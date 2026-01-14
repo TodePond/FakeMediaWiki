@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# Pre-commit hook to regenerate CSS custom data file
+#
+
+# Run the CSS variable extraction script
+npm run generate-css-vars
+
+# Stage the updated CSS custom data file if it changed
+git add .vscode/css.customData.json
+
+exit 0

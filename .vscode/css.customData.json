@@ -1,0 +1,1977 @@
+{
+  "version": 1.1,
+  "properties": [
+    {
+      "name": "--color-base",
+      "description": "CSS variable: --color-base"
+    },
+    {
+      "name": "--color-base-fixed",
+      "description": "CSS variable: --color-base-fixed"
+    },
+    {
+      "name": "--color-base--hover",
+      "description": "CSS variable: --color-base--hover"
+    },
+    {
+      "name": "--color-emphasized",
+      "description": "CSS variable: --color-emphasized"
+    },
+    {
+      "name": "--color-subtle",
+      "description": "CSS variable: --color-subtle"
+    },
+    {
+      "name": "--color-placeholder",
+      "description": "CSS variable: --color-placeholder"
+    },
+    {
+      "name": "--color-disabled",
+      "description": "CSS variable: --color-disabled"
+    },
+    {
+      "name": "--color-disabled-emphasized",
+      "description": "CSS variable: --color-disabled-emphasized"
+    },
+    {
+      "name": "--color-inverted",
+      "description": "CSS variable: --color-inverted"
+    },
+    {
+      "name": "--color-inverted-fixed",
+      "description": "CSS variable: --color-inverted-fixed"
+    },
+    {
+      "name": "--color-progressive",
+      "description": "CSS variable: --color-progressive"
+    },
+    {
+      "name": "--color-progressive--hover",
+      "description": "CSS variable: --color-progressive--hover"
+    },
+    {
+      "name": "--color-progressive--active",
+      "description": "CSS variable: --color-progressive--active"
+    },
+    {
+      "name": "--color-progressive--focus",
+      "description": "CSS variable: --color-progressive--focus"
+    },
+    {
+      "name": "--color-destructive",
+      "description": "CSS variable: --color-destructive"
+    },
+    {
+      "name": "--color-destructive--hover",
+      "description": "CSS variable: --color-destructive--hover"
+    },
+    {
+      "name": "--color-destructive--active",
+      "description": "CSS variable: --color-destructive--active"
+    },
+    {
+      "name": "--color-destructive--focus",
+      "description": "CSS variable: --color-destructive--focus"
+    },
+    {
+      "name": "--color-visited",
+      "description": "CSS variable: --color-visited"
+    },
+    {
+      "name": "--color-visited--hover",
+      "description": "CSS variable: --color-visited--hover"
+    },
+    {
+      "name": "--color-visited--active",
+      "description": "CSS variable: --color-visited--active"
+    },
+    {
+      "name": "--color-destructive--visited",
+      "description": "CSS variable: --color-destructive--visited"
+    },
+    {
+      "name": "--color-destructive--visited--hover",
+      "description": "CSS variable: --color-destructive--visited--hover"
+    },
+    {
+      "name": "--color-destructive--visited--active",
+      "description": "CSS variable: --color-destructive--visited--active"
+    },
+    {
+      "name": "--color-error",
+      "description": "CSS variable: --color-error"
+    },
+    {
+      "name": "--color-error--hover",
+      "description": "CSS variable: --color-error--hover"
+    },
+    {
+      "name": "--color-error--active",
+      "description": "CSS variable: --color-error--active"
+    },
+    {
+      "name": "--color-warning",
+      "description": "CSS variable: --color-warning"
+    },
+    {
+      "name": "--color-success",
+      "description": "CSS variable: --color-success"
+    },
+    {
+      "name": "--color-notice",
+      "description": "CSS variable: --color-notice"
+    },
+    {
+      "name": "--color-icon-error",
+      "description": "CSS variable: --color-icon-error"
+    },
+    {
+      "name": "--color-icon-warning",
+      "description": "CSS variable: --color-icon-warning"
+    },
+    {
+      "name": "--color-icon-success",
+      "description": "CSS variable: --color-icon-success"
+    },
+    {
+      "name": "--color-icon-notice",
+      "description": "CSS variable: --color-icon-notice"
+    },
+    {
+      "name": "--color-content-added",
+      "description": "CSS variable: --color-content-added"
+    },
+    {
+      "name": "--color-content-removed",
+      "description": "CSS variable: --color-content-removed"
+    },
+    {
+      "name": "--opacity-base",
+      "description": "CSS variable: --opacity-base"
+    },
+    {
+      "name": "--opacity-medium",
+      "description": "CSS variable: --opacity-medium"
+    },
+    {
+      "name": "--opacity-low",
+      "description": "CSS variable: --opacity-low"
+    },
+    {
+      "name": "--opacity-transparent",
+      "description": "CSS variable: --opacity-transparent"
+    },
+    {
+      "name": "--filter-invert-icon",
+      "description": "CSS variable: --filter-invert-icon"
+    },
+    {
+      "name": "--filter-invert-primary-button-icon",
+      "description": "CSS variable: --filter-invert-primary-button-icon"
+    },
+    {
+      "name": "--background-position-base",
+      "description": "CSS variable: --background-position-base"
+    },
+    {
+      "name": "--background-size-search-figure",
+      "description": "CSS variable: --background-size-search-figure"
+    },
+    {
+      "name": "--z-index-bottom",
+      "description": "CSS variable: --z-index-bottom"
+    },
+    {
+      "name": "--z-index-base",
+      "description": "CSS variable: --z-index-base"
+    },
+    {
+      "name": "--z-index-above-content",
+      "description": "CSS variable: --z-index-above-content"
+    },
+    {
+      "name": "--z-index-toolbar",
+      "description": "CSS variable: --z-index-toolbar"
+    },
+    {
+      "name": "--z-index-dropdown",
+      "description": "CSS variable: --z-index-dropdown"
+    },
+    {
+      "name": "--z-index-sticky",
+      "description": "CSS variable: --z-index-sticky"
+    },
+    {
+      "name": "--z-index-fixed",
+      "description": "CSS variable: --z-index-fixed"
+    },
+    {
+      "name": "--z-index-off-canvas-backdrop",
+      "description": "CSS variable: --z-index-off-canvas-backdrop"
+    },
+    {
+      "name": "--z-index-off-canvas",
+      "description": "CSS variable: --z-index-off-canvas"
+    },
+    {
+      "name": "--z-index-overlay-backdrop",
+      "description": "CSS variable: --z-index-overlay-backdrop"
+    },
+    {
+      "name": "--z-index-overlay",
+      "description": "CSS variable: --z-index-overlay"
+    },
+    {
+      "name": "--z-index-popover",
+      "description": "CSS variable: --z-index-popover"
+    },
+    {
+      "name": "--z-index-tooltip",
+      "description": "CSS variable: --z-index-tooltip"
+    },
+    {
+      "name": "--z-index-toast-notification",
+      "description": "CSS variable: --z-index-toast-notification"
+    },
+    {
+      "name": "--z-index-top",
+      "description": "CSS variable: --z-index-top"
+    },
+    {
+      "name": "--z-index-stacking-0",
+      "description": "CSS variable: --z-index-stacking-0"
+    },
+    {
+      "name": "--z-index-stacking-1",
+      "description": "CSS variable: --z-index-stacking-1"
+    },
+    {
+      "name": "--z-index-stacking-2",
+      "description": "CSS variable: --z-index-stacking-2"
+    },
+    {
+      "name": "--z-index-stacking-3",
+      "description": "CSS variable: --z-index-stacking-3"
+    },
+    {
+      "name": "--box-sizing-base",
+      "description": "CSS variable: --box-sizing-base"
+    },
+    {
+      "name": "--size-0",
+      "description": "CSS variable: --size-0"
+    },
+    {
+      "name": "--size-6",
+      "description": "CSS variable: --size-6"
+    },
+    {
+      "name": "--size-12",
+      "description": "CSS variable: --size-12"
+    },
+    {
+      "name": "--size-25",
+      "description": "CSS variable: --size-25"
+    },
+    {
+      "name": "--size-50",
+      "description": "CSS variable: --size-50"
+    },
+    {
+      "name": "--size-75",
+      "description": "CSS variable: --size-75"
+    },
+    {
+      "name": "--size-100",
+      "description": "CSS variable: --size-100"
+    },
+    {
+      "name": "--size-125",
+      "description": "CSS variable: --size-125"
+    },
+    {
+      "name": "--size-150",
+      "description": "CSS variable: --size-150"
+    },
+    {
+      "name": "--size-200",
+      "description": "CSS variable: --size-200"
+    },
+    {
+      "name": "--size-250",
+      "description": "CSS variable: --size-250"
+    },
+    {
+      "name": "--size-275",
+      "description": "CSS variable: --size-275"
+    },
+    {
+      "name": "--size-300",
+      "description": "CSS variable: --size-300"
+    },
+    {
+      "name": "--size-400",
+      "description": "CSS variable: --size-400"
+    },
+    {
+      "name": "--size-800",
+      "description": "CSS variable: --size-800"
+    },
+    {
+      "name": "--size-1200",
+      "description": "CSS variable: --size-1200"
+    },
+    {
+      "name": "--size-1600",
+      "description": "CSS variable: --size-1600"
+    },
+    {
+      "name": "--size-2400",
+      "description": "CSS variable: --size-2400"
+    },
+    {
+      "name": "--size-2800",
+      "description": "CSS variable: --size-2800"
+    },
+    {
+      "name": "--size-3200",
+      "description": "CSS variable: --size-3200"
+    },
+    {
+      "name": "--size-4000",
+      "description": "CSS variable: --size-4000"
+    },
+    {
+      "name": "--size-5600",
+      "description": "CSS variable: --size-5600"
+    },
+    {
+      "name": "--size-viewport-width-full",
+      "description": "CSS variable: --size-viewport-width-full"
+    },
+    {
+      "name": "--size-viewport-height-full",
+      "description": "CSS variable: --size-viewport-height-full"
+    },
+    {
+      "name": "--size-absolute-1",
+      "description": "CSS variable: --size-absolute-1"
+    },
+    {
+      "name": "--size-absolute-9999",
+      "description": "CSS variable: --size-absolute-9999"
+    },
+    {
+      "name": "--size-content-min",
+      "description": "CSS variable: --size-content-min"
+    },
+    {
+      "name": "--size-content-fit",
+      "description": "CSS variable: --size-content-fit"
+    },
+    {
+      "name": "--size-content-max",
+      "description": "CSS variable: --size-content-max"
+    },
+    {
+      "name": "--size-third",
+      "description": "CSS variable: --size-third"
+    },
+    {
+      "name": "--size-half",
+      "description": "CSS variable: --size-half"
+    },
+    {
+      "name": "--size-full",
+      "description": "CSS variable: --size-full"
+    },
+    {
+      "name": "--size-double",
+      "description": "CSS variable: --size-double"
+    },
+    {
+      "name": "--size-search-figure",
+      "description": "CSS variable: --size-search-figure"
+    },
+    {
+      "name": "--max-width-base",
+      "description": "CSS variable: --max-width-base"
+    },
+    {
+      "name": "--max-width-breakpoint-mobile",
+      "description": "CSS variable: --max-width-breakpoint-mobile"
+    },
+    {
+      "name": "--max-width-breakpoint-tablet",
+      "description": "CSS variable: --max-width-breakpoint-tablet"
+    },
+    {
+      "name": "--max-width-breakpoint-desktop",
+      "description": "CSS variable: --max-width-breakpoint-desktop"
+    },
+    {
+      "name": "--max-width-button",
+      "description": "CSS variable: --max-width-button"
+    },
+    {
+      "name": "--border-style-base",
+      "description": "CSS variable: --border-style-base"
+    },
+    {
+      "name": "--border-style-dashed",
+      "description": "CSS variable: --border-style-dashed"
+    },
+    {
+      "name": "--box-shadow-inset-small",
+      "description": "CSS variable: --box-shadow-inset-small"
+    },
+    {
+      "name": "--box-shadow-inset-medium",
+      "description": "CSS variable: --box-shadow-inset-medium"
+    },
+    {
+      "name": "--box-shadow-inset-medium-vertical",
+      "description": "CSS variable: --box-shadow-inset-medium-vertical"
+    },
+    {
+      "name": "--box-shadow-outset-small",
+      "description": "CSS variable: --box-shadow-outset-small"
+    },
+    {
+      "name": "--box-shadow-outset-small-top",
+      "description": "CSS variable: --box-shadow-outset-small-top"
+    },
+    {
+      "name": "--box-shadow-outset-small-bottom",
+      "description": "CSS variable: --box-shadow-outset-small-bottom"
+    },
+    {
+      "name": "--box-shadow-outset-small-start",
+      "description": "CSS variable: --box-shadow-outset-small-start"
+    },
+    {
+      "name": "--box-shadow-outset-medium-below",
+      "description": "CSS variable: --box-shadow-outset-medium-below"
+    },
+    {
+      "name": "--box-shadow-outset-medium-around",
+      "description": "CSS variable: --box-shadow-outset-medium-around"
+    },
+    {
+      "name": "--box-shadow-outset-large-below",
+      "description": "CSS variable: --box-shadow-outset-large-below"
+    },
+    {
+      "name": "--box-shadow-outset-large-around",
+      "description": "CSS variable: --box-shadow-outset-large-around"
+    },
+    {
+      "name": "--box-shadow-color-base",
+      "description": "CSS variable: --box-shadow-color-base"
+    },
+    {
+      "name": "--box-shadow-color-progressive--active",
+      "description": "CSS variable: --box-shadow-color-progressive--active"
+    },
+    {
+      "name": "--box-shadow-color-progressive--focus",
+      "description": "CSS variable: --box-shadow-color-progressive--focus"
+    },
+    {
+      "name": "--box-shadow-color-progressive-selected",
+      "description": "CSS variable: --box-shadow-color-progressive-selected"
+    },
+    {
+      "name": "--box-shadow-color-progressive-selected--hover",
+      "description": "CSS variable: --box-shadow-color-progressive-selected--hover"
+    },
+    {
+      "name": "--box-shadow-color-progressive-selected--active",
+      "description": "CSS variable: --box-shadow-color-progressive-selected--active"
+    },
+    {
+      "name": "--box-shadow-color-destructive--focus",
+      "description": "CSS variable: --box-shadow-color-destructive--focus"
+    },
+    {
+      "name": "--box-shadow-color-inverted",
+      "description": "CSS variable: --box-shadow-color-inverted"
+    },
+    {
+      "name": "--box-shadow-color-alpha-base",
+      "description": "CSS variable: --box-shadow-color-alpha-base"
+    },
+    {
+      "name": "--box-shadow-color-transparent",
+      "description": "CSS variable: --box-shadow-color-transparent"
+    },
+    {
+      "name": "--font-family-base",
+      "description": "CSS variable: --font-family-base"
+    },
+    {
+      "name": "--font-family-system-sans",
+      "description": "CSS variable: --font-family-system-sans"
+    },
+    {
+      "name": "--font-family-sans--fallback",
+      "description": "CSS variable: --font-family-sans--fallback"
+    },
+    {
+      "name": "--font-family-serif",
+      "description": "CSS variable: --font-family-serif"
+    },
+    {
+      "name": "--font-family-serif--fallback",
+      "description": "CSS variable: --font-family-serif--fallback"
+    },
+    {
+      "name": "--font-family-monospace",
+      "description": "CSS variable: --font-family-monospace"
+    },
+    {
+      "name": "--font-family-monospace--fallback",
+      "description": "CSS variable: --font-family-monospace--fallback"
+    },
+    {
+      "name": "--font-family-heading-main",
+      "description": "CSS variable: --font-family-heading-main"
+    },
+    {
+      "name": "--font-size-x-small",
+      "description": "CSS variable: --font-size-x-small"
+    },
+    {
+      "name": "--font-size-small",
+      "description": "CSS variable: --font-size-small"
+    },
+    {
+      "name": "--font-size-medium",
+      "description": "CSS variable: --font-size-medium"
+    },
+    {
+      "name": "--font-size-large",
+      "description": "CSS variable: --font-size-large"
+    },
+    {
+      "name": "--font-size-x-large",
+      "description": "CSS variable: --font-size-x-large"
+    },
+    {
+      "name": "--font-size-xx-large",
+      "description": "CSS variable: --font-size-xx-large"
+    },
+    {
+      "name": "--font-size-xxx-large",
+      "description": "CSS variable: --font-size-xxx-large"
+    },
+    {
+      "name": "--font-weight-hairline",
+      "description": "CSS variable: --font-weight-hairline"
+    },
+    {
+      "name": "--font-weight-light",
+      "description": "CSS variable: --font-weight-light"
+    },
+    {
+      "name": "--font-weight-normal",
+      "description": "CSS variable: --font-weight-normal"
+    },
+    {
+      "name": "--font-weight-semi-bold",
+      "description": "CSS variable: --font-weight-semi-bold"
+    },
+    {
+      "name": "--font-weight-bold",
+      "description": "CSS variable: --font-weight-bold"
+    },
+    {
+      "name": "--line-height-x-small",
+      "description": "CSS variable: --line-height-x-small"
+    },
+    {
+      "name": "--line-height-small",
+      "description": "CSS variable: --line-height-small"
+    },
+    {
+      "name": "--line-height-medium",
+      "description": "CSS variable: --line-height-medium"
+    },
+    {
+      "name": "--line-height-large",
+      "description": "CSS variable: --line-height-large"
+    },
+    {
+      "name": "--line-height-x-large",
+      "description": "CSS variable: --line-height-x-large"
+    },
+    {
+      "name": "--line-height-xx-large",
+      "description": "CSS variable: --line-height-xx-large"
+    },
+    {
+      "name": "--line-height-xxx-large",
+      "description": "CSS variable: --line-height-xxx-large"
+    },
+    {
+      "name": "--line-height-content",
+      "description": "CSS variable: --line-height-content"
+    },
+    {
+      "name": "--text-decoration-none",
+      "description": "CSS variable: --text-decoration-none"
+    },
+    {
+      "name": "--text-decoration-line-through",
+      "description": "CSS variable: --text-decoration-line-through"
+    },
+    {
+      "name": "--text-decoration-underline",
+      "description": "CSS variable: --text-decoration-underline"
+    },
+    {
+      "name": "--text-overflow-clip",
+      "description": "CSS variable: --text-overflow-clip"
+    },
+    {
+      "name": "--text-overflow-ellipsis",
+      "description": "CSS variable: --text-overflow-ellipsis"
+    },
+    {
+      "name": "--tab-size-base",
+      "description": "CSS variable: --tab-size-base"
+    },
+    {
+      "name": "--transform-checkbox-tick--checked",
+      "description": "CSS variable: --transform-checkbox-tick--checked"
+    },
+    {
+      "name": "--transform-progress-indicator-spinner-start",
+      "description": "CSS variable: --transform-progress-indicator-spinner-start"
+    },
+    {
+      "name": "--transform-progress-indicator-spinner-end",
+      "description": "CSS variable: --transform-progress-indicator-spinner-end"
+    },
+    {
+      "name": "--transition-duration-base",
+      "description": "CSS variable: --transition-duration-base"
+    },
+    {
+      "name": "--transition-duration-medium",
+      "description": "CSS variable: --transition-duration-medium"
+    },
+    {
+      "name": "--transition-property-base",
+      "description": "CSS variable: --transition-property-base"
+    },
+    {
+      "name": "--transition-property-fade",
+      "description": "CSS variable: --transition-property-fade"
+    },
+    {
+      "name": "--transition-property-icon",
+      "description": "CSS variable: --transition-property-icon"
+    },
+    {
+      "name": "--transition-property-icon-css-only",
+      "description": "CSS variable: --transition-property-icon-css-only"
+    },
+    {
+      "name": "--transition-property-toggle-switch-grip",
+      "description": "CSS variable: --transition-property-toggle-switch-grip"
+    },
+    {
+      "name": "--transition-timing-function-system",
+      "description": "CSS variable: --transition-timing-function-system"
+    },
+    {
+      "name": "--transition-timing-function-user",
+      "description": "CSS variable: --transition-timing-function-user"
+    },
+    {
+      "name": "--animation-delay-none",
+      "description": "CSS variable: --animation-delay-none"
+    },
+    {
+      "name": "--animation-delay-medium",
+      "description": "CSS variable: --animation-delay-medium"
+    },
+    {
+      "name": "--animation-delay-slow",
+      "description": "CSS variable: --animation-delay-slow"
+    },
+    {
+      "name": "--animation-duration-fast",
+      "description": "CSS variable: --animation-duration-fast"
+    },
+    {
+      "name": "--animation-duration-medium",
+      "description": "CSS variable: --animation-duration-medium"
+    },
+    {
+      "name": "--animation-duration-slow",
+      "description": "CSS variable: --animation-duration-slow"
+    },
+    {
+      "name": "--animation-timing-function-base",
+      "description": "CSS variable: --animation-timing-function-base"
+    },
+    {
+      "name": "--animation-timing-function-bouncing",
+      "description": "CSS variable: --animation-timing-function-bouncing"
+    },
+    {
+      "name": "--animation-iteration-count-base",
+      "description": "CSS variable: --animation-iteration-count-base"
+    },
+    {
+      "name": "--cursor-base",
+      "description": "CSS variable: --cursor-base"
+    },
+    {
+      "name": "--cursor-base--disabled",
+      "description": "CSS variable: --cursor-base--disabled"
+    },
+    {
+      "name": "--cursor-base--hover",
+      "description": "CSS variable: --cursor-base--hover"
+    },
+    {
+      "name": "--cursor-grab",
+      "description": "CSS variable: --cursor-grab"
+    },
+    {
+      "name": "--cursor-grabbing",
+      "description": "CSS variable: --cursor-grabbing"
+    },
+    {
+      "name": "--cursor-help",
+      "description": "CSS variable: --cursor-help"
+    },
+    {
+      "name": "--cursor-move",
+      "description": "CSS variable: --cursor-move"
+    },
+    {
+      "name": "--cursor-not-allowed",
+      "description": "CSS variable: --cursor-not-allowed"
+    },
+    {
+      "name": "--cursor-resize-nesw",
+      "description": "CSS variable: --cursor-resize-nesw"
+    },
+    {
+      "name": "--cursor-resize-nwse",
+      "description": "CSS variable: --cursor-resize-nwse"
+    },
+    {
+      "name": "--cursor-text",
+      "description": "CSS variable: --cursor-text"
+    },
+    {
+      "name": "--cursor-zoom-in",
+      "description": "CSS variable: --cursor-zoom-in"
+    },
+    {
+      "name": "--cursor-zoom-out",
+      "description": "CSS variable: --cursor-zoom-out"
+    },
+    {
+      "name": "--mix-blend-mode-base",
+      "description": "CSS variable: --mix-blend-mode-base"
+    },
+    {
+      "name": "--mix-blend-mode-blend",
+      "description": "CSS variable: --mix-blend-mode-blend"
+    },
+    {
+      "name": "--background-color-base",
+      "description": "CSS variable: --background-color-base"
+    },
+    {
+      "name": "--background-color-base-fixed",
+      "description": "CSS variable: --background-color-base-fixed"
+    },
+    {
+      "name": "--background-color-neutral",
+      "description": "CSS variable: --background-color-neutral"
+    },
+    {
+      "name": "--background-color-neutral-subtle",
+      "description": "CSS variable: --background-color-neutral-subtle"
+    },
+    {
+      "name": "--background-color-interactive",
+      "description": "CSS variable: --background-color-interactive"
+    },
+    {
+      "name": "--background-color-interactive--hover",
+      "description": "CSS variable: --background-color-interactive--hover"
+    },
+    {
+      "name": "--background-color-interactive--active",
+      "description": "CSS variable: --background-color-interactive--active"
+    },
+    {
+      "name": "--background-color-interactive-subtle",
+      "description": "CSS variable: --background-color-interactive-subtle"
+    },
+    {
+      "name": "--background-color-interactive-subtle--hover",
+      "description": "CSS variable: --background-color-interactive-subtle--hover"
+    },
+    {
+      "name": "--background-color-interactive-subtle--active",
+      "description": "CSS variable: --background-color-interactive-subtle--active"
+    },
+    {
+      "name": "--background-color-disabled",
+      "description": "CSS variable: --background-color-disabled"
+    },
+    {
+      "name": "--background-color-disabled-subtle",
+      "description": "CSS variable: --background-color-disabled-subtle"
+    },
+    {
+      "name": "--background-color-inverted",
+      "description": "CSS variable: --background-color-inverted"
+    },
+    {
+      "name": "--background-color-progressive",
+      "description": "CSS variable: --background-color-progressive"
+    },
+    {
+      "name": "--background-color-progressive--hover",
+      "description": "CSS variable: --background-color-progressive--hover"
+    },
+    {
+      "name": "--background-color-progressive--active",
+      "description": "CSS variable: --background-color-progressive--active"
+    },
+    {
+      "name": "--background-color-progressive--focus",
+      "description": "CSS variable: --background-color-progressive--focus"
+    },
+    {
+      "name": "--background-color-progressive-subtle",
+      "description": "CSS variable: --background-color-progressive-subtle"
+    },
+    {
+      "name": "--background-color-progressive-subtle--hover",
+      "description": "CSS variable: --background-color-progressive-subtle--hover"
+    },
+    {
+      "name": "--background-color-progressive-subtle--active",
+      "description": "CSS variable: --background-color-progressive-subtle--active"
+    },
+    {
+      "name": "--background-color-destructive",
+      "description": "CSS variable: --background-color-destructive"
+    },
+    {
+      "name": "--background-color-destructive--hover",
+      "description": "CSS variable: --background-color-destructive--hover"
+    },
+    {
+      "name": "--background-color-destructive--active",
+      "description": "CSS variable: --background-color-destructive--active"
+    },
+    {
+      "name": "--background-color-destructive--focus",
+      "description": "CSS variable: --background-color-destructive--focus"
+    },
+    {
+      "name": "--background-color-destructive-subtle",
+      "description": "CSS variable: --background-color-destructive-subtle"
+    },
+    {
+      "name": "--background-color-destructive-subtle--hover",
+      "description": "CSS variable: --background-color-destructive-subtle--hover"
+    },
+    {
+      "name": "--background-color-destructive-subtle--active",
+      "description": "CSS variable: --background-color-destructive-subtle--active"
+    },
+    {
+      "name": "--background-color-error",
+      "description": "CSS variable: --background-color-error"
+    },
+    {
+      "name": "--background-color-error--hover",
+      "description": "CSS variable: --background-color-error--hover"
+    },
+    {
+      "name": "--background-color-error--active",
+      "description": "CSS variable: --background-color-error--active"
+    },
+    {
+      "name": "--background-color-error-subtle",
+      "description": "CSS variable: --background-color-error-subtle"
+    },
+    {
+      "name": "--background-color-error-subtle--hover",
+      "description": "CSS variable: --background-color-error-subtle--hover"
+    },
+    {
+      "name": "--background-color-error-subtle--active",
+      "description": "CSS variable: --background-color-error-subtle--active"
+    },
+    {
+      "name": "--background-color-warning-subtle",
+      "description": "CSS variable: --background-color-warning-subtle"
+    },
+    {
+      "name": "--background-color-success-subtle",
+      "description": "CSS variable: --background-color-success-subtle"
+    },
+    {
+      "name": "--background-color-notice-subtle",
+      "description": "CSS variable: --background-color-notice-subtle"
+    },
+    {
+      "name": "--background-color-content-added",
+      "description": "CSS variable: --background-color-content-added"
+    },
+    {
+      "name": "--background-color-content-removed",
+      "description": "CSS variable: --background-color-content-removed"
+    },
+    {
+      "name": "--background-color-transparent",
+      "description": "CSS variable: --background-color-transparent"
+    },
+    {
+      "name": "--background-color-backdrop-light",
+      "description": "CSS variable: --background-color-backdrop-light"
+    },
+    {
+      "name": "--background-color-backdrop-dark",
+      "description": "CSS variable: --background-color-backdrop-dark"
+    },
+    {
+      "name": "--background-color-button-quiet--hover",
+      "description": "CSS variable: --background-color-button-quiet--hover"
+    },
+    {
+      "name": "--background-color-button-quiet--active",
+      "description": "CSS variable: --background-color-button-quiet--active"
+    },
+    {
+      "name": "--background-color-input-binary--checked",
+      "description": "CSS variable: --background-color-input-binary--checked"
+    },
+    {
+      "name": "--background-color-tab-list-item-framed--hover",
+      "description": "CSS variable: --background-color-tab-list-item-framed--hover"
+    },
+    {
+      "name": "--background-color-tab-list-item-framed--active",
+      "description": "CSS variable: --background-color-tab-list-item-framed--active"
+    },
+    {
+      "name": "--opacity-icon-base",
+      "description": "CSS variable: --opacity-icon-base"
+    },
+    {
+      "name": "--opacity-icon-base--hover",
+      "description": "CSS variable: --opacity-icon-base--hover"
+    },
+    {
+      "name": "--opacity-icon-base--selected",
+      "description": "CSS variable: --opacity-icon-base--selected"
+    },
+    {
+      "name": "--opacity-icon-base--disabled",
+      "description": "CSS variable: --opacity-icon-base--disabled"
+    },
+    {
+      "name": "--opacity-icon-placeholder",
+      "description": "CSS variable: --opacity-icon-placeholder"
+    },
+    {
+      "name": "--opacity-icon-subtle",
+      "description": "CSS variable: --opacity-icon-subtle"
+    },
+    {
+      "name": "--min-size-interactive-pointer",
+      "description": "CSS variable: --min-size-interactive-pointer"
+    },
+    {
+      "name": "--min-size-interactive-touch",
+      "description": "CSS variable: --min-size-interactive-touch"
+    },
+    {
+      "name": "--min-size-search-figure",
+      "description": "CSS variable: --min-size-search-figure"
+    },
+    {
+      "name": "--min-size-icon-x-small",
+      "description": "CSS variable: --min-size-icon-x-small"
+    },
+    {
+      "name": "--min-size-icon-small",
+      "description": "CSS variable: --min-size-icon-small"
+    },
+    {
+      "name": "--min-size-icon-medium",
+      "description": "CSS variable: --min-size-icon-medium"
+    },
+    {
+      "name": "--min-size-input-binary",
+      "description": "CSS variable: --min-size-input-binary"
+    },
+    {
+      "name": "--min-size-input-chip-clear-button",
+      "description": "CSS variable: --min-size-input-chip-clear-button"
+    },
+    {
+      "name": "--min-size-toggle-switch-grip",
+      "description": "CSS variable: --min-size-toggle-switch-grip"
+    },
+    {
+      "name": "--min-width-medium",
+      "description": "CSS variable: --min-width-medium"
+    },
+    {
+      "name": "--min-width-breakpoint-mobile",
+      "description": "CSS variable: --min-width-breakpoint-mobile"
+    },
+    {
+      "name": "--min-width-breakpoint-tablet",
+      "description": "CSS variable: --min-width-breakpoint-tablet"
+    },
+    {
+      "name": "--min-width-breakpoint-desktop",
+      "description": "CSS variable: --min-width-breakpoint-desktop"
+    },
+    {
+      "name": "--min-width-breakpoint-desktop-wide",
+      "description": "CSS variable: --min-width-breakpoint-desktop-wide"
+    },
+    {
+      "name": "--min-width-toggle-switch",
+      "description": "CSS variable: --min-width-toggle-switch"
+    },
+    {
+      "name": "--spacing-0",
+      "description": "CSS variable: --spacing-0"
+    },
+    {
+      "name": "--spacing-6",
+      "description": "CSS variable: --spacing-6"
+    },
+    {
+      "name": "--spacing-12",
+      "description": "CSS variable: --spacing-12"
+    },
+    {
+      "name": "--spacing-25",
+      "description": "CSS variable: --spacing-25"
+    },
+    {
+      "name": "--spacing-30",
+      "description": "CSS variable: --spacing-30"
+    },
+    {
+      "name": "--spacing-35",
+      "description": "CSS variable: --spacing-35"
+    },
+    {
+      "name": "--spacing-50",
+      "description": "CSS variable: --spacing-50"
+    },
+    {
+      "name": "--spacing-65",
+      "description": "CSS variable: --spacing-65"
+    },
+    {
+      "name": "--spacing-75",
+      "description": "CSS variable: --spacing-75"
+    },
+    {
+      "name": "--spacing-100",
+      "description": "CSS variable: --spacing-100"
+    },
+    {
+      "name": "--spacing-125",
+      "description": "CSS variable: --spacing-125"
+    },
+    {
+      "name": "--spacing-150",
+      "description": "CSS variable: --spacing-150"
+    },
+    {
+      "name": "--spacing-200",
+      "description": "CSS variable: --spacing-200"
+    },
+    {
+      "name": "--spacing-250",
+      "description": "CSS variable: --spacing-250"
+    },
+    {
+      "name": "--spacing-300",
+      "description": "CSS variable: --spacing-300"
+    },
+    {
+      "name": "--spacing-400",
+      "description": "CSS variable: --spacing-400"
+    },
+    {
+      "name": "--spacing-half",
+      "description": "CSS variable: --spacing-half"
+    },
+    {
+      "name": "--spacing-full",
+      "description": "CSS variable: --spacing-full"
+    },
+    {
+      "name": "--border-width-base",
+      "description": "CSS variable: --border-width-base"
+    },
+    {
+      "name": "--border-width-thick",
+      "description": "CSS variable: --border-width-thick"
+    },
+    {
+      "name": "--border-width-input-radio--checked",
+      "description": "CSS variable: --border-width-input-radio--checked"
+    },
+    {
+      "name": "--border-color-base",
+      "description": "CSS variable: --border-color-base"
+    },
+    {
+      "name": "--border-color-emphasized",
+      "description": "CSS variable: --border-color-emphasized"
+    },
+    {
+      "name": "--border-color-subtle",
+      "description": "CSS variable: --border-color-subtle"
+    },
+    {
+      "name": "--border-color-muted",
+      "description": "CSS variable: --border-color-muted"
+    },
+    {
+      "name": "--border-color-interactive",
+      "description": "CSS variable: --border-color-interactive"
+    },
+    {
+      "name": "--border-color-interactive--hover",
+      "description": "CSS variable: --border-color-interactive--hover"
+    },
+    {
+      "name": "--border-color-interactive--active",
+      "description": "CSS variable: --border-color-interactive--active"
+    },
+    {
+      "name": "--border-color-disabled",
+      "description": "CSS variable: --border-color-disabled"
+    },
+    {
+      "name": "--border-color-inverted",
+      "description": "CSS variable: --border-color-inverted"
+    },
+    {
+      "name": "--border-color-inverted-fixed",
+      "description": "CSS variable: --border-color-inverted-fixed"
+    },
+    {
+      "name": "--border-color-progressive",
+      "description": "CSS variable: --border-color-progressive"
+    },
+    {
+      "name": "--border-color-progressive--hover",
+      "description": "CSS variable: --border-color-progressive--hover"
+    },
+    {
+      "name": "--border-color-progressive--active",
+      "description": "CSS variable: --border-color-progressive--active"
+    },
+    {
+      "name": "--border-color-progressive--focus",
+      "description": "CSS variable: --border-color-progressive--focus"
+    },
+    {
+      "name": "--border-color-destructive",
+      "description": "CSS variable: --border-color-destructive"
+    },
+    {
+      "name": "--border-color-destructive--hover",
+      "description": "CSS variable: --border-color-destructive--hover"
+    },
+    {
+      "name": "--border-color-destructive--active",
+      "description": "CSS variable: --border-color-destructive--active"
+    },
+    {
+      "name": "--border-color-destructive--focus",
+      "description": "CSS variable: --border-color-destructive--focus"
+    },
+    {
+      "name": "--border-color-error",
+      "description": "CSS variable: --border-color-error"
+    },
+    {
+      "name": "--border-color-error--hover",
+      "description": "CSS variable: --border-color-error--hover"
+    },
+    {
+      "name": "--border-color-error--active",
+      "description": "CSS variable: --border-color-error--active"
+    },
+    {
+      "name": "--border-color-warning",
+      "description": "CSS variable: --border-color-warning"
+    },
+    {
+      "name": "--border-color-warning--hover",
+      "description": "CSS variable: --border-color-warning--hover"
+    },
+    {
+      "name": "--border-color-warning--active",
+      "description": "CSS variable: --border-color-warning--active"
+    },
+    {
+      "name": "--border-color-success",
+      "description": "CSS variable: --border-color-success"
+    },
+    {
+      "name": "--border-color-notice",
+      "description": "CSS variable: --border-color-notice"
+    },
+    {
+      "name": "--border-color-content-added",
+      "description": "CSS variable: --border-color-content-added"
+    },
+    {
+      "name": "--border-color-content-removed",
+      "description": "CSS variable: --border-color-content-removed"
+    },
+    {
+      "name": "--border-color-transparent",
+      "description": "CSS variable: --border-color-transparent"
+    },
+    {
+      "name": "--border-color-divider",
+      "description": "CSS variable: --border-color-divider"
+    },
+    {
+      "name": "--border-radius-base",
+      "description": "CSS variable: --border-radius-base"
+    },
+    {
+      "name": "--border-radius-sharp",
+      "description": "CSS variable: --border-radius-sharp"
+    },
+    {
+      "name": "--border-radius-pill",
+      "description": "CSS variable: --border-radius-pill"
+    },
+    {
+      "name": "--border-radius-circle",
+      "description": "CSS variable: --border-radius-circle"
+    },
+    {
+      "name": "--outline-color-progressive--focus",
+      "description": "CSS variable: --outline-color-progressive--focus"
+    },
+    {
+      "name": "--min-height-text-area",
+      "description": "CSS variable: --min-height-text-area"
+    },
+    {
+      "name": "--min-height-table-header",
+      "description": "CSS variable: --min-height-table-header"
+    },
+    {
+      "name": "--min-height-table-footer",
+      "description": "CSS variable: --min-height-table-footer"
+    },
+    {
+      "name": "--min-height-toggle-switch",
+      "description": "CSS variable: --min-height-toggle-switch"
+    },
+    {
+      "name": "--max-height-chip",
+      "description": "CSS variable: --max-height-chip"
+    },
+    {
+      "name": "--color-link",
+      "description": "CSS variable: --color-link"
+    },
+    {
+      "name": "--color-link--hover",
+      "description": "CSS variable: --color-link--hover"
+    },
+    {
+      "name": "--color-link--active",
+      "description": "CSS variable: --color-link--active"
+    },
+    {
+      "name": "--color-link--focus",
+      "description": "CSS variable: --color-link--focus"
+    },
+    {
+      "name": "--color-link--visited",
+      "description": "CSS variable: --color-link--visited"
+    },
+    {
+      "name": "--color-link--visited--hover",
+      "description": "CSS variable: --color-link--visited--hover"
+    },
+    {
+      "name": "--color-link--visited--active",
+      "description": "CSS variable: --color-link--visited--active"
+    },
+    {
+      "name": "--color-link-red",
+      "description": "CSS variable: --color-link-red"
+    },
+    {
+      "name": "--color-link-red--hover",
+      "description": "CSS variable: --color-link-red--hover"
+    },
+    {
+      "name": "--color-link-red--active",
+      "description": "CSS variable: --color-link-red--active"
+    },
+    {
+      "name": "--color-link-red--focus",
+      "description": "CSS variable: --color-link-red--focus"
+    },
+    {
+      "name": "--color-link-red--visited",
+      "description": "CSS variable: --color-link-red--visited"
+    },
+    {
+      "name": "--color-link-red--visited--hover",
+      "description": "CSS variable: --color-link-red--visited--hover"
+    },
+    {
+      "name": "--color-link-red--visited--active",
+      "description": "CSS variable: --color-link-red--visited--active"
+    },
+    {
+      "name": "--size-icon-x-small",
+      "description": "CSS variable: --size-icon-x-small"
+    },
+    {
+      "name": "--size-icon-small",
+      "description": "CSS variable: --size-icon-small"
+    },
+    {
+      "name": "--size-icon-medium",
+      "description": "CSS variable: --size-icon-medium"
+    },
+    {
+      "name": "--size-toggle-switch-grip",
+      "description": "CSS variable: --size-toggle-switch-grip"
+    },
+    {
+      "name": "--box-shadow-small",
+      "description": "CSS variable: --box-shadow-small"
+    },
+    {
+      "name": "--box-shadow-small-top",
+      "description": "CSS variable: --box-shadow-small-top"
+    },
+    {
+      "name": "--box-shadow-small-bottom",
+      "description": "CSS variable: --box-shadow-small-bottom"
+    },
+    {
+      "name": "--box-shadow-medium",
+      "description": "CSS variable: --box-shadow-medium"
+    },
+    {
+      "name": "--box-shadow-large",
+      "description": "CSS variable: --box-shadow-large"
+    },
+    {
+      "name": "--accent-color-base",
+      "description": "CSS variable: --accent-color-base"
+    },
+    {
+      "name": "--position-offset-border-width-base",
+      "description": "CSS variable: --position-offset-border-width-base"
+    },
+    {
+      "name": "--spacing-horizontal-button",
+      "description": "CSS variable: --spacing-horizontal-button"
+    },
+    {
+      "name": "--spacing-horizontal-button-icon-only",
+      "description": "CSS variable: --spacing-horizontal-button-icon-only"
+    },
+    {
+      "name": "--spacing-horizontal-button-small-icon-only",
+      "description": "CSS variable: --spacing-horizontal-button-small-icon-only"
+    },
+    {
+      "name": "--spacing-horizontal-button-small",
+      "description": "CSS variable: --spacing-horizontal-button-small"
+    },
+    {
+      "name": "--spacing-horizontal-button-large",
+      "description": "CSS variable: --spacing-horizontal-button-large"
+    },
+    {
+      "name": "--spacing-horizontal-input-text-two-end-icons",
+      "description": "CSS variable: --spacing-horizontal-input-text-two-end-icons"
+    },
+    {
+      "name": "--spacing-start-typeahead-search-figure",
+      "description": "CSS variable: --spacing-start-typeahead-search-figure"
+    },
+    {
+      "name": "--spacing-toggle-switch-grip-start",
+      "description": "CSS variable: --spacing-toggle-switch-grip-start"
+    },
+    {
+      "name": "--spacing-toggle-switch-grip-end",
+      "description": "CSS variable: --spacing-toggle-switch-grip-end"
+    },
+    {
+      "name": "--border-color-input--hover",
+      "description": "CSS variable: --border-color-input--hover"
+    },
+    {
+      "name": "--border-color-input-binary",
+      "description": "CSS variable: --border-color-input-binary"
+    },
+    {
+      "name": "--border-color-input-binary--hover",
+      "description": "CSS variable: --border-color-input-binary--hover"
+    },
+    {
+      "name": "--border-color-input-binary--active",
+      "description": "CSS variable: --border-color-input-binary--active"
+    },
+    {
+      "name": "--border-color-input-binary--focus",
+      "description": "CSS variable: --border-color-input-binary--focus"
+    },
+    {
+      "name": "--border-color-input-binary--checked",
+      "description": "CSS variable: --border-color-input-binary--checked"
+    },
+    {
+      "name": "--border-base",
+      "description": "CSS variable: --border-base"
+    },
+    {
+      "name": "--border-subtle",
+      "description": "CSS variable: --border-subtle"
+    },
+    {
+      "name": "--border-progressive",
+      "description": "CSS variable: --border-progressive"
+    },
+    {
+      "name": "--border-destructive",
+      "description": "CSS variable: --border-destructive"
+    },
+    {
+      "name": "--border-transparent",
+      "description": "CSS variable: --border-transparent"
+    },
+    {
+      "name": "--outline-base--focus",
+      "description": "CSS variable: --outline-base--focus"
+    },
+    {
+      "name": "--width-toggle-switch",
+      "description": "CSS variable: --width-toggle-switch"
+    },
+    {
+      "name": "--height-toggle-switch",
+      "description": "CSS variable: --height-toggle-switch"
+    },
+    {
+      "name": "--spacing-start-typeahead-search-icon",
+      "description": "CSS variable: --spacing-start-typeahead-search-icon"
+    },
+    {
+      "name": "--spacing-typeahead-search-focus-addition",
+      "description": "CSS variable: --spacing-typeahead-search-focus-addition"
+    },
+    {
+      "name": "--color-base--subtle",
+      "description": "CSS variable: --color-base--subtle"
+    },
+    {
+      "name": "--box-shadow-drop-xx-large",
+      "description": "CSS variable: --box-shadow-drop-xx-large"
+    },
+    {
+      "name": "--font-family-sans",
+      "description": "CSS variable: --font-family-sans"
+    },
+    {
+      "name": "--line-height-xxx-small",
+      "description": "CSS variable: --line-height-xxx-small"
+    },
+    {
+      "name": "--line-height-xx-small",
+      "description": "CSS variable: --line-height-xx-small"
+    },
+    {
+      "name": "--box-shadow-drop-small",
+      "description": "CSS variable: --box-shadow-drop-small"
+    },
+    {
+      "name": "--box-shadow-drop-medium",
+      "description": "CSS variable: --box-shadow-drop-medium"
+    },
+    {
+      "name": "--white",
+      "description": "CSS variable: --white"
+    },
+    {
+      "name": "--black",
+      "description": "CSS variable: --black"
+    },
+    {
+      "name": "--gray50",
+      "description": "CSS variable: --gray50"
+    },
+    {
+      "name": "--gray100",
+      "description": "CSS variable: --gray100"
+    },
+    {
+      "name": "--gray200",
+      "description": "CSS variable: --gray200"
+    },
+    {
+      "name": "--gray300",
+      "description": "CSS variable: --gray300"
+    },
+    {
+      "name": "--gray400",
+      "description": "CSS variable: --gray400"
+    },
+    {
+      "name": "--gray500",
+      "description": "CSS variable: --gray500"
+    },
+    {
+      "name": "--gray600",
+      "description": "CSS variable: --gray600"
+    },
+    {
+      "name": "--gray700",
+      "description": "CSS variable: --gray700"
+    },
+    {
+      "name": "--gray800",
+      "description": "CSS variable: --gray800"
+    },
+    {
+      "name": "--gray900",
+      "description": "CSS variable: --gray900"
+    },
+    {
+      "name": "--gray1000",
+      "description": "CSS variable: --gray1000"
+    },
+    {
+      "name": "--red50",
+      "description": "CSS variable: --red50"
+    },
+    {
+      "name": "--red100",
+      "description": "CSS variable: --red100"
+    },
+    {
+      "name": "--red200",
+      "description": "CSS variable: --red200"
+    },
+    {
+      "name": "--red300",
+      "description": "CSS variable: --red300"
+    },
+    {
+      "name": "--red400",
+      "description": "CSS variable: --red400"
+    },
+    {
+      "name": "--red500",
+      "description": "CSS variable: --red500"
+    },
+    {
+      "name": "--red600",
+      "description": "CSS variable: --red600"
+    },
+    {
+      "name": "--red700",
+      "description": "CSS variable: --red700"
+    },
+    {
+      "name": "--red800",
+      "description": "CSS variable: --red800"
+    },
+    {
+      "name": "--red900",
+      "description": "CSS variable: --red900"
+    },
+    {
+      "name": "--red1000",
+      "description": "CSS variable: --red1000"
+    },
+    {
+      "name": "--orange50",
+      "description": "CSS variable: --orange50"
+    },
+    {
+      "name": "--orange100",
+      "description": "CSS variable: --orange100"
+    },
+    {
+      "name": "--orange200",
+      "description": "CSS variable: --orange200"
+    },
+    {
+      "name": "--orange300",
+      "description": "CSS variable: --orange300"
+    },
+    {
+      "name": "--orange400",
+      "description": "CSS variable: --orange400"
+    },
+    {
+      "name": "--orange500",
+      "description": "CSS variable: --orange500"
+    },
+    {
+      "name": "--orange600",
+      "description": "CSS variable: --orange600"
+    },
+    {
+      "name": "--orange700",
+      "description": "CSS variable: --orange700"
+    },
+    {
+      "name": "--orange800",
+      "description": "CSS variable: --orange800"
+    },
+    {
+      "name": "--orange900",
+      "description": "CSS variable: --orange900"
+    },
+    {
+      "name": "--orange1000",
+      "description": "CSS variable: --orange1000"
+    },
+    {
+      "name": "--yellow50",
+      "description": "CSS variable: --yellow50"
+    },
+    {
+      "name": "--yellow100",
+      "description": "CSS variable: --yellow100"
+    },
+    {
+      "name": "--yellow200",
+      "description": "CSS variable: --yellow200"
+    },
+    {
+      "name": "--yellow300",
+      "description": "CSS variable: --yellow300"
+    },
+    {
+      "name": "--yellow400",
+      "description": "CSS variable: --yellow400"
+    },
+    {
+      "name": "--yellow500",
+      "description": "CSS variable: --yellow500"
+    },
+    {
+      "name": "--yellow600",
+      "description": "CSS variable: --yellow600"
+    },
+    {
+      "name": "--yellow700",
+      "description": "CSS variable: --yellow700"
+    },
+    {
+      "name": "--yellow800",
+      "description": "CSS variable: --yellow800"
+    },
+    {
+      "name": "--yellow900",
+      "description": "CSS variable: --yellow900"
+    },
+    {
+      "name": "--yellow1000",
+      "description": "CSS variable: --yellow1000"
+    },
+    {
+      "name": "--lime50",
+      "description": "CSS variable: --lime50"
+    },
+    {
+      "name": "--lime100",
+      "description": "CSS variable: --lime100"
+    },
+    {
+      "name": "--lime200",
+      "description": "CSS variable: --lime200"
+    },
+    {
+      "name": "--lime300",
+      "description": "CSS variable: --lime300"
+    },
+    {
+      "name": "--lime400",
+      "description": "CSS variable: --lime400"
+    },
+    {
+      "name": "--lime500",
+      "description": "CSS variable: --lime500"
+    },
+    {
+      "name": "--lime600",
+      "description": "CSS variable: --lime600"
+    },
+    {
+      "name": "--lime700",
+      "description": "CSS variable: --lime700"
+    },
+    {
+      "name": "--lime800",
+      "description": "CSS variable: --lime800"
+    },
+    {
+      "name": "--lime900",
+      "description": "CSS variable: --lime900"
+    },
+    {
+      "name": "--lime1000",
+      "description": "CSS variable: --lime1000"
+    },
+    {
+      "name": "--green50",
+      "description": "CSS variable: --green50"
+    },
+    {
+      "name": "--green100",
+      "description": "CSS variable: --green100"
+    },
+    {
+      "name": "--green200",
+      "description": "CSS variable: --green200"
+    },
+    {
+      "name": "--green300",
+      "description": "CSS variable: --green300"
+    },
+    {
+      "name": "--green400",
+      "description": "CSS variable: --green400"
+    },
+    {
+      "name": "--green500",
+      "description": "CSS variable: --green500"
+    },
+    {
+      "name": "--green600",
+      "description": "CSS variable: --green600"
+    },
+    {
+      "name": "--green700",
+      "description": "CSS variable: --green700"
+    },
+    {
+      "name": "--green800",
+      "description": "CSS variable: --green800"
+    },
+    {
+      "name": "--green900",
+      "description": "CSS variable: --green900"
+    },
+    {
+      "name": "--green1000",
+      "description": "CSS variable: --green1000"
+    },
+    {
+      "name": "--blue50",
+      "description": "CSS variable: --blue50"
+    },
+    {
+      "name": "--blue100",
+      "description": "CSS variable: --blue100"
+    },
+    {
+      "name": "--blue200",
+      "description": "CSS variable: --blue200"
+    },
+    {
+      "name": "--blue300",
+      "description": "CSS variable: --blue300"
+    },
+    {
+      "name": "--blue400",
+      "description": "CSS variable: --blue400"
+    },
+    {
+      "name": "--blue500",
+      "description": "CSS variable: --blue500"
+    },
+    {
+      "name": "--blue600",
+      "description": "CSS variable: --blue600"
+    },
+    {
+      "name": "--blue700",
+      "description": "CSS variable: --blue700"
+    },
+    {
+      "name": "--blue800",
+      "description": "CSS variable: --blue800"
+    },
+    {
+      "name": "--blue900",
+      "description": "CSS variable: --blue900"
+    },
+    {
+      "name": "--blue1000",
+      "description": "CSS variable: --blue1000"
+    },
+    {
+      "name": "--purple50",
+      "description": "CSS variable: --purple50"
+    },
+    {
+      "name": "--purple100",
+      "description": "CSS variable: --purple100"
+    },
+    {
+      "name": "--purple200",
+      "description": "CSS variable: --purple200"
+    },
+    {
+      "name": "--purple300",
+      "description": "CSS variable: --purple300"
+    },
+    {
+      "name": "--purple400",
+      "description": "CSS variable: --purple400"
+    },
+    {
+      "name": "--purple500",
+      "description": "CSS variable: --purple500"
+    },
+    {
+      "name": "--purple600",
+      "description": "CSS variable: --purple600"
+    },
+    {
+      "name": "--purple700",
+      "description": "CSS variable: --purple700"
+    },
+    {
+      "name": "--purple800",
+      "description": "CSS variable: --purple800"
+    },
+    {
+      "name": "--purple900",
+      "description": "CSS variable: --purple900"
+    },
+    {
+      "name": "--purple1000",
+      "description": "CSS variable: --purple1000"
+    },
+    {
+      "name": "--pink50",
+      "description": "CSS variable: --pink50"
+    },
+    {
+      "name": "--pink100",
+      "description": "CSS variable: --pink100"
+    },
+    {
+      "name": "--pink200",
+      "description": "CSS variable: --pink200"
+    },
+    {
+      "name": "--pink300",
+      "description": "CSS variable: --pink300"
+    },
+    {
+      "name": "--pink400",
+      "description": "CSS variable: --pink400"
+    },
+    {
+      "name": "--pink500",
+      "description": "CSS variable: --pink500"
+    },
+    {
+      "name": "--pink600",
+      "description": "CSS variable: --pink600"
+    },
+    {
+      "name": "--pink700",
+      "description": "CSS variable: --pink700"
+    },
+    {
+      "name": "--pink800",
+      "description": "CSS variable: --pink800"
+    },
+    {
+      "name": "--pink900",
+      "description": "CSS variable: --pink900"
+    },
+    {
+      "name": "--pink1000",
+      "description": "CSS variable: --pink1000"
+    },
+    {
+      "name": "--maroon50",
+      "description": "CSS variable: --maroon50"
+    },
+    {
+      "name": "--maroon100",
+      "description": "CSS variable: --maroon100"
+    },
+    {
+      "name": "--maroon200",
+      "description": "CSS variable: --maroon200"
+    },
+    {
+      "name": "--maroon300",
+      "description": "CSS variable: --maroon300"
+    },
+    {
+      "name": "--maroon400",
+      "description": "CSS variable: --maroon400"
+    },
+    {
+      "name": "--maroon500",
+      "description": "CSS variable: --maroon500"
+    },
+    {
+      "name": "--maroon600",
+      "description": "CSS variable: --maroon600"
+    },
+    {
+      "name": "--maroon700",
+      "description": "CSS variable: --maroon700"
+    },
+    {
+      "name": "--maroon800",
+      "description": "CSS variable: --maroon800"
+    },
+    {
+      "name": "--maroon900",
+      "description": "CSS variable: --maroon900"
+    },
+    {
+      "name": "--maroon1000",
+      "description": "CSS variable: --maroon1000"
+    }
+  ]
+}
