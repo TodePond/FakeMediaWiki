@@ -3,9 +3,13 @@ import { RouterLink } from 'vue-router';
 </script>
 
 <template>
-  <h1>MediaWiki prototypes</h1>
+  <h1>Prototypes</h1>
   <main>
-    <RouterLink to="/prototypes">Prototypes</RouterLink>
+    <ul>
+      <li>
+        <RouterLink to="/prototype/counter">Counter</RouterLink>
+      </li>
+    </ul>
   </main>
 </template>
 

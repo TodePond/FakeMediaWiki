@@ -1,13 +1,30 @@
 <script setup>
-import Counter from '../components/Counter.vue';
+import { computed, defineAsyncComponent } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const prototypeName = computed(() => route.params.name);
+
+const PrototypeComponent = computed(() => {
+  return defineAsyncComponent(
+    () => import(/* @vite-ignore */ `../prototypes/${prototypeName.value}/index.vue`),
+  );
+});
 </script>
 
 <template>
-  <h1>Fake MediaWiki</h1>
-  <p>Welcome.</p>
+  <header>
+    <RouterLink to="/">Home</RouterLink>
+  </header>
 
   <main>
-    <Prototype :component="Counter" />
+    <h1>Prototype: {{ prototypeName }}</h1>
+    <Suspense>
+      <template #default>
+        <component :is="PrototypeComponent" />
+      </template>
+      <template #fallback></template>
+    </Suspense>
   </main>
 </template>
 
