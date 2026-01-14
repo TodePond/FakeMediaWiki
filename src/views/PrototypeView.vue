@@ -1,11 +1,13 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import Counter from '../components/Counter.vue'
 </script>
 
 <template>
-  <h1>MediaWiki prototypes</h1>
+  <h1>Fake MediaWiki</h1>
+  <p>Welcome.</p>
+
   <main>
-    <RouterLink to="/prototypes">Prototypes</RouterLink>
+    <Prototype :component="Counter" />
   </main>
 </template>
 
