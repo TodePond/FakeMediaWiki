@@ -1,2 +1,4 @@
 @import '@wikimedia/codex/dist/codex.style.css';
 @import '@wikimedia/codex-design-tokens/theme-wikimedia-ui.css';
+@import './assets/color-tokens.css';
+@import './assets/colors.css';

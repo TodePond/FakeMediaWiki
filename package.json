@@ -11,9 +11,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/",
-    "generate-css-vars": "node scripts/extract-css-vars.js",
-    "postinstall": "scripts/install-git-hooks.sh"
+    "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
     "@wikimedia/codex": "^2.3.3",
