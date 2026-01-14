@@ -1,6 +1,7 @@
 <script setup>
 import CounterJsx from '../components/CounterJsx.vue'
 import CounterNoJsx from '../components/CounterNoJsx.vue'
+import Prototype from '../components/Prototype.vue'
 </script>
 
 <template>
@@ -10,6 +11,7 @@ import CounterNoJsx from '../components/CounterNoJsx.vue'
   <main>
     <CounterJsx />
     <CounterNoJsx />
+    <Prototype :component="CounterJsx" />
   </main>
 </template>
 
