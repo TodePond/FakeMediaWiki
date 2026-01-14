@@ -9,7 +9,9 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   base: process.env.BASE_URL || '/',
   plugins: [
-    vue(),
+    vue({
+      jsx: true,
+    }),
     vueJsx(),
     vueDevTools(),
   ],
