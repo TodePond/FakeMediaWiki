@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "jsx": "preserve",
+    "strict": true,
+    "noImplicitAny": false,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "@/*": ["./src/*"]
     }

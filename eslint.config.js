@@ -1,13 +1,23 @@
+import js from '@eslint/js'
+import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
+import pluginImport from 'eslint-plugin-import'
+import pluginVue from 'eslint-plugin-vue'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import globals from 'globals'
-import js from '@eslint/js'
-import pluginVue from 'eslint-plugin-vue'
-import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 
 export default defineConfig([
   {
     name: 'app/files-to-lint',
     files: ['**/*.{vue,js,mjs,jsx}'],
+  },
+  {
+    name: 'app/config-files',
+    files: ['*.config.{js,mjs}', 'vite.config.{js,ts}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
   },
 
   globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
@@ -17,6 +27,13 @@ export default defineConfig([
       globals: {
         ...globals.browser,
       },
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
     },
   },
 
@@ -24,6 +41,9 @@ export default defineConfig([
   ...pluginVue.configs['flat/essential'],
 
   {
+    plugins: {
+      import: pluginImport,
+    },
     rules: {
       // Auto-fix import ordering
       'sort-imports': [
@@ -36,6 +56,20 @@ export default defineConfig([
           allowSeparatedGroups: true,
         },
       ],
+      // Organize imports with eslint-plugin-import
+      'import/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          'newlines-between': 'always',
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
+      ],
+      'import/newline-after-import': 'error',
+      'import/no-duplicates': 'error',
     },
   },
 

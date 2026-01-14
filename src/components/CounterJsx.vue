@@ -1,4 +1,5 @@
 <script lang="jsx">
+import { CdxButton } from '@wikimedia/codex'
 import { ref } from 'vue'
 
 export default {
@@ -6,13 +7,13 @@ export default {
     const count = ref(0)
 
     const increment = () => {
-      count.value++
+      count.value += 1
     }
 
     return () => (
       <section>
         <p>Count: {count.value}</p>
-        <button onClick={increment}>Increment</button>
+        <CdxButton onClick={increment}>Increment</CdxButton>
       </section>
     )
   },
