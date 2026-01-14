@@ -1,6 +1,5 @@
 <script setup>
 import { RouterView } from 'vue-router';
-import './assets/main.css';
 </script>
 
 <template>
@@ -10,6 +9,10 @@ import './assets/main.css';
 <style lang="less">
 @import (reference) '@wikimedia/codex-design-tokens/theme-wikimedia-ui.less';
 @import (reference) '@wikimedia/codex/mixins/link.less';
+
+a {
+  .cdx-mixin-link();
+}
 
 .cdx-docs-link {
   .cdx-mixin-link();

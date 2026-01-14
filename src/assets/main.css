@@ -18,9 +18,6 @@ body {
   line-height: var(--line-height-medium);
 }
 
-h1 {
-}
-
 h1,
 h2,
 h3,
@@ -47,37 +44,7 @@ h2 {
 }
 
 h3 {
-  font-size: var(--font-size-large);
-}
-
-a {
-  color: var(--color-link);
-  text-decoration: var(--text-decoration-underline);
-}
-
-a:hover {
-  color: var(--color-link--hover);
-}
-
-a:active {
-  color: var(--color-link--active);
-}
-
-a:focus {
-  color: var(--color-link--focus);
-  outline: var(--outline-base--focus);
-}
-
-a:visited {
-  color: var(--color-link--visited);
-}
-
-a:visited:hover {
-  color: var(--color-link--visited--hover);
-}
-
-a:visited:active {
-  color: var(--color-link--visited--active);
+  font-size: var(--font-size-x-large);
 }
 
 ul,
