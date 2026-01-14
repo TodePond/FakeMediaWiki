@@ -1,9 +1,6 @@
-<script setup>
-import TheWelcome from '../components/TheWelcome.vue'
-</script>
-
 <template>
   <main>
-    <TheWelcome />
+    <h1>Fake MediaWiki</h1>
+    <p>Welcome.</p>
   </main>
 </template>
