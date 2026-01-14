@@ -1,37 +1,17 @@
 <script setup>
-import { computed, defineAsyncComponent } from 'vue';
+import { computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { prototypeMap } from '../prototypes/registry.js';
 
 const route = useRoute();
 const prototypeName = computed(() => route.params.name);
 
 const PrototypeComponent = computed(() => {
-  return defineAsyncComponent(
-    () => import(/* @vite-ignore */ `../prototypes/${prototypeName.value}/index.vue`),
-  );
+  return prototypeMap.get(prototypeName.value);
 });
 </script>
 
 <template>
-  <header>
-    <RouterLink to="/">Home</RouterLink>
-  </header>
-
-  <main>
-    <h1>Prototype: {{ prototypeName }}</h1>
-    <Suspense>
-      <template #default>
-        <component :is="PrototypeComponent" />
-      </template>
-      <template #fallback></template>
-    </Suspense>
-  </main>
+  <component v-if="PrototypeComponent" :is="PrototypeComponent" />
+  <p v-else>Prototype "{{ prototypeName }}" not found</p>
 </template>
-
-<style scoped>
-main {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-</style>

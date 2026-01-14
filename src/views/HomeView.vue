@@ -1,13 +1,14 @@
 <script setup>
 import { RouterLink } from 'vue-router';
+import { prototypes } from '../prototypes/registry.js';
 </script>
 
 <template>
   <h1>Prototypes</h1>
   <main>
     <ul>
-      <li>
-        <RouterLink to="/prototype/counter">Counter</RouterLink>
+      <li v-for="prototype in prototypes" :key="prototype.id">
+        <RouterLink :to="`/prototype/${prototype.id}`">{{ prototype.name }}</RouterLink>
       </li>
     </ul>
   </main>

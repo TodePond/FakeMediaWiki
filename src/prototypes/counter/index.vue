@@ -16,9 +16,4 @@ const increment = () => {
   </section>
 </template>
 
-<style scoped>
-section {
-  padding: 1rem;
-  border: 1px solid #ccc;
-}
-</style>
+<style scoped></style>
