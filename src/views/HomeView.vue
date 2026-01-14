@@ -4,7 +4,7 @@ import { prototypes } from '../prototypes/registry.js';
 </script>
 
 <template>
-  <h1>Prototypes</h1>
+  <h1>Special:Prototypes</h1>
   <main>
     <ul>
       <li v-for="prototype in prototypes" :key="prototype.id">
@@ -18,6 +18,6 @@ import { prototypes } from '../prototypes/registry.js';
 main {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--spacing-100);
 }
 </style>

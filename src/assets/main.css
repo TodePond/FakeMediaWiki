@@ -1,4 +1,90 @@
 @import '@wikimedia/codex/dist/codex.style.css';
 @import '@wikimedia/codex-design-tokens/theme-wikimedia-ui.css';
-@import './assets/color-tokens.css';
-@import './assets/colors.css';
+@import './color-tokens.css';
+@import './colors.css';
+
+html {
+  background-color: var(--background-color-neutral);
+}
+
+body {
+  max-width: var(--min-width-breakpoint-tablet);
+  color: var(--color-base);
+  margin: 0 auto;
+  background-color: var(--background-color-base);
+  padding: var(--spacing-100);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-medium);
+  line-height: var(--line-height-medium);
+}
+
+h1 {
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-heading-main);
+  color: var(--color-emphasized);
+  line-height: var(--line-height-medium);
+  font-weight: var(--font-weight-normal);
+}
+
+h1 {
+  border-bottom: var(--border-width-base) solid var(--border-color-base);
+}
+
+h1 {
+  font-size: var(--font-size-xxx-large);
+  padding-bottom: var(--spacing-30);
+}
+
+h2 {
+  font-size: var(--font-size-xx-large);
+}
+
+h3 {
+  font-size: var(--font-size-large);
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: var(--text-decoration-underline);
+}
+
+a:hover {
+  color: var(--color-link--hover);
+}
+
+a:active {
+  color: var(--color-link--active);
+}
+
+a:focus {
+  color: var(--color-link--focus);
+  outline: var(--outline-base--focus);
+}
+
+a:visited {
+  color: var(--color-link--visited);
+}
+
+a:visited:hover {
+  color: var(--color-link--visited--hover);
+}
+
+a:visited:active {
+  color: var(--color-link--visited--active);
+}
+
+ul,
+ol {
+  padding-left: var(--spacing-100);
+}
+
+p {
+  line-height: var(--line-height-content);
+}

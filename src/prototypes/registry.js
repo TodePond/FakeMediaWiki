@@ -4,12 +4,12 @@ import HelloWorld from './hello-world/index.vue';
 export const prototypes = [
   {
     id: 'counter',
-    name: 'Counter',
+    name: 'Special:Counter',
     component: Counter,
   },
   {
     id: 'hello-world',
-    name: 'Hello World',
+    name: 'Special:HelloWorld',
     component: HelloWorld,
   },
 ];
