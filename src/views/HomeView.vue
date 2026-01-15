@@ -13,11 +13,3 @@ import { prototypes } from '../prototypes/registry.js';
     </ul>
   </main>
 </template>
-
-<style scoped>
-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-100);
-}
-</style>
