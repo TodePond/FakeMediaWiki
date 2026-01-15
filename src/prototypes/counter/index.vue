@@ -10,11 +10,8 @@ const increment = () => {
 </script>
 
 <template>
-  <section>
-    <h1>Special:Counter</h1>
-    <p>Count: {{ count }}</p>
-    <CdxButton @click="increment">Increment</CdxButton>
-  </section>
+  <p>Count: {{ count }}</p>
+  <CdxButton @click="increment">Increment</CdxButton>
 </template>
 
 <style scoped></style>

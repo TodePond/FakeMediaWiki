@@ -1,16 +1,28 @@
-import Counter from './counter/index.vue';
-import HelloWorld from './hello-world/index.vue';
+import Card from './Card/index.vue';
+import Counter from './Counter/index.vue';
+import HelloWorld from './HelloWorld/index.vue';
+import Page from './Page/index.vue';
 
 export const prototypes = [
   {
-    id: 'counter',
+    id: 'HelloWorld',
+    name: 'Special:HelloWorld',
+    component: HelloWorld,
+  },
+  {
+    id: 'Counter',
     name: 'Special:Counter',
     component: Counter,
   },
   {
-    id: 'hello-world',
-    name: 'Special:HelloWorld',
-    component: HelloWorld,
+    id: 'Card',
+    name: 'Special:Card',
+    component: Card,
+  },
+  {
+    id: 'Page',
+    name: 'Special:Page',
+    component: Page,
   },
 ];
 

@@ -1,6 +1,6 @@
 @import '@wikimedia/codex/dist/codex.style.css';
 @import '@wikimedia/codex-design-tokens/theme-wikimedia-ui.css';
-@import './color-tokens.css';
+@import './tokens.css';
 @import './colors.css';
 
 html {
@@ -13,9 +13,13 @@ body {
   margin: 0 auto;
   background-color: var(--background-color-base);
   padding: var(--spacing-100);
-  font-family: var(--font-family-base);
+  font-family: var(--font-family-system-sans);
   font-size: var(--font-size-medium);
   line-height: var(--line-height-medium);
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-synthesis: style;
 }
 
 h1,
