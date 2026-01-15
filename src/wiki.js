@@ -21,7 +21,7 @@ export class WikiApi {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)',
+        'Api-User-Agent': 'MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)',
       },
     });
     return response.json();
