@@ -10,9 +10,10 @@ const title = ref('');
 const description = ref('');
 const supportingText = ref('');
 const thumbnail = ref(null);
-const searchQuery = ref('Wet Leg');
+const searchQuery = ref(sessionStorage.getItem('pageSearchQuery') || 'Wet Leg');
 const isLoading = ref(false);
 const search = async () => {
+  isLoading.value = true;
   const summary = await wiki.getPageSummary(searchQuery.value);
   isLoading.value = false;
   console.log(summary);
@@ -26,7 +27,12 @@ const search = async () => {
         url: summary.thumbnail.source,
       }
     : null;
+  saveSearchQuery(searchQuery.value);
 };
+
+function saveSearchQuery(query) {
+  sessionStorage.setItem('pageSearchQuery', query);
+}
 
 onMounted(search);
 </script>
