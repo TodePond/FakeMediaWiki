@@ -8,7 +8,7 @@ import { prototypes } from '../prototypes/registry.js';
   <main>
     <ul>
       <li v-for="prototype in prototypes" :key="prototype.id">
-        <RouterLink :to="`/prototype/${prototype.id}`">{{ prototype.name }}</RouterLink>
+        <RouterLink :to="`/Special/${prototype.id}`">Special:{{ prototype.id }}</RouterLink>
       </li>
     </ul>
   </main>

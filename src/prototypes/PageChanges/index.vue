@@ -13,7 +13,7 @@ const thumbnail = ref(null);
 const searchQuery = ref('Wet Leg');
 const isLoading = ref(false);
 const search = async () => {
-  const summary = await wiki.getPageSummary(searchQuery.value);
+  const summary = await wiki.getPageHistory(searchQuery.value);
   isLoading.value = false;
   console.log(summary);
 
@@ -33,6 +33,7 @@ onMounted(search);
 
 <template>
   <section>
+    <p><em>This page is under construction and doesn't work yet.</em></p>
     <form @submit.prevent="search">
       <CdxLabel input-id="page-name">Page name</CdxLabel>
 
