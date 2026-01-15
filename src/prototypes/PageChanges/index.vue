@@ -75,9 +75,8 @@ function getRevisionUrl(id) {
         </p>
         <p>
           <a :href="getUserUrl(change.user)">
-            <strong>{{ change.user.name }}</strong>
-          </a>
-          &nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
+            <strong>{{ change.user.name }}</strong> </a
+          >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
         </p>
         <p>
           <span>{{ formatTimestamp(change.timestamp) }}</span>
