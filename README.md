@@ -13,6 +13,7 @@ Try it at [todepond.github.io/FakeMediaWiki](https://todepond.github.io/FakeMedi
 - Vue
 - Vite
 - Codex (the design system, not the agent)
+- GitHub Pages
 
 ## How to run it locally
 
