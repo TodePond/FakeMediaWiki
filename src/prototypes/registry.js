@@ -6,24 +6,24 @@ import PageChanges from './PageChanges/index.vue';
 
 export const prototypes = [
   {
-    id: 'HelloWorld',
-    component: HelloWorld,
-  },
-  {
-    id: 'Counter',
-    component: Counter,
-  },
-  {
-    id: 'Card',
-    component: Card,
+    id: 'PageChanges',
+    component: PageChanges,
   },
   {
     id: 'Page',
     component: Page,
   },
   {
-    id: 'PageChanges',
-    component: PageChanges,
+    id: 'Card',
+    component: Card,
+  },
+  {
+    id: 'Counter',
+    component: Counter,
+  },
+  {
+    id: 'HelloWorld',
+    component: HelloWorld,
   },
 ];
 
