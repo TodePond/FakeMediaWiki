@@ -1,30 +1,32 @@
 <script setup>
-import {
-  CdxButton,
-  CdxCard,
-  CdxLabel,
-  CdxProgressIndicator,
-  CdxTextInput,
-} from "@wikimedia/codex";
-import { ref } from "vue";
+import { CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
+import { onMounted, ref } from "vue";
 import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const searchQuery = ref("");
+const searchQuery = ref(sessionStorage.getItem("searchTitlesQuery") || "");
+/** @type {any} */
 const results = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
 
+let searchId = 0;
 const search = async () => {
+  searchId++;
+  const currentSearchId = searchId;
+  sessionStorage.setItem("searchTitlesQuery", searchQuery.value);
   if (!searchQuery.value.trim()) return;
 
   isLoading.value = true;
   error.value = null;
   try {
     const data = await wiki.searchTitles(searchQuery.value, 20);
-    results.value = data.pages || [];
-  } catch (err) {
+    if (currentSearchId === searchId) {
+      results.value = data.pages || [];
+      console.log(results.value);
+    }
+  } catch (/** @type {any} */ err) {
     error.value = err.message;
     results.value = [];
   } finally {
@@ -35,12 +37,18 @@ const search = async () => {
 const getPageUrl = (title) => {
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
 };
+
+onMounted(() => {
+  if (searchQuery.value) {
+    search();
+  }
+});
 </script>
 
 <template>
   <section>
     <form @submit.prevent="search">
-      <CdxLabel input-id="search-query">Search titles (autocomplete)</CdxLabel>
+      <CdxLabel input-id="search-query">Search titles</CdxLabel>
       <span>
         <CdxTextInput
           autocomplete="off"
@@ -50,7 +58,6 @@ const getPageUrl = (title) => {
           placeholder="Type to search..."
           @input="search"
         />
-        <CdxButton>Search</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Searching" />
       </span>
     </form>
@@ -62,17 +69,14 @@ const getPageUrl = (title) => {
           v-for="page in results"
           :key="page.key"
           :url="getPageUrl(page.title)"
+          :thumbnail="page.thumbnail"
         >
           <template #title>{{ page.title }}</template>
-          <template #description v-if="page.description">{{
-            page.description
-          }}</template>
+          <template #description v-if="page.description">{{ page.description }}</template>
         </CdxCard>
       </div>
     </div>
-    <div v-else-if="!isLoading && searchQuery" class="no-results">
-      No results found
-    </div>
+    <div v-else-if="!isLoading && searchQuery" class="no-results">No results found</div>
   </section>
 </template>
 

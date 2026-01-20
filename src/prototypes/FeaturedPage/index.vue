@@ -1,18 +1,13 @@
 <script setup>
-import {
-  CdxButton,
-  CdxCard,
-  CdxLabel,
-  CdxProgressIndicator,
-  CdxTextInput,
-} from "@wikimedia/codex";
+import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
 const dateInput = ref("");
-const featuredArticle = ref(null);
+/** @type {any} */
+const featuredPage = ref(null);
 const isLoading = ref(false);
 const error = ref(null);
 
@@ -21,11 +16,11 @@ const loadFeatured = async () => {
   error.value = null;
   try {
     const date = dateInput.value ? new Date(dateInput.value) : new Date();
-    const data = await wiki.getFeaturedArticle(date);
-    featuredArticle.value = data;
-  } catch (err) {
+    const data = await wiki.getFeaturedPage(date);
+    featuredPage.value = data;
+  } catch (/** @type {any} */ err) {
     error.value = err.message;
-    featuredArticle.value = null;
+    featuredPage.value = null;
   } finally {
     isLoading.value = false;
   }
@@ -37,7 +32,7 @@ const getTodayDate = () => {
 };
 
 onMounted(() => {
-  dateInput.value = getTodayDate();
+  dateInput.value = getTodayDate() ?? "";
   loadFeatured();
 });
 
@@ -52,33 +47,26 @@ const getPageUrl = (title) => {
       <CdxLabel input-id="date-input">Date</CdxLabel>
       <span>
         <CdxTextInput v-model="dateInput" input-type="date" id="date-input" />
-        <CdxButton>Load Featured Article</CdxButton>
-        <CdxProgressIndicator
-          v-if="isLoading"
-          aria-label="Loading featured article"
-        />
+        <CdxButton>Load featured page</CdxButton>
+        <CdxProgressIndicator v-if="isLoading" aria-label="Loading featured article" />
       </span>
     </form>
     <div v-if="error" class="error">{{ error }}</div>
     <CdxCard
-      v-if="featuredArticle && featuredArticle.tfa"
-      :thumbnail="
-        featuredArticle.tfa.thumbnail
-          ? { url: featuredArticle.tfa.thumbnail.source }
-          : null
-      "
-      :url="getPageUrl(featuredArticle.tfa.title)"
+      v-if="featuredPage && featuredPage.tfa"
+      :thumbnail="featuredPage.tfa.thumbnail ? { url: featuredPage.tfa.thumbnail.source } : null"
+      :url="getPageUrl(featuredPage.tfa.title)"
     >
-      <template #title>{{ featuredArticle.tfa.title }}</template>
-      <template #description v-if="featuredArticle.tfa.description">
-        {{ featuredArticle.tfa.description }}
+      <template #title>{{ featuredPage.tfa.title }}</template>
+      <template #description v-if="featuredPage.tfa.description">
+        {{ featuredPage.tfa.description }}
       </template>
-      <template #supporting-text v-if="featuredArticle.tfa.extract">
-        {{ featuredArticle.tfa.extract }}
+      <template #supporting-text v-if="featuredPage.tfa.extract">
+        {{ featuredPage.tfa.extract }}
       </template>
     </CdxCard>
-    <div v-else-if="featuredArticle && !featuredArticle.tfa" class="no-article">
-      No featured article for this date
+    <div v-else-if="featuredPage && !featuredPage.tfa" class="no-article">
+      No featured page for this date
     </div>
   </section>
 </template>

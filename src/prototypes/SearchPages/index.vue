@@ -1,11 +1,11 @@
 <script setup>
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const searchQuery = ref("");
+const searchQuery = ref(sessionStorage.getItem("searchPagesQuery") || "");
 /** @type {any} */
 const results = ref([]);
 const isLoading = ref(false);
@@ -30,9 +30,19 @@ const search = async () => {
   }
 };
 
+function saveSearchQuery(query) {
+  sessionStorage.setItem("searchPagesQuery", query);
+}
+
 const getPageUrl = (title) => {
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
 };
+
+onMounted(() => {
+  if (searchQuery.value) {
+    search();
+  }
+});
 </script>
 
 <template>
@@ -46,6 +56,7 @@ const getPageUrl = (title) => {
           input-type="search"
           id="search-query"
           placeholder="Search titles and content..."
+          @input="saveSearchQuery(searchQuery)"
         />
         <CdxButton>Search</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Searching" />

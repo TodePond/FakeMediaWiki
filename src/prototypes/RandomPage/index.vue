@@ -35,14 +35,10 @@ const getPageUrl = () => {
 <template>
   <section>
     <div class="controls">
-      <CdxButton @click="getRandom">Get Random Page</CdxButton>
+      <CdxButton @click="getRandom">Load random page</CdxButton>
       <CdxProgressIndicator v-if="isLoading" aria-label="Loading random page" />
     </div>
     <div v-if="error" class="error">{{ error }}</div>
-    <div v-if="randomPage && format === 'title'" class="title-result">
-      <h2>{{ randomPage }}</h2>
-      <a :href="getPageUrl()" target="_blank">View on Wikipedia</a>
-    </div>
     <CdxCard
       v-else-if="randomPage"
       :thumbnail="randomPage.thumbnail ? { url: randomPage.thumbnail.source } : null"

@@ -1,16 +1,12 @@
 <script setup>
-import {
-  CdxButton,
-  CdxLabel,
-  CdxProgressIndicator,
-  CdxTextInput,
-} from "@wikimedia/codex";
+import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
 const searchQuery = ref(sessionStorage.getItem("searchQuery") || "Wet Leg");
+/** @type {any} */
 const history = ref([]);
 const isLoading = ref(false);
 
@@ -23,9 +19,20 @@ function saveSearchQuery(query) {
 async function search() {
   isLoading.value = true;
   const _history = await wiki.getPageHistory(searchQuery.value);
-  isLoading.value = false;
+
   console.log(_history);
+
+  await Promise.all(
+    _history.revisions.map(async (revision) => {
+      const html = await wiki.transformWikitextToHtml(revision.comment, searchQuery.value);
+      revision.html = html;
+      console.log(revision.html);
+    }),
+  );
+  isLoading.value = false;
+
   history.value = _history;
+
   saveSearchQuery(searchQuery.value);
 }
 
@@ -60,6 +67,10 @@ function getUserUrl(user) {
 function getRevisionUrl(id) {
   return `https://en.wikipedia.org/w/index.php?title=${searchQuery.value}&diff=${id}`;
 }
+
+function getThankUrl(id) {
+  return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
+}
 </script>
 
 <template>
@@ -68,35 +79,27 @@ function getRevisionUrl(id) {
       <CdxLabel input-id="page-name">Page name</CdxLabel>
 
       <span>
-        <CdxTextInput
-          autocomplete="off"
-          v-model="searchQuery"
-          input-type="search"
-          id="page-name"
-        />
-        <CdxButton>Load</CdxButton>
+        <CdxTextInput autocomplete="off" v-model="searchQuery" input-type="search" id="page-name" />
+        <CdxButton>Load changes</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>
     </form>
     <section class="changes">
-      <div
-        class="change"
-        v-for="change in history.revisions"
-        :key="change.timestamp"
-      >
-        <p>
-          <a :href="getRevisionUrl(change.id)">{{ change.comment }}</a>
-        </p>
+      <div class="change" v-for="change in history.revisions" :key="change.timestamp">
+        <div v-html="change.html"></div>
         <p>
           <a :href="getUserUrl(change.user)">
             <strong>{{ change.user.name }}</strong> </a
-          >&nbsp;<span :class="getDeltaClass(change.delta)">{{
-            change.delta
-          }}</span>
+          >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
         </p>
         <p>
           <span>{{ formatTimestamp(change.timestamp) }}</span>
         </p>
+        <footer>
+          <a target="_blank" :href="getRevisionUrl(change.id)">View change</a>
+          <span>|</span>
+          <a target="_blank" :href="getThankUrl(change.id)">Give thanks</a>
+        </footer>
       </div>
     </section>
   </main>
@@ -135,6 +138,10 @@ function getRevisionUrl(id) {
   color: var(--color-base);
 }
 
+.neutral::before {
+  content: "±";
+}
+
 .cdx-text-input {
   max-width: 100%;
   min-width: 0;
@@ -146,5 +153,19 @@ form > span {
   gap: 0.25rem;
   width: 100%;
   flex-wrap: wrap;
+}
+
+.change footer {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  row-gap: 0px;
+}
+</style>
+
+<style>
+.change p {
+  margin: 0 !important;
 }
 </style>

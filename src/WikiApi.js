@@ -201,11 +201,11 @@ export class WikiApi {
   }
 
   /**
-   * Get featured article for a specific date
+   * Get featured page for a specific date
    * @param {Date|string} date - Date object or YYYY/MM/DD string
-   * @returns {Promise<Object>} Featured article data
+   * @returns {Promise<Object>} Featured page data
    */
-  async getFeaturedArticle(date = new Date()) {
+  async getFeaturedPage(date = new Date()) {
     const dateStr =
       date instanceof Date
         ? `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`

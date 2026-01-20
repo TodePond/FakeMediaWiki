@@ -1,6 +1,6 @@
 import Card from "./Card/index.vue";
 import Counter from "./Counter/index.vue";
-import FeaturedArticle from "./FeaturedArticle/index.vue";
+import FeaturedPage from "./FeaturedPage/index.vue";
 import HelloWorld from "./HelloWorld/index.vue";
 import OnThisDay from "./OnThisDay/index.vue";
 import Page from "./Page/index.vue";
@@ -22,8 +22,8 @@ export const prototypes = [
     component: SearchPages,
   },
   {
-    id: "FeaturedArticle",
-    component: FeaturedArticle,
+    id: "FeaturedPage",
+    component: FeaturedPage,
   },
   {
     id: "OnThisDay",
