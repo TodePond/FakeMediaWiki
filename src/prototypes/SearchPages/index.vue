@@ -1,20 +1,16 @@
 <script setup>
-import {
-  CdxButton,
-  CdxCard,
-  CdxLabel,
-  CdxProgressIndicator,
-  CdxTextInput,
-} from "@wikimedia/codex";
+import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { ref } from "vue";
 import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
 const searchQuery = ref("");
+/** @type {any} */
 const results = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
+const hasSearched = ref(false);
 
 const search = async () => {
   if (!searchQuery.value.trim()) return;
@@ -24,7 +20,9 @@ const search = async () => {
   try {
     const data = await wiki.searchPages(searchQuery.value, 20);
     results.value = data.pages || [];
-  } catch (err) {
+    console.log(results.value);
+    hasSearched.value = true;
+  } catch (/** @type {any} */ err) {
     error.value = err.message;
     results.value = [];
   } finally {
@@ -57,24 +55,16 @@ const getPageUrl = (title) => {
     <div v-if="results.length > 0" class="results">
       <p class="results-count">{{ results.length }} results</p>
       <div class="results-list">
-        <CdxCard
-          v-for="page in results"
-          :key="page.key"
-          :url="getPageUrl(page.title)"
-        >
+        <CdxCard v-for="page in results" :key="page.key" :url="getPageUrl(page.title)">
           <template #title>{{ page.title }}</template>
-          <template #description v-if="page.description">{{
-            page.description
-          }}</template>
-          <template #supporting-text v-if="page.excerpt">{{
-            page.excerpt
-          }}</template>
+          <template #description v-if="page.description">{{ page.description }}</template>
+          <template #supporting-text v-if="page.excerpt">
+            <div v-html="page.excerpt"></div>
+          </template>
         </CdxCard>
       </div>
     </div>
-    <div v-else-if="!isLoading && searchQuery" class="no-results">
-      No results found
-    </div>
+    <div v-else-if="!isLoading && hasSearched" class="no-results">No results found</div>
   </section>
 </template>
 
@@ -126,5 +116,11 @@ form > span {
   padding: 1rem;
   text-align: center;
   color: var(--color-base--subtle);
+}
+</style>
+
+<style>
+.searchmatch {
+  font-weight: bold;
 }
 </style>
