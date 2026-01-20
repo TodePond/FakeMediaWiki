@@ -14,6 +14,7 @@ const wiki = new WikiApi();
 
 const type = ref("events");
 const dateInput = ref("");
+/** @type {any} */
 const content = ref(null);
 const isLoading = ref(false);
 const error = ref(null);
@@ -23,7 +24,6 @@ const typeOptions = [
   { value: "births", label: "Births" },
   { value: "deaths", label: "Deaths" },
   { value: "holidays", label: "Holidays" },
-  { value: "selected", label: "Selected" },
 ];
 
 const loadContent = async () => {
@@ -33,7 +33,7 @@ const loadContent = async () => {
     const date = dateInput.value ? new Date(dateInput.value) : new Date();
     const data = await wiki.getOnThisDay(type.value, date);
     content.value = data;
-  } catch (err) {
+  } catch (/** @type {any} */ err) {
     error.value = err.message;
     content.value = null;
   } finally {
@@ -47,7 +47,7 @@ const getTodayDate = () => {
 };
 
 onMounted(() => {
-  dateInput.value = getTodayDate();
+  dateInput.value = getTodayDate() ?? "";
   loadContent();
 });
 
@@ -60,7 +60,7 @@ const getPageUrl = (title) => {
   <section>
     <form @submit.prevent="loadContent">
       <CdxLabel input-id="type-select">Type</CdxLabel>
-      <CdxSelect v-model="type" :menu-items="typeOptions" id="type-select" />
+      <CdxSelect v-model:selected="type" :menu-items="typeOptions" />
       <CdxLabel input-id="date-input">Date</CdxLabel>
       <span>
         <CdxTextInput v-model="dateInput" input-type="date" id="date-input" />
@@ -79,9 +79,7 @@ const getPageUrl = (title) => {
             :url="getPageUrl(event.pages[0]?.title || '')"
           >
             <template #title>{{ event.text }}</template>
-            <template #description v-if="event.year"
-              >Year: {{ event.year }}</template
-            >
+            <template #description v-if="event.year">Year: {{ event.year }}</template>
           </CdxCard>
         </div>
       </div>
@@ -94,9 +92,7 @@ const getPageUrl = (title) => {
             :url="getPageUrl(birth.pages[0]?.title || '')"
           >
             <template #title>{{ birth.text }}</template>
-            <template #description v-if="birth.year"
-              >Year: {{ birth.year }}</template
-            >
+            <template #description v-if="birth.year">Year: {{ birth.year }}</template>
           </CdxCard>
         </div>
       </div>
@@ -109,16 +105,11 @@ const getPageUrl = (title) => {
             :url="getPageUrl(death.pages[0]?.title || '')"
           >
             <template #title>{{ death.text }}</template>
-            <template #description v-if="death.year"
-              >Year: {{ death.year }}</template
-            >
+            <template #description v-if="death.year">Year: {{ death.year }}</template>
           </CdxCard>
         </div>
       </div>
-      <div
-        v-if="content.holidays && content.holidays.length > 0"
-        class="section"
-      >
+      <div v-if="content.holidays && content.holidays.length > 0" class="section">
         <h3>Holidays</h3>
         <div class="items">
           <CdxCard
@@ -130,10 +121,7 @@ const getPageUrl = (title) => {
           </CdxCard>
         </div>
       </div>
-      <div
-        v-if="content.selected && content.selected.length > 0"
-        class="section"
-      >
+      <div v-if="content.selected && content.selected.length > 0" class="section">
         <h3>Selected</h3>
         <div class="items">
           <CdxCard
@@ -142,9 +130,7 @@ const getPageUrl = (title) => {
             :url="getPageUrl(item.pages[0]?.title || '')"
           >
             <template #title>{{ item.text }}</template>
-            <template #description v-if="item.year"
-              >Year: {{ item.year }}</template
-            >
+            <template #description v-if="item.year">Year: {{ item.year }}</template>
           </CdxCard>
         </div>
       </div>

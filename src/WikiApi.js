@@ -1,14 +1,29 @@
+/**
+ * Helper for interacting with Wikimedia and MediaWiki REST APIs.
+ */
 export class WikiApi {
+  /**
+   * Create a new WikiApi instance
+   * @param {string} base - Base URL for the API
+   */
   constructor(base = "https://en.wikipedia.org/") {
     this.base = base;
   }
 
+  /**
+   * Get the base URL for the Wikimedia REST API
+   * @returns {string} Wikimedia base URL
+   */
   get wikimediaBase() {
     return `${this.base}api/rest_v1/`;
   }
 
+  /**
+   * Get the base URL for the MediaWiki REST API
+   * @returns {string} MediaWiki base URL
+   */
   get mediawikiBase() {
-    return `${this.base}w/rest.php/`;
+    return `${this.base}w/rest.php/v1/`;
   }
 
   /**
@@ -16,12 +31,11 @@ export class WikiApi {
    * @param {string} path - API path
    * @param {object} options - Request options
    * @param {"wikimedia" | "mediawiki"} options.api - 'wikimedia' or 'mediawiki'
-   * @param {"GET" | "POST"} [options.method='GET'] - HTTP method
    * @param {object|null} [options.body=null] - Request body
    * @param {"json" | "text"} [options.type='json'] - Response type
    * @returns {Promise<Object|string>} JSON or text response
    */
-  async request(path, { api, method = "GET", body = null, type = "json" }) {
+  async request(path, { api, body = null, type = "json" }) {
     if (api !== "wikimedia" && api !== "mediawiki") {
       throw new Error('Please specify either "wikimedia" or "mediawiki" as the API type');
     }
@@ -38,8 +52,8 @@ export class WikiApi {
 
     try {
       const response = await fetch(url, {
-        method,
         headers,
+        method: body ? "POST" : "GET",
         body: body ? JSON.stringify(body) : undefined,
       });
 
@@ -86,7 +100,7 @@ export class WikiApi {
    * @returns {Promise<string>} HTML content
    */
   async getPageHtml(pageName) {
-    return await this.request(`v1/page/${this.encode(pageName)}/html`, {
+    return await this.request(`page/${this.encode(pageName)}/html`, {
       api: "mediawiki",
       type: "text",
     });
@@ -98,7 +112,7 @@ export class WikiApi {
    * @returns {Promise<string>} Wikitext source
    */
   async getPageSource(pageName) {
-    return this.request(`v1/page/${this.encode(pageName)}/source`, {
+    return this.request(`page/${this.encode(pageName)}/source`, {
       api: "mediawiki",
       type: "text",
     });
@@ -110,7 +124,7 @@ export class WikiApi {
    * @returns {Promise<Object>} Page metadata
    */
   async getPage(pageName) {
-    return this.request(`v1/page/${this.encode(pageName)}`, { api: "mediawiki" });
+    return this.request(`page/${this.encode(pageName)}`, { api: "mediawiki" });
   }
 
   // ==================== SEARCH METHODS ====================
@@ -122,7 +136,7 @@ export class WikiApi {
    * @returns {Promise<Object>} Search results
    */
   async searchTitles(query, limit = 20) {
-    return this.request(`v1/search/title?q=${encodeURIComponent(query)}&limit=${limit}`, {
+    return this.request(`search/title?q=${encodeURIComponent(query)}&limit=${limit}`, {
       api: "mediawiki",
     });
   }
@@ -134,7 +148,7 @@ export class WikiApi {
    * @returns {Promise<Object>} Search results
    */
   async searchPages(query, limit = 20) {
-    return this.request(`v1/search/page?q=${encodeURIComponent(query)}&limit=${limit}`, {
+    return this.request(`search/page?q=${encodeURIComponent(query)}&limit=${limit}`, {
       api: "mediawiki",
     });
   }
@@ -154,7 +168,7 @@ export class WikiApi {
     if (options.newer_than) params.append("newer_than", options.newer_than);
 
     const query = params.toString();
-    const path = `v1/page/${this.encode(pageName)}/history${query ? `?${query}` : ""}`;
+    const path = `page/${this.encode(pageName)}/history${query ? `?${query}` : ""}`;
     return this.request(path, { api: "mediawiki" });
   }
 
@@ -264,9 +278,8 @@ export class WikiApi {
    * @returns {Promise<string>} HTML content
    */
   async transformWikitextToHtml(wikitext, pageTitle = "Main_Page") {
-    return this.request(`v1/transform/wikitext/to/html/${this.encode(pageTitle)}`, {
+    return this.request(`transform/wikitext/to/html/${this.encode(pageTitle)}`, {
       api: "mediawiki",
-      method: "POST",
       body: { wikitext },
       type: "text",
     });

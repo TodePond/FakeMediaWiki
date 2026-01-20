@@ -25,7 +25,7 @@ const transform = async () => {
   try {
     const html = await wiki.transformWikitextToHtml(wikitext.value, pageTitle.value);
     htmlResult.value = html;
-  } catch (err) {
+  } catch (/** @type {any} */ err) {
     error.value = err.message;
     htmlResult.value = "";
   } finally {
