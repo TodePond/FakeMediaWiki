@@ -1,6 +1,4 @@
 import js from '@eslint/js'
-import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
-import pluginImport from 'eslint-plugin-import'
 import pluginVue from 'eslint-plugin-vue'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import globals from 'globals'
@@ -35,17 +33,10 @@ export default defineConfig([
         },
       },
     },
+
   },
 
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
 
-  {
-    plugins: {
-      import: pluginImport,
-    },
-    rules: {},
-  },
-
-  skipFormatting,
 ])

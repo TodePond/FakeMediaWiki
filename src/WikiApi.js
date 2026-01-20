@@ -1,9 +1,5 @@
-/**
- * WikiApi - A comprehensive API client for Wikimedia and MediaWiki REST APIs
- * Designed for UX prototyping with Wikipedia and other MediaWiki sites
- */
 export class WikiApi {
-  constructor(base = 'https://en.wikipedia.org/') {
+  constructor(base = "https://en.wikipedia.org/") {
     this.base = base;
   }
 
@@ -12,43 +8,39 @@ export class WikiApi {
   }
 
   get mediawikiBase() {
-    return `${this.base}w/rest.php/v1/`;
+    return `${this.base}w/rest.php/`;
   }
 
   /**
    * Make a request to either Wikimedia or MediaWiki REST API
    * @param {string} path - API path
-   * @param {string} api - 'wikimedia' or 'mediawiki'
-   * @param {Object} options - Request options (method, body, headers, etc.)
-   * @returns {Promise<Object>} JSON response
+   * @param {object} options - Request options
+   * @param {"wikimedia" | "mediawiki"} options.api - 'wikimedia' or 'mediawiki'
+   * @param {"GET" | "POST"} [options.method='GET'] - HTTP method
+   * @param {object|null} [options.body=null] - Request body
+   * @param {"json" | "text"} [options.type='json'] - Response type
+   * @returns {Promise<Object|string>} JSON or text response
    */
-  async request(path, api, options = {}) {
-    if (!api) {
+  async request(path, { api, method = "GET", body = null, type = "json" }) {
+    if (api !== "wikimedia" && api !== "mediawiki") {
       throw new Error('Please specify either "wikimedia" or "mediawiki" as the API type');
     }
-    const base = api === 'wikimedia' ? this.wikimediaBase : this.mediawikiBase;
-    const containsQuery = path.includes('?');
-    const separator = containsQuery ? '&' : '?';
-    
-    const url = `${base}${path}${separator}origin=*`;
-    const method = options.method || 'GET';
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      'Api-User-Agent': 'MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)',
-      ...options.headers,
-    };
 
-    // Add ETag if provided for conditional requests
-    if (options.etag) {
-      headers['If-None-Match'] = options.etag;
-    }
+    const base = api === "wikimedia" ? this.wikimediaBase : this.mediawikiBase;
+    const containsQuery = path.includes("?");
+    const separator = containsQuery ? "&" : "?";
+
+    const url = `${base}${path}${separator}origin=*`;
+    const headers = {
+      "Content-Type": "application/json",
+      "Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+    };
 
     try {
       const response = await fetch(url, {
         method,
         headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
+        body: body ? JSON.stringify(body) : undefined,
       });
 
       if (!response.ok) {
@@ -56,14 +48,12 @@ export class WikiApi {
         throw new Error(error.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Handle 304 Not Modified (cached response)
-      if (response.status === 304) {
-        return { cached: true };
-      }
-
-      return await response.json();
+      return type === "json" ? await response.json() : await response.text();
     } catch (error) {
-      console.error(`WikiApi request failed: ${error.message}`, { path, api, url });
+      console.error(
+        `WikiApi request failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        { path, api, url },
+      );
       throw error;
     }
   }
@@ -74,7 +64,7 @@ export class WikiApi {
    * @returns {string} URL-encoded title
    */
   encode(slug) {
-    return encodeURIComponent(slug.replace(/ /g, '_'));
+    return encodeURIComponent(slug.replace(/ /g, "_"));
   }
 
   // ==================== PAGE CONTENT METHODS ====================
@@ -85,7 +75,9 @@ export class WikiApi {
    * @returns {Promise<Object>} Page summary
    */
   async getPageSummary(pageName) {
-    return this.request(`page/summary/${this.encode(pageName)}`, 'wikimedia');
+    return this.request(`page/summary/${this.encode(pageName)}`, {
+      api: "wikimedia",
+    });
   }
 
   /**
@@ -94,16 +86,10 @@ export class WikiApi {
    * @returns {Promise<string>} HTML content
    */
   async getPageHtml(pageName) {
-    const response = await fetch(
-      `${this.mediawikiBase}page/${this.encode(pageName)}/html?origin=*`,
-      {
-        headers: {
-          'Api-User-Agent': 'MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)',
-        },
-      }
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.text();
+    return await this.request(`v1/page/${this.encode(pageName)}/html`, {
+      api: "mediawiki",
+      type: "text",
+    });
   }
 
   /**
@@ -112,16 +98,10 @@ export class WikiApi {
    * @returns {Promise<string>} Wikitext source
    */
   async getPageSource(pageName) {
-    const response = await fetch(
-      `${this.mediawikiBase}page/${this.encode(pageName)}/source?origin=*`,
-      {
-        headers: {
-          'Api-User-Agent': 'MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)',
-        },
-      }
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.text();
+    return this.request(`v1/page/${this.encode(pageName)}/source`, {
+      api: "mediawiki",
+      type: "text",
+    });
   }
 
   /**
@@ -130,7 +110,7 @@ export class WikiApi {
    * @returns {Promise<Object>} Page metadata
    */
   async getPage(pageName) {
-    return this.request(`page/${this.encode(pageName)}`, 'mediawiki');
+    return this.request(`v1/page/${this.encode(pageName)}`, { api: "mediawiki" });
   }
 
   // ==================== SEARCH METHODS ====================
@@ -142,7 +122,9 @@ export class WikiApi {
    * @returns {Promise<Object>} Search results
    */
   async searchTitles(query, limit = 20) {
-    return this.request(`search/title?q=${encodeURIComponent(query)}&limit=${limit}`, 'mediawiki');
+    return this.request(`v1/search/title?q=${encodeURIComponent(query)}&limit=${limit}`, {
+      api: "mediawiki",
+    });
   }
 
   /**
@@ -152,7 +134,9 @@ export class WikiApi {
    * @returns {Promise<Object>} Search results
    */
   async searchPages(query, limit = 20) {
-    return this.request(`search/page?q=${encodeURIComponent(query)}&limit=${limit}`, 'mediawiki');
+    return this.request(`v1/search/page?q=${encodeURIComponent(query)}&limit=${limit}`, {
+      api: "mediawiki",
+    });
   }
 
   // ==================== PAGE HISTORY METHODS ====================
@@ -165,13 +149,13 @@ export class WikiApi {
    */
   async getPageHistory(pageName, options = {}) {
     const params = new URLSearchParams();
-    if (options.limit) params.append('limit', options.limit);
-    if (options.older_than) params.append('older_than', options.older_than);
-    if (options.newer_than) params.append('newer_than', options.newer_than);
-    
+    if (options.limit) params.append("limit", options.limit);
+    if (options.older_than) params.append("older_than", options.older_than);
+    if (options.newer_than) params.append("newer_than", options.newer_than);
+
     const query = params.toString();
-    const path = `page/${this.encode(pageName)}/history${query ? `?${query}` : ''}`;
-    return this.request(path, 'mediawiki');
+    const path = `v1/page/${this.encode(pageName)}/history${query ? `?${query}` : ""}`;
+    return this.request(path, { api: "mediawiki" });
   }
 
   /**
@@ -181,7 +165,9 @@ export class WikiApi {
    * @returns {Promise<Object>} Diff between revisions
    */
   async compareRevisions(fromRevId, toRevId) {
-    return this.request(`revision/${fromRevId}/compare/${toRevId}`, 'mediawiki');
+    return this.request(`revision/${fromRevId}/compare/${toRevId}`, {
+      api: "mediawiki",
+    });
   }
 
   // ==================== RANDOM & FEATURED CONTENT ====================
@@ -191,13 +177,13 @@ export class WikiApi {
    * @param {string} format - Format: 'summary', 'html', or 'title' (default: 'summary')
    * @returns {Promise<Object|string>} Random page content
    */
-  async getRandomPage(format = 'summary') {
-    if (format === 'title') {
+  async getRandomPage(format = "summary") {
+    if (format === "title") {
       // For title-only, use MediaWiki API
-      const result = await this.request('page/random', 'mediawiki');
+      const result = await this.request("page/random", { api: "mediawiki" });
       return result.title;
     }
-    return this.request(`page/random/${format}`, 'wikimedia');
+    return this.request(`page/random/${format}`, { api: "wikimedia" });
   }
 
   /**
@@ -206,10 +192,11 @@ export class WikiApi {
    * @returns {Promise<Object>} Featured article data
    */
   async getFeaturedArticle(date = new Date()) {
-    const dateStr = date instanceof Date 
-      ? `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
-      : date;
-    return this.request(`feed/featured/${dateStr}`, 'wikimedia');
+    const dateStr =
+      date instanceof Date
+        ? `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`
+        : date;
+    return this.request(`feed/featured/${dateStr}`, { api: "wikimedia" });
   }
 
   /**
@@ -218,11 +205,14 @@ export class WikiApi {
    * @param {Date|string} date - Date object or MM/DD string
    * @returns {Promise<Object>} On this day content
    */
-  async getOnThisDay(type = 'events', date = new Date()) {
-    const dateStr = date instanceof Date
-      ? `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
-      : date;
-    return this.request(`feed/onthisday/${type}/${dateStr}`, 'wikimedia');
+  async getOnThisDay(type = "events", date = new Date()) {
+    const dateStr =
+      date instanceof Date
+        ? `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`
+        : date;
+    return this.request(`feed/onthisday/${type}/${dateStr}`, {
+      api: "wikimedia",
+    });
   }
 
   /**
@@ -230,7 +220,7 @@ export class WikiApi {
    * @returns {Promise<Object>} Announcements
    */
   async getAnnouncements() {
-    return this.request('feed/announcements', 'wikimedia');
+    return this.request("feed/announcements", { api: "wikimedia" });
   }
 
   // ==================== MEDIA & IMAGES ====================
@@ -241,26 +231,26 @@ export class WikiApi {
    * @returns {Promise<Object>} Media files associated with the page
    */
   async getPageMedia(pageName) {
-    return this.request(`page/media/${this.encode(pageName)}`, 'wikimedia');
+    return this.request(`page/media/${this.encode(pageName)}`, {
+      api: "wikimedia",
+    });
   }
 
   /**
    * Get thumbnail image for a page
    * @param {string} pageName - Page title
-   * @param {number} width - Thumbnail width in pixels (default: 320)
    * @returns {Promise<string|null>} Thumbnail URL or null
    */
-  async getPageThumbnail(pageName, width = 320) {
+  async getPageThumbnail(pageName) {
     try {
       const summary = await this.getPageSummary(pageName);
       if (summary.thumbnail) {
-        // Wikimedia API provides thumbnails with width parameter
         const thumb = summary.thumbnail;
         return thumb.source || thumb.url || null;
       }
       return null;
     } catch (error) {
-      console.error('Failed to get thumbnail:', error);
+      console.error("Failed to get thumbnail:", error);
       return null;
     }
   }
@@ -273,49 +263,13 @@ export class WikiApi {
    * @param {string} pageTitle - Page title for context (optional)
    * @returns {Promise<string>} HTML content
    */
-  async transformWikitextToHtml(wikitext, pageTitle = 'Main_Page') {
-    const response = await fetch(
-      `${this.mediawikiBase}transform/wikitext/to/html/${this.encode(pageTitle)}?origin=*`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Api-User-Agent': 'MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)',
-        },
-        body: JSON.stringify({ wikitext }),
-      }
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.text();
-  }
-
-  /**
-   * Get multiple page summaries at once
-   * @param {string[]} pageNames - Array of page titles
-   * @returns {Promise<Object[]>} Array of page summaries
-   */
-  async getMultiplePageSummaries(pageNames) {
-    const promises = pageNames.map(name => 
-      this.getPageSummary(name).catch(error => ({ 
-        title: name, 
-        error: error.message 
-      }))
-    );
-    return Promise.all(promises);
-  }
-
-  /**
-   * Check if a page exists
-   * @param {string} pageName - Page title
-   * @returns {Promise<boolean>} True if page exists
-   */
-  async pageExists(pageName) {
-    try {
-      await this.getPage(pageName);
-      return true;
-    } catch (error) {
-      return false;
-    }
+  async transformWikitextToHtml(wikitext, pageTitle = "Main_Page") {
+    return this.request(`v1/transform/wikitext/to/html/${this.encode(pageTitle)}`, {
+      api: "mediawiki",
+      method: "POST",
+      body: { wikitext },
+      type: "text",
+    });
   }
 
   /**
@@ -324,7 +278,9 @@ export class WikiApi {
    * @returns {Promise<Object>} Page categories
    */
   async getPageCategories(pageName) {
-    return this.request(`page/metadata/${this.encode(pageName)}`, 'wikimedia');
+    return this.request(`page/metadata/${this.encode(pageName)}`, {
+      api: "wikimedia",
+    });
   }
 
   /**
@@ -333,7 +289,9 @@ export class WikiApi {
    * @returns {Promise<Object>} Related pages data
    */
   async getRelatedPages(pageName) {
-    return this.request(`page/links/${this.encode(pageName)}`, 'wikimedia');
+    return this.request(`page/links/${this.encode(pageName)}`, {
+      api: "wikimedia",
+    });
   }
 
   /**
@@ -342,7 +300,8 @@ export class WikiApi {
    * @returns {Promise<string>} Mobile HTML
    */
   async getPageMobileHtml(pageName) {
-    return this.request(`page/mobile-sections/${this.encode(pageName)}`, 'wikimedia');
+    return this.request(`page/mobile-sections/${this.encode(pageName)}`, {
+      api: "wikimedia",
+    });
   }
-
 }

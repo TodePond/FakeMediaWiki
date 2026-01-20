@@ -1,12 +1,17 @@
 <script setup>
-import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from '@wikimedia/codex';
-import { onMounted, ref } from 'vue';
-import { WikiApi } from '../../WikiApi';
+import {
+  CdxButton,
+  CdxLabel,
+  CdxProgressIndicator,
+  CdxTextInput,
+} from "@wikimedia/codex";
+import { onMounted, ref } from "vue";
+import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const pageName = ref(sessionStorage.getItem('pageHtmlQuery') || 'Wet Leg');
-const htmlContent = ref('');
+const pageName = ref(sessionStorage.getItem("pageHtmlQuery") || "Wet Leg");
+const htmlContent = ref("");
 const isLoading = ref(false);
 const error = ref(null);
 
@@ -16,10 +21,10 @@ const loadPage = async () => {
   try {
     const html = await wiki.getPageHtml(pageName.value);
     htmlContent.value = html;
-    sessionStorage.setItem('pageHtmlQuery', pageName.value);
-  } catch (err) {
+    sessionStorage.setItem("pageHtmlQuery", pageName.value);
+  } catch (/** @type {any} */ err) {
     error.value = err.message;
-    htmlContent.value = '';
+    htmlContent.value = "";
   } finally {
     isLoading.value = false;
   }
@@ -33,7 +38,12 @@ onMounted(loadPage);
     <form @submit.prevent="loadPage">
       <CdxLabel input-id="page-name">Page name</CdxLabel>
       <span>
-        <CdxTextInput autocomplete="off" v-model="pageName" input-type="search" id="page-name" />
+        <CdxTextInput
+          autocomplete="off"
+          v-model="pageName"
+          input-type="search"
+          id="page-name"
+        />
         <CdxButton>Load HTML</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>

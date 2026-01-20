@@ -1,18 +1,23 @@
 <script setup>
-import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from '@wikimedia/codex';
-import { onMounted, ref } from 'vue';
-import { WikiApi } from '../../WikiApi';
+import {
+  CdxButton,
+  CdxLabel,
+  CdxProgressIndicator,
+  CdxTextInput,
+} from "@wikimedia/codex";
+import { onMounted, ref } from "vue";
+import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const searchQuery = ref(sessionStorage.getItem('searchQuery') || 'Wet Leg');
+const searchQuery = ref(sessionStorage.getItem("searchQuery") || "Wet Leg");
 const history = ref([]);
 const isLoading = ref(false);
 
 onMounted(search);
 
 function saveSearchQuery(query) {
-  sessionStorage.setItem('searchQuery', query);
+  sessionStorage.setItem("searchQuery", query);
 }
 
 async function search() {
@@ -26,25 +31,25 @@ async function search() {
 
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
-  const dateString = date.toLocaleDateString('en-GB', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const dateString = date.toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
-  const timeString = date.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
+  const timeString = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
   return `${timeString}, ${dateString}`;
 }
 
 function getDeltaClass(delta) {
   if (delta > 0) {
-    return 'positive';
+    return "positive";
   } else if (delta < 0) {
-    return 'negative';
+    return "negative";
   } else {
-    return 'neutral';
+    return "neutral";
   }
 }
 
@@ -63,20 +68,31 @@ function getRevisionUrl(id) {
       <CdxLabel input-id="page-name">Page name</CdxLabel>
 
       <span>
-        <CdxTextInput autocomplete="off" v-model="searchQuery" input-type="search" id="page-name" />
+        <CdxTextInput
+          autocomplete="off"
+          v-model="searchQuery"
+          input-type="search"
+          id="page-name"
+        />
         <CdxButton>Load</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>
     </form>
     <section class="changes">
-      <div class="change" v-for="change in history.revisions" :key="change.timestamp">
+      <div
+        class="change"
+        v-for="change in history.revisions"
+        :key="change.timestamp"
+      >
         <p>
           <a :href="getRevisionUrl(change.id)">{{ change.comment }}</a>
         </p>
         <p>
           <a :href="getUserUrl(change.user)">
             <strong>{{ change.user.name }}</strong> </a
-          >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
+          >&nbsp;<span :class="getDeltaClass(change.delta)">{{
+            change.delta
+          }}</span>
         </p>
         <p>
           <span>{{ formatTimestamp(change.timestamp) }}</span>
@@ -108,7 +124,7 @@ function getRevisionUrl(id) {
 }
 
 .positive::before {
-  content: '+';
+  content: "+";
 }
 
 .negative {

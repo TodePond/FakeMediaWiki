@@ -1,18 +1,24 @@
 <script setup>
-import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from '@wikimedia/codex';
-import { ref } from 'vue';
-import { WikiApi } from '../../WikiApi';
+import {
+  CdxButton,
+  CdxCard,
+  CdxLabel,
+  CdxProgressIndicator,
+  CdxTextInput,
+} from "@wikimedia/codex";
+import { ref } from "vue";
+import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const searchQuery = ref('');
+const searchQuery = ref("");
 const results = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
 
 const search = async () => {
   if (!searchQuery.value.trim()) return;
-  
+
   isLoading.value = true;
   error.value = null;
   try {
@@ -36,10 +42,10 @@ const getPageUrl = (title) => {
     <form @submit.prevent="search">
       <CdxLabel input-id="search-query">Search titles (autocomplete)</CdxLabel>
       <span>
-        <CdxTextInput 
-          autocomplete="off" 
-          v-model="searchQuery" 
-          input-type="search" 
+        <CdxTextInput
+          autocomplete="off"
+          v-model="searchQuery"
+          input-type="search"
           id="search-query"
           placeholder="Type to search..."
           @input="search"
@@ -52,17 +58,21 @@ const getPageUrl = (title) => {
     <div v-if="results.length > 0" class="results">
       <p class="results-count">{{ results.length }} results</p>
       <div class="results-list">
-        <CdxCard 
-          v-for="page in results" 
-          :key="page.key" 
+        <CdxCard
+          v-for="page in results"
+          :key="page.key"
           :url="getPageUrl(page.title)"
         >
           <template #title>{{ page.title }}</template>
-          <template #description v-if="page.description">{{ page.description }}</template>
+          <template #description v-if="page.description">{{
+            page.description
+          }}</template>
         </CdxCard>
       </div>
     </div>
-    <div v-else-if="!isLoading && searchQuery" class="no-results">No results found</div>
+    <div v-else-if="!isLoading && searchQuery" class="no-results">
+      No results found
+    </div>
   </section>
 </template>
 

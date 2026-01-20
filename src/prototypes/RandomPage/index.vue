@@ -1,19 +1,20 @@
 <script setup>
-import { CdxButton, CdxCard, CdxProgressIndicator, CdxSelect } from '@wikimedia/codex';
-import { ref } from 'vue';
-import { WikiApi } from '../../WikiApi';
+import { CdxButton, CdxCard, CdxProgressIndicator, CdxSelect } from "@wikimedia/codex";
+import { ref } from "vue";
+import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const format = ref('summary');
+const format = ref("summary");
+/** @type {any} */
 const randomPage = ref(null);
 const isLoading = ref(false);
 const error = ref(null);
 
 const formatOptions = [
-  { value: 'summary', label: 'Summary' },
-  { value: 'html', label: 'HTML' },
-  { value: 'title', label: 'Title Only' },
+  { value: "summary", label: "Summary" },
+  { value: "html", label: "HTML" },
+  { value: "title", label: "Title Only" },
 ];
 
 const getRandom = async () => {
@@ -22,7 +23,7 @@ const getRandom = async () => {
   try {
     const data = await wiki.getRandomPage(format.value);
     randomPage.value = data;
-  } catch (err) {
+  } catch (/** @type {any} */ err) {
     error.value = err.message;
     randomPage.value = null;
   } finally {
@@ -30,10 +31,9 @@ const getRandom = async () => {
   }
 };
 
-const getPageUrl = (title) => {
-  const pageTitle = typeof randomPage.value === 'string' 
-    ? randomPage.value 
-    : randomPage.value?.title || '';
+const getPageUrl = () => {
+  const pageTitle =
+    typeof randomPage.value === "string" ? randomPage.value : randomPage.value?.title || "";
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}`;
 };
 </script>
@@ -41,7 +41,11 @@ const getPageUrl = (title) => {
 <template>
   <section>
     <div class="controls">
-      <CdxSelect v-model="format" :menu-items="formatOptions" />
+      <CdxSelect
+        @update:model-value="format = $event"
+        :menu-items="formatOptions"
+        :selected="format"
+      />
       <CdxButton @click="getRandom">Get Random Page</CdxButton>
       <CdxProgressIndicator v-if="isLoading" aria-label="Loading random page" />
     </div>
@@ -50,7 +54,7 @@ const getPageUrl = (title) => {
       <h2>{{ randomPage }}</h2>
       <a :href="getPageUrl()" target="_blank">View on Wikipedia</a>
     </div>
-    <CdxCard 
+    <CdxCard
       v-else-if="randomPage && format === 'summary'"
       :thumbnail="randomPage.thumbnail ? { url: randomPage.thumbnail.source } : null"
       :url="getPageUrl()"

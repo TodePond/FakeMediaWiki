@@ -1,19 +1,25 @@
 <script setup>
-import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput, CdxTextArea } from '@wikimedia/codex';
-import { ref } from 'vue';
-import { WikiApi } from '../../WikiApi';
+import {
+  CdxButton,
+  CdxLabel,
+  CdxProgressIndicator,
+  CdxTextArea,
+  CdxTextInput,
+} from "@wikimedia/codex";
+import { ref } from "vue";
+import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const wikitext = ref('== Hello World ==\n\nThis is a test of **wikitext** transformation.');
-const pageTitle = ref('Test_Page');
-const htmlResult = ref('');
+const wikitext = ref("== Hello World ==\n\nThis is a test of ''wikitext'' transformation.");
+const pageTitle = ref("Test_Page");
+const htmlResult = ref("");
 const isLoading = ref(false);
 const error = ref(null);
 
 const transform = async () => {
   if (!wikitext.value.trim()) return;
-  
+
   isLoading.value = true;
   error.value = null;
   try {
@@ -21,7 +27,7 @@ const transform = async () => {
     htmlResult.value = html;
   } catch (err) {
     error.value = err.message;
-    htmlResult.value = '';
+    htmlResult.value = "";
   } finally {
     isLoading.value = false;
   }
@@ -34,8 +40,8 @@ const transform = async () => {
       <CdxLabel input-id="page-title">Page Title (for context)</CdxLabel>
       <CdxTextInput v-model="pageTitle" id="page-title" />
       <CdxLabel input-id="wikitext">Wikitext</CdxLabel>
-      <CdxTextArea 
-        v-model="wikitext" 
+      <CdxTextArea
+        v-model="wikitext"
         id="wikitext"
         :rows="10"
         placeholder="Enter wikitext here..."

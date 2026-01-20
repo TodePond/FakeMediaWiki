@@ -1,31 +1,36 @@
 <script setup>
-import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxSelect, CdxTextInput } from '@wikimedia/codex';
-import { onMounted, ref } from 'vue';
-import { WikiApi } from '../../WikiApi';
+import {
+  CdxButton,
+  CdxCard,
+  CdxLabel,
+  CdxProgressIndicator,
+  CdxSelect,
+  CdxTextInput,
+} from "@wikimedia/codex";
+import { onMounted, ref } from "vue";
+import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const type = ref('events');
-const dateInput = ref('');
+const type = ref("events");
+const dateInput = ref("");
 const content = ref(null);
 const isLoading = ref(false);
 const error = ref(null);
 
 const typeOptions = [
-  { value: 'events', label: 'Events' },
-  { value: 'births', label: 'Births' },
-  { value: 'deaths', label: 'Deaths' },
-  { value: 'holidays', label: 'Holidays' },
-  { value: 'selected', label: 'Selected' },
+  { value: "events", label: "Events" },
+  { value: "births", label: "Births" },
+  { value: "deaths", label: "Deaths" },
+  { value: "holidays", label: "Holidays" },
+  { value: "selected", label: "Selected" },
 ];
 
 const loadContent = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const date = dateInput.value 
-      ? new Date(dateInput.value) 
-      : new Date();
+    const date = dateInput.value ? new Date(dateInput.value) : new Date();
     const data = await wiki.getOnThisDay(type.value, date);
     content.value = data;
   } catch (err) {
@@ -38,7 +43,7 @@ const loadContent = async () => {
 
 const getTodayDate = () => {
   const today = new Date();
-  return today.toISOString().split('T')[0];
+  return today.toISOString().split("T")[0];
 };
 
 onMounted(() => {
@@ -58,11 +63,7 @@ const getPageUrl = (title) => {
       <CdxSelect v-model="type" :menu-items="typeOptions" id="type-select" />
       <CdxLabel input-id="date-input">Date</CdxLabel>
       <span>
-        <CdxTextInput 
-          v-model="dateInput" 
-          input-type="date" 
-          id="date-input"
-        />
+        <CdxTextInput v-model="dateInput" input-type="date" id="date-input" />
         <CdxButton>Load</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading content" />
       </span>
@@ -72,47 +73,56 @@ const getPageUrl = (title) => {
       <div v-if="content.events && content.events.length > 0" class="section">
         <h3>Events</h3>
         <div class="items">
-          <CdxCard 
-            v-for="(event, index) in content.events" 
+          <CdxCard
+            v-for="(event, index) in content.events"
             :key="index"
             :url="getPageUrl(event.pages[0]?.title || '')"
           >
             <template #title>{{ event.text }}</template>
-            <template #description v-if="event.year">Year: {{ event.year }}</template>
+            <template #description v-if="event.year"
+              >Year: {{ event.year }}</template
+            >
           </CdxCard>
         </div>
       </div>
       <div v-if="content.births && content.births.length > 0" class="section">
         <h3>Births</h3>
         <div class="items">
-          <CdxCard 
-            v-for="(birth, index) in content.births" 
+          <CdxCard
+            v-for="(birth, index) in content.births"
             :key="index"
             :url="getPageUrl(birth.pages[0]?.title || '')"
           >
             <template #title>{{ birth.text }}</template>
-            <template #description v-if="birth.year">Year: {{ birth.year }}</template>
+            <template #description v-if="birth.year"
+              >Year: {{ birth.year }}</template
+            >
           </CdxCard>
         </div>
       </div>
       <div v-if="content.deaths && content.deaths.length > 0" class="section">
         <h3>Deaths</h3>
         <div class="items">
-          <CdxCard 
-            v-for="(death, index) in content.deaths" 
+          <CdxCard
+            v-for="(death, index) in content.deaths"
             :key="index"
             :url="getPageUrl(death.pages[0]?.title || '')"
           >
             <template #title>{{ death.text }}</template>
-            <template #description v-if="death.year">Year: {{ death.year }}</template>
+            <template #description v-if="death.year"
+              >Year: {{ death.year }}</template
+            >
           </CdxCard>
         </div>
       </div>
-      <div v-if="content.holidays && content.holidays.length > 0" class="section">
+      <div
+        v-if="content.holidays && content.holidays.length > 0"
+        class="section"
+      >
         <h3>Holidays</h3>
         <div class="items">
-          <CdxCard 
-            v-for="(holiday, index) in content.holidays" 
+          <CdxCard
+            v-for="(holiday, index) in content.holidays"
             :key="index"
             :url="getPageUrl(holiday.pages[0]?.title || '')"
           >
@@ -120,16 +130,21 @@ const getPageUrl = (title) => {
           </CdxCard>
         </div>
       </div>
-      <div v-if="content.selected && content.selected.length > 0" class="section">
+      <div
+        v-if="content.selected && content.selected.length > 0"
+        class="section"
+      >
         <h3>Selected</h3>
         <div class="items">
-          <CdxCard 
-            v-for="(item, index) in content.selected" 
+          <CdxCard
+            v-for="(item, index) in content.selected"
             :key="index"
             :url="getPageUrl(item.pages[0]?.title || '')"
           >
             <template #title>{{ item.text }}</template>
-            <template #description v-if="item.year">Year: {{ item.year }}</template>
+            <template #description v-if="item.year"
+              >Year: {{ item.year }}</template
+            >
           </CdxCard>
         </div>
       </div>

@@ -1,7 +1,7 @@
-@import '@wikimedia/codex/dist/codex.style.css';
-@import '@wikimedia/codex-design-tokens/theme-wikimedia-ui.css';
-@import './tokens.css';
-@import './colors.css';
+@import "@wikimedia/codex/dist/codex.style.css";
+@import "@wikimedia/codex-design-tokens/theme-wikimedia-ui.css";
+@import "./tokens.css";
+@import "./colors.css";
 
 html {
   background-color: var(--background-color-neutral);
