@@ -121,19 +121,6 @@ const getPageUrl = (title) => {
           </CdxCard>
         </div>
       </div>
-      <div v-if="content.selected && content.selected.length > 0" class="section">
-        <h3>Selected</h3>
-        <div class="items">
-          <CdxCard
-            v-for="(item, index) in content.selected"
-            :key="index"
-            :url="getPageUrl(item.pages[0]?.title || '')"
-          >
-            <template #title>{{ item.text }}</template>
-            <template #description v-if="item.year">Year: {{ item.year }}</template>
-          </CdxCard>
-        </div>
-      </div>
     </div>
   </section>
 </template>
