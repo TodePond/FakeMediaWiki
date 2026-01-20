@@ -119,7 +119,7 @@ function getThankUrl(id) {
 
 .change {
   border: 1px solid var(--border-color-base);
-  padding: 0.5rem;
+  padding: 0.25rem 0.6rem;
 }
 
 .positive {
