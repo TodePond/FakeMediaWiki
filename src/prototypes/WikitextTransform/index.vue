@@ -1,18 +1,11 @@
 <script setup>
-import {
-  CdxButton,
-  CdxLabel,
-  CdxProgressIndicator,
-  CdxTextArea,
-  CdxTextInput,
-} from "@wikimedia/codex";
+import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextArea } from "@wikimedia/codex";
 import { ref } from "vue";
 import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
 const wikitext = ref("== Hello World ==\n\nThis is a test of ''wikitext'' transformation.");
-const pageTitle = ref("Test_Page");
 const htmlResult = ref("");
 const isLoading = ref(false);
 const error = ref(null);
@@ -23,7 +16,7 @@ const transform = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const html = await wiki.transformWikitextToHtml(wikitext.value, pageTitle.value);
+    const html = await wiki.transformWikitextToHtml(wikitext.value);
     htmlResult.value = html;
   } catch (/** @type {any} */ err) {
     error.value = err.message;
@@ -37,8 +30,6 @@ const transform = async () => {
 <template>
   <section>
     <form @submit.prevent="transform">
-      <CdxLabel input-id="page-title">Page Title (for context)</CdxLabel>
-      <CdxTextInput v-model="pageTitle" id="page-title" />
       <CdxLabel input-id="wikitext">Wikitext</CdxLabel>
       <CdxTextArea
         v-model="wikitext"
@@ -51,7 +42,6 @@ const transform = async () => {
     </form>
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="htmlResult" class="html-result">
-      <h3>HTML Result:</h3>
       <div class="html-content" v-html="htmlResult"></div>
     </div>
   </section>
@@ -84,8 +74,6 @@ section {
 .html-content {
   border: 1px solid var(--border-color-base);
   padding: 1rem;
-  max-height: 600px;
-  overflow-y: auto;
 }
 
 .html-content :deep(img) {

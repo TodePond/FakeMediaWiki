@@ -14,6 +14,46 @@ import WikitextTransform from "./WikitextTransform/index.vue";
 
 export const prototypes = [
   {
+    id: "SearchTitles",
+    component: SearchTitles,
+  },
+  {
+    id: "SearchPages",
+    component: SearchPages,
+  },
+  {
+    id: "FeaturedArticle",
+    component: FeaturedArticle,
+  },
+  {
+    id: "OnThisDay",
+    component: OnThisDay,
+  },
+  {
+    id: "WikitextTransform",
+    component: WikitextTransform,
+  },
+  {
+    id: "PageMetadata",
+    component: PageMetadata,
+  },
+  {
+    id: "PageHtml",
+    component: PageHtml,
+  },
+  {
+    id: "PageChanges",
+    component: PageChanges,
+  },
+  {
+    id: "RandomPage",
+    component: RandomPage,
+  },
+  {
+    id: "Page",
+    component: Page,
+  },
+  {
     id: "Card",
     component: Card,
   },
@@ -22,48 +62,8 @@ export const prototypes = [
     component: Counter,
   },
   {
-    id: "FeaturedArticle",
-    component: FeaturedArticle,
-  },
-  {
     id: "HelloWorld",
     component: HelloWorld,
-  },
-  {
-    id: "OnThisDay",
-    component: OnThisDay,
-  },
-  {
-    id: "Page",
-    component: Page,
-  },
-  {
-    id: "PageChanges",
-    component: PageChanges,
-  },
-  {
-    id: "PageHtml",
-    component: PageHtml,
-  },
-  {
-    id: "PageMetadata",
-    component: PageMetadata,
-  },
-  {
-    id: "RandomPage",
-    component: RandomPage,
-  },
-  {
-    id: "SearchPages",
-    component: SearchPages,
-  },
-  {
-    id: "SearchTitles",
-    component: SearchTitles,
-  },
-  {
-    id: "WikitextTransform",
-    component: WikitextTransform,
   },
 ];
 

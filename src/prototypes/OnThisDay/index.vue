@@ -61,17 +61,18 @@ const getPageUrl = (title) => {
     <form @submit.prevent="loadContent">
       <CdxLabel input-id="type-select">Type</CdxLabel>
       <CdxSelect v-model:selected="type" :menu-items="typeOptions" />
-      <CdxLabel input-id="date-input">Date</CdxLabel>
-      <span>
-        <CdxTextInput v-model="dateInput" input-type="date" id="date-input" />
-        <CdxButton>Load</CdxButton>
-        <CdxProgressIndicator v-if="isLoading" aria-label="Loading content" />
-      </span>
+      <p>
+        <CdxLabel input-id="date-input">Date</CdxLabel>
+        <span>
+          <CdxTextInput v-model="dateInput" input-type="date" id="date-input" />
+          <CdxButton>Load</CdxButton>
+          <CdxProgressIndicator v-if="isLoading" aria-label="Loading content" />
+        </span>
+      </p>
     </form>
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="content" class="content">
       <div v-if="content.events && content.events.length > 0" class="section">
-        <h3>Events</h3>
         <div class="items">
           <CdxCard
             v-for="(event, index) in content.events"
@@ -84,7 +85,6 @@ const getPageUrl = (title) => {
         </div>
       </div>
       <div v-if="content.births && content.births.length > 0" class="section">
-        <h3>Births</h3>
         <div class="items">
           <CdxCard
             v-for="(birth, index) in content.births"
@@ -97,7 +97,6 @@ const getPageUrl = (title) => {
         </div>
       </div>
       <div v-if="content.deaths && content.deaths.length > 0" class="section">
-        <h3>Deaths</h3>
         <div class="items">
           <CdxCard
             v-for="(death, index) in content.deaths"
@@ -110,7 +109,6 @@ const getPageUrl = (title) => {
         </div>
       </div>
       <div v-if="content.holidays && content.holidays.length > 0" class="section">
-        <h3>Holidays</h3>
         <div class="items">
           <CdxCard
             v-for="(holiday, index) in content.holidays"
@@ -138,7 +136,7 @@ section {
   width: 256px;
 }
 
-form > span {
+form span {
   display: flex;
   gap: 0.25rem;
   width: 100%;

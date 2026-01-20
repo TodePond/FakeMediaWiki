@@ -1,5 +1,5 @@
 <script setup>
-import { CdxButton, CdxCard, CdxProgressIndicator, CdxSelect } from "@wikimedia/codex";
+import { CdxButton, CdxCard, CdxProgressIndicator } from "@wikimedia/codex";
 import { ref } from "vue";
 import { WikiApi } from "../../WikiApi";
 
@@ -10,12 +10,6 @@ const format = ref("summary");
 const randomPage = ref(null);
 const isLoading = ref(false);
 const error = ref(null);
-
-const formatOptions = [
-  { value: "summary", label: "Summary" },
-  { value: "html", label: "HTML" },
-  { value: "title", label: "Title Only" },
-];
 
 const getRandom = async () => {
   isLoading.value = true;
@@ -41,11 +35,6 @@ const getPageUrl = () => {
 <template>
   <section>
     <div class="controls">
-      <CdxSelect
-        @update:model-value="format = $event"
-        :menu-items="formatOptions"
-        :selected="format"
-      />
       <CdxButton @click="getRandom">Get Random Page</CdxButton>
       <CdxProgressIndicator v-if="isLoading" aria-label="Loading random page" />
     </div>
@@ -55,7 +44,7 @@ const getPageUrl = () => {
       <a :href="getPageUrl()" target="_blank">View on Wikipedia</a>
     </div>
     <CdxCard
-      v-else-if="randomPage && format === 'summary'"
+      v-else-if="randomPage"
       :thumbnail="randomPage.thumbnail ? { url: randomPage.thumbnail.source } : null"
       :url="getPageUrl()"
     >
@@ -63,7 +52,6 @@ const getPageUrl = () => {
       <template #description v-if="randomPage.description">{{ randomPage.description }}</template>
       <template #supporting-text v-if="randomPage.extract">{{ randomPage.extract }}</template>
     </CdxCard>
-    <div v-else-if="randomPage && format === 'html'" class="html-content" v-html="randomPage"></div>
   </section>
 </template>
 
