@@ -1,18 +1,19 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
-import HomeView from './views/HomeView.vue';
-import SpecialView from './views/SpecialView.vue';
+import { createRouter, createWebHashHistory } from "vue-router";
+import HomeView from "./views/HomeView.vue";
+import SpecialView from "./views/SpecialView.vue";
 
 const router = createRouter({
+  // @ts-expect-error - trust me
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'Home',
+      path: "/",
+      name: "Home",
       component: HomeView,
     },
     {
-      path: '/Special/:name',
-      name: 'Special',
+      path: "/Special/:name",
+      name: "Special",
       component: SpecialView,
     },
   ],

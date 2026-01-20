@@ -1,16 +1,22 @@
 <script setup>
-import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from '@wikimedia/codex';
-import { onMounted, ref } from 'vue';
-import { WikiApi } from '../../WikiApi';
+import {
+  CdxButton,
+  CdxCard,
+  CdxLabel,
+  CdxProgressIndicator,
+  CdxTextInput,
+} from "@wikimedia/codex";
+import { onMounted, ref } from "vue";
+import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const url = ref('');
-const title = ref('');
-const description = ref('');
-const supportingText = ref('');
+const url = ref("");
+const title = ref("");
+const description = ref("");
+const supportingText = ref("");
 const thumbnail = ref(null);
-const searchQuery = ref(sessionStorage.getItem('pageSearchQuery') || 'Wet Leg');
+const searchQuery = ref(sessionStorage.getItem("pageSearchQuery") || "Wet Leg");
 const isLoading = ref(false);
 const search = async () => {
   isLoading.value = true;
@@ -31,7 +37,7 @@ const search = async () => {
 };
 
 function saveSearchQuery(query) {
-  sessionStorage.setItem('pageSearchQuery', query);
+  sessionStorage.setItem("pageSearchQuery", query);
 }
 
 onMounted(search);
@@ -43,7 +49,12 @@ onMounted(search);
       <CdxLabel input-id="page-name">Page name</CdxLabel>
 
       <span>
-        <CdxTextInput autocomplete="off" v-model="searchQuery" input-type="search" id="page-name" />
+        <CdxTextInput
+          autocomplete="off"
+          v-model="searchQuery"
+          input-type="search"
+          id="page-name"
+        />
         <CdxButton>Load</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>

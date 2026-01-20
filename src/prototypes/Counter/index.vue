@@ -1,6 +1,6 @@
 <script setup>
-import { CdxButton } from '@wikimedia/codex';
-import { ref } from 'vue';
+import { CdxButton } from "@wikimedia/codex";
+import { ref } from "vue";
 
 const count = ref(0);
 

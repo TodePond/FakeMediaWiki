@@ -1,9 +1,9 @@
 <!-- Currently hardcoded as a Special page -->
 <!-- Consider other wrapper types too -->
 <script setup>
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { prototypeMap } from '../prototypes/registry.js';
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+import { prototypeMap } from "../prototypes/registry.js";
 
 const route = useRoute();
 const prototypeName = computed(() => route.params.name);

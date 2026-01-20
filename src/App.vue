@@ -1,5 +1,5 @@
 <script setup>
-import { RouterView } from 'vue-router';
+import { RouterView } from "vue-router";
 </script>
 
 <template>
@@ -7,8 +7,8 @@ import { RouterView } from 'vue-router';
 </template>
 
 <style lang="less">
-@import (reference) '@wikimedia/codex-design-tokens/theme-wikimedia-ui.less';
-@import (reference) '@wikimedia/codex/mixins/link.less';
+@import (reference) "@wikimedia/codex-design-tokens/theme-wikimedia-ui.less";
+@import (reference) "@wikimedia/codex/mixins/link.less";
 
 a {
   .cdx-mixin-link();

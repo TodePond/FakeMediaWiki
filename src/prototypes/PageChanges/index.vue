@@ -1,50 +1,62 @@
 <script setup>
-import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from '@wikimedia/codex';
-import { onMounted, ref } from 'vue';
-import { WikiApi } from '../../WikiApi';
+import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
+import { onMounted, ref } from "vue";
+import { WikiApi } from "../../WikiApi";
 
 const wiki = new WikiApi();
 
-const searchQuery = ref(sessionStorage.getItem('searchQuery') || 'Wet Leg');
+const searchQuery = ref(sessionStorage.getItem("searchQuery") || "Wet Leg");
+/** @type {any} */
 const history = ref([]);
 const isLoading = ref(false);
 
 onMounted(search);
 
 function saveSearchQuery(query) {
-  sessionStorage.setItem('searchQuery', query);
+  sessionStorage.setItem("searchQuery", query);
 }
 
 async function search() {
   isLoading.value = true;
   const _history = await wiki.getPageHistory(searchQuery.value);
-  isLoading.value = false;
+
   console.log(_history);
+
+  await Promise.all(
+    _history.revisions.map(async (revision) => {
+      const html = await wiki.transformWikitextToHtml(revision.comment, searchQuery.value);
+      revision.html = html;
+      console.log(revision.html);
+    }),
+  );
+  isLoading.value = false;
+
   history.value = _history;
+
   saveSearchQuery(searchQuery.value);
 }
 
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
-  const dateString = date.toLocaleDateString('en-GB', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const dateString = date.toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
-  const timeString = date.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
+  const timeString = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
   return `${timeString}, ${dateString}`;
 }
 
 function getDeltaClass(delta) {
   if (delta > 0) {
-    return 'positive';
+    return "positive";
   } else if (delta < 0) {
-    return 'negative';
+    return "negative";
   } else {
-    return 'neutral';
+    return "neutral";
   }
 }
 
@@ -55,6 +67,10 @@ function getUserUrl(user) {
 function getRevisionUrl(id) {
   return `https://en.wikipedia.org/w/index.php?title=${searchQuery.value}&diff=${id}`;
 }
+
+function getThankUrl(id) {
+  return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
+}
 </script>
 
 <template>
@@ -64,15 +80,13 @@ function getRevisionUrl(id) {
 
       <span>
         <CdxTextInput autocomplete="off" v-model="searchQuery" input-type="search" id="page-name" />
-        <CdxButton>Load</CdxButton>
+        <CdxButton>Load changes</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>
     </form>
     <section class="changes">
       <div class="change" v-for="change in history.revisions" :key="change.timestamp">
-        <p>
-          <a :href="getRevisionUrl(change.id)">{{ change.comment }}</a>
-        </p>
+        <div v-html="change.html"></div>
         <p>
           <a :href="getUserUrl(change.user)">
             <strong>{{ change.user.name }}</strong> </a
@@ -81,6 +95,11 @@ function getRevisionUrl(id) {
         <p>
           <span>{{ formatTimestamp(change.timestamp) }}</span>
         </p>
+        <footer>
+          <a target="_blank" :href="getRevisionUrl(change.id)">View change</a>
+          <span>|</span>
+          <a target="_blank" :href="getThankUrl(change.id)">Give thanks</a>
+        </footer>
       </div>
     </section>
   </main>
@@ -108,7 +127,7 @@ function getRevisionUrl(id) {
 }
 
 .positive::before {
-  content: '+';
+  content: "+";
 }
 
 .negative {
@@ -117,6 +136,10 @@ function getRevisionUrl(id) {
 
 .neutral {
   color: var(--color-base);
+}
+
+.neutral::before {
+  content: "±";
 }
 
 .cdx-text-input {
@@ -130,5 +153,19 @@ form > span {
   gap: 0.25rem;
   width: 100%;
   flex-wrap: wrap;
+}
+
+.change footer {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  row-gap: 0px;
+}
+</style>
+
+<style>
+.change p {
+  margin: 0 !important;
 }
 </style>

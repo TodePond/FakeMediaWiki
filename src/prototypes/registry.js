@@ -1,28 +1,68 @@
-import Card from './Card/index.vue';
-import Counter from './Counter/index.vue';
-import HelloWorld from './HelloWorld/index.vue';
-import Page from './Page/index.vue';
-import PageChanges from './PageChanges/index.vue';
+import Card from "./Card/index.vue";
+import Counter from "./Counter/index.vue";
+import FeaturedPage from "./FeaturedPage/index.vue";
+import HelloWorld from "./HelloWorld/index.vue";
+import OnThisDay from "./OnThisDay/index.vue";
+import Page from "./Page/index.vue";
+import PageChanges from "./PageChanges/index.vue";
+import PageHtml from "./PageHtml/index.vue";
+import PageMetadata from "./PageMetadata/index.vue";
+import RandomPage from "./RandomPage/index.vue";
+import SearchPages from "./SearchPages/index.vue";
+import SearchTitles from "./SearchTitles/index.vue";
+import WikitextTransform from "./WikitextTransform/index.vue";
 
 export const prototypes = [
   {
-    id: 'PageChanges',
+    id: "SearchTitles",
+    component: SearchTitles,
+  },
+  {
+    id: "SearchPages",
+    component: SearchPages,
+  },
+  {
+    id: "FeaturedPage",
+    component: FeaturedPage,
+  },
+  {
+    id: "OnThisDay",
+    component: OnThisDay,
+  },
+  {
+    id: "WikitextTransform",
+    component: WikitextTransform,
+  },
+  {
+    id: "PageMetadata",
+    component: PageMetadata,
+  },
+  {
+    id: "PageHtml",
+    component: PageHtml,
+  },
+  {
+    id: "PageChanges",
     component: PageChanges,
   },
   {
-    id: 'Page',
+    id: "RandomPage",
+    component: RandomPage,
+  },
+  {
+    id: "Page",
     component: Page,
   },
   {
-    id: 'Card',
+    id: "Card",
     component: Card,
   },
   {
-    id: 'Counter',
+    id: "Counter",
     component: Counter,
   },
   {
-    id: 'HelloWorld',
+    id: "HelloWorld",
     component: HelloWorld,
   },
 ];
