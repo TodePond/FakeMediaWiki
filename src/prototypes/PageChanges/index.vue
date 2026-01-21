@@ -16,16 +16,29 @@ function saveSearchQuery(query) {
   sessionStorage.setItem("searchQuery", query);
 }
 
+// If a comment begins with a /* comment block */
+// replace it with a wikitext link to that heading
+// eg
+// from: "/* Singles */ blah blah"
+// to: "[[pageName#Singles]] blah blah"
+function linkUpComment(comment, pageName) {
+  return comment.replace(/^\/\* (.*) \*\//, `[[${pageName}#$1|→$1]]`);
+}
+
 async function search() {
   isLoading.value = true;
-  const _history = await wiki.getPageHistory(searchQuery.value);
+  const pageName = searchQuery.value;
+  const _history = await wiki.getPageHistory(pageName);
 
   console.log(_history);
 
   await Promise.all(
     _history.revisions.map(async (revision) => {
-      const html = await wiki.transformWikitextToHtml(revision.comment, searchQuery.value);
+      const linkedUpComment = linkUpComment(revision.comment, pageName);
+      let html = await wiki.transformWikitextToHtml(linkedUpComment, searchQuery.value);
+      html = html.replaceAll("<a ", "<a target='_blank' ");
       revision.html = html;
+
       console.log(revision.html);
     }),
   );
@@ -33,7 +46,7 @@ async function search() {
 
   history.value = _history;
 
-  saveSearchQuery(searchQuery.value);
+  saveSearchQuery(pageName);
 }
 
 function formatTimestamp(timestamp) {
