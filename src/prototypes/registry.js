@@ -5,6 +5,7 @@ import HelloWorld from "./HelloWorld/index.vue";
 import OnThisDay from "./OnThisDay/index.vue";
 import Page from "./Page/index.vue";
 import PageChanges from "./PageChanges/index.vue";
+import PageFeed from "./PageFeed/index.vue";
 import PageHtml from "./PageHtml/index.vue";
 import PageMedia from "./PageMedia/index.vue";
 import PageMetadata from "./PageMetadata/index.vue";
@@ -67,6 +68,12 @@ export const prototypes = [
     id: "PageChanges",
     component: PageChanges,
     wrapper: "Fullscreen",
+    pinned: true,
+  },
+  {
+    id: "PageFeed",
+    component: PageFeed,
+    wrapper: "Special",
     pinned: true,
   },
   {

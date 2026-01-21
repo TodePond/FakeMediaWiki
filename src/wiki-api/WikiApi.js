@@ -318,4 +318,21 @@ export class WikiApi {
       type: "text",
     });
   }
+
+  async getUserAvatar(userName) {
+    // Get media from the user's user page
+    try {
+      const media = await this.getPageMedia(`User:${this.encode(userName)}`);
+      if (media.items.length > 0) {
+        return (
+          media.items[0].srcset[0]?.src ??
+          "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
+        );
+      }
+      return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg";
+    } catch (error) {
+      // If no image found, use the default
+      return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg";
+    }
+  }
 }

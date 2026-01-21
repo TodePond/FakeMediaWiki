@@ -1,5 +1,6 @@
 <script setup>
-import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
+import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
+import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
 
@@ -50,6 +51,7 @@ async function search() {
       let html = await wiki.transformWikitextToHtml(linkedUpComment, searchQuery.value);
       html = html.replaceAll("<a ", "<a target='_blank' ");
       revision.html = html;
+      revision.avatarUrl = await wiki.getUserAvatar(revision.user.name);
 
       console.log(revision.html);
     }),
@@ -72,7 +74,10 @@ function formatTimestamp(timestamp) {
     hour: "2-digit",
     minute: "2-digit",
   });
-  return `${timeString}, ${dateString}`;
+  // ascii bullet point character
+  const bulletPoint = "•";
+  return `${bulletPoint} ${dateString}`;
+  // return `${timeString}, ${dateString}`;
 }
 
 function getDeltaClass(delta) {
@@ -102,29 +107,33 @@ function getThankUrl(id) {
   <main>
     <form @submit.prevent="search">
       <CdxLabel input-id="page-name">Page name</CdxLabel>
-
       <span>
         <CdxTextInput autocomplete="off" v-model="searchQuery" input-type="search" id="page-name" />
         <CdxButton>Load changes</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>
     </form>
+
     <section class="changes">
       <div v-if="error" class="error">{{ error }}</div>
       <div class="change" v-for="change in history.revisions" :key="change.timestamp">
-        <div v-html="change.html"></div>
-        <p>
-          <a :href="getUserUrl(change.user)">
-            <strong>{{ change.user.name }}</strong> </a
-          >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
-        </p>
-        <p>
-          <span>{{ formatTimestamp(change.timestamp) }}</span>
-        </p>
+        <img class="change-avatar" :src="change.avatarUrl" />
+        <div class="change-body">
+          <span class="change-header">
+            <a :href="getUserUrl(change.user)">
+              <strong>{{ change.user.name }}</strong>
+            </a>
+            <span class="change-timestamp">&nbsp;{{ formatTimestamp(change.timestamp) }}</span>
+          </span>
+
+          <span :class="getDeltaClass(change.delta)">{{ change.delta }} </span>
+          <div v-html="change.html"></div>
+        </div>
         <footer>
-          <a target="_blank" :href="getRevisionUrl(change.id)">View change</a>
-          <span>|</span>
-          <a target="_blank" :href="getThankUrl(change.id)">Give thanks</a>
+          <a target="_blank" :href="getRevisionUrl(change.id)"
+            ><CdxIcon :icon="cdxIconLinkExternal"
+          /></a>
+          <a target="_blank" :href="getThankUrl(change.id)"><CdxIcon :icon="cdxIconHeart" /></a>
         </footer>
       </div>
     </section>
@@ -146,6 +155,11 @@ function getThankUrl(id) {
 .change {
   border: 1px solid var(--border-color-base);
   padding: 0.25rem 0.6rem;
+  display: flex;
+}
+
+.change-body {
+  flex: 1;
 }
 
 .positive {
@@ -181,12 +195,51 @@ form > span {
   flex-wrap: wrap;
 }
 
+.change-header {
+  display: flex;
+  /* gap: 0.25rem; */
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.change-timestamp {
+  color: var(--color-subtle);
+}
+
+.change-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 0.5rem;
+}
+
 .change footer {
   display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
+  /* gap: 0.5rem; */
+  /* justify-content: flex-end; */
+  /* flex-direction: column; */
   flex-wrap: wrap;
   row-gap: 0px;
+  /* font-size: 20rem; */
+  /* transform: scale(2); */
+  /* transform-origin: bottom right; */
+  margin-right: -0.25rem;
+}
+
+.change footer a {
+  flex-shrink: 0;
+}
+
+.change footer .cdx-icon {
+  width: 2rem;
+  height: 2rem;
+  padding: 0.5rem;
+  color: var(--color-progressive);
+}
+
+.change footer .cdx-icon:hover {
+  color: var(--color-progressive--hover);
 }
 
 .error {
