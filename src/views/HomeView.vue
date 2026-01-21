@@ -11,22 +11,20 @@ const unpinnedPrototypes = getUnpinnedPrototypes();
 <template>
   <main>
     <h1>Prototypes</h1>
-    <article>
-      <ul>
-        <li v-for="prototype in pinnedPrototypes" :key="prototype.id" class="pinned">
-          <RouterLink :to="`/${prototype.wrapper}/${prototype.id}`">
-            <CdxIcon :icon="cdxIconPushPin" /> {{ prototype.wrapper }}:{{ prototype.id }}
-          </RouterLink>
-        </li>
-      </ul>
-      <ul>
-        <li v-for="prototype in unpinnedPrototypes" :key="prototype.id">
-          <RouterLink :to="`/${prototype.wrapper}/${prototype.id}`"
-            >{{ prototype.wrapper }}:{{ prototype.id }}</RouterLink
-          >
-        </li>
-      </ul>
-    </article>
+    <ul>
+      <li v-for="prototype in pinnedPrototypes" :key="prototype.id" class="pinned">
+        <RouterLink :to="`/${prototype.wrapper}/${prototype.id}`">
+          <CdxIcon :icon="cdxIconPushPin" /> {{ prototype.wrapper }}:{{ prototype.id }}
+        </RouterLink>
+      </li>
+    </ul>
+    <ul>
+      <li v-for="prototype in unpinnedPrototypes" :key="prototype.id">
+        <RouterLink :to="`/${prototype.wrapper}/${prototype.id}`"
+          >{{ prototype.wrapper }}:{{ prototype.id }}</RouterLink
+        >
+      </li>
+    </ul>
   </main>
 </template>
 
@@ -34,13 +32,9 @@ const unpinnedPrototypes = getUnpinnedPrototypes();
 ul {
   list-style-type: none;
   margin-left: 0;
+  margin-bottom: 1rem;
 }
 
-article {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
 main {
   max-width: var(--min-width-breakpoint-tablet);
   margin: 0 auto;
