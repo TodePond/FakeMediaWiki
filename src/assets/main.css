@@ -61,3 +61,26 @@ ol {
 p {
   /* line-height: var(--line-height-content); */
 }
+
+.wikitable {
+  background-color: var(--background-color-neutral-subtle, #f8f9fa);
+  color: var(--color-base, #202122);
+  margin: 1em 0;
+  border: 1px solid var(--border-color-base, #a2a9b1);
+  border-collapse: collapse;
+}
+
+.wikitable > tr > th,
+.wikitable > tr > td,
+.wikitable > * > tr > th,
+.wikitable > * > tr > td {
+  border: 1px solid var(--border-color-base, #a2a9b1);
+  padding: 0.2em 0.4em;
+}
+
+.wikitable > tr > th,
+.wikitable > * > tr > th {
+  background-color: var(--background-color-neutral, #eaecf0);
+  color: var(--color-base, #202122);
+  text-align: center;
+}

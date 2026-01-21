@@ -3,7 +3,7 @@
     "jsx": "preserve",
     "strict": true,
     "checkJs": true,
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
     "noImplicitAny": false,
     "noUncheckedIndexedAccess": true,
     "paths": {
