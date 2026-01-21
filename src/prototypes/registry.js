@@ -6,7 +6,10 @@ import OnThisDay from "./OnThisDay/index.vue";
 import Page from "./Page/index.vue";
 import PageChanges from "./PageChanges/index.vue";
 import PageHtml from "./PageHtml/index.vue";
+import PageMedia from "./PageMedia/index.vue";
 import PageMetadata from "./PageMetadata/index.vue";
+import PageMobileHtml from "./PageMobileHtml/index.vue";
+import PageSource from "./PageSource/index.vue";
 import RandomPage from "./RandomPage/index.vue";
 import SearchPages from "./SearchPages/index.vue";
 import SearchTitles from "./SearchTitles/index.vue";
@@ -40,6 +43,18 @@ export const prototypes = [
   {
     id: "PageHtml",
     component: PageHtml,
+  },
+  {
+    id: "PageSource",
+    component: PageSource,
+  },
+  {
+    id: "PageMedia",
+    component: PageMedia,
+  },
+  {
+    id: "PageMobileHtml",
+    component: PageMobileHtml,
   },
   {
     id: "PageChanges",

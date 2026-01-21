@@ -1,7 +1,7 @@
 <script setup>
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextArea } from "@wikimedia/codex";
 import { ref } from "vue";
-import { WikiApi } from "../../WikiApi";
+import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 

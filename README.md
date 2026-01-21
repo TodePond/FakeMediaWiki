@@ -7,7 +7,6 @@ Try it at [todepond.github.io/FakeMediaWiki](https://todepond.github.io/FakeMedi
 - It comes with Codex and a bunch of CSS variables for making wiki-like UIs.
 - It comes with a little library for using MediaWiki's APIs. See `WikiApi.js` for more info.
 
-
 ## Stack
 
 - Vue

@@ -112,10 +112,10 @@ export class WikiApi {
    * @returns {Promise<string>} Wikitext source
    */
   async getPageSource(pageName) {
-    return this.request(`page/${this.encode(pageName)}/source`, {
+    const page = await this.request(`page/${this.encode(pageName)}`, {
       api: "mediawiki",
-      type: "text",
     });
+    return page.source;
   }
 
   /**
@@ -245,7 +245,7 @@ export class WikiApi {
    * @returns {Promise<Object>} Media files associated with the page
    */
   async getPageMedia(pageName) {
-    return this.request(`page/media/${this.encode(pageName)}`, {
+    return this.request(`page/media-list/${this.encode(pageName)}`, {
       api: "wikimedia",
     });
   }
@@ -313,8 +313,9 @@ export class WikiApi {
    * @returns {Promise<string>} Mobile HTML
    */
   async getPageMobileHtml(pageName) {
-    return this.request(`page/mobile-sections/${this.encode(pageName)}`, {
+    return this.request(`page/mobile-html/${this.encode(pageName)}`, {
       api: "wikimedia",
+      type: "text",
     });
   }
 }

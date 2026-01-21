@@ -5,8 +5,8 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
-const pageName = ref(sessionStorage.getItem("pageHtmlQuery") || "Wet Leg");
-const htmlContent = ref("");
+const pageName = ref(sessionStorage.getItem("pageSourceQuery") || "Wet Leg");
+const sourceContent = ref("");
 const isLoading = ref(false);
 const error = ref(null);
 
@@ -14,12 +14,12 @@ const loadPage = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const html = await wiki.getPageHtml(pageName.value);
-    htmlContent.value = html;
-    sessionStorage.setItem("pageHtmlQuery", pageName.value);
+    const source = await wiki.getPageSource(pageName.value);
+    sourceContent.value = source;
+    sessionStorage.setItem("pageSourceQuery", pageName.value);
   } catch (/** @type {any} */ err) {
     error.value = err.message;
-    htmlContent.value = "";
+    sourceContent.value = "";
   } finally {
     isLoading.value = false;
   }
@@ -34,12 +34,12 @@ onMounted(loadPage);
       <CdxLabel input-id="page-name">Page name</CdxLabel>
       <span>
         <CdxTextInput autocomplete="off" v-model="pageName" input-type="search" id="page-name" />
-        <CdxButton>Load HTML</CdxButton>
+        <CdxButton>Load Source</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>
     </form>
     <div v-if="error" class="error">{{ error }}</div>
-    <div v-if="htmlContent" class="html-content" v-html="htmlContent"></div>
+    <pre v-if="sourceContent" class="source-content">{{ sourceContent }}</pre>
   </section>
 </template>
 
@@ -63,16 +63,16 @@ form > span {
   flex-wrap: wrap;
 }
 
-.html-content {
+.source-content {
   border: 1px solid var(--border-color-base);
   padding: 1rem;
   max-height: 600px;
   overflow-y: auto;
-}
-
-.html-content :deep(img) {
-  max-width: 100%;
-  height: auto;
+  background-color: var(--background-color-base);
+  font-family: monospace;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .error {

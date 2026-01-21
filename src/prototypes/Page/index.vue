@@ -1,13 +1,7 @@
 <script setup>
-import {
-  CdxButton,
-  CdxCard,
-  CdxLabel,
-  CdxProgressIndicator,
-  CdxTextInput,
-} from "@wikimedia/codex";
+import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
-import { WikiApi } from "../../WikiApi";
+import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
@@ -49,12 +43,7 @@ onMounted(search);
       <CdxLabel input-id="page-name">Page name</CdxLabel>
 
       <span>
-        <CdxTextInput
-          autocomplete="off"
-          v-model="searchQuery"
-          input-type="search"
-          id="page-name"
-        />
+        <CdxTextInput autocomplete="off" v-model="searchQuery" input-type="search" id="page-name" />
         <CdxButton>Load</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>

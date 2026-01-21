@@ -1,12 +1,7 @@
 <script setup>
-import {
-  CdxButton,
-  CdxLabel,
-  CdxProgressIndicator,
-  CdxTextInput,
-} from "@wikimedia/codex";
+import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
-import { WikiApi } from "../../WikiApi";
+import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
@@ -22,7 +17,7 @@ const loadPage = async () => {
     const data = await wiki.getPage(pageName.value);
     metadata.value = data;
     sessionStorage.setItem("pageMetadataQuery", pageName.value);
-  } catch (err) {
+  } catch (/** @type {any} */ err) {
     error.value = err.message;
     metadata.value = null;
   } finally {
@@ -38,20 +33,13 @@ onMounted(loadPage);
     <form @submit.prevent="loadPage">
       <CdxLabel input-id="page-name">Page name</CdxLabel>
       <span>
-        <CdxTextInput
-          autocomplete="off"
-          v-model="pageName"
-          input-type="search"
-          id="page-name"
-        />
+        <CdxTextInput autocomplete="off" v-model="pageName" input-type="search" id="page-name" />
         <CdxButton>Load Metadata</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>
     </form>
     <div v-if="error" class="error">{{ error }}</div>
-    <pre v-if="metadata" class="metadata-content">{{
-      JSON.stringify(metadata, null, 2)
-    }}</pre>
+    <pre v-if="metadata" class="metadata-content">{{ JSON.stringify(metadata, null, 2) }}</pre>
   </section>
 </template>
 

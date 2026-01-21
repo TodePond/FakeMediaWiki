@@ -1,7 +1,7 @@
 <script setup>
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
-import { WikiApi } from "../../WikiApi";
+import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
@@ -163,7 +163,6 @@ form > span {
   row-gap: 0px;
 }
 </style>
-
 <style>
 .change p {
   margin: 0 !important;

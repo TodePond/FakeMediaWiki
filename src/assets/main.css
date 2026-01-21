@@ -3,12 +3,17 @@
 @import "./tokens.css";
 @import "./colors.css";
 
+* {
+  box-sizing: border-box;
+}
+
 html {
   background-color: var(--background-color-neutral);
 }
 
 body {
-  max-width: var(--min-width-breakpoint-tablet);
+  max-width: 900px;
+  /* max-width: var(--min-width-breakpoint-tablet); */
   color: var(--color-base);
   margin: 0px auto;
   background-color: var(--background-color-base);
