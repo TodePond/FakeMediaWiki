@@ -6,7 +6,7 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
-const searchQuery = ref(sessionStorage.getItem("searchQuery") || "Wet Leg");
+const searchQuery = ref(sessionStorage.getItem("searchQueryFeed") || "Wikipedia");
 /** @type {any} */
 const history = ref([]);
 const isLoading = ref(false);
