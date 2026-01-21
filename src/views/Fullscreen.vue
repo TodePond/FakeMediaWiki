@@ -14,7 +14,6 @@ const PrototypeComponent = computed(() => {
 
 <template>
   <main>
-    <h1>{{ prototypeName }}</h1>
     <component v-if="PrototypeComponent" :is="PrototypeComponent" />
     <p v-else>Prototype "{{ prototypeName }}" not found</p>
   </main>
@@ -22,7 +21,14 @@ const PrototypeComponent = computed(() => {
 
 <style scoped>
 main {
-  max-width: var(--min-width-breakpoint-tablet);
-  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+</style>
+
+<style scoped>
+body {
+  max-width: 100%;
 }
 </style>

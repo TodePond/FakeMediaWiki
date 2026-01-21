@@ -58,16 +58,16 @@ export class WikiApi {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: response.statusText }));
-        throw new Error(error.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`${response.status}`);
       }
 
       return type === "json" ? await response.json() : await response.text();
     } catch (error) {
-      console.error(
-        `WikiApi request failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        { path, api, url },
-      );
+      console.error(`Request failed: ${error instanceof Error ? error.message : "Unknown error"}`, {
+        path,
+        api,
+        url,
+      });
       throw error;
     }
   }

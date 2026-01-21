@@ -1,6 +1,4 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import HomeView from "./views/HomeView.vue";
-import SpecialView from "./views/SpecialView.vue";
 
 const router = createRouter({
   // @ts-expect-error - trust me
@@ -9,12 +7,17 @@ const router = createRouter({
     {
       path: "/",
       name: "Home",
-      component: HomeView,
+      component: () => import("./views/HomeView.vue"),
     },
     {
       path: "/Special/:name",
       name: "Special",
-      component: SpecialView,
+      component: () => import("./views/SpecialView.vue"),
+    },
+    {
+      path: "/Fullscreen/:name",
+      name: "Fullscreen",
+      component: () => import("./views/Fullscreen.vue"),
     },
   ],
 });

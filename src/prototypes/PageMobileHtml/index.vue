@@ -65,9 +65,8 @@ form > span {
 }
 
 .mobile-frame {
-  height: 700px;
+  height: 750px;
   width: 100%;
-  max-height: 900px;
   max-width: calc(var(--max-width-breakpoint-mobile) * 0.66);
   border: 8px solid var(--border-color-base);
   border-radius: 20px;

@@ -9,6 +9,7 @@ const pageName = ref(sessionStorage.getItem("pageMediaQuery") || "Wet Leg");
 /** @type {any} */
 const mediaItems = ref([]);
 const isLoading = ref(false);
+/** @type {any} */
 const error = ref(null);
 
 // eg
@@ -29,7 +30,11 @@ const loadPage = async () => {
     console.log(mediaItems.value);
     sessionStorage.setItem("pageMediaQuery", pageName.value);
   } catch (/** @type {any} */ err) {
-    error.value = err.message;
+    if (err.message.includes("404")) {
+      error.value = "Page not found";
+    } else {
+      error.value = err.message;
+    }
     mediaItems.value = [];
   } finally {
     isLoading.value = false;

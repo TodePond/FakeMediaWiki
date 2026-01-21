@@ -9,6 +9,8 @@ const searchQuery = ref(sessionStorage.getItem("searchQuery") || "Wet Leg");
 /** @type {any} */
 const history = ref([]);
 const isLoading = ref(false);
+/** @type {any} */
+const error = ref(null);
 
 onMounted(search);
 
@@ -28,10 +30,20 @@ function linkUpComment(comment, pageName) {
 async function search() {
   isLoading.value = true;
   const pageName = searchQuery.value;
-  const _history = await wiki.getPageHistory(pageName);
-
+  let _history;
+  try {
+    _history = await wiki.getPageHistory(pageName);
+  } catch (/** @type {any} */ e) {
+    if (e.message.includes("404")) {
+      error.value = "Page not found";
+    } else {
+      error.value = e.message;
+    }
+    history.value = [];
+    isLoading.value = false;
+    return;
+  }
   console.log(_history);
-
   await Promise.all(
     _history.revisions.map(async (revision) => {
       const linkedUpComment = linkUpComment(revision.comment, pageName);
@@ -98,6 +110,7 @@ function getThankUrl(id) {
       </span>
     </form>
     <section class="changes">
+      <div v-if="error" class="error">{{ error }}</div>
       <div class="change" v-for="change in history.revisions" :key="change.timestamp">
         <div v-html="change.html"></div>
         <p>
@@ -174,6 +187,13 @@ form > span {
   justify-content: flex-end;
   flex-wrap: wrap;
   row-gap: 0px;
+}
+
+.error {
+  color: var(--color-destructive);
+  padding: 0.5rem;
+  border: 1px solid var(--color-destructive);
+  background-color: var(--background-color-destructive-subtle);
 }
 </style>
 <style>
