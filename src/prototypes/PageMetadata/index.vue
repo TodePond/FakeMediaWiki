@@ -34,7 +34,7 @@ onMounted(loadPage);
       <CdxLabel input-id="page-name">Page name</CdxLabel>
       <span>
         <CdxTextInput autocomplete="off" v-model="pageName" input-type="search" id="page-name" />
-        <CdxButton>Load Metadata</CdxButton>
+        <CdxButton>Load metadata</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
       </span>
     </form>

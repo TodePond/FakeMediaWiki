@@ -1,12 +1,13 @@
 <script setup>
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
-import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons";
+import { cdxIconHeart, cdxIconLinkExternal, cdxIconRobot } from "@wikimedia/codex-icons";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
-const searchQuery = ref(sessionStorage.getItem("searchQueryFeed") || "Wikipedia");
+const storageKey = "searchQueryFeed";
+const searchQuery = ref(sessionStorage.getItem(storageKey) || "Wikipedia");
 /** @type {any} */
 const history = ref([]);
 const isLoading = ref(false);
@@ -16,7 +17,7 @@ const error = ref(null);
 onMounted(search);
 
 function saveSearchQuery(query) {
-  sessionStorage.setItem("searchQuery", query);
+  sessionStorage.setItem(storageKey, query);
 }
 
 // If a comment begins with a /* comment block */
@@ -33,7 +34,7 @@ async function search() {
   const pageName = searchQuery.value;
   let _history;
   try {
-    _history = await wiki.getPageHistory(pageName);
+    _history = await wiki.getPageHistory(pageName, { limit: 5 });
   } catch (/** @type {any} */ e) {
     if (e.message.includes("404")) {
       error.value = "Page not found";
@@ -44,20 +45,30 @@ async function search() {
     isLoading.value = false;
     return;
   }
-  console.log(_history);
+
   await Promise.all(
     _history.revisions.map(async (revision) => {
-      const linkedUpComment = linkUpComment(revision.comment, pageName);
-      let html = await wiki.transformWikitextToHtml(linkedUpComment, searchQuery.value);
-      html = html.replaceAll("<a ", "<a target='_blank' ");
-      revision.html = html;
+      const _summary = wiki.preprocessEditSummary(revision.comment, searchQuery.value);
+      const toolbar = wiki.parseToolbarComment(_summary);
+      const summary = toolbar ? toolbar : { comment: _summary };
+      summary.comment = summary.comment
+        ? await wiki.transformWikitextToHtml(summary.comment, searchQuery.value)
+        : "";
+      // summary.useThisBot = summary.useThisBot
+      //   ? await wiki.transformWikitextToHtml(summary.useThisBot, searchQuery.value)
+      //   : "";
+      // summary.reportBugs = summary.reportBugs
+      //   ? await wiki.transformWikitextToHtml(summary.reportBugs, searchQuery.value)
+      //   : "";
+      summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
+      // let html = await wiki.getEditSummaryHtml(revision.comment, searchQuery.value);
+      // html = html.replaceAll("<a ", "<a target='_blank' ");
+      // revision.html = html;
+      revision.summary = summary;
       revision.avatarUrl = await wiki.getUserAvatar(revision.user.name);
-
-      console.log(revision.html);
     }),
   );
   isLoading.value = false;
-
   history.value = _history;
 
   saveSearchQuery(pageName);
@@ -90,8 +101,19 @@ function getDeltaClass(delta) {
   }
 }
 
-function getUserUrl(user) {
-  return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(user.name)}`;
+function getBotUrl(useThisBot) {
+  console.log(useThisBot);
+  const [head] = useThisBot.split("|");
+  let path = head.split("[[")[1];
+  [path] = path.split("/use");
+  if (!path) {
+    return "#";
+  }
+  return `https://en.wikipedia.org/wiki/${path}`;
+}
+
+function getUserUrl(userName) {
+  return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(userName)}`;
 }
 
 function getRevisionUrl(id) {
@@ -120,16 +142,27 @@ function getThankUrl(id) {
         <img class="change-avatar" :src="change.avatarUrl" />
         <div class="change-body">
           <span class="change-header">
-            <a :href="getUserUrl(change.user)">
+            <a target="_blank" :href="getUserUrl(change.user.name)">
               <strong>{{ change.user.name }}</strong>
             </a>
             <span class="change-timestamp">&nbsp;{{ formatTimestamp(change.timestamp) }}</span>
+            <br />
           </span>
-
+          <span class="change-suggested-by" v-if="change.summary.suggestedBy">
+            Suggested by
+            <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
+          </span>
           <span :class="getDeltaClass(change.delta)">{{ change.delta }} </span>
-          <div v-html="change.html"></div>
+          <div v-html="change?.summary?.comment"></div>
         </div>
         <footer>
+          <a
+            v-if="change.summary.useThisBot"
+            target="_blank"
+            :href="getBotUrl(change.summary.useThisBot)"
+          >
+            <CdxIcon :icon="cdxIconRobot" />
+          </a>
           <a target="_blank" :href="getRevisionUrl(change.id)"
             ><CdxIcon :icon="cdxIconLinkExternal"
           /></a>
@@ -202,6 +235,12 @@ form > span {
   align-items: baseline;
 }
 
+.change-suggested-by {
+  color: var(--color-subtle);
+  font-size: 0.8rem;
+  display: block;
+}
+
 .change-timestamp {
   color: var(--color-subtle);
 }
@@ -251,6 +290,10 @@ form > span {
 </style>
 <style>
 .change p {
-  margin: 0 !important;
+  margin: 0;
+}
+.change .wikitable {
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
 }
 </style>

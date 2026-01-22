@@ -81,8 +81,6 @@ export class WikiApi {
     return encodeURIComponent(slug.replace(/ /g, "_"));
   }
 
-  // ==================== PAGE CONTENT METHODS ====================
-
   /**
    * Get a page summary (extract, thumbnail, etc.)
    * @param {string} pageName - Page title
@@ -127,8 +125,6 @@ export class WikiApi {
     return this.request(`page/${this.encode(pageName)}`, { api: "mediawiki" });
   }
 
-  // ==================== SEARCH METHODS ====================
-
   /**
    * Search for pages by title (autocomplete-style)
    * @param {string} query - Search query
@@ -152,8 +148,6 @@ export class WikiApi {
       api: "mediawiki",
     });
   }
-
-  // ==================== PAGE HISTORY METHODS ====================
 
   /**
    * Get page revision history
@@ -183,8 +177,6 @@ export class WikiApi {
       api: "mediawiki",
     });
   }
-
-  // ==================== RANDOM & FEATURED CONTENT ====================
 
   /**
    * Get a random page
@@ -237,8 +229,6 @@ export class WikiApi {
     return this.request("feed/announcements", { api: "wikimedia" });
   }
 
-  // ==================== MEDIA & IMAGES ====================
-
   /**
    * Get page media (images, audio, etc.)
    * @param {string} pageName - Page title
@@ -268,8 +258,6 @@ export class WikiApi {
       return null;
     }
   }
-
-  // ==================== UTILITY METHODS ====================
 
   /**
    * Transform wikitext to HTML
@@ -320,9 +308,11 @@ export class WikiApi {
   }
 
   async getUserAvatar(userName) {
+    // return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg";
+
     // Get media from the user's user page
     try {
-      const media = await this.getPageMedia(`User:${this.encode(userName)}`);
+      const media = await this.getPageMedia(`User:${userName}`);
       if (media.items.length > 0) {
         return (
           media.items[0].srcset[0]?.src ??
@@ -334,5 +324,86 @@ export class WikiApi {
       // If no image found, use the default
       return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg";
     }
+  }
+
+  getTableFromToolbarComment(comment) {
+    const toolbar = this.parseToolbarComment(comment);
+
+    if (toolbar === null) {
+      return comment;
+    }
+
+    let table = `${toolbar.comment ?? ""}\n{\| class="wikitable" class="wikitable"\n|-\n`;
+    if (toolbar.suggestedBy) {
+      table += `| Suggested by [[User:${toolbar.suggestedBy}|${toolbar.suggestedBy}]]\n|-\n`;
+    }
+    if (toolbar.useThisBot && toolbar.reportBugs) {
+      table += `| ${toolbar.useThisBot}. ${toolbar.reportBugs}\n|-\n`;
+    }
+    if (toolbar.hashtags.length > 0) {
+      table += `| ${toolbar.hashtags.join(" ")}\n|-\n`;
+    }
+    if (toolbar.other.length > 0) {
+      table += `| ${toolbar.other.join("\n|-\n|")}\n|-\n`;
+    }
+
+    table += `\n|}`;
+
+    return table;
+  }
+
+  /**
+   *
+   * @param {string} comment
+   * @returns
+   */
+  parseToolbarComment(comment) {
+    /** @type {string[]} */
+    let parts = comment.split(" | ");
+    parts = parts.filter((part) => part.trim().length > 0);
+    if (parts.length <= 1) {
+      return null;
+    }
+
+    /** @type {[string]} */
+    // @ts-expect-error - i already checked that it's not empty
+    const [head] = parts;
+    const suggestedByPart = parts.find((part) => part.startsWith("Suggested by "));
+    const botPart = parts.find((part) => part.includes("Use this bot]]."));
+    const hashtagParts = parts.filter((part) => part.startsWith("#"));
+
+    const [useThisBot, reportBugs] = botPart ? botPart.split(". ") : [null, null];
+
+    const commentPart =
+      head !== suggestedByPart && head !== botPart && !hashtagParts.includes(head) ? head : null;
+
+    const otherParts = parts.filter(
+      (part) =>
+        part !== commentPart &&
+        part !== suggestedByPart &&
+        part !== botPart &&
+        !hashtagParts.includes(part),
+    );
+
+    return {
+      comment: commentPart,
+      suggestedBy: suggestedByPart ? suggestedByPart.replace("Suggested by ", "") : null,
+      hashtags: hashtagParts,
+      other: otherParts,
+      useThisBot,
+      reportBugs,
+    };
+  }
+
+  preprocessEditSummary(summary, pageName) {
+    summary = summary.replace(/^\/\* (.*) \*\//, `[[${pageName}#$1|→$1]]`);
+    summary = summary.replaceAll("[[Category:", "[[:Category:");
+    return summary;
+  }
+
+  async getEditSummaryHtml(summary, pageName) {
+    summary = this.preprocessEditSummary(summary, pageName);
+    summary = this.getTableFromToolbarComment(summary);
+    return await this.transformWikitextToHtml(summary);
   }
 }

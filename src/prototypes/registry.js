@@ -29,6 +29,24 @@ import WikitextTransform from "./WikitextTransform/index.vue";
  */
 export const prototypes = [
   {
+    id: "PageFeed",
+    component: PageFeed,
+    wrapper: "Special",
+    pinned: true,
+  },
+  {
+    id: "PageChanges",
+    component: PageChanges,
+    wrapper: "Special",
+    pinned: true,
+  },
+  {
+    id: "PageChanges",
+    component: PageChanges,
+    wrapper: "Fullscreen",
+    pinned: true,
+  },
+  {
     id: "SearchTitles",
     component: SearchTitles,
     pinned: false,
@@ -57,24 +75,6 @@ export const prototypes = [
     component: WikitextTransform,
     pinned: false,
     wrapper: "Special",
-  },
-  {
-    id: "PageChanges",
-    component: PageChanges,
-    wrapper: "Special",
-    pinned: true,
-  },
-  {
-    id: "PageChanges",
-    component: PageChanges,
-    wrapper: "Fullscreen",
-    pinned: true,
-  },
-  {
-    id: "PageFeed",
-    component: PageFeed,
-    wrapper: "Special",
-    pinned: true,
   },
   {
     id: "PageMetadata",
