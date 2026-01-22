@@ -313,9 +313,14 @@ export class WikiApi {
     // Get media from the user's user page
     try {
       const media = await this.getPageMedia(`User:${userName}`);
+      console.log(media);
       if (media.items.length > 0) {
+        // Look for the first item in the section 1, to avoid notices at the top of the page
+        // Resort to the notices if no item is found in section 1
+        let leadItem = media.items.find((item) => item.section_id === 1) ?? media.items[0];
+
         return (
-          media.items[0].srcset[0]?.src ??
+          leadItem.srcset[0]?.src ??
           "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
         );
       }
