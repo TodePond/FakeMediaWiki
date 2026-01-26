@@ -10,8 +10,8 @@ const storageKey1 = "searchQueryFeed1";
 const storageKey2 = "searchQueryFeed2";
 const storageKey3 = "searchQueryFeed3";
 const searchQuery1 = ref(sessionStorage.getItem(storageKey1) || "Wikipedia");
-const searchQuery2 = ref(sessionStorage.getItem(storageKey2) || "");
-const searchQuery3 = ref(sessionStorage.getItem(storageKey3) || "");
+const searchQuery2 = ref(sessionStorage.getItem(storageKey2) || "Life");
+const searchQuery3 = ref(sessionStorage.getItem(storageKey3) || "Water");
 /** @type {any} */
 const history = ref([]);
 const isLoading = ref(false);
@@ -163,7 +163,7 @@ function getThankUrl(id) {
         </div>
       </div>
       <span>
-        <CdxButton>Load changes</CdxButton>
+        <CdxButton>Refresh feed</CdxButton>
         <CdxProgressIndicator v-if="isLoading" aria-label="Loading pages" />
       </span>
     </form>
@@ -183,20 +183,24 @@ function getThankUrl(id) {
             <a target="_blank" :href="getUserUrl(change.user.name)">
               <strong class="change-user-name">{{ change.user.name }}</strong>
             </a>
+            <span class="change-suggested-by" v-if="change.summary.suggestedBy">
+              &nbsp;suggested by
+              <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
+            </span>
             <!-- <span class="change-timestamp">&nbsp;{{ formatTimestamp(change.timestamp) }}</span> -->
             <!-- <br /> -->
           </span>
-          <!-- <span class="change-suggested-by" v-if="change.summary.suggestedBy">
-            Suggested by
-            <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
-          </span> -->
           <span class="change-page-name-and-delta">
             <a target="_blank" :href="getPageUrl(change.pageName)" class="change-page-name">
               {{ change.pageName }} </a
             >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
           </span>
           <!-- <br /> -->
-          <span class="change-timestamp">{{ formatTimestamp(change.timestamp) }}</span>
+          <span class="change-timestamp"
+            ><a target="_blank" :href="getRevisionUrl(change.id, change.pageName)">{{
+              formatTimestamp(change.timestamp)
+            }}</a></span
+          >
           <div class="change-comment" v-html="change?.summary?.comment"></div>
         </div>
         <footer>
@@ -211,6 +215,17 @@ function getThankUrl(id) {
 </template>
 
 <style scoped>
+.change {
+  /* padding: 0.6rem 0rem; */
+  /* padding: 0.8rem 0rem; */
+  padding: 1rem 0rem;
+}
+
+.change-comment {
+  /* padding-top: 0.2rem; */
+  padding-top: 0.4rem;
+}
+
 .changes {
   margin: 0.5rem 0;
   display: flex;
@@ -224,7 +239,6 @@ function getThankUrl(id) {
 
 .change {
   /* border: 1px solid var(--border-color-base); */
-  padding: 1rem 0rem;
   display: flex;
   border-top: 0.5px solid var(--border-color-subtle);
 }
@@ -297,22 +311,32 @@ form > span {
   align-items: baseline;
 }
 
+.change-user-name {
+  color: var(--color-progressive);
+}
+
 .change-suggested-by {
   color: var(--color-subtle);
-  font-size: 0.8rem;
+  /* font-size: 0.8rem; */
   display: block;
+  margin-top: -0.2rem;
 }
 
 .change-comment {
   color: var(--color-subtle);
-  padding-top: 0.4rem;
+  /* padding-top: 0.4rem; */
+  overflow-x: break-word;
 }
 
 .change-timestamp {
   color: var(--color-subtle);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   margin-top: -0.3rem;
   /* padding-bottom: 0.25rem; */
+}
+
+.change-timestamp a {
+  color: var(--color-subtle);
 }
 
 .change-page-name-and-delta {
