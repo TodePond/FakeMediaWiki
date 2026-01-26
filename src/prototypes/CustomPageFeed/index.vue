@@ -572,7 +572,6 @@ form footer {
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  margin-right: 0.5rem;
   flex-shrink: 0;
   background-color: var(--background-color-interactive-subtle);
   border: 1px solid var(--border-color-subtle);
