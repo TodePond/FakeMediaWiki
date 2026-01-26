@@ -6,104 +6,92 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
-const storageKey1 = "searchQueryFeed1";
-const storageKey2 = "searchQueryFeed2";
-const storageKey3 = "searchQueryFeed3";
-const storageKey4 = "searchQueryFeed4";
-const storageKey5 = "searchQueryFeed5";
-const storageKey6 = "searchQueryFeed6";
-const searchQuery1 = ref(sessionStorage.getItem(storageKey1) ?? "Wikipedia");
-const searchQuery2 = ref(sessionStorage.getItem(storageKey2) ?? "Life");
-const searchQuery3 = ref(sessionStorage.getItem(storageKey3) ?? "Water");
-const searchQuery4 = ref(sessionStorage.getItem(storageKey4) ?? "Samwalton9");
-const searchQuery5 = ref(sessionStorage.getItem(storageKey5) ?? "GearsDatapack");
-const searchQuery6 = ref(sessionStorage.getItem(storageKey6) ?? "TrademarkedTWOrantula");
+/** @type {[string, string, string]} */
+const pageStorageKeys = ["searchQueryFeed1", "searchQueryFeed2", "searchQueryFeed3"];
+/** @type {[string, string, string]} */
+const userStorageKeys = ["searchQueryFeed4", "searchQueryFeed5", "searchQueryFeed6"];
+/** @type {any} */
+const pageSearchQueries = ref([
+  sessionStorage.getItem(pageStorageKeys[0]) || "Wikipedia",
+  sessionStorage.getItem(pageStorageKeys[1]) || "Life",
+  sessionStorage.getItem(pageStorageKeys[2]) || "Water",
+]);
+/** @type {any} */
+const userSearchQueries = ref([
+  sessionStorage.getItem(userStorageKeys[0]) || "Samwalton9",
+  sessionStorage.getItem(userStorageKeys[1]) || "GearsDatapack",
+  sessionStorage.getItem(userStorageKeys[2]) || "TrademarkedTWOrantula",
+]);
 
 // Store results separately for each page
-const page1Results = ref([]);
-const page2Results = ref([]);
-const page3Results = ref([]);
-const user1Results = ref([]);
-const user2Results = ref([]);
-const user3Results = ref([]);
-const page1Loading = ref(false);
-const page2Loading = ref(false);
-const page3Loading = ref(false);
-const user1Loading = ref(false);
-const user2Loading = ref(false);
-const user3Loading = ref(false);
-const page1Error = ref(null);
-const page2Error = ref(null);
-const page3Error = ref(null);
-const user1Error = ref(null);
-const user2Error = ref(null);
-const user3Error = ref(null);
+/** @type {any} */
+const pageResults = [ref([]), ref([]), ref([])];
+/** @type {any} */
+const userResults = [ref([]), ref([]), ref([])];
+/** @type {any} */
+const pageLoading = [ref(false), ref(false), ref(false)];
+/** @type {any} */
+const userLoading = [ref(false), ref(false), ref(false)];
+/** @type {any} */
+const pageError = [ref(null), ref(null), ref(null)];
+/** @type {any} */
+const userError = [ref(null), ref(null), ref(null)];
 onMounted(search);
 
 function saveSearchQueries() {
-  sessionStorage.setItem(storageKey1, searchQuery1.value);
-  sessionStorage.setItem(storageKey2, searchQuery2.value);
-  sessionStorage.setItem(storageKey3, searchQuery3.value);
-  sessionStorage.setItem(storageKey4, searchQuery4.value);
-  sessionStorage.setItem(storageKey5, searchQuery5.value);
-  sessionStorage.setItem(storageKey6, searchQuery6.value);
+  pageSearchQueries.value.forEach((query, index) => {
+    if (pageStorageKeys[index]) {
+      sessionStorage.setItem(pageStorageKeys[index], query);
+    }
+  });
+  userSearchQueries.value.forEach((query, index) => {
+    if (userStorageKeys[index]) {
+      sessionStorage.setItem(userStorageKeys[index], query);
+    }
+  });
 }
 
 async function search() {
-  const pageNames = [searchQuery1.value, searchQuery2.value, searchQuery3.value].filter(
-    (name) => name.trim() !== "",
-  );
+  const pageNames = pageSearchQueries.value.filter((name) => name.trim() !== "");
 
   if (pageNames.length === 0) {
-    page1Results.value = [];
-    page2Results.value = [];
-    page3Results.value = [];
+    pageResults.forEach((result) => {
+      result.value = [];
+    });
     return;
   }
 
   // Load each page independently
   const loadPromises = [];
-  if (searchQuery1.value.trim()) {
-    loadPromises.push(loadPage(1, searchQuery1.value, page1Results, page1Loading, page1Error));
-  } else {
-    page1Results.value = [];
-    page1Loading.value = false;
-    page1Error.value = null;
+  for (let i = 0; i < pageSearchQueries.value.length; i++) {
+    const query = pageSearchQueries.value[i];
+    const results = pageResults[i];
+    const loading = pageLoading[i];
+    const error = pageError[i];
+    if (query && results && loading && error) {
+      if (query.trim()) {
+        loadPromises.push(loadPage(i + 1, query, results, loading, error));
+      } else {
+        results.value = [];
+        loading.value = false;
+        error.value = null;
+      }
+    }
   }
-  if (searchQuery2.value.trim()) {
-    loadPromises.push(loadPage(2, searchQuery2.value, page2Results, page2Loading, page2Error));
-  } else {
-    page2Results.value = [];
-    page2Loading.value = false;
-    page2Error.value = null;
-  }
-  if (searchQuery3.value.trim()) {
-    loadPromises.push(loadPage(3, searchQuery3.value, page3Results, page3Loading, page3Error));
-  } else {
-    page3Results.value = [];
-    page3Loading.value = false;
-    page3Error.value = null;
-  }
-  if (searchQuery4.value.trim()) {
-    loadPromises.push(loadUser(1, searchQuery4.value, user1Results, user1Loading, user1Error));
-  } else {
-    user1Results.value = [];
-    user1Loading.value = false;
-    user1Error.value = null;
-  }
-  if (searchQuery5.value.trim()) {
-    loadPromises.push(loadUser(2, searchQuery5.value, user2Results, user2Loading, user2Error));
-  } else {
-    user2Results.value = [];
-    user2Loading.value = false;
-    user2Error.value = null;
-  }
-  if (searchQuery6.value.trim()) {
-    loadPromises.push(loadUser(3, searchQuery6.value, user3Results, user3Loading, user3Error));
-  } else {
-    user3Results.value = [];
-    user3Loading.value = false;
-    user3Error.value = null;
+  for (let i = 0; i < userSearchQueries.value.length; i++) {
+    const query = userSearchQueries.value[i];
+    const results = userResults[i];
+    const loading = userLoading[i];
+    const error = userError[i];
+    if (query && results && loading && error) {
+      if (query.trim()) {
+        loadPromises.push(loadUser(i + 1, query, results, loading, error));
+      } else {
+        results.value = [];
+        loading.value = false;
+        error.value = null;
+      }
+    }
   }
 
   await Promise.all(loadPromises);
@@ -221,12 +209,24 @@ async function loadAvatarForRevision(pageNum, revision, resultsRef) {
 const allRevisions = computed(() => {
   /** @type {any[]} */
   const revisions = [];
-  page1Results.value.forEach((revision) => revisions.push(revision));
-  page2Results.value.forEach((revision) => revisions.push(revision));
-  page3Results.value.forEach((revision) => revisions.push(revision));
-  user1Results.value.forEach((revision) => revisions.push(revision));
-  user2Results.value.forEach((revision) => revisions.push(revision));
-  user3Results.value.forEach((revision) => revisions.push(revision));
+  const seenIds = new Set();
+  
+  pageResults.forEach((result) => {
+    result.value.forEach((revision) => {
+      if (revision.id && !seenIds.has(revision.id)) {
+        seenIds.add(revision.id);
+        revisions.push(revision);
+      }
+    });
+  });
+  userResults.forEach((result) => {
+    result.value.forEach((revision) => {
+      if (revision.id && !seenIds.has(revision.id)) {
+        seenIds.add(revision.id);
+        revisions.push(revision);
+      }
+    });
+  });
   // Sort by timestamp (most recent first)
   return revisions.sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
@@ -235,23 +235,19 @@ const allRevisions = computed(() => {
 
 const isAnyLoading = computed(() => {
   return (
-    page1Loading.value ||
-    page2Loading.value ||
-    page3Loading.value ||
-    user1Loading.value ||
-    user2Loading.value ||
-    user3Loading.value
+    pageLoading.some((loading) => loading.value) ||
+    userLoading.some((loading) => loading.value)
   );
 });
 
 const errors = computed(() => {
   const errs = [];
-  if (page1Error.value) errs.push(page1Error.value);
-  if (page2Error.value) errs.push(page2Error.value);
-  if (page3Error.value) errs.push(page3Error.value);
-  if (user1Error.value) errs.push(user1Error.value);
-  if (user2Error.value) errs.push(user2Error.value);
-  if (user3Error.value) errs.push(user3Error.value);
+  pageError.forEach((error) => {
+    if (error.value) errs.push(error.value);
+  });
+  userError.forEach((error) => {
+    if (error.value) errs.push(error.value);
+  });
   return errs;
 });
 
@@ -303,7 +299,7 @@ function getThankUrl(id) {
           <div class="input-group">
             <CdxTextInput
               autocomplete="off"
-              v-model="searchQuery1"
+              v-model="pageSearchQueries[0]"
               input-type="search"
               id="page-name-1"
             />
@@ -311,7 +307,7 @@ function getThankUrl(id) {
           <div class="input-group">
             <CdxTextInput
               autocomplete="off"
-              v-model="searchQuery2"
+              v-model="pageSearchQueries[1]"
               input-type="search"
               id="page-name-2"
             />
@@ -319,7 +315,7 @@ function getThankUrl(id) {
           <div class="input-group">
             <CdxTextInput
               autocomplete="off"
-              v-model="searchQuery3"
+              v-model="pageSearchQueries[2]"
               input-type="search"
               id="page-name-3"
             />
@@ -330,7 +326,7 @@ function getThankUrl(id) {
           <div class="input-group">
             <CdxTextInput
               autocomplete="off"
-              v-model="searchQuery4"
+              v-model="userSearchQueries[0]"
               input-type="search"
               id="user-1"
             />
@@ -338,7 +334,7 @@ function getThankUrl(id) {
           <div class="input-group">
             <CdxTextInput
               autocomplete="off"
-              v-model="searchQuery5"
+              v-model="userSearchQueries[1]"
               input-type="search"
               id="user-2"
             />
@@ -346,7 +342,7 @@ function getThankUrl(id) {
           <div class="input-group">
             <CdxTextInput
               autocomplete="off"
-              v-model="searchQuery6"
+              v-model="userSearchQueries[2]"
               input-type="search"
               id="user-3"
             />
