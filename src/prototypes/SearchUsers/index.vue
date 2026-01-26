@@ -1,11 +1,11 @@
 <script setup>
-import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
+import { CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
-const searchQuery = ref(sessionStorage.getItem("searchUsersQuery") || "");
+const searchQuery = ref(sessionStorage.getItem("searchUsersQuery") || "samwalton");
 /** @type {any} */
 const results = ref([]);
 const isLoading = ref(false);
@@ -23,7 +23,7 @@ const search = async () => {
   error.value = null;
   try {
     const usersWithAvatars = await wiki.searchUsers(searchQuery.value, 20);
-    
+
     if (currentSearchId === searchId) {
       results.value = usersWithAvatars;
       hasSearched.value = true;
