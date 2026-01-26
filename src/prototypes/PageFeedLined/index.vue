@@ -169,7 +169,7 @@ function getThankUrl(id) {
   margin: 0.5rem 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  /* gap: 0.5rem; */
 }
 
 .changes p {
@@ -177,9 +177,10 @@ function getThankUrl(id) {
 }
 
 .change {
-  border: 1px solid var(--border-color-base);
-  padding: 0.25rem 0.6rem;
+  /* border: 1px solid var(--border-color-base); */
+  padding: 0.6rem 0rem;
   display: flex;
+  border-bottom: 0.5px solid var(--border-color-subtle);
 }
 
 .change-body {
@@ -254,7 +255,7 @@ form > span {
   /* font-size: 20rem; */
   /* transform: scale(2); */
   /* transform-origin: bottom right; */
-  margin-right: -0.25rem;
+  margin-right: -0.1rem;
 }
 
 .change footer a {

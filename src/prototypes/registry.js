@@ -6,6 +6,7 @@ import OnThisDay from "./OnThisDay/index.vue";
 import Page from "./Page/index.vue";
 import PageChanges from "./PageChanges/index.vue";
 import PageFeed from "./PageFeed/index.vue";
+import PageFeedLined from "./PageFeedLined/index.vue";
 import PageHtml from "./PageHtml/index.vue";
 import PageMedia from "./PageMedia/index.vue";
 import PageMetadata from "./PageMetadata/index.vue";
@@ -29,6 +30,12 @@ import WikitextTransform from "./WikitextTransform/index.vue";
  * @type {PrototypeDefinition[]}
  */
 export const prototypes = [
+  {
+    id: "PageFeedLined",
+    component: PageFeedLined,
+    wrapper: "Special",
+    pinned: true,
+  },
   {
     id: "PageFeed",
     component: PageFeed,
