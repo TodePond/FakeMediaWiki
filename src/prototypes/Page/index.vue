@@ -9,6 +9,7 @@ const url = ref("");
 const title = ref("");
 const description = ref("");
 const supportingText = ref("");
+/** @type {any} */
 const thumbnail = ref(null);
 const searchQuery = ref(sessionStorage.getItem("pageSearchQuery") || "Wet Leg");
 const isLoading = ref(false);

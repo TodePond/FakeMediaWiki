@@ -150,6 +150,44 @@ export class WikiApi {
   }
 
   /**
+   * Search for users by username
+   * @param {string} query - Search query (username or part of username)
+   * @returns {Promise<Array>} Array of user objects with username, avatar, and page metadata
+   */
+  async searchUsers(query, limit = 20) {
+    // Search for users by prefixing with "User:" if not already present
+    const cleanQuery = query.trim();
+    const searchQuery = cleanQuery.startsWith("User:") ? cleanQuery : `User:${cleanQuery}`;
+
+    // Search for titles matching the query
+    const data = await this.searchTitles(searchQuery, limit * 2); // Get more results to account for filtering
+
+    // Filter to only User namespace pages (exclude subpages like User:Name/Talk)
+    const userPages = (data.pages || []).filter(
+      (page) =>
+        page.title.startsWith("User:") && !page.title.includes("/") && page.title !== "User:",
+    );
+
+    // Limit results after filtering
+    const limitedPages = userPages.slice(0, limit);
+
+    // Fetch avatars for each user
+    const usersWithAvatars = await Promise.all(
+      limitedPages.map(async (page) => {
+        const username = page.title.replace(/^User:/, "");
+        const avatar = await this.getUserAvatar(username);
+        return {
+          ...page,
+          username,
+          avatar: avatar ? { url: avatar } : null,
+        };
+      }),
+    );
+
+    return usersWithAvatars;
+  }
+
+  /**
    * Get page revision history
    * @param {string} pageName - Page title
    * @param {Object} options - Options (limit, older_than, newer_than, etc.)

@@ -14,6 +14,7 @@ import PageSource from "./PageSource/index.vue";
 import RandomPage from "./RandomPage/index.vue";
 import SearchPages from "./SearchPages/index.vue";
 import SearchTitles from "./SearchTitles/index.vue";
+import SearchUsers from "./SearchUsers/index.vue";
 import WikitextTransform from "./WikitextTransform/index.vue";
 
 /**
@@ -55,6 +56,12 @@ export const prototypes = [
   {
     id: "SearchPages",
     component: SearchPages,
+    pinned: false,
+    wrapper: "Special",
+  },
+  {
+    id: "SearchUsers",
+    component: SearchUsers,
     pinned: false,
     wrapper: "Special",
   },
