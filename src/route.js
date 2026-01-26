@@ -19,6 +19,11 @@ const router = createRouter({
       name: "Fullscreen",
       component: () => import("./views/Fullscreen.vue"),
     },
+    {
+      path: "/Tablet/:name",
+      name: "Tablet",
+      component: () => import("./views/TabletView.vue"),
+    },
   ],
 });
 

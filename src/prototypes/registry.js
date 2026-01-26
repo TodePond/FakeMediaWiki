@@ -35,7 +35,7 @@ export const prototypes = [
   {
     id: "CustomPageFeed",
     component: CustomPageFeed,
-    wrapper: "Special",
+    wrapper: "Tablet",
     pinned: true,
   },
   {
