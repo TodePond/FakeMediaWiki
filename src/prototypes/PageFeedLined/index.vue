@@ -1,6 +1,6 @@
 <script setup>
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
-import { cdxIconHeart, cdxIconLinkExternal, cdxIconRobot } from "@wikimedia/codex-icons";
+import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
 
@@ -66,20 +66,18 @@ async function search() {
 }
 
 function formatTimestamp(timestamp) {
-  const date = new Date(timestamp);
-  const dateString = date.toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const timeString = date.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  // ascii bullet point character
-  const bulletPoint = "•";
-  return `${bulletPoint} ${dateString}`;
-  // return `${timeString}, ${dateString}`;
+  return (
+    "• " +
+    wiki.getRelativeTimestamp(timestamp, {
+      seconds: "words",
+      minutes: "minutes",
+      hours: "hours",
+      days: "days",
+      weeks: "date",
+      months: "date",
+      years: "date",
+    })
+  );
 }
 
 function getDeltaClass(delta) {
@@ -147,13 +145,13 @@ function getThankUrl(id) {
           <div v-html="change?.summary?.comment"></div>
         </div>
         <footer>
-          <a
+          <!-- <a
             v-if="change.summary.useThisBot"
             target="_blank"
             :href="getBotUrl(change.summary.useThisBot)"
           >
             <CdxIcon :icon="cdxIconRobot" />
-          </a>
+          </a> -->
           <a target="_blank" :href="getRevisionUrl(change.id)"
             ><CdxIcon :icon="cdxIconLinkExternal"
           /></a>
@@ -287,5 +285,11 @@ form > span {
 .change .wikitable {
   margin: 0.5rem 0;
   font-size: 0.8rem;
+}
+
+.change img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 </style>

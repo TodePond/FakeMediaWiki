@@ -441,6 +441,9 @@ export class WikiApi {
   preprocessEditSummary(summary, pageName) {
     summary = summary.replace(/^\/\* (.*) \*\//, `[[${pageName}#$1|→$1]]`);
     summary = summary.replaceAll("[[Category:", "[[:Category:");
+    if (summary.includes("#IABot")) {
+      summary = `(${summary})`;
+    }
     return summary;
   }
 
@@ -448,5 +451,164 @@ export class WikiApi {
     summary = this.preprocessEditSummary(summary, pageName);
     summary = this.getTableFromToolbarComment(summary);
     return await this.transformWikitextToHtml(summary);
+  }
+
+  /**
+   * Get a relative timestamp string (e.g., "2 minutes ago", "3 days ago")
+   * @param {string|Date} timestamp - ISO timestamp string or Date object
+   * @param {Object} [options] - Formatting options for different time periods
+   * @param {string} [options.seconds] - Format for seconds: "words", "date", or unit name
+   * @param {string} [options.minutes] - Format for minutes: "words", "date", or unit name
+   * @param {string} [options.hours] - Format for hours: "words", "date", or unit name
+   * @param {string} [options.days] - Format for days: "words", "date", or unit name
+   * @param {string} [options.weeks] - Format for weeks: "words", "date", or unit name
+   * @param {string} [options.months] - Format for months: "words", "date", or unit name
+   * @param {string} [options.years] - Format for years: "words", "date", or unit name
+   * @returns {string} Relative time string
+   */
+  getRelativeTimestamp(timestamp, options = {}) {
+    const now = new Date();
+    const past = timestamp instanceof Date ? timestamp : new Date(timestamp);
+
+    // Handle invalid dates
+    if (isNaN(past.getTime())) {
+      return "Invalid date";
+    }
+
+    const diffMs = now.getTime() - past.getTime();
+
+    // Handle future dates
+    if (diffMs < 0) {
+      return "Just now";
+    }
+
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    // Calculate calendar days (timezone-aware)
+    // Create dates at midnight in local timezone to compare calendar days
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const pastDate = new Date(past.getFullYear(), past.getMonth(), past.getDate());
+    const diffDays = Math.floor((nowDate.getTime() - pastDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    const diffWeeks = Math.floor(diffDays / 7);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
+
+    // Helper function to format date as "DD Month YYYY"
+    const formatDate = (date) => {
+      return date.toLocaleDateString("en-GB", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    };
+
+    // Helper function to format a specific unit
+    const formatUnit = (value, unit) => {
+      const unitNames = {
+        seconds: { singular: "second", plural: "seconds" },
+        minutes: { singular: "minute", plural: "minutes" },
+        hours: { singular: "hour", plural: "hours" },
+        days: { singular: "day", plural: "days" },
+        weeks: { singular: "week", plural: "weeks" },
+        months: { singular: "month", plural: "months" },
+        years: { singular: "year", plural: "years" },
+      };
+      const names = unitNames[unit];
+      return `${value} ${value === 1 ? names.singular : names.plural} ago`;
+    };
+
+    // Helper function to get format option for a time period
+    const getFormat = (period) => {
+      return options[period];
+    };
+
+    // Determine which time period we're in and get the appropriate format
+    let currentPeriod;
+    let currentValue;
+
+    if (diffSeconds < 60) {
+      currentPeriod = "seconds";
+      currentValue = diffSeconds;
+    } else if (diffMinutes < 60) {
+      currentPeriod = "minutes";
+      currentValue = diffMinutes;
+    } else if (diffHours < 24) {
+      currentPeriod = "hours";
+      currentValue = diffHours;
+    } else if (diffDays < 7) {
+      currentPeriod = "days";
+      currentValue = diffDays;
+    } else if (diffWeeks < 4) {
+      currentPeriod = "weeks";
+      currentValue = diffWeeks;
+    } else if (diffMonths < 12) {
+      currentPeriod = "months";
+      currentValue = diffMonths;
+    } else {
+      currentPeriod = "years";
+      currentValue = diffYears;
+    }
+
+    // Check if there's a format option for this period
+    const format = getFormat(currentPeriod);
+
+    // Handle "date" format
+    if (format === "date") {
+      return formatDate(past);
+    }
+
+    // Handle "words" format
+    if (format === "words") {
+      if (currentPeriod === "seconds") {
+        return "Just now";
+      } else if (currentPeriod === "minutes") {
+        return "Minutes ago";
+      } else if (currentPeriod === "hours") {
+        return "Hours ago";
+      } else if (currentPeriod === "days") {
+        return "Days ago";
+      } else if (currentPeriod === "weeks") {
+        return "Weeks ago";
+      } else if (currentPeriod === "months") {
+        return "Months ago";
+      } else if (currentPeriod === "years") {
+        return "A long time ago";
+      }
+    }
+
+    // Handle forced unit format (e.g., "days", "hours", etc.)
+    if (
+      format &&
+      ["seconds", "minutes", "hours", "days", "weeks", "months", "years"].includes(format)
+    ) {
+      // Calculate the value for the forced unit
+      let forcedValue;
+      if (format === "seconds") {
+        forcedValue = diffSeconds;
+      } else if (format === "minutes") {
+        forcedValue = diffMinutes;
+      } else if (format === "hours") {
+        forcedValue = diffHours;
+      } else if (format === "days") {
+        forcedValue = diffDays;
+      } else if (format === "weeks") {
+        forcedValue = diffWeeks;
+      } else if (format === "months") {
+        forcedValue = diffMonths;
+      } else if (format === "years") {
+        forcedValue = diffYears;
+      }
+      return formatUnit(forcedValue, format);
+    }
+
+    // Default behavior: return relative timestamp for current period
+    if (currentPeriod === "seconds") {
+      return "Just now";
+    } else {
+      return formatUnit(currentValue, currentPeriod);
+    }
   }
 }

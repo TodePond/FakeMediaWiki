@@ -112,7 +112,7 @@ export const prototypes = [
     id: "PageMedia",
     component: PageMedia,
     wrapper: "Special",
-    pinned: true,
+    pinned: false,
   },
   {
     id: "PageMobileHtml",

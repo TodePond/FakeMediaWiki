@@ -66,20 +66,18 @@ async function search() {
 }
 
 function formatTimestamp(timestamp) {
-  const date = new Date(timestamp);
-  const dateString = date.toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const timeString = date.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  // ascii bullet point character
-  const bulletPoint = "•";
-  return `${bulletPoint} ${dateString}`;
-  // return `${timeString}, ${dateString}`;
+  return (
+    "• " +
+    wiki.getRelativeTimestamp(timestamp, {
+      seconds: "words",
+      minutes: "minutes",
+      hours: "hours",
+      days: "days",
+      weeks: "date",
+      months: "date",
+      years: "date",
+    })
+  );
 }
 
 function getDeltaClass(delta) {
