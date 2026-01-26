@@ -700,7 +700,7 @@ export class WikiApi {
       const currentYear = now.getFullYear();
       const dateYear = date.getFullYear();
       const includeYear = dateYear !== currentYear;
-      
+
       return date.toLocaleDateString("en-GB", {
         year: includeYear ? "numeric" : undefined,
         month: "long",

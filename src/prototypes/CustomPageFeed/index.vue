@@ -12,15 +12,15 @@ const pageStorageKeys = ["searchQueryFeed1", "searchQueryFeed2", "searchQueryFee
 const userStorageKeys = ["searchQueryFeed4", "searchQueryFeed5", "searchQueryFeed6"];
 /** @type {any} */
 const pageSearchQueries = ref([
-  sessionStorage.getItem(pageStorageKeys[0]) || "Wikipedia",
-  sessionStorage.getItem(pageStorageKeys[1]) || "Life",
-  sessionStorage.getItem(pageStorageKeys[2]) || "Water",
+  sessionStorage.getItem(pageStorageKeys[0]) ?? "Wikipedia",
+  sessionStorage.getItem(pageStorageKeys[1]) ?? "Life",
+  sessionStorage.getItem(pageStorageKeys[2]) ?? "Water",
 ]);
 /** @type {any} */
 const userSearchQueries = ref([
-  sessionStorage.getItem(userStorageKeys[0]) || "Samwalton9",
-  sessionStorage.getItem(userStorageKeys[1]) || "GearsDatapack",
-  sessionStorage.getItem(userStorageKeys[2]) || "TrademarkedTWOrantula",
+  sessionStorage.getItem(userStorageKeys[0]) ?? "Samwalton9",
+  sessionStorage.getItem(userStorageKeys[1]) ?? "GearsDatapack",
+  sessionStorage.getItem(userStorageKeys[2]) ?? "TrademarkedTWOrantula",
 ]);
 
 // Store results separately for each page
@@ -52,15 +52,6 @@ function saveSearchQueries() {
 }
 
 async function search() {
-  const pageNames = pageSearchQueries.value.filter((name) => name.trim() !== "");
-
-  if (pageNames.length === 0) {
-    pageResults.forEach((result) => {
-      result.value = [];
-    });
-    return;
-  }
-
   // Load each page independently
   const loadPromises = [];
   for (let i = 0; i < pageSearchQueries.value.length; i++) {
@@ -68,7 +59,12 @@ async function search() {
     const results = pageResults[i];
     const loading = pageLoading[i];
     const error = pageError[i];
-    if (query && results && loading && error) {
+    if (
+      query !== undefined &&
+      results !== undefined &&
+      loading !== undefined &&
+      error !== undefined
+    ) {
       if (query.trim()) {
         loadPromises.push(loadPage(i + 1, query, results, loading, error));
       } else {
@@ -83,7 +79,12 @@ async function search() {
     const results = userResults[i];
     const loading = userLoading[i];
     const error = userError[i];
-    if (query && results && loading && error) {
+    if (
+      query !== undefined &&
+      results !== undefined &&
+      loading !== undefined &&
+      error !== undefined
+    ) {
       if (query.trim()) {
         loadPromises.push(loadUser(i + 1, query, results, loading, error));
       } else {
@@ -210,7 +211,7 @@ const allRevisions = computed(() => {
   /** @type {any[]} */
   const revisions = [];
   const seenIds = new Set();
-  
+
   pageResults.forEach((result) => {
     result.value.forEach((revision) => {
       if (revision.id && !seenIds.has(revision.id)) {
@@ -235,8 +236,7 @@ const allRevisions = computed(() => {
 
 const isAnyLoading = computed(() => {
   return (
-    pageLoading.some((loading) => loading.value) ||
-    userLoading.some((loading) => loading.value)
+    pageLoading.some((loading) => loading.value) || userLoading.some((loading) => loading.value)
   );
 });
 
