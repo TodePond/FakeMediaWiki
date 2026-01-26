@@ -2,6 +2,7 @@ import Card from "./Card/index.vue";
 import Counter from "./Counter/index.vue";
 import FeaturedPage from "./FeaturedPage/index.vue";
 import HelloWorld from "./HelloWorld/index.vue";
+import MultiPageFeed from "./MultiPageFeed/index.vue";
 import OnThisDay from "./OnThisDay/index.vue";
 import Page from "./Page/index.vue";
 import PageChanges from "./PageChanges/index.vue";
@@ -30,6 +31,12 @@ import WikitextTransform from "./WikitextTransform/index.vue";
  * @type {PrototypeDefinition[]}
  */
 export const prototypes = [
+  {
+    id: "MultiPageFeed",
+    component: MultiPageFeed,
+    wrapper: "Special",
+    pinned: true,
+  },
   {
     id: "PageFeedLined",
     component: PageFeedLined,

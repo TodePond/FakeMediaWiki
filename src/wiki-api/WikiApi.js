@@ -496,10 +496,14 @@ export class WikiApi {
     const diffMonths = Math.floor(diffDays / 30);
     const diffYears = Math.floor(diffDays / 365);
 
-    // Helper function to format date as "DD Month YYYY"
+    // Helper function to format date as "DD Month YYYY" (or "DD Month" if same year)
     const formatDate = (date) => {
+      const currentYear = now.getFullYear();
+      const dateYear = date.getFullYear();
+      const includeYear = dateYear !== currentYear;
+      
       return date.toLocaleDateString("en-GB", {
-        year: "numeric",
+        year: includeYear ? "numeric" : undefined,
         month: "long",
         day: "numeric",
       });
