@@ -1,6 +1,7 @@
 import Card from "./Card/index.vue";
 import Counter from "./Counter/index.vue";
 import CustomPageFeed from "./CustomPageFeed/index.vue";
+import CustomThumbnailFeed from "./CustomThumbnailFeed/index.vue";
 import FeaturedPage from "./FeaturedPage/index.vue";
 import HelloWorld from "./HelloWorld/index.vue";
 import MultiPageFeed from "./MultiPageFeed/index.vue";
@@ -35,6 +36,12 @@ export const prototypes = [
   {
     id: "CustomPageFeed",
     component: CustomPageFeed,
+    wrapper: "Tablet",
+    pinned: true,
+  },
+  {
+    id: "CustomThumbnailFeed",
+    component: CustomThumbnailFeed,
     wrapper: "Tablet",
     pinned: true,
   },

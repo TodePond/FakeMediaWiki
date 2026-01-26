@@ -480,7 +480,25 @@ export class WikiApi {
    */
   async getPageThumbnail(pageName) {
     try {
-      const summary = await this.getPageSummary(pageName);
+      // For User talk pages, get the user avatar instead
+      if (pageName.startsWith("User talk:")) {
+        const userName = pageName.substring(10); // Remove "User talk:" prefix
+        return await this.getUserAvatar(userName);
+      }
+
+      // For User pages, get the user avatar instead
+      if (pageName.startsWith("User:")) {
+        const userName = pageName.substring(5); // Remove "User:" prefix
+        return await this.getUserAvatar(userName);
+      }
+
+      // For Talk pages, get the thumbnail from the main page
+      let targetPageName = pageName;
+      if (pageName.startsWith("Talk:")) {
+        targetPageName = pageName.substring(5); // Remove "Talk:" prefix
+      }
+
+      const summary = await this.getPageSummary(targetPageName);
       if (summary.thumbnail) {
         const thumb = summary.thumbnail;
         return thumb.source || thumb.url || null;

@@ -1,6 +1,6 @@
 <script setup>
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
-import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons";
+import { cdxIconArticle, cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons";
 import { computed, onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
 
@@ -106,7 +106,7 @@ async function loadUser(userNum, userName, resultsRef, loadingRef, errorRef) {
   try {
     const _history = await wiki.getUserHistory(userName, { limit: 5 });
 
-    // Process revisions - but don't await avatar loading
+    // Process revisions - but don't await thumbnail loading
     const processedRevisions = await Promise.all(
       _history.revisions.map(async (revision) => {
         const pageName = revision.pageName || revision.title || "";
@@ -119,8 +119,8 @@ async function loadUser(userNum, userName, resultsRef, loadingRef, errorRef) {
         summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
         revision.summary = summary;
         revision.pageName = pageName;
-        // Don't await avatar - load it asynchronously
-        revision.avatarUrl = null; // Will be loaded separately
+        // Don't await thumbnail - load it asynchronously
+        revision.thumbnailUrl = null; // Will be loaded separately
         return revision;
       }),
     );
@@ -129,9 +129,9 @@ async function loadUser(userNum, userName, resultsRef, loadingRef, errorRef) {
     resultsRef.value = processedRevisions;
     loadingRef.value = false;
 
-    // Load avatars asynchronously - don't block UI
+    // Load thumbnails asynchronously - don't block UI
     processedRevisions.forEach((revision) => {
-      loadAvatarForRevision(userNum, revision, resultsRef);
+      loadThumbnailForRevision(userNum, revision, resultsRef);
     });
   } catch (/** @type {any} */ e) {
     loadingRef.value = false;
@@ -151,7 +151,7 @@ async function loadPage(pageNum, pageName, resultsRef, loadingRef, errorRef) {
   try {
     const _history = await wiki.getPageHistory(pageName, { limit: 5 });
 
-    // Process revisions - but don't await avatar loading
+    // Process revisions - but don't await thumbnail loading
     const processedRevisions = await Promise.all(
       _history.revisions.map(async (revision) => {
         const _summary = wiki.preprocessEditSummary(revision.comment, pageName);
@@ -163,8 +163,8 @@ async function loadPage(pageNum, pageName, resultsRef, loadingRef, errorRef) {
         summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
         revision.summary = summary;
         revision.pageName = pageName;
-        // Don't await avatar - load it asynchronously
-        revision.avatarUrl = null; // Will be loaded separately
+        // Don't await thumbnail - load it asynchronously
+        revision.thumbnailUrl = null; // Will be loaded separately
         return revision;
       }),
     );
@@ -173,9 +173,9 @@ async function loadPage(pageNum, pageName, resultsRef, loadingRef, errorRef) {
     resultsRef.value = processedRevisions;
     loadingRef.value = false;
 
-    // Load avatars asynchronously - don't block UI
+    // Load thumbnails asynchronously - don't block UI
     processedRevisions.forEach((revision) => {
-      loadAvatarForRevision(pageNum, revision, resultsRef);
+      loadThumbnailForRevision(pageNum, revision, resultsRef);
     });
   } catch (/** @type {any} */ e) {
     loadingRef.value = false;
@@ -188,20 +188,20 @@ async function loadPage(pageNum, pageName, resultsRef, loadingRef, errorRef) {
   }
 }
 
-// Load avatar asynchronously and update the revision
-async function loadAvatarForRevision(pageNum, revision, resultsRef) {
+// Load thumbnail asynchronously and update the revision
+async function loadThumbnailForRevision(pageNum, revision, resultsRef) {
   try {
-    const avatarUrl = await wiki.getUserAvatar(revision.user.name);
+    const thumbnailUrl = await wiki.getPageThumbnail(revision.pageName);
     // Update the revision in the results array
     const revIndex = resultsRef.value.findIndex((r) => r.id === revision.id);
     if (revIndex !== -1) {
-      resultsRef.value[revIndex].avatarUrl = avatarUrl;
+      resultsRef.value[revIndex].thumbnailUrl = thumbnailUrl;
       // Trigger reactivity by reassigning
       resultsRef.value = [...resultsRef.value];
     }
   } catch (e) {
-    console.error("Failed to load avatar", e);
-    // Avatar will remain null, placeholder will show
+    console.error("Failed to load thumbnail", e);
+    // Thumbnail will remain null, placeholder will show
   }
 }
 
@@ -364,16 +364,24 @@ function getThankUrl(id) {
         v-for="change in allRevisions"
         :key="`${change.pageName}-${change.timestamp}`"
       >
-        <a target="_blank" :href="getUserUrl(change.user.name)">
-          <img
-            v-if="change.avatarUrl"
-            class="change-avatar"
-            :src="change.avatarUrl"
-            :alt="`Avatar for ${change.user.name}`"
+        <a target="_blank" :href="getPageUrl(change.pageName)"
+          ><img
+            v-if="change.thumbnailUrl"
+            class="change-thumbnail"
+            :src="change.thumbnailUrl"
+            :alt="`Thumbnail for ${change.pageName}`"
           />
-          <div v-else class="change-avatar-placeholder"></div>
+          <div v-else class="change-thumbnail-placeholder">
+            <CdxIcon :icon="cdxIconArticle" />
+          </div>
         </a>
+
         <div class="change-body">
+          <span class="change-page-name-and-delta">
+            <a target="_blank" :href="getPageUrl(change.pageName)" class="change-page-name">
+              {{ change.pageName }} </a
+            >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
+          </span>
           <span class="change-header">
             <a class="change-user-name" target="_blank" :href="getUserUrl(change.user.name)">
               <strong>{{ change.user.name }}</strong>
@@ -383,11 +391,6 @@ function getThankUrl(id) {
               <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
             </span>
           </span>
-          <span class="change-page-name-and-delta">
-            <a target="_blank" :href="getPageUrl(change.pageName)" class="change-page-name">
-              {{ change.pageName }} </a
-            >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
-          </span>
           <span class="change-timestamp">
             <a target="_blank" :href="getRevisionUrl(change.id, change.pageName)">{{
               formatTimestamp(change.timestamp)
@@ -395,6 +398,7 @@ function getThankUrl(id) {
           </span>
           <div class="change-comment" v-html="change?.summary?.comment"></div>
         </div>
+
         <footer>
           <a target="_blank" :href="getRevisionUrl(change.id, change.pageName)">
             <CdxIcon :icon="cdxIconLinkExternal" />
@@ -524,6 +528,7 @@ form footer {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  margin-top: -0.2rem;
 }
 
 .change-user-name {
@@ -537,7 +542,7 @@ form footer {
 .change-suggested-by {
   color: var(--color-subtle);
   display: block;
-  margin-top: -0.2rem;
+  margin-top: -0.1rem;
 }
 
 .change-comment {
@@ -548,7 +553,7 @@ form footer {
 .change-timestamp {
   color: var(--color-subtle);
   font-size: 0.8rem;
-  margin-top: -0.3rem;
+  margin-top: -0.2rem;
 }
 
 .change-timestamp a {
@@ -559,23 +564,29 @@ form footer {
   margin-top: -0.3rem;
 }
 
-.change-avatar {
+.change-thumbnail {
   width: 3rem;
   height: 3rem;
-  border-radius: 50%;
+  border-radius: 2px;
   object-fit: cover;
-  /* margin-right: 0.5rem; */
   flex-shrink: 0;
 }
 
-.change-avatar-placeholder {
+.change-thumbnail-placeholder {
   width: 3rem;
   height: 3rem;
-  border-radius: 50%;
-  margin-right: 0.5rem;
+  border-radius: 2px;
   flex-shrink: 0;
   background-color: var(--background-color-interactive-subtle);
   border: 1px solid var(--border-color-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.change-thumbnail-placeholder .cdx-icon {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .change footer {
@@ -630,5 +641,9 @@ form footer {
   width: 100%;
   height: auto;
   object-fit: contain;
+}
+
+.change-thumbnail-placeholder .cdx-icon svg {
+  color: var(--color-icon-notice);
 }
 </style>
