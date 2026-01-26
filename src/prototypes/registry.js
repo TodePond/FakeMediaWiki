@@ -1,5 +1,6 @@
 import Card from "./Card/index.vue";
 import Counter from "./Counter/index.vue";
+import CustomPageFeed from "./CustomPageFeed/index.vue";
 import FeaturedPage from "./FeaturedPage/index.vue";
 import HelloWorld from "./HelloWorld/index.vue";
 import MultiPageFeed from "./MultiPageFeed/index.vue";
@@ -31,6 +32,12 @@ import WikitextTransform from "./WikitextTransform/index.vue";
  * @type {PrototypeDefinition[]}
  */
 export const prototypes = [
+  {
+    id: "CustomPageFeed",
+    component: CustomPageFeed,
+    wrapper: "Special",
+    pinned: true,
+  },
   {
     id: "MultiPageFeed",
     component: MultiPageFeed,
