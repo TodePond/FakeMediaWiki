@@ -32,3 +32,6 @@ coverage
 
 # Vitest
 __screenshots__/
+
+# Generated entry points
+entry-points/
