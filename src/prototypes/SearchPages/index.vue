@@ -34,9 +34,6 @@ function saveSearchQuery(query: string): void {
   sessionStorage.setItem("searchPagesQuery", query);
 }
 
-const getPageUrl = (title: string): string => {
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
-};
 
 onMounted(() => {
   if (searchQuery.value) {
@@ -66,7 +63,7 @@ onMounted(() => {
     <div v-if="results.length > 0" class="results">
       <p class="results-count">{{ results.length }} results</p>
       <div class="results-list">
-        <CdxCard v-for="page in results" :key="page.key" :url="getPageUrl(page.title)">
+        <CdxCard v-for="page in results" :key="page.key" :url="wiki.getPageUrl(page.title)">
           <template #title>{{ page.title }}</template>
           <template #description v-if="page.description">{{ page.description }}</template>
           <template #supporting-text v-if="page.excerpt">

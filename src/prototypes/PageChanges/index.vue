@@ -86,17 +86,6 @@ function getDeltaClass(delta: number): string {
   }
 }
 
-function getUserUrl(user: { name: string }): string {
-  return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(user.name)}`;
-}
-
-function getRevisionUrl(id: number): string {
-  return `https://en.wikipedia.org/w/index.php?title=${searchQuery.value}&diff=${id}`;
-}
-
-function getThankUrl(id: number): string {
-  return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
-}
 </script>
 
 <template>
@@ -115,7 +104,7 @@ function getThankUrl(id: number): string {
       <div class="change" v-for="change in history.revisions" :key="change.timestamp">
         <div v-html="change.html"></div>
         <p>
-          <a :href="getUserUrl(change.user)">
+          <a :href="wiki.getUserUrl(change.user.name)">
             <strong>{{ change.user.name }}</strong> </a
           >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
         </p>
@@ -123,9 +112,9 @@ function getThankUrl(id: number): string {
           <span>{{ formatTimestamp(change.timestamp) }}</span>
         </p>
         <footer>
-          <a target="_blank" :href="getRevisionUrl(change.id)">View change</a>
+          <a target="_blank" :href="wiki.getRevisionUrl(change.id, searchQuery)">View change</a>
           <span>|</span>
-          <a target="_blank" :href="getThankUrl(change.id)">Give thanks</a>
+          <a target="_blank" :href="wiki.getThankUrl(change.id)">Give thanks</a>
         </footer>
       </div>
     </section>

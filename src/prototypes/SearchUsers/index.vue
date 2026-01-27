@@ -41,9 +41,6 @@ const search = async (): Promise<void> => {
   }
 };
 
-const getUserUrl = (username: string): string => {
-  return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(username)}`;
-};
 
 onMounted(() => {
   if (searchQuery.value) {
@@ -75,7 +72,7 @@ onMounted(() => {
         <CdxCard
           v-for="user in results"
           :key="user.key"
-          :url="getUserUrl(user.username)"
+          :url="wiki.getUserUrl(user.username)"
           :thumbnail="user.avatar"
         >
           <template #title>{{ user.username }}</template>

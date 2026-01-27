@@ -42,7 +42,7 @@ const loadContent = async (): Promise<void> => {
 };
 
 const getEventPageUrl = (event: { pages?: Array<{ title: string }> }): string => {
-  return getPageUrl(event.pages?.[0]?.title || "");
+  return wiki.getPageUrl(event.pages?.[0]?.title || "");
 };
 
 const getTodayDate = (): string => {
@@ -56,9 +56,6 @@ onMounted(() => {
   loadContent();
 });
 
-const getPageUrl = (title: string): string => {
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
-};
 </script>
 
 <template>

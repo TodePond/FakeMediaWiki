@@ -2,20 +2,7 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { cdxIconArticle, cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons";
 import { computed, onMounted, ref, type Ref } from "vue";
-import { WikiApi } from "../../wiki-api/WikiApi";
-
-interface Revision {
-  id: number;
-  timestamp: string;
-  user: { name: string };
-  delta: number;
-  comment: string;
-  summary?: { comment?: string; suggestedBy?: string; hashtags?: string; useThisBot?: string };
-  avatarUrl?: string | null;
-  pageName?: string;
-  title?: string;
-  thumbnailUrl?: string | null;
-}
+import { WikiApi, type Revision } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
@@ -308,21 +295,6 @@ function getDeltaClass(delta: number): string {
   }
 }
 
-function getUserUrl(userName: string): string {
-  return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(userName)}`;
-}
-
-function getRevisionUrl(id: number, pageName: string): string {
-  return `https://en.wikipedia.org/w/index.php?title=${pageName}&diff=${id}`;
-}
-
-function getPageUrl(pageName: string): string {
-  return `https://en.wikipedia.org/wiki/${pageName}`;
-}
-
-function getThankUrl(id: number): string {
-  return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
-}
 </script>
 
 <template>
@@ -399,7 +371,7 @@ function getThankUrl(id: number): string {
         v-for="change in allRevisions"
         :key="`${change.pageName}-${change.timestamp}`"
       >
-        <a v-if="change.pageName" target="_blank" :href="getPageUrl(change.pageName)"
+        <a v-if="change.pageName" target="_blank" :href="wiki.getPageUrl(change.pageName)"
           ><img
             v-if="change.thumbnailUrl"
             class="change-thumbnail"
@@ -413,21 +385,21 @@ function getThankUrl(id: number): string {
 
         <div class="change-body">
           <span class="change-page-name-and-delta">
-            <a v-if="change.pageName" target="_blank" :href="getPageUrl(change.pageName)" class="change-page-name">
+            <a v-if="change.pageName" target="_blank" :href="wiki.getPageUrl(change.pageName)" class="change-page-name">
               {{ change.pageName }} </a
             >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
           </span>
           <span class="change-header">
-            <a class="change-user-name" target="_blank" :href="getUserUrl(change.user.name)">
+            <a class="change-user-name" target="_blank" :href="wiki.getUserUrl(change.user.name)">
               <strong>{{ change.user.name }}</strong>
             </a>
             <span class="change-suggested-by" v-if="change.summary?.suggestedBy">
               &nbsp;suggested by
-              <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
+              <a :href="wiki.getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
             </span>
           </span>
           <span class="change-timestamp">
-            <a v-if="change.pageName" target="_blank" :href="getRevisionUrl(change.id, change.pageName)">{{
+            <a v-if="change.pageName" target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName)">{{
               formatTimestamp(change.timestamp)
             }}</a>
           </span>
@@ -435,10 +407,10 @@ function getThankUrl(id: number): string {
         </div>
 
         <footer>
-          <a v-if="change.pageName" target="_blank" :href="getRevisionUrl(change.id, change.pageName)">
+          <a v-if="change.pageName" target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName)">
             <CdxIcon :icon="cdxIconLinkExternal" />
           </a>
-          <a target="_blank" :href="getThankUrl(change.id)">
+          <a target="_blank" :href="wiki.getThankUrl(change.id)">
             <CdxIcon :icon="cdxIconHeart" />
           </a>
         </footer>

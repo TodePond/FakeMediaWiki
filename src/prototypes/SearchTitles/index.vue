@@ -34,9 +34,6 @@ const search = async (): Promise<void> => {
   }
 };
 
-const getPageUrl = (title: string): string => {
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
-};
 
 const getThumbnail = (thumbnail: unknown): { url: string } | undefined => {
   return thumbnail as { url: string } | undefined;
@@ -72,7 +69,7 @@ onMounted(() => {
         <CdxCard
           v-for="page in results"
           :key="page.key"
-          :url="getPageUrl(page.title)"
+          :url="wiki.getPageUrl(page.title)"
           :thumbnail="getThumbnail(page.thumbnail)"
         >
           <template #title>{{ page.title }}</template>

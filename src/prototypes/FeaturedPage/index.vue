@@ -41,9 +41,6 @@ onMounted(() => {
   loadFeatured();
 });
 
-const getPageUrl = (title: string): string => {
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
-};
 </script>
 
 <template>
@@ -60,7 +57,7 @@ const getPageUrl = (title: string): string => {
     <CdxCard
       v-if="featuredPage && featuredPage.tfa"
       :thumbnail="getThumbnailUrl() ? { url: getThumbnailUrl()! } : null"
-      :url="getPageUrl(featuredPage.tfa.title)"
+      :url="wiki.getPageUrl(featuredPage.tfa.title)"
     >
       <template #title>{{ featuredPage.tfa.title }}</template>
       <template #description v-if="featuredPage.tfa.description">

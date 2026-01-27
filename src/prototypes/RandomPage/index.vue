@@ -28,7 +28,7 @@ const getRandom = async (): Promise<void> => {
 const getPageUrl = (): string => {
   const pageTitle =
     typeof randomPage.value === "string" ? randomPage.value : randomPage.value?.title || "";
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}`;
+  return wiki.getPageUrl(pageTitle);
 };
 </script>
 

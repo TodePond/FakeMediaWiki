@@ -105,17 +105,6 @@ function getBotUrl(useThisBot: string | null | undefined): string {
   return `https://en.wikipedia.org/wiki/${path}`;
 }
 
-function getUserUrl(userName: string): string {
-  return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(userName)}`;
-}
-
-function getRevisionUrl(id: number): string {
-  return `https://en.wikipedia.org/w/index.php?title=${searchQuery.value}&diff=${id}`;
-}
-
-function getThankUrl(id: number): string {
-  return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
-}
 </script>
 
 <template>
@@ -136,7 +125,7 @@ function getThankUrl(id: number): string {
         <div v-else class="change-avatar-placeholder"></div>
         <div class="change-body">
           <span class="change-header">
-            <a target="_blank" :href="getUserUrl(change.user.name)">
+            <a target="_blank" :href="wiki.getUserUrl(change.user.name)">
               <strong>{{ change.user.name }}</strong>
             </a>
             <span class="change-timestamp">&nbsp;{{ formatTimestamp(change.timestamp) }}</span>
@@ -144,7 +133,7 @@ function getThankUrl(id: number): string {
           </span>
           <span class="change-suggested-by" v-if="change.summary?.suggestedBy">
             Suggested by
-            <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
+            <a :href="wiki.getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
           </span>
           <span :class="getDeltaClass(change.delta)">{{ change.delta }} </span>
           <div v-html="change?.summary?.comment"></div>
@@ -157,10 +146,10 @@ function getThankUrl(id: number): string {
           >
             <CdxIcon :icon="cdxIconRobot" />
           </a>
-          <a target="_blank" :href="getRevisionUrl(change.id)"
+          <a target="_blank" :href="wiki.getRevisionUrl(change.id, searchQuery)"
             ><CdxIcon :icon="cdxIconLinkExternal"
           /></a>
-          <a target="_blank" :href="getThankUrl(change.id)"><CdxIcon :icon="cdxIconHeart" /></a>
+          <a target="_blank" :href="wiki.getThankUrl(change.id)"><CdxIcon :icon="cdxIconHeart" /></a>
         </footer>
       </div>
     </section>

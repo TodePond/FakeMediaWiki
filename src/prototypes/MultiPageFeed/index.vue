@@ -112,21 +112,6 @@ function getDeltaClass(delta: number): string {
 
 // getBotUrl function removed - unused
 
-function getUserUrl(userName: string): string {
-  return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(userName)}`;
-}
-
-function getRevisionUrl(id: number, pageName: string): string {
-  return `https://en.wikipedia.org/w/index.php?title=${pageName}&diff=${id}`;
-}
-
-function getPageUrl(pageName: string): string {
-  return `https://en.wikipedia.org/wiki/${pageName}`;
-}
-
-function getThankUrl(id: number): string {
-  return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
-}
 </script>
 
 <template>
@@ -180,34 +165,34 @@ function getThankUrl(id: number): string {
         <div v-else class="change-avatar-placeholder"></div>
         <div class="change-body">
           <span class="change-header">
-            <a target="_blank" :href="getUserUrl(change.user.name)">
+            <a target="_blank" :href="wiki.getUserUrl(change.user.name)">
               <strong class="change-user-name">{{ change.user.name }}</strong>
             </a>
             <span class="change-suggested-by" v-if="change.summary?.suggestedBy">
               &nbsp;suggested by
-              <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
+              <a :href="wiki.getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
             </span>
             <!-- <span class="change-timestamp">&nbsp;{{ formatTimestamp(change.timestamp) }}</span> -->
             <!-- <br /> -->
           </span>
           <span class="change-page-name-and-delta" v-if="change.pageName">
-            <a target="_blank" :href="getPageUrl(change.pageName)" class="change-page-name">
+            <a target="_blank" :href="wiki.getPageUrl(change.pageName)" class="change-page-name">
               {{ change.pageName }} </a
             >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
           </span>
           <!-- <br /> -->
           <span class="change-timestamp" v-if="change.pageName"
-            ><a target="_blank" :href="getRevisionUrl(change.id, change.pageName)">{{
+            ><a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName)">{{
               formatTimestamp(change.timestamp)
             }}</a></span
           >
           <div class="change-comment" v-html="change?.summary?.comment"></div>
         </div>
         <footer>
-          <a v-if="change.pageName" target="_blank" :href="getRevisionUrl(change.id, change.pageName)"
+          <a v-if="change.pageName" target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName)"
             ><CdxIcon :icon="cdxIconLinkExternal"
           /></a>
-          <a target="_blank" :href="getThankUrl(change.id)"><CdxIcon :icon="cdxIconHeart" /></a>
+          <a target="_blank" :href="wiki.getThankUrl(change.id)"><CdxIcon :icon="cdxIconHeart" /></a>
         </footer>
       </div>
     </section>

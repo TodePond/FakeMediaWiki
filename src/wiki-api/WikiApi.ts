@@ -48,6 +48,25 @@ interface RelativeTimestampOptions {
   years?: TimestampFormat;
 }
 
+export interface Revision {
+  id: number;
+  timestamp: string;
+  user: { name: string };
+  delta: number;
+  comment: string;
+  summary?: {
+    comment?: string | null;
+    suggestedBy?: string | null;
+    hashtags?: string[] | string;
+    useThisBot?: string | null;
+    reportBugs?: string | null;
+  };
+  avatarUrl?: string | null;
+  pageName?: string;
+  title?: string;
+  thumbnailUrl?: string | null;
+}
+
 /**
  * Helper for interacting with Wikimedia and MediaWiki REST APIs.
  */
@@ -900,5 +919,42 @@ export class WikiApi {
     } else {
       return formatUnit(currentValue, currentPeriod);
     }
+  }
+
+  /**
+   * Get URL for a user page
+   * @param userName - Username
+   * @returns URL to user page
+   */
+  getUserUrl(userName: string): string {
+    return `${this.base}wiki/User:${encodeURIComponent(userName)}`;
+  }
+
+  /**
+   * Get URL for viewing a revision diff
+   * @param id - Revision ID
+   * @param pageName - Page title
+   * @returns URL to revision diff
+   */
+  getRevisionUrl(id: number, pageName: string): string {
+    return `${this.base}w/index.php?title=${this.encode(pageName)}&diff=${id}`;
+  }
+
+  /**
+   * Get URL for a page
+   * @param pageName - Page title
+   * @returns URL to page
+   */
+  getPageUrl(pageName: string): string {
+    return `${this.base}wiki/${this.encode(pageName)}`;
+  }
+
+  /**
+   * Get URL for thanking a user for a revision
+   * @param id - Revision ID
+   * @returns URL to thank page
+   */
+  getThankUrl(id: number): string {
+    return `${this.base}wiki/Special:Thanks/${id}`;
   }
 }
