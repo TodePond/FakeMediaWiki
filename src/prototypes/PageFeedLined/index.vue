@@ -3,10 +3,12 @@ import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { onMounted, ref } from "vue"
 import { WikiApi, type PageHistoryResponse, type Revision } from "../../wiki-api/WikiApi"
+import "../../wiki-api/style/delta.css"
 
 const wiki = new WikiApi()
+const PROTOTYPE_NAME = "PageFeedLined"
 
-const storageKey = "searchQueryFeed"
+const storageKey = wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")
 const searchQuery = ref(sessionStorage.getItem(storageKey) || "Wikipedia")
 const history = ref<{ revisions?: Revision[] }>({})
 const isLoading = ref(false)
@@ -95,18 +97,6 @@ function formatTimestamp(timestamp: string): string {
 		})
 	)
 }
-
-function getDeltaClass(delta: number): string {
-	if (delta > 0) {
-		return "positive"
-	} else if (delta < 0) {
-		return "negative"
-	} else {
-		return "neutral"
-	}
-}
-
-// getBotUrl function removed - unused
 </script>
 
 <template>
@@ -150,7 +140,9 @@ function getDeltaClass(delta: number): string {
 							change.summary.suggestedBy
 						}}</a>
 					</span>
-					<span :class="getDeltaClass(change.delta ?? 0)">{{ change.delta ?? 0 }} </span>
+					<span :class="wiki.getDeltaClass(change.delta ?? 0)"
+						>{{ change.delta ?? 0 }}
+					</span>
 					<div v-html="change?.summary?.comment"></div>
 				</div>
 				<footer>
@@ -178,7 +170,6 @@ function getDeltaClass(delta: number): string {
 	margin: 0.5rem 0;
 	display: flex;
 	flex-direction: column;
-	/* gap: 0.5rem; */
 }
 
 .changes p {
@@ -186,7 +177,6 @@ function getDeltaClass(delta: number): string {
 }
 
 .change {
-	/* border: 1px solid var(--border-color-base); */
 	padding: 0.6rem 0rem;
 	display: flex;
 	border-bottom: 0.5px solid var(--border-color-subtle);
@@ -194,26 +184,6 @@ function getDeltaClass(delta: number): string {
 
 .change-body {
 	flex: 1;
-}
-
-.positive {
-	color: var(--color-content-added);
-}
-
-.positive::before {
-	content: "+";
-}
-
-.negative {
-	color: var(--color-content-removed);
-}
-
-.neutral {
-	color: var(--color-base);
-}
-
-.neutral::before {
-	content: "±";
 }
 
 .cdx-text-input {
@@ -231,7 +201,6 @@ form > span {
 
 .change-header {
 	display: flex;
-	/* gap: 0.25rem; */
 	flex-wrap: wrap;
 	align-items: baseline;
 }
@@ -264,14 +233,8 @@ form > span {
 
 .change footer {
 	display: flex;
-	/* gap: 0.5rem; */
-	/* justify-content: flex-end; */
-	/* flex-direction: column; */
 	flex-wrap: wrap;
 	row-gap: 0px;
-	/* font-size: 20rem; */
-	/* transform: scale(2); */
-	/* transform-origin: bottom right; */
 	margin-right: -0.1rem;
 }
 

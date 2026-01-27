@@ -2,10 +2,14 @@
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi, type PageHistoryResponse, type PageHistoryRevision } from "../../wiki-api/WikiApi"
+import "../../wiki-api/style/delta.css"
 
 const wiki = new WikiApi()
+const PROTOTYPE_NAME = "PageChanges"
 
-const searchQuery = ref(sessionStorage.getItem("searchQuery") || "Wet Leg")
+const searchQuery = ref(
+	sessionStorage.getItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")) || "Wet Leg"
+)
 const history = ref<{
 	revisions?: Array<PageHistoryRevision & { html?: string }>
 }>({})
@@ -15,7 +19,7 @@ const error = ref<string | null>(null)
 onMounted(search)
 
 function saveSearchQuery(query: string): void {
-	sessionStorage.setItem("searchQuery", query)
+	sessionStorage.setItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery"), query)
 }
 
 // If a comment begins with a /* comment block */
@@ -44,7 +48,6 @@ async function search(): Promise<void> {
 		isLoading.value = false
 		return
 	}
-	console.log(_history)
 	if (_history.revisions) {
 		const processedRevisions = await Promise.all(
 			_history.revisions.map(async revision => {
@@ -79,16 +82,6 @@ function formatTimestamp(timestamp: string): string {
 	})
 	return `${timeString}, ${dateString}`
 }
-
-function getDeltaClass(delta: number): string {
-	if (delta > 0) {
-		return "positive"
-	} else if (delta < 0) {
-		return "negative"
-	} else {
-		return "neutral"
-	}
-}
 </script>
 
 <template>
@@ -114,7 +107,9 @@ function getDeltaClass(delta: number): string {
 				<p>
 					<a :href="wiki.getUserUrl(change.user.name)">
 						<strong>{{ change.user.name }}</strong> </a
-					>&nbsp;<span :class="getDeltaClass(change.delta ?? 0)">{{ change.delta }}</span>
+					>&nbsp;<span :class="wiki.getDeltaClass(change.delta ?? 0)">{{
+						change.delta
+					}}</span>
 				</p>
 				<p>
 					<span>{{ formatTimestamp(change.timestamp) }}</span>
@@ -146,26 +141,6 @@ function getDeltaClass(delta: number): string {
 .change {
 	border: 1px solid var(--border-color-base);
 	padding: 0.25rem 0.6rem;
-}
-
-.positive {
-	color: var(--color-content-added);
-}
-
-.positive::before {
-	content: "+";
-}
-
-.negative {
-	color: var(--color-content-removed);
-}
-
-.neutral {
-	color: var(--color-base);
-}
-
-.neutral::before {
-	content: "±";
 }
 
 .cdx-text-input {

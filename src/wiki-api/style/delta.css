@@ -1,0 +1,24 @@
+/**
+ * Shared styles for delta (change size) indicators.
+ * Used across multiple feed prototypes to show positive/negative/neutral changes.
+ */
+
+.positive {
+	color: var(--color-content-added);
+}
+
+.positive::before {
+	content: "+";
+}
+
+.negative {
+	color: var(--color-content-removed);
+}
+
+.neutral {
+	color: var(--color-base);
+}
+
+.neutral::before {
+	content: "±";
+}

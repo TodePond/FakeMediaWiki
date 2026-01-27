@@ -23,7 +23,6 @@ const search = async (): Promise<void> => {
 		const data = await wiki.searchTitles(searchQuery.value, 20)
 		if (currentSearchId === searchId) {
 			results.value = data.pages || []
-			console.log(results.value)
 		}
 	} catch (err) {
 		const errorObj = err as Error

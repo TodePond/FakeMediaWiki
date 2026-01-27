@@ -16,7 +16,6 @@ const search = async (): Promise<void> => {
 	isLoading.value = true
 	const summary = await wiki.getPageSummary(searchQuery.value)
 	isLoading.value = false
-	console.log(summary)
 
 	url.value = summary.content_urls?.desktop?.page || ""
 	title.value = summary.title || ""

@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref, watch } from "vue"
 import { useRoute } from "vue-router"
-import { prototypeMap } from "../prototypes/registry"
+import { getPrototypeComponent } from "../prototypes/registry"
+import type { Component } from "vue"
 
 const route = useRoute()
 const prototypeName = computed(() => route.params.name as string)
+const PrototypeComponent = ref<Component | undefined>(undefined)
 
-const PrototypeComponent = computed(() => {
-	return prototypeMap.get(prototypeName.value)
-})
+watch(
+	prototypeName,
+	async newName => {
+		PrototypeComponent.value = getPrototypeComponent(newName)
+	},
+	{ immediate: true }
+)
 </script>
 
 <template>

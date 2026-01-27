@@ -16,7 +16,6 @@ const loadPage = async (): Promise<void> => {
 	try {
 		const data = await wiki.getPageMedia(pageName.value)
 		mediaItems.value = data.items || []
-		console.log(mediaItems.value)
 		sessionStorage.setItem("pageMediaQuery", pageName.value)
 	} catch (err) {
 		const errorObj = err as Error

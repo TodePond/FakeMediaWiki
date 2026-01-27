@@ -26,7 +26,6 @@ const search = async (): Promise<void> => {
 		if (currentSearchId === searchId) {
 			results.value = usersWithAvatars
 			hasSearched.value = true
-			console.log(results.value)
 		}
 	} catch (err) {
 		if (currentSearchId === searchId) {

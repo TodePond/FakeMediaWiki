@@ -653,7 +653,11 @@ form footer {
 }
 
 .change-page-name-and-delta {
-	margin-top: -0.3rem;
+	margin-top: -0.2rem;
+}
+
+.change footer {
+	margin-top: -0.4rem;
 }
 
 .change-thumbnail {

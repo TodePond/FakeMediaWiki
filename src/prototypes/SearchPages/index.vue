@@ -19,7 +19,6 @@ const search = async (): Promise<void> => {
 	try {
 		const data = await wiki.searchPages(searchQuery.value, 20)
 		results.value = data.pages || []
-		console.log(results.value)
 		hasSearched.value = true
 	} catch (err) {
 		const errorObj = err as Error

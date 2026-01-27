@@ -2,6 +2,7 @@
 @import "@wikimedia/codex-design-tokens/theme-wikimedia-ui.css";
 @import "./tokens.css";
 @import "./colors.css";
+@import "../wiki-api/style/delta.css";
 
 * {
 	box-sizing: border-box;

@@ -67,6 +67,16 @@ export interface Revision {
 	thumbnailUrl?: string | null
 }
 
+/**
+ * Standardized result type for prototype data.
+ * This provides a consistent structure for storing and managing results across prototypes.
+ */
+export interface Result<T = Revision> {
+	data: T[]
+	loading: boolean
+	error: string | null
+}
+
 export interface UserSearchResult {
 	key?: string
 	title?: string
@@ -1107,5 +1117,58 @@ export class WikiApi {
 		const parts = uploadUrl.split("/")
 		const fileName = parts[parts.length - 2]
 		return `${this.getPageUrl(pageName)}#/media/File:${fileName}`
+	}
+
+	/**
+	 * Generate a storage key for a prototype
+	 * @param prototypeName - Name of the prototype (e.g., "PageFeed", "CustomPageFeed")
+	 * @param keyName - Name of the key (e.g., "searchQuery", "pageName")
+	 * @returns A unique storage key string
+	 */
+	getStorageKey(prototypeName: string, keyName: string): string {
+		return `${prototypeName}_${keyName}`
+	}
+
+	/**
+	 * Generate multiple storage keys for a prototype
+	 * @param prototypeName - Name of the prototype
+	 * @param keyName - Base name of the key
+	 * @param count - Number of keys to generate
+	 * @returns Array of storage keys
+	 */
+	getStorageKeys(prototypeName: string, keyName: string, count: number): string[] {
+		return Array.from({ length: count }, (_, i) =>
+			this.getStorageKey(prototypeName, `${keyName}${i + 1}`)
+		)
+	}
+
+	/**
+	 * Create a new Result instance with default values
+	 * @returns Result instance with empty data, loading false, and no error
+	 */
+	createResult<T = Revision>(): Result<T> {
+		return {
+			data: [],
+			loading: false,
+			error: null,
+		}
+	}
+
+	/**
+	 * Create multiple Result instances
+	 * @param count - Number of results to create
+	 * @returns Array of Result instances
+	 */
+	createResults<T = Revision>(count: number): Result<T>[] {
+		return Array.from({ length: count }, () => this.createResult<T>())
+	}
+
+	/**
+	 * Get CSS class name for delta (change size) indicator
+	 * @param delta - Change size (positive, negative, or zero)
+	 * @returns CSS class name: "positive", "negative", or "neutral"
+	 */
+	getDeltaClass(delta: number): string {
+		return delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral"
 	}
 }

@@ -124,8 +124,6 @@ function getDeltaClass(delta: number): string {
 		return "neutral"
 	}
 }
-
-// getBotUrl function removed - unused
 </script>
 
 <template>
@@ -424,7 +422,7 @@ form > span {
 }
 
 .change img {
-	width: 100%;
+	max-width: 100%;
 	height: auto;
 	object-fit: contain;
 }

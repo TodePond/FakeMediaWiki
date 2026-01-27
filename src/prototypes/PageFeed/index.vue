@@ -3,10 +3,12 @@ import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from
 import { cdxIconHeart, cdxIconLinkExternal, cdxIconRobot } from "@wikimedia/codex-icons"
 import { onMounted, ref } from "vue"
 import { WikiApi, type PageHistoryResponse, type Revision } from "../../wiki-api/WikiApi"
+import "../../wiki-api/style/delta.css"
 
 const wiki = new WikiApi()
+const PROTOTYPE_NAME = "PageFeed"
 
-const storageKey = "searchQueryFeed"
+const storageKey = wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")
 const searchQuery = ref(sessionStorage.getItem(storageKey) || "Wikipedia")
 const history = ref<{ revisions?: Revision[] }>({})
 const isLoading = ref(false)
@@ -96,19 +98,8 @@ function formatTimestamp(timestamp: string): string {
 	)
 }
 
-function getDeltaClass(delta: number): string {
-	if (delta > 0) {
-		return "positive"
-	} else if (delta < 0) {
-		return "negative"
-	} else {
-		return "neutral"
-	}
-}
-
 function getBotUrl(useThisBot: string | null | undefined): string {
 	if (!useThisBot) return "#"
-	console.log(useThisBot)
 	const parts = useThisBot.split("|")
 	const head = parts[0]
 	if (!head) return "#"
@@ -164,7 +155,9 @@ function getBotUrl(useThisBot: string | null | undefined): string {
 							change.summary.suggestedBy
 						}}</a>
 					</span>
-					<span :class="getDeltaClass(change.delta ?? 0)">{{ change.delta ?? 0 }} </span>
+					<span :class="wiki.getDeltaClass(change.delta ?? 0)"
+						>{{ change.delta ?? 0 }}
+					</span>
 					<div v-html="change?.summary?.comment"></div>
 				</div>
 				<footer>
@@ -209,26 +202,6 @@ function getBotUrl(useThisBot: string | null | undefined): string {
 	flex: 1;
 }
 
-.positive {
-	color: var(--color-content-added);
-}
-
-.positive::before {
-	content: "+";
-}
-
-.negative {
-	color: var(--color-content-removed);
-}
-
-.neutral {
-	color: var(--color-base);
-}
-
-.neutral::before {
-	content: "±";
-}
-
 .cdx-text-input {
 	max-width: 100%;
 	min-width: 0;
@@ -244,7 +217,6 @@ form > span {
 
 .change-header {
 	display: flex;
-	/* gap: 0.25rem; */
 	flex-wrap: wrap;
 	align-items: baseline;
 }
@@ -277,14 +249,8 @@ form > span {
 
 .change footer {
 	display: flex;
-	/* gap: 0.5rem; */
-	/* justify-content: flex-end; */
-	/* flex-direction: column; */
 	flex-wrap: wrap;
 	row-gap: 0px;
-	/* font-size: 20rem; */
-	/* transform: scale(2); */
-	/* transform-origin: bottom right; */
 	margin-right: -0.25rem;
 }
 

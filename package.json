@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --fix --cache",
+    "lint": "eslint . --fix --cache && npm run type-check",
     "type-check": "vue-tsc --noEmit",
     "format": "prettier --write src/"
   },
