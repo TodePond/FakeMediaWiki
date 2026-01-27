@@ -1,6 +1,8 @@
 import type { Component } from "vue"
 import { defineAsyncComponent } from "vue"
-import { prototypeMetadata } from "./prototypes"
+import { prototypeMetadata, categories } from "./prototypes"
+
+export { categories }
 
 // Dynamically import all components using Vite's glob import (lazy loading)
 // @ts-ignore - import.meta.glob is a Vite-specific feature
@@ -21,8 +23,11 @@ const asyncComponentCache = new Map<string, Component>()
 
 export interface PrototypeDefinition {
 	id: string
-	componentName: string
-	pinned?: boolean
+	name: string
+	description: string
+	category: string
+	new?: boolean
+	updated?: boolean
 	wrapper?: string
 }
 
@@ -30,7 +35,7 @@ export interface PrototypeDefinition {
  * Build prototypes array from metadata
  */
 export const prototypes: PrototypeDefinition[] = prototypeMetadata.filter(
-	meta => componentLoaderMap[meta.componentName] !== undefined
+	meta => componentLoaderMap[meta.id] !== undefined
 )
 
 /**
@@ -46,7 +51,7 @@ export function getPrototypeComponent(id: string): Component | undefined {
 	if (!prototype) {
 		return undefined
 	}
-	const loader = componentLoaderMap[prototype.componentName]
+	const loader = componentLoaderMap[prototype.id]
 	if (!loader) {
 		return undefined
 	}
@@ -57,10 +62,25 @@ export function getPrototypeComponent(id: string): Component | undefined {
 	return asyncComponent
 }
 
-export function getPinnedPrototypes(): PrototypeDefinition[] {
-	return prototypes.filter(p => p.pinned === true)
-}
-
-export function getUnpinnedPrototypes(): PrototypeDefinition[] {
-	return prototypes.filter(p => !p.pinned)
+/**
+ * Get prototypes grouped by category in the defined order
+ */
+export function getPrototypesByCategory(): Record<string, PrototypeDefinition[]> {
+	const grouped: Record<string, PrototypeDefinition[]> = {}
+	
+	// Initialize all categories from categories array
+	for (const category of categories) {
+		grouped[category.id] = []
+	}
+	
+	// Group prototypes by category
+	for (const prototype of prototypes) {
+		const category = prototype.category
+		if (!grouped[category]) {
+			grouped[category] = []
+		}
+		grouped[category].push(prototype)
+	}
+	
+	return grouped
 }
