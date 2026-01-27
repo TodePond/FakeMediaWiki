@@ -1,34 +1,33 @@
-<script setup>
-import { computed } from "vue";
-import { useRoute } from "vue-router";
-import { prototypeMap } from "../prototypes/registry.js";
+<script setup lang="ts">
+import { computed } from "vue"
+import { useRoute } from "vue-router"
+import { prototypeMap } from "../prototypes/registry"
 
-const route = useRoute();
-/** @type {any} */
-const prototypeName = computed(() => route.params.name);
+const route = useRoute()
+const prototypeName = computed(() => route.params.name as string)
 
 const PrototypeComponent = computed(() => {
-  return prototypeMap.get(prototypeName.value);
-});
+	return prototypeMap.get(prototypeName.value)
+})
 </script>
 
 <template>
-  <main>
-    <component v-if="PrototypeComponent" :is="PrototypeComponent" />
-    <p v-else>Prototype "{{ prototypeName }}" not found</p>
-  </main>
+	<main>
+		<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+		<p v-else>Prototype "{{ prototypeName }}" not found</p>
+	</main>
 </template>
 
 <style scoped>
 main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
 }
 </style>
 
 <style scoped>
 body {
-  max-width: 100%;
+	max-width: 100%;
 }
 </style>
