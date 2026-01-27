@@ -41,9 +41,14 @@ const loadContent = async (): Promise<void> => {
   }
 };
 
+const getEventPageUrl = (event: { pages?: Array<{ title: string }> }): string => {
+  return getPageUrl(event.pages?.[0]?.title || "");
+};
+
 const getTodayDate = (): string => {
   const today = new Date();
-  return today.toISOString().split("T")[0];
+  const dateStr = today.toISOString().split("T")[0];
+  return dateStr || "";
 };
 
 onMounted(() => {
@@ -77,7 +82,7 @@ const getPageUrl = (title: string): string => {
           <CdxCard
             v-for="(event, index) in content.events"
             :key="index"
-            :url="getPageUrl(event.pages[0]?.title || '')"
+            :url="getEventPageUrl(event)"
           >
             <template #title>{{ event.text }}</template>
             <template #description v-if="event.year">Year: {{ event.year }}</template>
@@ -89,7 +94,7 @@ const getPageUrl = (title: string): string => {
           <CdxCard
             v-for="(birth, index) in content.births"
             :key="index"
-            :url="getPageUrl(birth.pages[0]?.title || '')"
+            :url="getEventPageUrl(birth)"
           >
             <template #title>{{ birth.text }}</template>
             <template #description v-if="birth.year">Year: {{ birth.year }}</template>
@@ -101,7 +106,7 @@ const getPageUrl = (title: string): string => {
           <CdxCard
             v-for="(death, index) in content.deaths"
             :key="index"
-            :url="getPageUrl(death.pages[0]?.title || '')"
+            :url="getEventPageUrl(death)"
           >
             <template #title>{{ death.text }}</template>
             <template #description v-if="death.year">Year: {{ death.year }}</template>
@@ -113,7 +118,7 @@ const getPageUrl = (title: string): string => {
           <CdxCard
             v-for="(holiday, index) in content.holidays"
             :key="index"
-            :url="getPageUrl(holiday.pages[0]?.title || '')"
+            :url="getEventPageUrl(holiday)"
           >
             <template #title>{{ holiday.text }}</template>
           </CdxCard>

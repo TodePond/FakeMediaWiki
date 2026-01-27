@@ -301,7 +301,7 @@ async function loadPage(
 
 // Load avatar asynchronously and update the revision
 async function loadAvatarForRevision(
-  pageNum: number,
+  _pageNum: number,
   revision: Revision,
   resultsRef: Ref<Revision[]>,
 ): Promise<void> {
@@ -309,8 +309,8 @@ async function loadAvatarForRevision(
     const avatarUrl = await wiki.getUserAvatar(revision.user.name);
     // Update the revision in the results array
     const revIndex = resultsRef.value.findIndex((r) => r.id === revision.id);
-    if (revIndex !== -1) {
-      resultsRef.value[revIndex].avatarUrl = avatarUrl;
+    if (revIndex !== -1 && resultsRef.value[revIndex]) {
+      resultsRef.value[revIndex]!.avatarUrl = avatarUrl;
       // Trigger reactivity by reassigning
       resultsRef.value = [...resultsRef.value];
     }

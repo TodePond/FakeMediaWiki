@@ -1,15 +1,17 @@
 import type { Component } from "vue";
-import { prototypeMetadata, type PrototypeMetadata } from "./prototypes";
+import { prototypeMetadata } from "./prototypes";
 
 // Dynamically import all components using Vite's glob import
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - import.meta.glob is a Vite-specific feature
 const componentModules = import.meta.glob<{ default: Component }>("./*/index.vue", { eager: true });
 
 // Build component map from glob imports
 // Extract component name from path (e.g., "./Card/index.vue" -> "Card")
-const componentMap: Record<string, Component> = {};
+const componentMap: Record<string, Component | undefined> = {};
 for (const [path, module] of Object.entries(componentModules)) {
   const componentName = path.match(/\.\/([^/]+)\/index\.vue$/)?.[1];
-  if (componentName) {
+  if (componentName && module) {
     componentMap[componentName] = module.default;
   }
 }
@@ -24,12 +26,20 @@ export interface PrototypeDefinition {
 /**
  * Build prototypes array from metadata and component map
  */
-export const prototypes: PrototypeDefinition[] = prototypeMetadata.map((meta) => ({
-  id: meta.id,
-  component: componentMap[meta.componentName],
-  wrapper: meta.wrapper,
-  pinned: meta.pinned,
-}));
+export const prototypes: PrototypeDefinition[] = prototypeMetadata
+  .map((meta) => {
+    const component = componentMap[meta.componentName];
+    if (!component) {
+      return null;
+    }
+    return {
+      id: meta.id,
+      component,
+      wrapper: meta.wrapper,
+      pinned: meta.pinned,
+    } as PrototypeDefinition;
+  })
+  .filter((p): p is PrototypeDefinition => p !== null);
 
 export const prototypeMap = new Map(prototypes.map((p) => [p.id, p.component]));
 

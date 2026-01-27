@@ -56,7 +56,7 @@ function saveSearchQueries(): void {
 
 async function search(): Promise<void> {
   // Load each page independently
-  const loadPromises = [];
+  const loadPromises: Promise<void>[] = [];
   for (let i = 0; i < pageSearchQueries.value.length; i++) {
     const query = pageSearchQueries.value[i];
     const results = pageResults[i];
@@ -125,11 +125,18 @@ async function loadUser(userNum: number, userName: string, resultsRef: Ref<Revis
         summary.comment = summary.comment
           ? await wiki.transformWikitextToHtml(summary.comment, pageName)
           : "";
-        summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
+        summary.hashtags = Array.isArray(summary.hashtags)
+          ? summary.hashtags.join(" ")
+          : summary.hashtags;
         const processedRevision: Revision = {
           ...revision,
           comment: revision.comment || "",
-          summary,
+          summary: {
+            comment: summary.comment ?? undefined,
+            suggestedBy: summary.suggestedBy ?? undefined,
+            hashtags: summary.hashtags,
+            useThisBot: summary.useThisBot ?? undefined,
+          },
           pageName,
           thumbnailUrl: null, // Will be loaded separately
         };
@@ -179,10 +186,17 @@ async function loadPage(pageNum: number, pageName: string, resultsRef: Ref<Revis
         summary.comment = summary.comment
           ? await wiki.transformWikitextToHtml(summary.comment, pageName)
           : "";
-        summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
+        summary.hashtags = Array.isArray(summary.hashtags)
+          ? summary.hashtags.join(" ")
+          : summary.hashtags;
         const processedRevision: Revision = {
           ...revision,
-          summary,
+          summary: {
+            comment: summary.comment ?? undefined,
+            suggestedBy: summary.suggestedBy ?? undefined,
+            hashtags: summary.hashtags,
+            useThisBot: summary.useThisBot ?? undefined,
+          },
           pageName,
           thumbnailUrl: null, // Will be loaded separately
         };
@@ -211,14 +225,14 @@ async function loadPage(pageNum: number, pageName: string, resultsRef: Ref<Revis
 }
 
 // Load thumbnail asynchronously and update the revision
-async function loadThumbnailForRevision(pageNum: number, revision: Revision, resultsRef: Ref<Revision[]>): Promise<void> {
+async function loadThumbnailForRevision(_pageNum: number, revision: Revision, resultsRef: Ref<Revision[]>): Promise<void> {
   try {
     if (!revision.pageName) return;
     const thumbnailUrl = await wiki.getPageThumbnail(revision.pageName);
     // Update the revision in the results array
     const revIndex = resultsRef.value.findIndex((r) => r.id === revision.id);
-    if (revIndex !== -1) {
-      resultsRef.value[revIndex].thumbnailUrl = thumbnailUrl;
+    if (revIndex !== -1 && resultsRef.value[revIndex]) {
+      resultsRef.value[revIndex]!.thumbnailUrl = thumbnailUrl;
       // Trigger reactivity by reassigning
       resultsRef.value = [...resultsRef.value];
     }
@@ -385,7 +399,7 @@ function getThankUrl(id: number): string {
         v-for="change in allRevisions"
         :key="`${change.pageName}-${change.timestamp}`"
       >
-        <a target="_blank" :href="getPageUrl(change.pageName)"
+        <a v-if="change.pageName" target="_blank" :href="getPageUrl(change.pageName)"
           ><img
             v-if="change.thumbnailUrl"
             class="change-thumbnail"
@@ -399,7 +413,7 @@ function getThankUrl(id: number): string {
 
         <div class="change-body">
           <span class="change-page-name-and-delta">
-            <a target="_blank" :href="getPageUrl(change.pageName)" class="change-page-name">
+            <a v-if="change.pageName" target="_blank" :href="getPageUrl(change.pageName)" class="change-page-name">
               {{ change.pageName }} </a
             >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
           </span>
@@ -407,13 +421,13 @@ function getThankUrl(id: number): string {
             <a class="change-user-name" target="_blank" :href="getUserUrl(change.user.name)">
               <strong>{{ change.user.name }}</strong>
             </a>
-            <span class="change-suggested-by" v-if="change.summary.suggestedBy">
+            <span class="change-suggested-by" v-if="change.summary?.suggestedBy">
               &nbsp;suggested by
               <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
             </span>
           </span>
           <span class="change-timestamp">
-            <a target="_blank" :href="getRevisionUrl(change.id, change.pageName)">{{
+            <a v-if="change.pageName" target="_blank" :href="getRevisionUrl(change.id, change.pageName)">{{
               formatTimestamp(change.timestamp)
             }}</a>
           </span>
@@ -421,7 +435,7 @@ function getThankUrl(id: number): string {
         </div>
 
         <footer>
-          <a target="_blank" :href="getRevisionUrl(change.id, change.pageName)">
+          <a v-if="change.pageName" target="_blank" :href="getRevisionUrl(change.id, change.pageName)">
             <CdxIcon :icon="cdxIconLinkExternal" />
           </a>
           <a target="_blank" :href="getThankUrl(change.id)">

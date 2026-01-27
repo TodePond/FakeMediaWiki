@@ -32,11 +32,11 @@ async function search(): Promise<void> {
   try {
     _history = (await wiki.getPageHistory(pageName)) as { revisions?: Array<{ comment: string; html?: string; timestamp: string; user: { name: string }; delta: number; id: number }> };
   } catch (e) {
-    const error = e as Error;
-    if (error.message.includes("404")) {
+    const errorObj = e as Error;
+    if (errorObj.message.includes("404")) {
       error.value = "Page not found";
     } else {
-      error.value = error.message;
+      error.value = errorObj.message;
     }
     history.value = { revisions: [] };
     isLoading.value = false;

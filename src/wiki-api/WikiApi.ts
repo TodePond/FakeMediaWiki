@@ -644,11 +644,12 @@ export class WikiApi {
         // Look for the first item in the section 1, to avoid notices at the top of the page
         // Resort to the notices if no item is found in section 1
         const leadItem = media.items.find((item) => item.section_id === 1) ?? media.items[0];
-
-        return (
-          leadItem.srcset?.[0]?.src ??
-          "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
-        );
+        if (leadItem) {
+          return (
+            leadItem.srcset?.[0]?.src ??
+            "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
+          );
+        }
       }
       return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg";
     } catch (error) {
@@ -703,7 +704,7 @@ export class WikiApi {
     const [useThisBot, reportBugs] = botPart ? botPart.split(". ") : [null, null];
 
     const commentPart =
-      head !== suggestedByPart && head !== botPart && !hashtagParts.includes(head) ? head : null;
+      head && head !== suggestedByPart && head !== botPart && !hashtagParts.includes(head) ? head : null;
 
     const otherParts = parts.filter(
       (part) =>
@@ -714,12 +715,12 @@ export class WikiApi {
     );
 
     return {
-      comment: commentPart,
+      comment: commentPart ?? null,
       suggestedBy: suggestedByPart ? suggestedByPart.replace("Suggested by ", "") : null,
       hashtags: hashtagParts,
       other: otherParts,
-      useThisBot,
-      reportBugs,
+      useThisBot: useThisBot ?? null,
+      reportBugs: reportBugs ?? null,
     };
   }
 
@@ -799,6 +800,9 @@ export class WikiApi {
         years: { singular: "year", plural: "years" },
       };
       const names = unitNames[unit];
+      if (!names) {
+        return `${value} ${unit} ago`;
+      }
       return `${value} ${value === 1 ? names.singular : names.plural} ago`;
     };
 

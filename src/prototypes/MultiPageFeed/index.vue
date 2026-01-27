@@ -53,9 +53,16 @@ async function search(): Promise<void> {
               summary.comment = summary.comment
                 ? await wiki.transformWikitextToHtml(summary.comment, pageName)
                 : "";
-              summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
-              revision.summary = summary;
-              revision.avatarUrl = await wiki.getUserAvatar(revision.user.name);
+              summary.hashtags = Array.isArray(summary.hashtags)
+                ? summary.hashtags.join(" ")
+                : summary.hashtags;
+              revision.summary = {
+                comment: summary.comment ?? undefined,
+                suggestedBy: summary.suggestedBy ?? undefined,
+                hashtags: summary.hashtags,
+                useThisBot: summary.useThisBot ?? undefined,
+              };
+              revision.avatarUrl = (await wiki.getUserAvatar(revision.user.name)) ?? null;
               revision.pageName = pageName; // Store page name for URL generation
               allRevisions.push(revision);
             }),
@@ -103,19 +110,7 @@ function getDeltaClass(delta: number): string {
   }
 }
 
-function getBotUrl(useThisBot: string | null | undefined): string {
-  if (!useThisBot) return "#";
-  console.log(useThisBot);
-  const [head] = useThisBot.split("|");
-  let path = head.split("[[")[1];
-  if (path) {
-    [path] = path.split("/use");
-  }
-  if (!path) {
-    return "#";
-  }
-  return `https://en.wikipedia.org/wiki/${path}`;
-}
+// getBotUrl function removed - unused
 
 function getUserUrl(userName: string): string {
   return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(userName)}`;
@@ -181,26 +176,27 @@ function getThankUrl(id: number): string {
         v-for="change in history.revisions"
         :key="`${change.pageName}-${change.timestamp}`"
       >
-        <img class="change-avatar" :src="change.avatarUrl" />
+        <img v-if="change.avatarUrl" class="change-avatar" :src="change.avatarUrl || undefined" />
+        <div v-else class="change-avatar-placeholder"></div>
         <div class="change-body">
           <span class="change-header">
             <a target="_blank" :href="getUserUrl(change.user.name)">
               <strong class="change-user-name">{{ change.user.name }}</strong>
             </a>
-            <span class="change-suggested-by" v-if="change.summary.suggestedBy">
+            <span class="change-suggested-by" v-if="change.summary?.suggestedBy">
               &nbsp;suggested by
               <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
             </span>
             <!-- <span class="change-timestamp">&nbsp;{{ formatTimestamp(change.timestamp) }}</span> -->
             <!-- <br /> -->
           </span>
-          <span class="change-page-name-and-delta">
+          <span class="change-page-name-and-delta" v-if="change.pageName">
             <a target="_blank" :href="getPageUrl(change.pageName)" class="change-page-name">
               {{ change.pageName }} </a
             >&nbsp;<span :class="getDeltaClass(change.delta)">{{ change.delta }}</span>
           </span>
           <!-- <br /> -->
-          <span class="change-timestamp"
+          <span class="change-timestamp" v-if="change.pageName"
             ><a target="_blank" :href="getRevisionUrl(change.id, change.pageName)">{{
               formatTimestamp(change.timestamp)
             }}</a></span
@@ -208,7 +204,7 @@ function getThankUrl(id: number): string {
           <div class="change-comment" v-html="change?.summary?.comment"></div>
         </div>
         <footer>
-          <a target="_blank" :href="getRevisionUrl(change.id, change.pageName)"
+          <a v-if="change.pageName" target="_blank" :href="getRevisionUrl(change.id, change.pageName)"
             ><CdxIcon :icon="cdxIconLinkExternal"
           /></a>
           <a target="_blank" :href="getThankUrl(change.id)"><CdxIcon :icon="cdxIconHeart" /></a>
@@ -352,6 +348,14 @@ form > span {
   height: 3rem;
   border-radius: 50%;
   object-fit: cover;
+  margin-right: 0.5rem;
+}
+
+.change-avatar-placeholder {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: var(--background-color-interactive-subtle);
   margin-right: 0.5rem;
 }
 

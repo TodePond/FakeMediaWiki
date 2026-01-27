@@ -38,6 +38,10 @@ const getPageUrl = (title: string): string => {
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
 };
 
+const getThumbnail = (thumbnail: unknown): { url: string } | undefined => {
+  return thumbnail as { url: string } | undefined;
+};
+
 onMounted(() => {
   if (searchQuery.value) {
     search();
@@ -69,7 +73,7 @@ onMounted(() => {
           v-for="page in results"
           :key="page.key"
           :url="getPageUrl(page.title)"
-          :thumbnail="page.thumbnail"
+          :thumbnail="getThumbnail(page.thumbnail)"
         >
           <template #title>{{ page.title }}</template>
           <template #description v-if="page.description">{{ page.description }}</template>

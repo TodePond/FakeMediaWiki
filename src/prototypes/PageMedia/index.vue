@@ -57,7 +57,7 @@ onMounted(loadPage);
     <div v-if="mediaItems.length" class="media-grid">
       <div v-for="(item, index) in mediaItems" :key="index" class="media-item">
         <a
-          v-if="item.srcset && item.srcset.length"
+          v-if="item.srcset && item.srcset.length > 0 && item.srcset[0]"
           :href="getAssetUrlFromUploadUrl(item.srcset[0].src)"
           target="_blank"
         >

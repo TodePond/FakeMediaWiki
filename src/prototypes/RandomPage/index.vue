@@ -40,8 +40,8 @@ const getPageUrl = (): string => {
     </div>
     <div v-if="error" class="error">{{ error }}</div>
     <CdxCard
-      v-else-if="randomPage"
-      :thumbnail="randomPage.thumbnail ? { url: randomPage.thumbnail.source } : null"
+      v-else-if="randomPage && typeof randomPage === 'object'"
+      :thumbnail="randomPage.thumbnail?.source ? { url: randomPage.thumbnail.source } : null"
       :url="getPageUrl()"
     >
       <template #title>{{ randomPage.title }}</template>

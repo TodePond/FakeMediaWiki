@@ -6,11 +6,11 @@ import globals from 'globals'
 export default defineConfig([
   {
     name: 'app/files-to-lint',
-    files: ['**/*.{vue,js,mjs,jsx}'],
+    files: ['**/*.{vue,js,mjs,jsx,ts,tsx}'],
   },
   {
     name: 'app/config-files',
-    files: ['*.config.{js,mjs}', 'vite.config.{js,ts}'],
+    files: ['*.config.{js,mjs,ts}', 'vite.config.{js,ts}'],
     languageOptions: {
       globals: {
         ...globals.node,

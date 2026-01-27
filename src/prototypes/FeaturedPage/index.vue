@@ -26,9 +26,14 @@ const loadFeatured = async (): Promise<void> => {
   }
 };
 
+const getThumbnailUrl = (): string | undefined => {
+  return featuredPage.value?.tfa?.thumbnail?.source;
+};
+
 const getTodayDate = (): string => {
   const today = new Date();
-  return today.toISOString().split("T")[0];
+  const dateStr = today.toISOString().split("T")[0];
+  return dateStr || "";
 };
 
 onMounted(() => {
@@ -54,7 +59,7 @@ const getPageUrl = (title: string): string => {
     <div v-if="error" class="error">{{ error }}</div>
     <CdxCard
       v-if="featuredPage && featuredPage.tfa"
-      :thumbnail="featuredPage.tfa.thumbnail ? { url: featuredPage.tfa.thumbnail.source } : null"
+      :thumbnail="getThumbnailUrl() ? { url: getThumbnailUrl()! } : null"
       :url="getPageUrl(featuredPage.tfa.title)"
     >
       <template #title>{{ featuredPage.tfa.title }}</template>

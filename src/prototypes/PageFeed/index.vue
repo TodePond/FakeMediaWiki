@@ -45,9 +45,16 @@ async function search(): Promise<void> {
         summary.comment = summary.comment
           ? await wiki.transformWikitextToHtml(summary.comment, searchQuery.value)
           : "";
-        summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
-        revision.summary = summary;
-        revision.avatarUrl = await wiki.getUserAvatar(revision.user.name);
+        summary.hashtags = Array.isArray(summary.hashtags)
+          ? summary.hashtags.join(" ")
+          : summary.hashtags;
+        revision.summary = {
+          comment: summary.comment ?? undefined,
+          suggestedBy: summary.suggestedBy ?? undefined,
+          hashtags: summary.hashtags,
+          useThisBot: summary.useThisBot ?? undefined,
+        };
+        revision.avatarUrl = (await wiki.getUserAvatar(revision.user.name)) ?? null;
       }),
     );
   }
@@ -85,7 +92,9 @@ function getDeltaClass(delta: number): string {
 function getBotUrl(useThisBot: string | null | undefined): string {
   if (!useThisBot) return "#";
   console.log(useThisBot);
-  const [head] = useThisBot.split("|");
+  const parts = useThisBot.split("|");
+  const head = parts[0];
+  if (!head) return "#";
   let path = head.split("[[")[1];
   if (path) {
     [path] = path.split("/use");
@@ -123,7 +132,8 @@ function getThankUrl(id: number): string {
     <section class="changes">
       <div v-if="error" class="error">{{ error }}</div>
       <div class="change" v-for="change in history.revisions" :key="change.timestamp">
-        <img class="change-avatar" :src="change.avatarUrl" />
+        <img v-if="change.avatarUrl" class="change-avatar" :src="change.avatarUrl || undefined" />
+        <div v-else class="change-avatar-placeholder"></div>
         <div class="change-body">
           <span class="change-header">
             <a target="_blank" :href="getUserUrl(change.user.name)">
@@ -132,7 +142,7 @@ function getThankUrl(id: number): string {
             <span class="change-timestamp">&nbsp;{{ formatTimestamp(change.timestamp) }}</span>
             <br />
           </span>
-          <span class="change-suggested-by" v-if="change.summary.suggestedBy">
+          <span class="change-suggested-by" v-if="change.summary?.suggestedBy">
             Suggested by
             <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
           </span>
@@ -141,7 +151,7 @@ function getThankUrl(id: number): string {
         </div>
         <footer>
           <a
-            v-if="change.summary.useThisBot"
+            v-if="change.summary?.useThisBot"
             target="_blank"
             :href="getBotUrl(change.summary.useThisBot)"
           >
@@ -234,6 +244,14 @@ form > span {
   height: 3rem;
   border-radius: 50%;
   object-fit: cover;
+  margin-right: 0.5rem;
+}
+
+.change-avatar-placeholder {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: var(--background-color-interactive-subtle);
   margin-right: 0.5rem;
 }
 
