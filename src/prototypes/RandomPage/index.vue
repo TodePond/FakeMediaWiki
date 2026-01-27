@@ -1,31 +1,31 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxCard, CdxProgressIndicator } from "@wikimedia/codex";
 import { ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
-const format = ref("summary");
-/** @type {any} */
-const randomPage = ref(null);
+const format = ref<"summary" | "html" | "title">("summary");
+const randomPage = ref<string | { title?: string; description?: string; extract?: string; thumbnail?: { source?: string } } | null>(null);
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 
-const getRandom = async () => {
+const getRandom = async (): Promise<void> => {
   isLoading.value = true;
   error.value = null;
   try {
     const data = await wiki.getRandomPage(format.value);
-    randomPage.value = data;
-  } catch (/** @type {any} */ err) {
-    error.value = err.message;
+    randomPage.value = data as string | { title?: string; description?: string; extract?: string; thumbnail?: { source?: string } };
+  } catch (err) {
+    const errorObj = err as Error;
+    error.value = errorObj.message;
     randomPage.value = null;
   } finally {
     isLoading.value = false;
   }
 };
 
-const getPageUrl = () => {
+const getPageUrl = (): string => {
   const pageTitle =
     typeof randomPage.value === "string" ? randomPage.value : randomPage.value?.title || "";
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}`;

@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { CdxIcon } from "@wikimedia/codex";
 import { cdxIconPushPin } from "@wikimedia/codex-icons";
 import { RouterLink } from "vue-router";
-import { getPinnedPrototypes, getUnpinnedPrototypes } from "../prototypes/registry.js";
+import { getPinnedPrototypes, getUnpinnedPrototypes } from "../prototypes/registry";
 
 const pinnedPrototypes = getPinnedPrototypes();
 const unpinnedPrototypes = getUnpinnedPrototypes();

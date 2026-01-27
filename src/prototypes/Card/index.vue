@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxCard } from "@wikimedia/codex";
 
 const thumbnail = {

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -6,34 +6,33 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 const wiki = new WikiApi();
 
 const pageName = ref(sessionStorage.getItem("pageMediaQuery") || "Wet Leg");
-/** @type {any} */
-const mediaItems = ref([]);
+const mediaItems = ref<Array<{ title?: string; srcset?: Array<{ src: string }> }>>([]);
 const isLoading = ref(false);
-/** @type {any} */
-const error = ref(null);
+const error = ref<string | null>(null);
 
 // eg
 // from: https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Wet_Leg_%2852031506992%29.jpg/640px-Wet_Leg_%2852031506992%29.jpg
 // to: https://en.wikipedia.org/wiki/Wet_Leg#/media/File:Wet_Leg_(52031506992).jpg
-function getAssetUrlFromUploadUrl(uploadUrl) {
+function getAssetUrlFromUploadUrl(uploadUrl: string): string {
   const parts = uploadUrl.split("/");
   const fileName = parts[parts.length - 2];
   return `https://en.wikipedia.org/wiki/${pageName.value}#/media/File:${fileName}`;
 }
 
-const loadPage = async () => {
+const loadPage = async (): Promise<void> => {
   isLoading.value = true;
   error.value = null;
   try {
-    const data = await wiki.getPageMedia(pageName.value);
+    const data = (await wiki.getPageMedia(pageName.value)) as { items?: Array<{ title?: string; srcset?: Array<{ src: string }> }> };
     mediaItems.value = data.items || [];
     console.log(mediaItems.value);
     sessionStorage.setItem("pageMediaQuery", pageName.value);
-  } catch (/** @type {any} */ err) {
-    if (err.message.includes("404")) {
+  } catch (err) {
+    const errorObj = err as Error;
+    if (errorObj.message.includes("404")) {
       error.value = "Page not found";
     } else {
-      error.value = err.message;
+      error.value = errorObj.message;
     }
     mediaItems.value = [];
   } finally {

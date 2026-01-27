@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { cdxIconHeart, cdxIconLinkExternal, cdxIconRobot } from "@wikimedia/codex-icons";
 import { onMounted, ref } from "vue";
@@ -8,64 +8,56 @@ const wiki = new WikiApi();
 
 const storageKey = "searchQueryFeed";
 const searchQuery = ref(sessionStorage.getItem(storageKey) || "Wikipedia");
-/** @type {any} */
-const history = ref([]);
+const history = ref<{ revisions?: Array<{ comment: string; timestamp: string; user: { name: string }; delta: number; id: number; summary?: { comment?: string; suggestedBy?: string; hashtags?: string; useThisBot?: string }; avatarUrl?: string | null }> }>({});
 const isLoading = ref(false);
-/** @type {any} */
-const error = ref(null);
+const error = ref<string | null>(null);
 
 onMounted(search);
 
-function saveSearchQuery(query) {
+function saveSearchQuery(query: string): void {
   sessionStorage.setItem(storageKey, query);
 }
 
-async function search() {
+async function search(): Promise<void> {
   isLoading.value = true;
   const pageName = searchQuery.value;
-  let _history;
+  let _history: { revisions?: Array<{ comment: string; timestamp: string; user: { name: string }; delta: number; id: number; summary?: { comment?: string; suggestedBy?: string; hashtags?: string; useThisBot?: string }; avatarUrl?: string | null }> };
   try {
-    _history = await wiki.getPageHistory(pageName, { limit: 5 });
-  } catch (/** @type {any} */ e) {
-    if (e.message.includes("404")) {
+    _history = (await wiki.getPageHistory(pageName, { limit: 5 })) as { revisions?: Array<{ comment: string; timestamp: string; user: { name: string }; delta: number; id: number; summary?: { comment?: string; suggestedBy?: string; hashtags?: string; useThisBot?: string }; avatarUrl?: string | null }> };
+  } catch (e) {
+    const errorObj = e as Error;
+    if (errorObj.message.includes("404")) {
       error.value = "Page not found";
     } else {
-      error.value = e.message;
+      error.value = errorObj.message;
     }
-    history.value = [];
+    history.value = { revisions: [] };
     isLoading.value = false;
     return;
   }
 
-  await Promise.all(
-    _history.revisions.map(async (revision) => {
-      const _summary = wiki.preprocessEditSummary(revision.comment, searchQuery.value);
-      const toolbar = wiki.parseToolbarComment(_summary);
-      const summary = toolbar ? toolbar : { comment: _summary };
-      summary.comment = summary.comment
-        ? await wiki.transformWikitextToHtml(summary.comment, searchQuery.value)
-        : "";
-      // summary.useThisBot = summary.useThisBot
-      //   ? await wiki.transformWikitextToHtml(summary.useThisBot, searchQuery.value)
-      //   : "";
-      // summary.reportBugs = summary.reportBugs
-      //   ? await wiki.transformWikitextToHtml(summary.reportBugs, searchQuery.value)
-      //   : "";
-      summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
-      // let html = await wiki.getEditSummaryHtml(revision.comment, searchQuery.value);
-      // html = html.replaceAll("<a ", "<a target='_blank' ");
-      // revision.html = html;
-      revision.summary = summary;
-      revision.avatarUrl = await wiki.getUserAvatar(revision.user.name);
-    }),
-  );
+  if (_history.revisions) {
+    await Promise.all(
+      _history.revisions.map(async (revision) => {
+        const _summary = wiki.preprocessEditSummary(revision.comment, searchQuery.value);
+        const toolbar = wiki.parseToolbarComment(_summary);
+        const summary = toolbar ? toolbar : { comment: _summary, hashtags: [], other: [], suggestedBy: null, useThisBot: null, reportBugs: null };
+        summary.comment = summary.comment
+          ? await wiki.transformWikitextToHtml(summary.comment, searchQuery.value)
+          : "";
+        summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
+        revision.summary = summary;
+        revision.avatarUrl = await wiki.getUserAvatar(revision.user.name);
+      }),
+    );
+  }
   isLoading.value = false;
   history.value = _history;
 
   saveSearchQuery(pageName);
 }
 
-function formatTimestamp(timestamp) {
+function formatTimestamp(timestamp: string): string {
   return (
     "• " +
     wiki.getRelativeTimestamp(timestamp, {
@@ -80,7 +72,7 @@ function formatTimestamp(timestamp) {
   );
 }
 
-function getDeltaClass(delta) {
+function getDeltaClass(delta: number): string {
   if (delta > 0) {
     return "positive";
   } else if (delta < 0) {
@@ -90,26 +82,29 @@ function getDeltaClass(delta) {
   }
 }
 
-function getBotUrl(useThisBot) {
+function getBotUrl(useThisBot: string | null | undefined): string {
+  if (!useThisBot) return "#";
   console.log(useThisBot);
   const [head] = useThisBot.split("|");
   let path = head.split("[[")[1];
-  [path] = path.split("/use");
+  if (path) {
+    [path] = path.split("/use");
+  }
   if (!path) {
     return "#";
   }
   return `https://en.wikipedia.org/wiki/${path}`;
 }
 
-function getUserUrl(userName) {
+function getUserUrl(userName: string): string {
   return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(userName)}`;
 }
 
-function getRevisionUrl(id) {
+function getRevisionUrl(id: number): string {
   return `https://en.wikipedia.org/w/index.php?title=${searchQuery.value}&diff=${id}`;
 }
 
-function getThankUrl(id) {
+function getThankUrl(id: number): string {
   return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
 }
 </script>

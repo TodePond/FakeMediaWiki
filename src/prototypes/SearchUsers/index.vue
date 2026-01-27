@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -6,14 +6,13 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 const wiki = new WikiApi();
 
 const searchQuery = ref(sessionStorage.getItem("searchUsersQuery") || "samwalton");
-/** @type {any} */
-const results = ref([]);
+const results = ref<Array<{ key?: string; username: string; description?: string; avatar?: { url: string } | null }>>([]);
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 const hasSearched = ref(false);
 
 let searchId = 0;
-const search = async () => {
+const search = async (): Promise<void> => {
   searchId++;
   const currentSearchId = searchId;
   sessionStorage.setItem("searchUsersQuery", searchQuery.value);
@@ -22,16 +21,17 @@ const search = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const usersWithAvatars = await wiki.searchUsers(searchQuery.value, 20);
+    const usersWithAvatars = (await wiki.searchUsers(searchQuery.value, 20)) as Array<{ key?: string; username: string; description?: string; avatar?: { url: string } | null }>;
 
     if (currentSearchId === searchId) {
       results.value = usersWithAvatars;
       hasSearched.value = true;
       console.log(results.value);
     }
-  } catch (/** @type {any} */ err) {
+  } catch (err) {
     if (currentSearchId === searchId) {
-      error.value = err.message;
+      const errorObj = err as Error;
+      error.value = errorObj.message;
       results.value = [];
     }
   } finally {
@@ -41,7 +41,7 @@ const search = async () => {
   }
 };
 
-const getUserUrl = (username) => {
+const getUserUrl = (username: string): string => {
   return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(username)}`;
 };
 

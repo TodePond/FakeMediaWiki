@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -6,35 +6,35 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 const wiki = new WikiApi();
 
 const searchQuery = ref(sessionStorage.getItem("searchPagesQuery") || "");
-/** @type {any} */
-const results = ref([]);
+const results = ref<Array<{ key?: string; title: string; description?: string; excerpt?: string }>>([]);
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 const hasSearched = ref(false);
 
-const search = async () => {
+const search = async (): Promise<void> => {
   if (!searchQuery.value.trim()) return;
 
   isLoading.value = true;
   error.value = null;
   try {
-    const data = await wiki.searchPages(searchQuery.value, 20);
+    const data = (await wiki.searchPages(searchQuery.value, 20)) as { pages?: Array<{ key?: string; title: string; description?: string; excerpt?: string }> };
     results.value = data.pages || [];
     console.log(results.value);
     hasSearched.value = true;
-  } catch (/** @type {any} */ err) {
-    error.value = err.message;
+  } catch (err) {
+    const errorObj = err as Error;
+    error.value = errorObj.message;
     results.value = [];
   } finally {
     isLoading.value = false;
   }
 };
 
-function saveSearchQuery(query) {
+function saveSearchQuery(query: string): void {
   sessionStorage.setItem("searchPagesQuery", query);
 }
 
-const getPageUrl = (title) => {
+const getPageUrl = (title: string): string => {
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
 };
 

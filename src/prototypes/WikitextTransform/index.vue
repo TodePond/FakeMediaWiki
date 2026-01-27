@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextArea } from "@wikimedia/codex";
 import { ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -8,9 +8,9 @@ const wiki = new WikiApi();
 const wikitext = ref("== Hello World ==\n\nThis is a test of ''wikitext'' transformation.");
 const htmlResult = ref("");
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 
-const transform = async () => {
+const transform = async (): Promise<void> => {
   if (!wikitext.value.trim()) return;
 
   isLoading.value = true;
@@ -18,8 +18,9 @@ const transform = async () => {
   try {
     const html = await wiki.transformWikitextToHtml(wikitext.value);
     htmlResult.value = html;
-  } catch (/** @type {any} */ err) {
-    error.value = err.message;
+  } catch (err) {
+    const errorObj = err as Error;
+    error.value = errorObj.message;
     htmlResult.value = "";
   } finally {
     isLoading.value = false;

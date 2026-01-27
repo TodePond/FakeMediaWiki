@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -6,37 +6,37 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 const wiki = new WikiApi();
 
 const dateInput = ref("");
-/** @type {any} */
-const featuredPage = ref(null);
+const featuredPage = ref<{ tfa?: { title: string; description?: string; extract?: string; thumbnail?: { source?: string } } } | null>(null);
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 
-const loadFeatured = async () => {
+const loadFeatured = async (): Promise<void> => {
   isLoading.value = true;
   error.value = null;
   try {
     const date = dateInput.value ? new Date(dateInput.value) : new Date();
-    const data = await wiki.getFeaturedPage(date);
+    const data = (await wiki.getFeaturedPage(date)) as { tfa?: { title: string; description?: string; extract?: string; thumbnail?: { source?: string } } };
     featuredPage.value = data;
-  } catch (/** @type {any} */ err) {
-    error.value = err.message;
+  } catch (err) {
+    const errorObj = err as Error;
+    error.value = errorObj.message;
     featuredPage.value = null;
   } finally {
     isLoading.value = false;
   }
 };
 
-const getTodayDate = () => {
+const getTodayDate = (): string => {
   const today = new Date();
   return today.toISOString().split("T")[0];
 };
 
 onMounted(() => {
-  dateInput.value = getTodayDate() ?? "";
+  dateInput.value = getTodayDate();
   loadFeatured();
 });
 
-const getPageUrl = (title) => {
+const getPageUrl = (title: string): string => {
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
 };
 </script>

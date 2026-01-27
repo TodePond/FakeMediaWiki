@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -6,19 +6,20 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 const wiki = new WikiApi();
 
 const pageName = ref(sessionStorage.getItem("pageMetadataQuery") || "Wet Leg");
-const metadata = ref(null);
+const metadata = ref<unknown>(null);
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 
-const loadPage = async () => {
+const loadPage = async (): Promise<void> => {
   isLoading.value = true;
   error.value = null;
   try {
     const data = await wiki.getPage(pageName.value);
     metadata.value = data;
     sessionStorage.setItem("pageMetadataQuery", pageName.value);
-  } catch (/** @type {any} */ err) {
-    error.value = err.message;
+  } catch (err) {
+    const errorObj = err as Error;
+    error.value = errorObj.message;
     metadata.value = null;
   } finally {
     isLoading.value = false;

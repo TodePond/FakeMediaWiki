@@ -1,11 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from "vue";
 import { useRoute } from "vue-router";
-import { prototypeMap } from "../prototypes/registry.js";
+import { prototypeMap } from "../prototypes/registry";
 
 const route = useRoute();
-/** @type {any} */
-const prototypeName = computed(() => route.params.name);
+const prototypeName = computed(() => route.params.name as string);
 
 const PrototypeComponent = computed(() => {
   return prototypeMap.get(prototypeName.value);

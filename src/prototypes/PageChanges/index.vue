@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -6,15 +6,13 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 const wiki = new WikiApi();
 
 const searchQuery = ref(sessionStorage.getItem("searchQuery") || "Wet Leg");
-/** @type {any} */
-const history = ref([]);
+const history = ref<{ revisions?: Array<{ comment: string; html?: string; timestamp: string; user: { name: string }; delta: number; id: number }> }>({});
 const isLoading = ref(false);
-/** @type {any} */
-const error = ref(null);
+const error = ref<string | null>(null);
 
 onMounted(search);
 
-function saveSearchQuery(query) {
+function saveSearchQuery(query: string): void {
   sessionStorage.setItem("searchQuery", query);
 }
 
@@ -23,37 +21,40 @@ function saveSearchQuery(query) {
 // eg
 // from: "/* Singles */ blah blah"
 // to: "[[pageName#Singles]] blah blah"
-function linkUpComment(comment, pageName) {
+function linkUpComment(comment: string, pageName: string): string {
   return comment.replace(/^\/\* (.*) \*\//, `[[${pageName}#$1|→$1]]`);
 }
 
-async function search() {
+async function search(): Promise<void> {
   isLoading.value = true;
   const pageName = searchQuery.value;
-  let _history;
+  let _history: { revisions?: Array<{ comment: string; html?: string; timestamp: string; user: { name: string }; delta: number; id: number }> };
   try {
-    _history = await wiki.getPageHistory(pageName);
-  } catch (/** @type {any} */ e) {
-    if (e.message.includes("404")) {
+    _history = (await wiki.getPageHistory(pageName)) as { revisions?: Array<{ comment: string; html?: string; timestamp: string; user: { name: string }; delta: number; id: number }> };
+  } catch (e) {
+    const error = e as Error;
+    if (error.message.includes("404")) {
       error.value = "Page not found";
     } else {
-      error.value = e.message;
+      error.value = error.message;
     }
-    history.value = [];
+    history.value = { revisions: [] };
     isLoading.value = false;
     return;
   }
   console.log(_history);
-  await Promise.all(
-    _history.revisions.map(async (revision) => {
-      const linkedUpComment = linkUpComment(revision.comment, pageName);
-      let html = await wiki.transformWikitextToHtml(linkedUpComment, searchQuery.value);
-      html = html.replaceAll("<a ", "<a target='_blank' ");
-      revision.html = html;
+  if (_history.revisions) {
+    await Promise.all(
+      _history.revisions.map(async (revision) => {
+        const linkedUpComment = linkUpComment(revision.comment, pageName);
+        let html = await wiki.transformWikitextToHtml(linkedUpComment, searchQuery.value);
+        html = html.replaceAll("<a ", "<a target='_blank' ");
+        revision.html = html;
 
-      console.log(revision.html);
-    }),
-  );
+        console.log(revision.html);
+      }),
+    );
+  }
   isLoading.value = false;
 
   history.value = _history;
@@ -61,7 +62,7 @@ async function search() {
   saveSearchQuery(pageName);
 }
 
-function formatTimestamp(timestamp) {
+function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
   const dateString = date.toLocaleDateString("en-GB", {
     year: "numeric",
@@ -75,7 +76,7 @@ function formatTimestamp(timestamp) {
   return `${timeString}, ${dateString}`;
 }
 
-function getDeltaClass(delta) {
+function getDeltaClass(delta: number): string {
   if (delta > 0) {
     return "positive";
   } else if (delta < 0) {
@@ -85,15 +86,15 @@ function getDeltaClass(delta) {
   }
 }
 
-function getUserUrl(user) {
+function getUserUrl(user: { name: string }): string {
   return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(user.name)}`;
 }
 
-function getRevisionUrl(id) {
+function getRevisionUrl(id: number): string {
   return `https://en.wikipedia.org/w/index.php?title=${searchQuery.value}&diff=${id}`;
 }
 
-function getThankUrl(id) {
+function getThankUrl(id: number): string {
   return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
 }
 </script>

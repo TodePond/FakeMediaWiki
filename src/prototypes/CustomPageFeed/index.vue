@@ -1,44 +1,84 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, type Ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
+
+interface Revision {
+  id: number;
+  timestamp: string;
+  user: { name: string };
+  delta: number;
+  comment: string;
+  summary?: {
+    comment?: string | null;
+    suggestedBy?: string | null;
+    hashtags?: string[] | string;
+    useThisBot?: string | null;
+    reportBugs?: string | null;
+  };
+  avatarUrl?: string | null;
+  pageName: string;
+  title?: string;
+}
 
 const wiki = new WikiApi();
 
-/** @type {[string, string, string]} */
-const pageStorageKeys = ["searchQueryFeed1", "searchQueryFeed2", "searchQueryFeed3"];
-/** @type {[string, string, string]} */
-const userStorageKeys = ["searchQueryFeed4", "searchQueryFeed5", "searchQueryFeed6"];
-/** @type {any} */
-const pageSearchQueries = ref([
+const pageStorageKeys: [string, string, string] = [
+  "searchQueryFeed1",
+  "searchQueryFeed2",
+  "searchQueryFeed3",
+];
+const userStorageKeys: [string, string, string] = [
+  "searchQueryFeed4",
+  "searchQueryFeed5",
+  "searchQueryFeed6",
+];
+const pageSearchQueries = ref<string[]>([
   sessionStorage.getItem(pageStorageKeys[0]) ?? "Wikipedia",
   sessionStorage.getItem(pageStorageKeys[1]) ?? "Life",
   sessionStorage.getItem(pageStorageKeys[2]) ?? "Water",
 ]);
-/** @type {any} */
-const userSearchQueries = ref([
+const userSearchQueries = ref<string[]>([
   sessionStorage.getItem(userStorageKeys[0]) ?? "Samwalton9",
   sessionStorage.getItem(userStorageKeys[1]) ?? "GearsDatapack",
   sessionStorage.getItem(userStorageKeys[2]) ?? "TrademarkedTWOrantula",
 ]);
 
 // Store results separately for each page
-/** @type {any} */
-const pageResults = [ref([]), ref([]), ref([])];
-/** @type {any} */
-const userResults = [ref([]), ref([]), ref([])];
-/** @type {any} */
-const pageLoading = [ref(false), ref(false), ref(false)];
-/** @type {any} */
-const userLoading = [ref(false), ref(false), ref(false)];
-/** @type {any} */
-const pageError = [ref(null), ref(null), ref(null)];
-/** @type {any} */
-const userError = [ref(null), ref(null), ref(null)];
+const pageResults: [Ref<Revision[]>, Ref<Revision[]>, Ref<Revision[]>] = [
+  ref([]),
+  ref([]),
+  ref([]),
+];
+const userResults: [Ref<Revision[]>, Ref<Revision[]>, Ref<Revision[]>] = [
+  ref([]),
+  ref([]),
+  ref([]),
+];
+const pageLoading: [Ref<boolean>, Ref<boolean>, Ref<boolean>] = [
+  ref(false),
+  ref(false),
+  ref(false),
+];
+const userLoading: [Ref<boolean>, Ref<boolean>, Ref<boolean>] = [
+  ref(false),
+  ref(false),
+  ref(false),
+];
+const pageError: [Ref<string | null>, Ref<string | null>, Ref<string | null>] = [
+  ref(null),
+  ref(null),
+  ref(null),
+];
+const userError: [Ref<string | null>, Ref<string | null>, Ref<string | null>] = [
+  ref(null),
+  ref(null),
+  ref(null),
+];
 onMounted(search);
 
-function saveSearchQueries() {
+function saveSearchQueries(): void {
   pageSearchQueries.value.forEach((query, index) => {
     if (pageStorageKeys[index]) {
       sessionStorage.setItem(pageStorageKeys[index], query);
@@ -51,9 +91,9 @@ function saveSearchQueries() {
   });
 }
 
-async function search() {
+async function search(): Promise<void> {
   // Load each page independently
-  const loadPromises = [];
+  const loadPromises: Promise<void>[] = [];
   for (let i = 0; i < pageSearchQueries.value.length; i++) {
     const query = pageSearchQueries.value[i];
     const results = pageResults[i];
@@ -99,12 +139,34 @@ async function search() {
   saveSearchQueries();
 }
 
-async function loadUser(userNum, userName, resultsRef, loadingRef, errorRef) {
+async function loadUser(
+  userNum: number,
+  userName: string,
+  resultsRef: Ref<Revision[]>,
+  loadingRef: Ref<boolean>,
+  errorRef: Ref<string | null>,
+): Promise<void> {
   loadingRef.value = true;
   errorRef.value = null;
 
   try {
-    const _history = await wiki.getUserHistory(userName, { limit: 5 });
+    const _history = (await wiki.getUserHistory(userName, { limit: 5 })) as {
+      revisions?: Array<{
+        comment?: string;
+        pageName?: string;
+        title?: string;
+        user: { name: string };
+        id: number;
+        timestamp: string;
+        delta: number;
+      }>;
+    };
+
+    if (!_history.revisions) {
+      resultsRef.value = [];
+      loadingRef.value = false;
+      return;
+    }
 
     // Process revisions - but don't await avatar loading
     const processedRevisions = await Promise.all(
@@ -112,16 +174,30 @@ async function loadUser(userNum, userName, resultsRef, loadingRef, errorRef) {
         const pageName = revision.pageName || revision.title || "";
         const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName);
         const toolbar = wiki.parseToolbarComment(_summary);
-        const summary = toolbar ? toolbar : { comment: _summary };
+        const summary = toolbar
+          ? toolbar
+          : {
+              comment: _summary,
+              hashtags: [],
+              other: [],
+              suggestedBy: null,
+              useThisBot: null,
+              reportBugs: null,
+            };
         summary.comment = summary.comment
           ? await wiki.transformWikitextToHtml(summary.comment, pageName)
           : "";
-        summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
-        revision.summary = summary;
-        revision.pageName = pageName;
-        // Don't await avatar - load it asynchronously
-        revision.avatarUrl = null; // Will be loaded separately
-        return revision;
+        summary.hashtags = Array.isArray(summary.hashtags)
+          ? summary.hashtags.join(" ")
+          : summary.hashtags;
+        const processedRevision: Revision = {
+          ...revision,
+          comment: revision.comment || "",
+          summary,
+          pageName,
+          avatarUrl: null, // Will be loaded separately
+        };
+        return processedRevision;
       }),
     );
 
@@ -133,39 +209,73 @@ async function loadUser(userNum, userName, resultsRef, loadingRef, errorRef) {
     processedRevisions.forEach((revision) => {
       loadAvatarForRevision(userNum, revision, resultsRef);
     });
-  } catch (/** @type {any} */ e) {
+  } catch (e) {
     loadingRef.value = false;
-    if (e.message.includes("404")) {
+    const errorObj = e as Error;
+    if (errorObj.message.includes("404")) {
       errorRef.value = `${userName}: User not found`;
     } else {
-      errorRef.value = `${userName}: ${e.message}`;
+      errorRef.value = `${userName}: ${errorObj.message}`;
     }
     resultsRef.value = [];
   }
 }
 
-async function loadPage(pageNum, pageName, resultsRef, loadingRef, errorRef) {
+async function loadPage(
+  pageNum: number,
+  pageName: string,
+  resultsRef: Ref<Revision[]>,
+  loadingRef: Ref<boolean>,
+  errorRef: Ref<string | null>,
+): Promise<void> {
   loadingRef.value = true;
   errorRef.value = null;
 
   try {
-    const _history = await wiki.getPageHistory(pageName, { limit: 5 });
+    const _history = (await wiki.getPageHistory(pageName, { limit: 5 })) as {
+      revisions?: Array<{
+        comment: string;
+        user: { name: string };
+        id: number;
+        timestamp: string;
+        delta: number;
+      }>;
+    };
+
+    if (!_history.revisions) {
+      resultsRef.value = [];
+      loadingRef.value = false;
+      return;
+    }
 
     // Process revisions - but don't await avatar loading
     const processedRevisions = await Promise.all(
       _history.revisions.map(async (revision) => {
         const _summary = wiki.preprocessEditSummary(revision.comment, pageName);
         const toolbar = wiki.parseToolbarComment(_summary);
-        const summary = toolbar ? toolbar : { comment: _summary };
+        const summary = toolbar
+          ? toolbar
+          : {
+              comment: _summary,
+              hashtags: [],
+              other: [],
+              suggestedBy: null,
+              useThisBot: null,
+              reportBugs: null,
+            };
         summary.comment = summary.comment
           ? await wiki.transformWikitextToHtml(summary.comment, pageName)
           : "";
-        summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
-        revision.summary = summary;
-        revision.pageName = pageName;
-        // Don't await avatar - load it asynchronously
-        revision.avatarUrl = null; // Will be loaded separately
-        return revision;
+        summary.hashtags = Array.isArray(summary.hashtags)
+          ? summary.hashtags.join(" ")
+          : summary.hashtags;
+        const processedRevision: Revision = {
+          ...revision,
+          summary,
+          pageName,
+          avatarUrl: null, // Will be loaded separately
+        };
+        return processedRevision;
       }),
     );
 
@@ -177,19 +287,24 @@ async function loadPage(pageNum, pageName, resultsRef, loadingRef, errorRef) {
     processedRevisions.forEach((revision) => {
       loadAvatarForRevision(pageNum, revision, resultsRef);
     });
-  } catch (/** @type {any} */ e) {
+  } catch (e) {
     loadingRef.value = false;
-    if (e.message.includes("404")) {
+    const errorObj = e as Error;
+    if (errorObj.message.includes("404")) {
       errorRef.value = `${pageName}: Page not found`;
     } else {
-      errorRef.value = `${pageName}: ${e.message}`;
+      errorRef.value = `${pageName}: ${errorObj.message}`;
     }
     resultsRef.value = [];
   }
 }
 
 // Load avatar asynchronously and update the revision
-async function loadAvatarForRevision(pageNum, revision, resultsRef) {
+async function loadAvatarForRevision(
+  pageNum: number,
+  revision: Revision,
+  resultsRef: Ref<Revision[]>,
+): Promise<void> {
   try {
     const avatarUrl = await wiki.getUserAvatar(revision.user.name);
     // Update the revision in the results array
@@ -206,11 +321,9 @@ async function loadAvatarForRevision(pageNum, revision, resultsRef) {
 }
 
 // Combined view of all revisions from all pages and users, sorted by timestamp
-/** @type {import('vue').ComputedRef<any[]>} */
 const allRevisions = computed(() => {
-  /** @type {any[]} */
-  const revisions = [];
-  const seenIds = new Set();
+  const revisions: Revision[] = [];
+  const seenIds = new Set<number>();
 
   pageResults.forEach((result) => {
     result.value.forEach((revision) => {
@@ -241,7 +354,7 @@ const isAnyLoading = computed(() => {
 });
 
 const errors = computed(() => {
-  const errs = [];
+  const errs: string[] = [];
   pageError.forEach((error) => {
     if (error.value) errs.push(error.value);
   });
@@ -251,7 +364,7 @@ const errors = computed(() => {
   return errs;
 });
 
-function formatTimestamp(timestamp) {
+function formatTimestamp(timestamp: string): string {
   return wiki.getRelativeTimestamp(timestamp, {
     seconds: "words",
     minutes: "minutes",
@@ -263,7 +376,7 @@ function formatTimestamp(timestamp) {
   });
 }
 
-function getDeltaClass(delta) {
+function getDeltaClass(delta: number): string {
   if (delta > 0) {
     return "positive";
   } else if (delta < 0) {
@@ -273,19 +386,19 @@ function getDeltaClass(delta) {
   }
 }
 
-function getUserUrl(userName) {
+function getUserUrl(userName: string): string {
   return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(userName)}`;
 }
 
-function getRevisionUrl(id, pageName) {
+function getRevisionUrl(id: number, pageName: string): string {
   return `https://en.wikipedia.org/w/index.php?title=${pageName}&diff=${id}`;
 }
 
-function getPageUrl(pageName) {
+function getPageUrl(pageName: string): string {
   return `https://en.wikipedia.org/wiki/${pageName}`;
 }
 
-function getThankUrl(id) {
+function getThankUrl(id: number): string {
   return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
 }
 </script>
@@ -378,9 +491,11 @@ function getThankUrl(id) {
             <a class="change-user-name" target="_blank" :href="getUserUrl(change.user.name)">
               <strong>{{ change.user.name }}</strong>
             </a>
-            <span class="change-suggested-by" v-if="change.summary.suggestedBy">
+            <span class="change-suggested-by" v-if="change.summary?.suggestedBy">
               &nbsp;suggested by
-              <a :href="getUserUrl(change.summary.suggestedBy)">{{ change.summary.suggestedBy }}</a>
+              <a :href="getUserUrl(change.summary?.suggestedBy)">{{
+                change.summary?.suggestedBy
+              }}</a>
             </span>
           </span>
           <span class="change-page-name-and-delta">

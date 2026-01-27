@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { defineConfig } from 'vite'
-import { prototypeMetadata } from './src/prototypes/prototypes.js'
+import { prototypeMetadata } from './src/prototypes/prototypes.ts'
 
 // Generate entry points from registry
 function generateEntryPoints() {
@@ -70,8 +70,8 @@ function createEntryPointFiles() {
       window.__INITIAL_ROUTE__ = '${routePath}';
     </script>`
     const modifiedHtml = htmlContent.replace(
-      '<script type="module" src="/src/main.js"></script>',
-      `${routeScript}\n    <script type="module" src="/src/main.js"></script>`
+      '<script type="module" src="/src/main.ts"></script>',
+      `${routeScript}\n    <script type="module" src="/src/main.ts"></script>`
     )
 
     const filePath = join(entryPointsDir, wrapper, `${id}.html`)

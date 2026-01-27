@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons";
 import { onMounted, ref } from "vue";
@@ -12,21 +12,19 @@ const storageKey3 = "searchQueryFeed3";
 const searchQuery1 = ref(sessionStorage.getItem(storageKey1) || "Wikipedia");
 const searchQuery2 = ref(sessionStorage.getItem(storageKey2) || "Life");
 const searchQuery3 = ref(sessionStorage.getItem(storageKey3) || "Water");
-/** @type {any} */
-const history = ref([]);
+const history = ref<{ revisions?: Array<{ comment: string; timestamp: string; user: { name: string }; delta: number; id: number; summary?: { comment?: string; suggestedBy?: string; hashtags?: string; useThisBot?: string }; avatarUrl?: string | null; pageName?: string }> }>({});
 const isLoading = ref(false);
-/** @type {any} */
-const errors = ref([]);
+const errors = ref<string[]>([]);
 
 onMounted(search);
 
-function saveSearchQueries() {
+function saveSearchQueries(): void {
   sessionStorage.setItem(storageKey1, searchQuery1.value);
   sessionStorage.setItem(storageKey2, searchQuery2.value);
   sessionStorage.setItem(storageKey3, searchQuery3.value);
 }
 
-async function search() {
+async function search(): Promise<void> {
   isLoading.value = true;
   errors.value = [];
   const pageNames = [searchQuery1.value, searchQuery2.value, searchQuery3.value].filter(
@@ -34,38 +32,41 @@ async function search() {
   );
 
   if (pageNames.length === 0) {
-    history.value = [];
+    history.value = { revisions: [] };
     isLoading.value = false;
     return;
   }
 
-  const allRevisions = [];
+  const allRevisions: Array<{ comment: string; timestamp: string; user: { name: string }; delta: number; id: number; summary?: { comment?: string; suggestedBy?: string; hashtags?: string; useThisBot?: string }; avatarUrl?: string | null; pageName?: string }> = [];
 
   await Promise.all(
     pageNames.map(async (pageName) => {
       try {
-        const _history = await wiki.getPageHistory(pageName, { limit: 5 });
+        const _history = (await wiki.getPageHistory(pageName, { limit: 5 })) as { revisions?: Array<{ comment: string; timestamp: string; user: { name: string }; delta: number; id: number; summary?: { comment?: string; suggestedBy?: string; hashtags?: string; useThisBot?: string }; avatarUrl?: string | null; pageName?: string }> };
 
-        await Promise.all(
-          _history.revisions.map(async (revision) => {
-            const _summary = wiki.preprocessEditSummary(revision.comment, pageName);
-            const toolbar = wiki.parseToolbarComment(_summary);
-            const summary = toolbar ? toolbar : { comment: _summary };
-            summary.comment = summary.comment
-              ? await wiki.transformWikitextToHtml(summary.comment, pageName)
-              : "";
-            summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
-            revision.summary = summary;
-            revision.avatarUrl = await wiki.getUserAvatar(revision.user.name);
-            revision.pageName = pageName; // Store page name for URL generation
-            allRevisions.push(revision);
-          }),
-        );
-      } catch (/** @type {any} */ e) {
-        if (e.message.includes("404")) {
+        if (_history.revisions) {
+          await Promise.all(
+            _history.revisions.map(async (revision) => {
+              const _summary = wiki.preprocessEditSummary(revision.comment, pageName);
+              const toolbar = wiki.parseToolbarComment(_summary);
+              const summary = toolbar ? toolbar : { comment: _summary, hashtags: [], other: [], suggestedBy: null, useThisBot: null, reportBugs: null };
+              summary.comment = summary.comment
+                ? await wiki.transformWikitextToHtml(summary.comment, pageName)
+                : "";
+              summary.hashtags = summary.hashtags ? summary.hashtags.join(" ") : "";
+              revision.summary = summary;
+              revision.avatarUrl = await wiki.getUserAvatar(revision.user.name);
+              revision.pageName = pageName; // Store page name for URL generation
+              allRevisions.push(revision);
+            }),
+          );
+        }
+      } catch (e) {
+        const errorObj = e as Error;
+        if (errorObj.message.includes("404")) {
           errors.value.push(`${pageName}: Page not found`);
         } else {
-          errors.value.push(`${pageName}: ${e.message}`);
+          errors.value.push(`${pageName}: ${errorObj.message}`);
         }
       }
     }),
@@ -80,7 +81,7 @@ async function search() {
   saveSearchQueries();
 }
 
-function formatTimestamp(timestamp) {
+function formatTimestamp(timestamp: string): string {
   return wiki.getRelativeTimestamp(timestamp, {
     seconds: "words",
     minutes: "minutes",
@@ -92,7 +93,7 @@ function formatTimestamp(timestamp) {
   });
 }
 
-function getDeltaClass(delta) {
+function getDeltaClass(delta: number): string {
   if (delta > 0) {
     return "positive";
   } else if (delta < 0) {
@@ -102,30 +103,33 @@ function getDeltaClass(delta) {
   }
 }
 
-function getBotUrl(useThisBot) {
+function getBotUrl(useThisBot: string | null | undefined): string {
+  if (!useThisBot) return "#";
   console.log(useThisBot);
   const [head] = useThisBot.split("|");
   let path = head.split("[[")[1];
-  [path] = path.split("/use");
+  if (path) {
+    [path] = path.split("/use");
+  }
   if (!path) {
     return "#";
   }
   return `https://en.wikipedia.org/wiki/${path}`;
 }
 
-function getUserUrl(userName) {
+function getUserUrl(userName: string): string {
   return `https://en.wikipedia.org/wiki/User:${encodeURIComponent(userName)}`;
 }
 
-function getRevisionUrl(id, pageName) {
+function getRevisionUrl(id: number, pageName: string): string {
   return `https://en.wikipedia.org/w/index.php?title=${pageName}&diff=${id}`;
 }
 
-function getPageUrl(pageName) {
+function getPageUrl(pageName: string): string {
   return `https://en.wikipedia.org/wiki/${pageName}`;
 }
 
-function getThankUrl(id) {
+function getThankUrl(id: number): string {
   return `https://en.wikipedia.org/wiki/Special:Thanks/${id}`;
 }
 </script>

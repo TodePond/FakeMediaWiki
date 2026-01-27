@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import {
   CdxButton,
   CdxCard,
@@ -12,12 +12,11 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 
 const wiki = new WikiApi();
 
-const type = ref("events");
+const type = ref<"events" | "births" | "deaths" | "holidays" | "selected">("events");
 const dateInput = ref("");
-/** @type {any} */
-const content = ref(null);
+const content = ref<{ events?: Array<{ text: string; year?: number; pages?: Array<{ title: string }> }>; births?: Array<{ text: string; year?: number; pages?: Array<{ title: string }> }>; deaths?: Array<{ text: string; year?: number; pages?: Array<{ title: string }> }>; holidays?: Array<{ text: string; pages?: Array<{ title: string }> }> } | null>(null);
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 const typeOptions = [
   { value: "events", label: "Events" },
@@ -26,32 +25,33 @@ const typeOptions = [
   { value: "holidays", label: "Holidays" },
 ];
 
-const loadContent = async () => {
+const loadContent = async (): Promise<void> => {
   isLoading.value = true;
   error.value = null;
   try {
     const date = dateInput.value ? new Date(dateInput.value) : new Date();
-    const data = await wiki.getOnThisDay(type.value, date);
+    const data = (await wiki.getOnThisDay(type.value, date)) as { events?: Array<{ text: string; year?: number; pages?: Array<{ title: string }> }>; births?: Array<{ text: string; year?: number; pages?: Array<{ title: string }> }>; deaths?: Array<{ text: string; year?: number; pages?: Array<{ title: string }> }>; holidays?: Array<{ text: string; pages?: Array<{ title: string }> }> };
     content.value = data;
-  } catch (/** @type {any} */ err) {
-    error.value = err.message;
+  } catch (err) {
+    const errorObj = err as Error;
+    error.value = errorObj.message;
     content.value = null;
   } finally {
     isLoading.value = false;
   }
 };
 
-const getTodayDate = () => {
+const getTodayDate = (): string => {
   const today = new Date();
   return today.toISOString().split("T")[0];
 };
 
 onMounted(() => {
-  dateInput.value = getTodayDate() ?? "";
+  dateInput.value = getTodayDate();
   loadContent();
 });
 
-const getPageUrl = (title) => {
+const getPageUrl = (title: string): string => {
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
 };
 </script>

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -9,20 +9,25 @@ const url = ref("");
 const title = ref("");
 const description = ref("");
 const supportingText = ref("");
-/** @type {any} */
-const thumbnail = ref(null);
+const thumbnail = ref<{ url: string } | null>(null);
 const searchQuery = ref(sessionStorage.getItem("pageSearchQuery") || "Wet Leg");
 const isLoading = ref(false);
-const search = async () => {
+const search = async (): Promise<void> => {
   isLoading.value = true;
-  const summary = await wiki.getPageSummary(searchQuery.value);
+  const summary = (await wiki.getPageSummary(searchQuery.value)) as {
+    content_urls?: { desktop?: { page?: string } };
+    title?: string;
+    description?: string;
+    extract?: string;
+    thumbnail?: { source?: string };
+  };
   isLoading.value = false;
   console.log(summary);
 
-  url.value = summary.content_urls.desktop.page;
-  title.value = summary.title;
-  description.value = summary.description;
-  supportingText.value = summary.extract;
+  url.value = summary.content_urls?.desktop?.page || "";
+  title.value = summary.title || "";
+  description.value = summary.description || "";
+  supportingText.value = summary.extract || "";
   thumbnail.value = summary.thumbnail?.source
     ? {
         url: summary.thumbnail.source,
@@ -31,7 +36,7 @@ const search = async () => {
   saveSearchQuery(searchQuery.value);
 };
 
-function saveSearchQuery(query) {
+function saveSearchQuery(query: string): void {
   sessionStorage.setItem("pageSearchQuery", query);
 }
 

@@ -1,10 +1,62 @@
+interface RestApiOptions {
+  api: "wikimedia" | "mediawiki";
+  path: string;
+  body?: Record<string, unknown> | null;
+  type?: "json" | "text";
+}
+
+interface ActionApiOptions {
+  api: "action";
+  params: Record<string, unknown>;
+}
+
+type ApiOptions = RestApiOptions | ActionApiOptions;
+
+interface HistoryOptions {
+  limit?: number | string;
+  older_than?: string;
+  newer_than?: string;
+}
+
+interface ToolbarComment {
+  comment: string | null;
+  suggestedBy: string | null;
+  hashtags: string[] | string;
+  other: string[];
+  useThisBot: string | null;
+  reportBugs: string | null;
+}
+
+type TimestampFormat =
+  | "words"
+  | "date"
+  | "seconds"
+  | "minutes"
+  | "hours"
+  | "days"
+  | "weeks"
+  | "months"
+  | "years";
+
+interface RelativeTimestampOptions {
+  seconds?: TimestampFormat;
+  minutes?: TimestampFormat;
+  hours?: TimestampFormat;
+  days?: TimestampFormat;
+  weeks?: TimestampFormat;
+  months?: TimestampFormat;
+  years?: TimestampFormat;
+}
+
 /**
  * Helper for interacting with Wikimedia and MediaWiki REST APIs.
  */
 export class WikiApi {
+  base: string;
+
   /**
    * Create a new WikiApi instance
-   * @param {string} base - Base URL for the API
+   * @param base - Base URL for the API
    */
   constructor(base = "https://en.wikipedia.org/") {
     this.base = base;
@@ -12,46 +64,32 @@ export class WikiApi {
 
   /**
    * Get the base URL for the Wikimedia REST API
-   * @returns {string} Wikimedia base URL
+   * @returns Wikimedia base URL
    */
-  get wikimediaBase() {
+  get wikimediaBase(): string {
     return `${this.base}api/rest_v1/`;
   }
 
   /**
    * Get the base URL for the MediaWiki REST API
-   * @returns {string} MediaWiki base URL
+   * @returns MediaWiki base URL
    */
-  get mediawikiBase() {
+  get mediawikiBase(): string {
     return `${this.base}w/rest.php/v1/`;
   }
 
   /**
-   * @typedef {Object} RestApiOptions
-   * @property {"wikimedia" | "mediawiki"} api - API type
-   * @property {string} path - API path
-   * @property {object|null} [body=null] - Request body (for POST requests)
-   * @property {"json" | "text"} [type='json'] - Response type
-   */
-
-  /**
-   * @typedef {Object} ActionApiOptions
-   * @property {"action"} api - API type
-   * @property {Object<string, any>} params - Action API parameters (e.g., { action: "query", list: "usercontribs", ... })
-   */
-
-  /**
    * Make a request to Wikimedia REST API, MediaWiki REST API, or MediaWiki Action API
-   * @param {RestApiOptions | ActionApiOptions} options - Request options
-   * @returns {Promise<Object|string>} JSON or text response
+   * @param options - Request options
+   * @returns JSON or text response
    */
-  async request(options) {
+  async request(options: ApiOptions): Promise<unknown> {
     const { api } = options;
 
     if (api === "action") {
-      return this._handleActionApiRequest(/** @type {ActionApiOptions} */ (options));
+      return this._handleActionApiRequest(options as ActionApiOptions);
     } else if (api === "wikimedia" || api === "mediawiki") {
-      return this._handleRestApiRequest(/** @type {RestApiOptions} */ (options));
+      return this._handleRestApiRequest(options as RestApiOptions);
     } else {
       throw new Error('API type must be "wikimedia", "mediawiki", or "action"');
     }
@@ -59,11 +97,16 @@ export class WikiApi {
 
   /**
    * Handle REST API requests (Wikimedia or MediaWiki)
-   * @param {RestApiOptions} options - REST API options
-   * @returns {Promise<Object|string>} JSON or text response
+   * @param options - REST API options
+   * @returns JSON or text response
    * @private
    */
-  async _handleRestApiRequest({ api, path, body = null, type = "json" }) {
+  async _handleRestApiRequest({
+    api,
+    path,
+    body = null,
+    type = "json",
+  }: RestApiOptions): Promise<unknown> {
     const base = api === "wikimedia" ? this.wikimediaBase : this.mediawikiBase;
     const containsQuery = path.includes("?");
     const separator = containsQuery ? "&" : "?";
@@ -98,11 +141,11 @@ export class WikiApi {
 
   /**
    * Handle Action API requests
-   * @param {ActionApiOptions} options - Action API options
-   * @returns {Promise<Object>} JSON response from Action API
+   * @param options - Action API options
+   * @returns JSON response from Action API
    * @private
    */
-  async _handleActionApiRequest({ params }) {
+  async _handleActionApiRequest({ params }: ActionApiOptions): Promise<unknown> {
     const searchParams = new URLSearchParams();
 
     // Add all parameters to the URL
@@ -110,9 +153,9 @@ export class WikiApi {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
           // Handle array values (some Action API params accept multiple values)
-          value.forEach((v) => searchParams.append(key, v));
+          value.forEach((v) => searchParams.append(key, String(v)));
         } else {
-          searchParams.append(key, value.toString());
+          searchParams.append(key, String(value));
         }
       }
     }
@@ -140,7 +183,10 @@ export class WikiApi {
         throw new Error(`${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        error?: { info?: string; code?: string };
+        warnings?: unknown;
+      };
 
       // Check for Action API errors
       if (data.error) {
@@ -167,19 +213,19 @@ export class WikiApi {
 
   /**
    * Encode a page title for URL usage
-   * @param {string} slug - Page title
-   * @returns {string} URL-encoded title
+   * @param slug - Page title
+   * @returns URL-encoded title
    */
-  encode(slug) {
+  encode(slug: string): string {
     return encodeURIComponent(slug.replace(/ /g, "_"));
   }
 
   /**
    * Get a page summary (extract, thumbnail, etc.)
-   * @param {string} pageName - Page title
-   * @returns {Promise<Object>} Page summary
+   * @param pageName - Page title
+   * @returns Page summary
    */
-  async getPageSummary(pageName) {
+  async getPageSummary(pageName: string): Promise<unknown> {
     return this.request({
       api: "wikimedia",
       path: `page/summary/${this.encode(pageName)}`,
@@ -188,36 +234,36 @@ export class WikiApi {
 
   /**
    * Get page content as HTML
-   * @param {string} pageName - Page title
-   * @returns {Promise<string>} HTML content
+   * @param pageName - Page title
+   * @returns HTML content
    */
-  async getPageHtml(pageName) {
-    return await this.request({
+  async getPageHtml(pageName: string): Promise<string> {
+    return (await this.request({
       api: "mediawiki",
       path: `page/${this.encode(pageName)}/html`,
       type: "text",
-    });
+    })) as string;
   }
 
   /**
    * Get page content as wikitext source
-   * @param {string} pageName - Page title
-   * @returns {Promise<string>} Wikitext source
+   * @param pageName - Page title
+   * @returns Wikitext source
    */
-  async getPageSource(pageName) {
-    const page = await this.request({
+  async getPageSource(pageName: string): Promise<string> {
+    const page = (await this.request({
       api: "mediawiki",
       path: `page/${this.encode(pageName)}`,
-    });
+    })) as { source: string };
     return page.source;
   }
 
   /**
    * Get full page metadata and latest revision
-   * @param {string} pageName - Page title
-   * @returns {Promise<Object>} Page metadata
+   * @param pageName - Page title
+   * @returns Page metadata
    */
-  async getPage(pageName) {
+  async getPage(pageName: string): Promise<unknown> {
     return this.request({
       api: "mediawiki",
       path: `page/${this.encode(pageName)}`,
@@ -226,11 +272,11 @@ export class WikiApi {
 
   /**
    * Search for pages by title (autocomplete-style)
-   * @param {string} query - Search query
-   * @param {number} limit - Maximum results (default: 20)
-   * @returns {Promise<Object>} Search results
+   * @param query - Search query
+   * @param limit - Maximum results (default: 20)
+   * @returns Search results
    */
-  async searchTitles(query, limit = 20) {
+  async searchTitles(query: string, limit = 20): Promise<unknown> {
     return this.request({
       api: "mediawiki",
       path: `search/title?q=${encodeURIComponent(query)}&limit=${limit}`,
@@ -239,11 +285,11 @@ export class WikiApi {
 
   /**
    * Full-text search across page titles and content
-   * @param {string} query - Search query
-   * @param {number} limit - Maximum results (default: 20)
-   * @returns {Promise<Object>} Search results
+   * @param query - Search query
+   * @param limit - Maximum results (default: 20)
+   * @returns Search results
    */
-  async searchPages(query, limit = 20) {
+  async searchPages(query: string, limit = 20): Promise<unknown> {
     return this.request({
       api: "mediawiki",
       path: `search/page?q=${encodeURIComponent(query)}&limit=${limit}`,
@@ -252,16 +298,19 @@ export class WikiApi {
 
   /**
    * Search for users by username
-   * @param {string} query - Search query (username or part of username)
-   * @returns {Promise<Array>} Array of user objects with username, avatar, and page metadata
+   * @param query - Search query (username or part of username)
+   * @param limit - Maximum results (default: 20)
+   * @returns Array of user objects with username, avatar, and page metadata
    */
-  async searchUsers(query, limit = 20) {
+  async searchUsers(query: string, limit = 20): Promise<unknown[]> {
     // Search for users by prefixing with "User:" if not already present
     const cleanQuery = query.trim();
     const searchQuery = cleanQuery.startsWith("User:") ? cleanQuery : `User:${cleanQuery}`;
 
     // Search for titles matching the query
-    const data = await this.searchTitles(searchQuery, limit * 2); // Get more results to account for filtering
+    const data = (await this.searchTitles(searchQuery, limit * 2)) as {
+      pages?: Array<{ title: string }>;
+    };
 
     // Filter to only User namespace pages (exclude subpages like User:Name/Talk)
     const userPages = (data.pages || []).filter(
@@ -290,13 +339,13 @@ export class WikiApi {
 
   /**
    * Get page revision history
-   * @param {string} pageName - Page title
-   * @param {Object} options - Options (limit, older_than, newer_than, etc.)
-   * @returns {Promise<Object>} Revision history
+   * @param pageName - Page title
+   * @param options - Options (limit, older_than, newer_than, etc.)
+   * @returns Revision history
    */
-  async getPageHistory(pageName, options = {}) {
+  async getPageHistory(pageName: string, options: HistoryOptions = {}): Promise<unknown> {
     const params = new URLSearchParams();
-    if (options.limit) params.append("limit", options.limit);
+    if (options.limit) params.append("limit", String(options.limit));
     if (options.older_than) params.append("older_than", options.older_than);
     if (options.newer_than) params.append("newer_than", options.newer_than);
 
@@ -310,15 +359,15 @@ export class WikiApi {
 
   /**
    * Get user contribution history (revisions made by a user)
-   * @param {string} userName - Username
-   * @param {Object} options - Options (limit, older_than, newer_than, etc.)
-   * @returns {Promise<Object>} User revision history with same structure as getPageHistory
+   * @param userName - Username
+   * @param options - Options (limit, older_than, newer_than, etc.)
+   * @returns User revision history with same structure as getPageHistory
    */
-  async getUserHistory(userName, options = {}) {
+  async getUserHistory(userName: string, options: HistoryOptions = {}): Promise<unknown> {
     // Try REST API endpoint first (if it exists)
     try {
       const params = new URLSearchParams();
-      if (options.limit) params.append("limit", options.limit);
+      if (options.limit) params.append("limit", String(options.limit));
       if (options.older_than) params.append("older_than", options.older_than);
       if (options.newer_than) params.append("newer_than", options.newer_than);
 
@@ -336,16 +385,19 @@ export class WikiApi {
 
   /**
    * Get user contributions using the Action API (fallback)
-   * @param {string} userName - Username
-   * @param {Object} options - Options (limit, etc.)
-   * @returns {Promise<Object>} User revision history
+   * @param userName - Username
+   * @param options - Options (limit, etc.)
+   * @returns User revision history
    */
-  async getUserHistoryViaActionApi(userName, options = {}) {
+  async getUserHistoryViaActionApi(
+    userName: string,
+    options: HistoryOptions = {},
+  ): Promise<unknown> {
     const limit = options.limit || 20;
     const ucstart = options.older_than || undefined;
     const ucend = options.newer_than || undefined;
 
-    const params = {
+    const params: Record<string, unknown> = {
       action: "query",
       list: "usercontribs",
       ucuser: userName,
@@ -356,10 +408,25 @@ export class WikiApi {
     if (ucstart) params.ucstart = ucstart;
     if (ucend) params.ucend = ucend;
 
-    const data = await this.request({
+    const data = (await this.request({
       api: "action",
       params,
-    });
+    })) as {
+      query?: {
+        usercontribs?: Array<{
+          revid: number;
+          timestamp: string;
+          minor?: boolean;
+          size?: number;
+          comment?: string;
+          userid?: number;
+          user?: string;
+          sizediff?: number;
+          title: string;
+          pageid: number;
+        }>;
+      };
+    };
 
     // Transform Action API response to match REST API format
     const contributions = data.query?.usercontribs || [];
@@ -386,11 +453,11 @@ export class WikiApi {
 
   /**
    * Compare two revisions
-   * @param {number} fromRevId - Source revision ID
-   * @param {number} toRevId - Target revision ID
-   * @returns {Promise<Object>} Diff between revisions
+   * @param fromRevId - Source revision ID
+   * @param toRevId - Target revision ID
+   * @returns Diff between revisions
    */
-  async compareRevisions(fromRevId, toRevId) {
+  async compareRevisions(fromRevId: number, toRevId: number): Promise<unknown> {
     return this.request({
       api: "mediawiki",
       path: `revision/${fromRevId}/compare/${toRevId}`,
@@ -399,16 +466,16 @@ export class WikiApi {
 
   /**
    * Get a random page
-   * @param {string} format - Format: 'summary', 'html', or 'title' (default: 'summary')
-   * @returns {Promise<Object|string>} Random page content
+   * @param format - Format: 'summary', 'html', or 'title' (default: 'summary')
+   * @returns Random page content
    */
-  async getRandomPage(format = "summary") {
+  async getRandomPage(format: "summary" | "html" | "title" = "summary"): Promise<unknown> {
     if (format === "title") {
       // For title-only, use MediaWiki API
-      const result = await this.request({
+      const result = (await this.request({
         api: "mediawiki",
         path: "page/random",
-      });
+      })) as { title: string };
       return result.title;
     }
     return this.request({
@@ -419,10 +486,10 @@ export class WikiApi {
 
   /**
    * Get featured page for a specific date
-   * @param {Date|string} date - Date object or YYYY/MM/DD string
-   * @returns {Promise<Object>} Featured page data
+   * @param date - Date object or YYYY/MM/DD string
+   * @returns Featured page data
    */
-  async getFeaturedPage(date = new Date()) {
+  async getFeaturedPage(date: Date | string = new Date()): Promise<unknown> {
     const dateStr =
       date instanceof Date
         ? `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`
@@ -435,11 +502,14 @@ export class WikiApi {
 
   /**
    * Get "On This Day" content
-   * @param {string} type - Type: 'events', 'births', 'deaths', 'holidays', 'selected'
-   * @param {Date|string} date - Date object or MM/DD string
-   * @returns {Promise<Object>} On this day content
+   * @param type - Type: 'events', 'births', 'deaths', 'holidays', 'selected'
+   * @param date - Date object or MM/DD string
+   * @returns On this day content
    */
-  async getOnThisDay(type = "events", date = new Date()) {
+  async getOnThisDay(
+    type: "events" | "births" | "deaths" | "holidays" | "selected" = "events",
+    date: Date | string = new Date(),
+  ): Promise<unknown> {
     const dateStr =
       date instanceof Date
         ? `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`
@@ -452,9 +522,9 @@ export class WikiApi {
 
   /**
    * Get current announcements
-   * @returns {Promise<Object>} Announcements
+   * @returns Announcements
    */
-  async getAnnouncements() {
+  async getAnnouncements(): Promise<unknown> {
     return this.request({
       api: "wikimedia",
       path: "feed/announcements",
@@ -463,10 +533,10 @@ export class WikiApi {
 
   /**
    * Get page media (images, audio, etc.)
-   * @param {string} pageName - Page title
-   * @returns {Promise<Object>} Media files associated with the page
+   * @param pageName - Page title
+   * @returns Media files associated with the page
    */
-  async getPageMedia(pageName) {
+  async getPageMedia(pageName: string): Promise<unknown> {
     return this.request({
       api: "wikimedia",
       path: `page/media-list/${this.encode(pageName)}`,
@@ -475,10 +545,10 @@ export class WikiApi {
 
   /**
    * Get thumbnail image for a page
-   * @param {string} pageName - Page title
-   * @returns {Promise<string|null>} Thumbnail URL or null
+   * @param pageName - Page title
+   * @returns Thumbnail URL or null
    */
-  async getPageThumbnail(pageName) {
+  async getPageThumbnail(pageName: string): Promise<string | null> {
     try {
       // For User talk pages, get the user avatar instead
       if (pageName.startsWith("User talk:")) {
@@ -498,7 +568,9 @@ export class WikiApi {
         targetPageName = pageName.substring(5); // Remove "Talk:" prefix
       }
 
-      const summary = await this.getPageSummary(targetPageName);
+      const summary = (await this.getPageSummary(targetPageName)) as {
+        thumbnail?: { source?: string; url?: string };
+      };
       if (summary.thumbnail) {
         const thumb = summary.thumbnail;
         return thumb.source || thumb.url || null;
@@ -512,25 +584,25 @@ export class WikiApi {
 
   /**
    * Transform wikitext to HTML
-   * @param {string} wikitext - Wikitext content
-   * @param {string} pageTitle - Page title for context (optional)
-   * @returns {Promise<string>} HTML content
+   * @param wikitext - Wikitext content
+   * @param pageTitle - Page title for context (optional)
+   * @returns HTML content
    */
-  async transformWikitextToHtml(wikitext, pageTitle = "Main_Page") {
-    return this.request({
+  async transformWikitextToHtml(wikitext: string, pageTitle = "Main_Page"): Promise<string> {
+    return (await this.request({
       api: "mediawiki",
       path: `transform/wikitext/to/html/${this.encode(pageTitle)}`,
       body: { wikitext },
       type: "text",
-    });
+    })) as string;
   }
 
   /**
    * Get page categories
-   * @param {string} pageName - Page title
-   * @returns {Promise<Object>} Page categories
+   * @param pageName - Page title
+   * @returns Page categories
    */
-  async getPageCategories(pageName) {
+  async getPageCategories(pageName: string): Promise<unknown> {
     return this.request({
       api: "wikimedia",
       path: `page/metadata/${this.encode(pageName)}`,
@@ -539,10 +611,10 @@ export class WikiApi {
 
   /**
    * Get related pages (links, etc.)
-   * @param {string} pageName - Page title
-   * @returns {Promise<Object>} Related pages data
+   * @param pageName - Page title
+   * @returns Related pages data
    */
-  async getRelatedPages(pageName) {
+  async getRelatedPages(pageName: string): Promise<unknown> {
     return this.request({
       api: "wikimedia",
       path: `page/links/${this.encode(pageName)}`,
@@ -551,31 +623,30 @@ export class WikiApi {
 
   /**
    * Get page mobile-optimized HTML
-   * @param {string} pageName - Page title
-   * @returns {Promise<string>} Mobile HTML
+   * @param pageName - Page title
+   * @returns Mobile HTML
    */
-  async getPageMobileHtml(pageName) {
-    return this.request({
+  async getPageMobileHtml(pageName: string): Promise<string> {
+    return (await this.request({
       api: "wikimedia",
       path: `page/mobile-html/${this.encode(pageName)}`,
       type: "text",
-    });
+    })) as string;
   }
 
-  async getUserAvatar(userName) {
-    // return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg";
-
+  async getUserAvatar(userName: string): Promise<string | null> {
     // Get media from the user's user page
     try {
-      const media = await this.getPageMedia(`User:${userName}`);
-      console.log(media);
-      if (media.items.length > 0) {
+      const media = (await this.getPageMedia(`User:${userName}`)) as {
+        items?: Array<{ section_id?: number; srcset?: Array<{ src?: string }> }>;
+      };
+      if (media.items && media.items.length > 0) {
         // Look for the first item in the section 1, to avoid notices at the top of the page
         // Resort to the notices if no item is found in section 1
-        let leadItem = media.items.find((item) => item.section_id === 1) ?? media.items[0];
+        const leadItem = media.items.find((item) => item.section_id === 1) ?? media.items[0];
 
         return (
-          leadItem.srcset[0]?.src ??
+          leadItem.srcset?.[0]?.src ??
           "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
         );
       }
@@ -586,7 +657,7 @@ export class WikiApi {
     }
   }
 
-  getTableFromToolbarComment(comment) {
+  getTableFromToolbarComment(comment: string): string {
     const toolbar = this.parseToolbarComment(comment);
 
     if (toolbar === null) {
@@ -600,7 +671,7 @@ export class WikiApi {
     if (toolbar.useThisBot && toolbar.reportBugs) {
       table += `| ${toolbar.useThisBot}. ${toolbar.reportBugs}\n|-\n`;
     }
-    if (toolbar.hashtags.length > 0) {
+    if (Array.isArray(toolbar.hashtags) && toolbar.hashtags.length > 0) {
       table += `| ${toolbar.hashtags.join(" ")}\n|-\n`;
     }
     if (toolbar.other.length > 0) {
@@ -613,20 +684,17 @@ export class WikiApi {
   }
 
   /**
-   *
-   * @param {string} comment
-   * @returns
+   * Parse a toolbar comment into structured parts
+   * @param comment - Comment string to parse
+   * @returns Parsed toolbar comment or null if not a toolbar comment
    */
-  parseToolbarComment(comment) {
-    /** @type {string[]} */
+  parseToolbarComment(comment: string): ToolbarComment | null {
     let parts = comment.split(" | ");
     parts = parts.filter((part) => part.trim().length > 0);
     if (parts.length <= 1) {
       return null;
     }
 
-    /** @type {[string]} */
-    // @ts-expect-error - i already checked that it's not empty
     const [head] = parts;
     const suggestedByPart = parts.find((part) => part.startsWith("Suggested by "));
     const botPart = parts.find((part) => part.includes("Use this bot]]."));
@@ -655,7 +723,7 @@ export class WikiApi {
     };
   }
 
-  preprocessEditSummary(summary, pageName) {
+  preprocessEditSummary(summary: string, pageName: string): string {
     summary = summary.replace(/^\/\* (.*) \*\//, `[[${pageName}#$1|→$1]]`);
     summary = summary.replaceAll("[[Category:", "[[:Category:");
     if (summary.includes("#IABot")) {
@@ -664,7 +732,7 @@ export class WikiApi {
     return summary;
   }
 
-  async getEditSummaryHtml(summary, pageName) {
+  async getEditSummaryHtml(summary: string, pageName: string): Promise<string> {
     summary = this.preprocessEditSummary(summary, pageName);
     summary = this.getTableFromToolbarComment(summary);
     return await this.transformWikitextToHtml(summary);
@@ -672,18 +740,11 @@ export class WikiApi {
 
   /**
    * Get a relative timestamp string (e.g., "2 minutes ago", "3 days ago")
-   * @param {string|Date} timestamp - ISO timestamp string or Date object
-   * @param {Object} [options] - Formatting options for different time periods
-   * @param {string} [options.seconds] - Format for seconds: "words", "date", or unit name
-   * @param {string} [options.minutes] - Format for minutes: "words", "date", or unit name
-   * @param {string} [options.hours] - Format for hours: "words", "date", or unit name
-   * @param {string} [options.days] - Format for days: "words", "date", or unit name
-   * @param {string} [options.weeks] - Format for weeks: "words", "date", or unit name
-   * @param {string} [options.months] - Format for months: "words", "date", or unit name
-   * @param {string} [options.years] - Format for years: "words", "date", or unit name
-   * @returns {string} Relative time string
+   * @param timestamp - ISO timestamp string or Date object
+   * @param options - Formatting options for different time periods
+   * @returns Relative time string
    */
-  getRelativeTimestamp(timestamp, options = {}) {
+  getRelativeTimestamp(timestamp: string | Date, options: RelativeTimestampOptions = {}): string {
     const now = new Date();
     const past = timestamp instanceof Date ? timestamp : new Date(timestamp);
 
@@ -714,7 +775,7 @@ export class WikiApi {
     const diffYears = Math.floor(diffDays / 365);
 
     // Helper function to format date as "DD Month YYYY" (or "DD Month" if same year)
-    const formatDate = (date) => {
+    const formatDate = (date: Date): string => {
       const currentYear = now.getFullYear();
       const dateYear = date.getFullYear();
       const includeYear = dateYear !== currentYear;
@@ -727,8 +788,8 @@ export class WikiApi {
     };
 
     // Helper function to format a specific unit
-    const formatUnit = (value, unit) => {
-      const unitNames = {
+    const formatUnit = (value: number, unit: string): string => {
+      const unitNames: Record<string, { singular: string; plural: string }> = {
         seconds: { singular: "second", plural: "seconds" },
         minutes: { singular: "minute", plural: "minutes" },
         hours: { singular: "hour", plural: "hours" },
@@ -742,13 +803,13 @@ export class WikiApi {
     };
 
     // Helper function to get format option for a time period
-    const getFormat = (period) => {
-      return options[period];
+    const getFormat = (period: string): string | undefined => {
+      return options[period as keyof RelativeTimestampOptions] as string | undefined;
     };
 
     // Determine which time period we're in and get the appropriate format
-    let currentPeriod;
-    let currentValue;
+    let currentPeriod: string;
+    let currentValue: number;
 
     if (diffSeconds < 60) {
       currentPeriod = "seconds";
@@ -806,7 +867,7 @@ export class WikiApi {
       ["seconds", "minutes", "hours", "days", "weeks", "months", "years"].includes(format)
     ) {
       // Calculate the value for the forced unit
-      let forcedValue;
+      let forcedValue: number;
       if (format === "seconds") {
         forcedValue = diffSeconds;
       } else if (format === "minutes") {
@@ -821,6 +882,8 @@ export class WikiApi {
         forcedValue = diffMonths;
       } else if (format === "years") {
         forcedValue = diffYears;
+      } else {
+        forcedValue = 0;
       }
       return formatUnit(forcedValue, format);
     }

@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 const router = createRouter({
-  // @ts-expect-error - trust me
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {

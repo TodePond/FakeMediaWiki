@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex";
 import { onMounted, ref } from "vue";
 import { WikiApi } from "../../wiki-api/WikiApi";
@@ -6,13 +6,12 @@ import { WikiApi } from "../../wiki-api/WikiApi";
 const wiki = new WikiApi();
 
 const searchQuery = ref(sessionStorage.getItem("searchTitlesQuery") || "");
-/** @type {any} */
-const results = ref([]);
+const results = ref<Array<{ key?: string; title: string; description?: string; thumbnail?: unknown }>>([]);
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 let searchId = 0;
-const search = async () => {
+const search = async (): Promise<void> => {
   searchId++;
   const currentSearchId = searchId;
   sessionStorage.setItem("searchTitlesQuery", searchQuery.value);
@@ -21,20 +20,21 @@ const search = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const data = await wiki.searchTitles(searchQuery.value, 20);
+    const data = (await wiki.searchTitles(searchQuery.value, 20)) as { pages?: Array<{ key?: string; title: string; description?: string; thumbnail?: unknown }> };
     if (currentSearchId === searchId) {
       results.value = data.pages || [];
       console.log(results.value);
     }
-  } catch (/** @type {any} */ err) {
-    error.value = err.message;
+  } catch (err) {
+    const errorObj = err as Error;
+    error.value = errorObj.message;
     results.value = [];
   } finally {
     isLoading.value = false;
   }
 };
 
-const getPageUrl = (title) => {
+const getPageUrl = (title: string): string => {
   return `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
 };
 

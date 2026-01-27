@@ -1,15 +1,11 @@
-/**
- * @typedef {object} PrototypeMetadata
- * @property {string} id
- * @property {string} componentName - Name of the component (matches the directory)
- * @property {boolean} [pinned]
- * @property {string} [wrapper]
- */
+export interface PrototypeMetadata {
+  id: string;
+  componentName: string;
+  pinned?: boolean;
+  wrapper?: string;
+}
 
-/**
- * @type {PrototypeMetadata[]}
- */
-export const prototypeMetadata = [
+export const prototypeMetadata: PrototypeMetadata[] = [
   {
     id: "CustomPageFeed",
     componentName: "CustomPageFeed",
