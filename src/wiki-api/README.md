@@ -8,32 +8,32 @@ This directory contains API schemas and utilities for interacting with Wikimedia
 - `schema/mediawiki-schema.json` - OpenAPI 3.0 schema for MediaWiki REST API
 - `schema/wikimedia-schema.json` - OpenAPI 3.0 schema for Wikimedia REST API
 
-## Utility Methods
+## Utility methods
 
 The WikiApi class provides several utility methods for prototypes:
 
-### Storage Keys
+### Storage keys
 
 - `wiki.getStorageKey(prototypeName, keyName)` - Generate a single storage key
 - `wiki.getStorageKeys(prototypeName, keyName, count)` - Generate multiple storage keys
 
-### Result Types
+### Result types
 
 - `Result<T>` interface - Standardized result type with `data`, `loading`, and `error` properties
 - `wiki.createResult<T>()` - Create a single Result instance with default values
 - `wiki.createResults<T>(count)` - Create multiple Result instances
 
-### Delta Utilities
+### Delta utilities
 
 - `wiki.getDeltaClass(delta)` - Get CSS class name for change size indicator ("positive", "negative", or "neutral")
 - `style/delta.css` - Shared CSS styles for delta indicators (import this file to use the classes)
 
-## Reference Documentation
+## Reference documentation
 
 - `CODEX_REFERENCE.md` - Guide to Codex components, icons, and design tokens
 - `ICON_REFERENCE.md` - Documentation of Codex icons used in the project
 
-## API Types
+## API types
 
 ### Wikimedia REST API
 
@@ -55,7 +55,7 @@ The traditional MediaWiki API using query parameters.
 
 ## Usage
 
-### Basic API Usage
+### Basic API usage
 
 ```typescript
 import { WikiApi } from "./wiki-api/WikiApi"
@@ -72,7 +72,7 @@ const history = await wiki.getPageHistory("Wikipedia", { limit: 5 })
 const results = await wiki.searchPages("query", 20)
 ```
 
-### Using Storage Keys
+### Using storage keys
 
 ```typescript
 import { WikiApi } from "./wiki-api/WikiApi"
@@ -88,7 +88,7 @@ const keys = wiki.getStorageKeys("CustomPageFeed", "pageQuery", 3)
 // Returns: ["CustomPageFeed_pageQuery1", "CustomPageFeed_pageQuery2", "CustomPageFeed_pageQuery3"]
 ```
 
-### Using Result Types
+### Using result types
 
 ```typescript
 import { WikiApi, type Result, type Revision } from "./wiki-api/WikiApi"
@@ -102,7 +102,7 @@ const result = wiki.createResult<Revision>()
 const results = wiki.createResults<Revision>(3)
 ```
 
-### Using Delta Utilities
+### Using delta utilities
 
 ```typescript
 import { WikiApi } from "./wiki-api/WikiApi"
@@ -115,7 +115,7 @@ const className2 = wiki.getDeltaClass(-50) // Returns "negative"
 const className3 = wiki.getDeltaClass(0) // Returns "neutral"
 ```
 
-## Schema Files
+## Schema files
 
 The schema files (`mediawiki-schema.json` and `wikimedia-schema.json`) are OpenAPI 3.0 specifications that document all available endpoints, parameters, and response formats. These can be used for:
 

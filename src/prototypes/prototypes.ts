@@ -1,12 +1,32 @@
-export interface PrototypeMetadata {
+export interface PrototypeItem {
+	id: string
+	name: string
+	description: string
+	wrapper: string
+	new?: boolean
+	updated?: boolean
+}
+
+export interface PrototypeMetadataBase {
 	id: string
 	name: string
 	description: string
 	category: string
 	new?: boolean
 	updated?: boolean
-	wrapper?: string
 }
+
+export interface PrototypeMetadataPrototype extends PrototypeMetadataBase {
+	type: "prototype"
+	wrapper: string
+}
+
+export interface PrototypeMetadataVariants extends PrototypeMetadataBase {
+	type: "variants"
+	variants: PrototypeItem[]
+}
+
+export type PrototypeMetadata = PrototypeMetadataPrototype | PrototypeMetadataVariants
 
 export interface CategoryDefinition {
 	id: string
@@ -19,22 +39,22 @@ export const categories: CategoryDefinition[] = [
 	{
 		id: "feed",
 		name: "Feed",
-		description: 'Early dashboard explorations based around the "feed" metaphor.',
+		description: 'Early dashboard explorations based on the "feed" metaphor.',
 	},
 	{
 		id: "page",
 		name: "Page",
-		description: "Simple demonstrations of API endpoints for individual wiki pages.",
+		description: "Basic demonstrations of working with real page information.",
 	},
 	{
 		id: "search",
 		name: "Search",
-		description: "Simple demonstrations of search endpoints.",
+		description: "Basic demonstrations of using search features.",
 	},
 	{
 		id: "api",
 		name: "API",
-		description: "Simple pages that demonstrate one or more API endpoints.",
+		description: "Basic demonstrations of API endpoints.",
 	},
 	{
 		id: "components",
@@ -45,24 +65,29 @@ export const categories: CategoryDefinition[] = [
 
 export const prototypeMetadata: PrototypeMetadata[] = [
 	{
-		id: "CustomPageFeed",
-		name: "Combined feed: User variant",
-		description:
-			"A feed that combines multiple sources into one feed: Pages and users.<br/>In this variant, the <strong>user</strong> is the primary source.",
+		type: "variants",
+		id: "CombinedFeed",
+		name: "Combined feed",
+		description: "A feed that combines multiple sources into one.",
 		category: "feed",
-		wrapper: "Tablet",
 		new: true,
+		variants: [
+			{
+				id: "CustomPageFeed",
+				name: "User variant",
+				description: "Use the user as the primary source.",
+				wrapper: "Tablet",
+			},
+			{
+				id: "CustomThumbnailFeed",
+				name: "Page variant",
+				description: "Use the page as the primary source.",
+				wrapper: "Tablet",
+			},
+		],
 	},
 	{
-		id: "CustomThumbnailFeed",
-		name: "Combined feed: Page variant",
-		description:
-			"A feed that combines multiple sources into one feed: Pages and users.<br/>In this variant, the <strong>page</strong> is the primary source.",
-		category: "feed",
-		wrapper: "Tablet",
-		new: true,
-	},
-	{
+		type: "prototype",
 		id: "MultiPageFeed",
 		name: "Multi-page feed",
 		description: "A feed that combines updates from multiple pages.",
@@ -71,136 +96,164 @@ export const prototypeMetadata: PrototypeMetadata[] = [
 		// new: true,
 	},
 	{
-		id: "PageFeedLined",
-		name: "Page feed: Lined variant",
-		description: "A feed component...",
-		category: "feed",
-		wrapper: "Special",
-		// new: true,
-	},
-	{
+		type: "variants",
 		id: "PageFeed",
-		name: "Page feed: Card variant",
-		description: "A feed component...",
+		name: "Page feed",
+		description: "A feed component that shows recent changes to a page.",
 		category: "feed",
-		wrapper: "Special",
+		variants: [
+			{
+				id: "PageFeedLined",
+				name: "Lined variant",
+				description: "Use lines to separate changes.",
+				wrapper: "Special",
+			},
+			{
+				id: "PageFeed",
+				name: "Card variant",
+				description: "Use cards to display changes.",
+				wrapper: "Special",
+			},
+		],
 	},
 	{
+		type: "prototype",
 		id: "PageChanges",
-		name: "Page Changes",
-		description: "A basic example of...",
+		name: "Page changes",
+		description: "How to get a page's recent changes from the API.",
 		category: "feed",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "SearchTitles",
-		name: "Search Titles",
-		description: "A search interface for...",
+		name: "Search titles",
+		description: "How to search page titles using the API.",
 		category: "search",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "SearchPages",
-		name: "Search Pages",
-		description: "A search interface for...",
+		name: "Search pages",
+		description: "How to search page content using the API.",
 		category: "search",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "SearchUsers",
-		name: "Search Users",
-		description: "A search interface for...",
+		name: "Search users",
+		description: "How to search user accounts using the API.",
 		category: "search",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "FeaturedPage",
-		name: "Featured Page",
-		description: "A basic example of...",
+		name: "Featured page",
+		description: "How to get a featured page from the API.",
 		category: "api",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "OnThisDay",
-		name: "On This Day",
-		description: "A basic example of...",
+		name: "On this day",
+		description: "How to get pages that relate to a specific date.",
 		category: "api",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "WikitextTransform",
-		name: "Wikitext Transform",
-		description: "A basic example of...",
+		name: "Wikitext transform",
+		description: "How to transform wikitext to HTML using the API.",
 		category: "api",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "PageMetadata",
-		name: "Page Metadata",
-		description: "A basic example of...",
+		name: "Page metadata",
+		description: "How to get a page's metadata from the API.",
 		category: "page",
 		wrapper: "Special",
 	},
 	{
+		type: "variants",
 		id: "PageHtml",
 		name: "Page HTML",
-		description: "A basic example of...",
+		description: "How to render the HTML representation of a page.",
 		category: "page",
-		wrapper: "Special",
+		variants: [
+			{
+				id: "PageHtml",
+				name: "Desktop variant",
+				description: "Get the desktop version.",
+				wrapper: "Special",
+			},
+			{
+				id: "PageMobileHtml",
+				name: "Mobile variant",
+				description: "Get the mobile version.",
+				wrapper: "Special",
+			},
+		],
 	},
 	{
+		type: "prototype",
 		id: "PageSource",
-		name: "Page Source",
-		description: "A basic example of...",
+		name: "Page source",
+		description: "How to get a page's source.",
 		category: "page",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "PageMedia",
-		name: "Page Media",
-		description: "A basic example of...",
+		name: "Page media",
+		description: "How to get a page's media items.",
 		category: "page",
 		wrapper: "Special",
 	},
 	{
-		id: "PageMobileHtml",
-		name: "Page Mobile HTML",
-		description: "A basic example of...",
-		category: "page",
-		wrapper: "Special",
-	},
-	{
+		type: "prototype",
 		id: "RandomPage",
-		name: "Random Page",
-		description: "A basic example of...",
+		name: "Random page",
+		description: "How to get a random page from the API.",
 		category: "api",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "Page",
 		name: "Page",
-		description: "A basic example of...",
+		description: "How to get a page's summary.",
 		category: "page",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "Card",
 		name: "Card",
-		description: "A basic example of...",
+		description: "How to use a card component.",
 		category: "components",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "Counter",
 		name: "Counter",
-		description: "A basic example of...",
+		description: "How to use a button component.",
 		category: "components",
 		wrapper: "Special",
 	},
 	{
+		type: "prototype",
 		id: "HelloWorld",
-		name: "Hello World",
-		description: "A basic example of...",
+		name: "Hello world",
+		description: "How to use codex components.",
 		category: "components",
 		wrapper: "Special",
 	},

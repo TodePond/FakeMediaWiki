@@ -1,10 +1,10 @@
-# Codex Design System Reference
+# Codex design system reference
 
 This project uses [Codex](https://doc.wikimedia.org/codex/), the design system for Wikimedia.
 
 ## Components
 
-### Commonly Used Components
+### Commonly used components
 
 - `CdxButton` - Button component
 - `CdxTextInput` - Text input field
@@ -42,7 +42,7 @@ import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 </template>
 ```
 
-### Common Icons Used in This Project
+### Common icons used in this project
 
 - `cdxIconHeart` - Heart icon (for "thank" actions)
 - `cdxIconLinkExternal` - External link icon
@@ -50,11 +50,11 @@ import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 - `cdxIconRobot` - Bot icon
 - `cdxIconPushPin` - Pin icon
 
-## Design Tokens
+## Design tokens
 
 Design tokens are available as CSS variables. See `src/style/tokens.css` for the full list.
 
-### Common Tokens
+### Common tokens
 
 - Colors: `--color-base`, `--color-progressive`, `--color-destructive`, `--color-subtle`
 - Spacing: `--spacing-50`, `--spacing-100`, etc.

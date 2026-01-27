@@ -1,14 +1,14 @@
-# Codex Icons Reference
+# Codex icons reference
 
 This document lists icons from `@wikimedia/codex-icons` used in this project.
 
-## Importing Icons
+## Importing icons
 
 ```typescript
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 ```
 
-## Using Icons
+## Using icons
 
 ```vue
 <template>
@@ -16,9 +16,9 @@ import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 </template>
 ```
 
-## Icons Used in This Project
+## Icons used in this project
 
-### Navigation & Links
+### Navigation & links
 
 - `cdxIconLinkExternal` - External link icon (used in feed items to link to revisions)
 
@@ -32,7 +32,7 @@ import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 - `cdxIconArticle` - Article/document icon (used as placeholder for page thumbnails)
 - `cdxIconPushPin` - Pin icon (used in home view for pinned prototypes)
 
-## Finding More Icons
+## Finding more icons
 
 All available icons can be found in the [Codex Icons Documentation](https://doc.wikimedia.org/codex/latest/icons/all-icons.html).
 

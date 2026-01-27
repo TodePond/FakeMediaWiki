@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { RouterLink } from "vue-router"
-import { categories, getPrototypesByCategory } from "../prototypes/registry"
+import { categories, getPrototypeGroupsByCategory } from "../prototypes/registry"
 
-const prototypesByCategory = getPrototypesByCategory()
+const prototypeGroupsByCategory = getPrototypeGroupsByCategory()
 
 const categoriesWithPrototypes = computed(() => {
-	return categories.filter(category => (prototypesByCategory[category.id]?.length ?? 0) > 0)
+	return categories.filter(category => (prototypeGroupsByCategory[category.id]?.length ?? 0) > 0)
 })
 </script>
 
 <template>
 	<main>
-		<h1>MediaWiki Prototypes</h1>
+		<h1>Prototypes</h1>
 		<div
 			v-for="category in categoriesWithPrototypes"
 			:key="category.id"
@@ -21,17 +21,57 @@ const categoriesWithPrototypes = computed(() => {
 			<h2>{{ category.name }}</h2>
 			<p class="category-description">{{ category.description }}</p>
 			<ul>
-				<li v-for="prototype in prototypesByCategory[category.id]!" :key="prototype.id">
-					<RouterLink :to="`/${prototype.wrapper}/${prototype.id}`">
-						<div class="prototype-header">
-							<span class="prototype-name">{{ prototype.name }}</span>
-							<span v-if="prototype.new" class="badge badge-new">New</span>
-							<span v-if="prototype.updated" class="badge badge-updated"
-								>Updated</span
-							>
+				<li v-for="group in prototypeGroupsByCategory[category.id]!" :key="group.id">
+					<template v-if="group.type === 'prototype'">
+						<RouterLink :to="`/${group.wrapper}/${group.id}`" class="prototype-card">
+							<div class="prototype-header">
+								<span class="prototype-name">{{ group.name }}</span>
+								<span v-if="group.new" class="badge badge-new">New</span>
+								<span v-if="group.updated" class="badge badge-updated"
+									>Updated</span
+								>
+							</div>
+							<p class="prototype-description" v-html="group.description"></p>
+						</RouterLink>
+					</template>
+					<template v-else>
+						<div class="prototype-group">
+							<div class="prototype-header">
+								<span class="prototype-name">{{ group.name }}</span>
+								<span v-if="group.new" class="badge badge-new">New</span>
+								<span v-if="group.updated" class="badge badge-updated"
+									>Updated</span
+								>
+							</div>
+							<p class="prototype-description" v-html="group.description"></p>
+							<ul class="variant-list">
+								<li
+									v-for="variant in group.variants"
+									:key="variant.id"
+									class="variant-item"
+								>
+									<RouterLink
+										:to="`/${variant.wrapper}/${variant.id}`"
+										class="prototype-card"
+									>
+										<div class="prototype-header">
+											<span class="prototype-name">{{ variant.name }}</span>
+											<span v-if="variant.new" class="badge badge-new"
+												>New</span
+											>
+											<span v-if="variant.updated" class="badge badge-updated"
+												>Updated</span
+											>
+										</div>
+										<p
+											class="prototype-description"
+											v-html="variant.description"
+										></p>
+									</RouterLink>
+								</li>
+							</ul>
 						</div>
-						<p class="prototype-description" v-html="prototype.description"></p>
-					</RouterLink>
+					</template>
 				</li>
 			</ul>
 		</div>
@@ -42,7 +82,10 @@ const categoriesWithPrototypes = computed(() => {
 ul {
 	list-style-type: none;
 	margin-left: 0;
-	margin-bottom: 1rem;
+	/* margin-bottom: 1rem; */
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
 }
 
 main {
@@ -66,20 +109,23 @@ main {
 	font-size: 0.9em;
 }
 
-li {
-	margin-bottom: 1rem;
-}
-
-a {
+/* This should be a more specific to avoid affecting other links */
+a.prototype-card {
 	display: block;
-	padding: 1rem;
-	border: 1px solid var(--border-color-base, #a7a7a7);
+	padding-left: 1rem;
+	padding-right: 1rem;
+	padding-top: 1rem;
+	padding-bottom: 1rem;
+
+	border: 1px solid var(--border-color-subtle);
+	/* border: 1px solid var(--border-color-muted); */
 	border-radius: 2px;
 	text-decoration: none;
 	color: inherit;
+	background-color: var(--background-color-base);
 }
 
-a:hover {
+a.prototype-card:hover {
 	background-color: var(--background-color-interactive);
 	color: var(--color-base);
 }
@@ -100,9 +146,18 @@ h1 {
 	margin-bottom: 1.5rem;
 }
 
+/* .prototype-group > .prototype-header > .prototype-name {
+	font-weight: 600;
+	font-size: 0.9em;
+} */
+
 .prototype-name {
 	font-weight: 600;
 	font-size: 1.1em;
+}
+
+.prototype-name:not(.prototype-group > .prototype-header > .prototype-name) {
+	color: var(--color-progressive);
 }
 
 .badge {
@@ -128,5 +183,27 @@ h1 {
 	color: var(--color-base--subtle, #54595d);
 	font-size: 0.9em;
 	line-height: 1.4;
+}
+
+.prototype-group {
+	padding: 1rem;
+	border: 1px solid var(--border-color-subtle);
+	/* border: 1px solid var(--border-color-muted); */
+	/* border-radius: 2px; */
+	/* padding-bottom: 0.001rem; */
+	/* padding-bottom: auto; */
+	border-radius: 2px;
+	background-color: var(--background-color-neutral-subtle);
+}
+
+.variant-item {
+	margin-bottom: 0rem;
+}
+
+.variant-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding-top: 1rem;
 }
 </style>
