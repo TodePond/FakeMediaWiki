@@ -2,7 +2,7 @@ import type { Component } from "vue";
 import { prototypeMetadata } from "./prototypes";
 
 // Dynamically import all components using Vite's glob import
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+ 
 // @ts-ignore - import.meta.glob is a Vite-specific feature
 const componentModules = import.meta.glob<{ default: Component }>("./*/index.vue", { eager: true });
 

@@ -377,7 +377,7 @@ export class WikiApi {
         api: "mediawiki",
         path,
       });
-    } catch (error) {
+    } catch {
       // If REST API doesn't have this endpoint, fall back to Action API
       return this.getUserHistoryViaActionApi(userName, options);
     }
@@ -652,7 +652,7 @@ export class WikiApi {
         }
       }
       return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg";
-    } catch (error) {
+    } catch {
       // If no image found, use the default
       return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg";
     }
@@ -665,7 +665,7 @@ export class WikiApi {
       return comment;
     }
 
-    let table = `${toolbar.comment ?? ""}\n{\| class="wikitable" class="wikitable"\n|-\n`;
+    let table = `${toolbar.comment ?? ""}\n{| class="wikitable" class="wikitable"\n|-\n`;
     if (toolbar.suggestedBy) {
       table += `| Suggested by [[User:${toolbar.suggestedBy}|${toolbar.suggestedBy}]]\n|-\n`;
     }
@@ -704,7 +704,9 @@ export class WikiApi {
     const [useThisBot, reportBugs] = botPart ? botPart.split(". ") : [null, null];
 
     const commentPart =
-      head && head !== suggestedByPart && head !== botPart && !hashtagParts.includes(head) ? head : null;
+      head && head !== suggestedByPart && head !== botPart && !hashtagParts.includes(head)
+        ? head
+        : null;
 
     const otherParts = parts.filter(
       (part) =>

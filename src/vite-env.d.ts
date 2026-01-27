@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/* eslint-disable no-unused-vars */
 
 interface ImportMetaEnv {
   readonly BASE_URL: string;
