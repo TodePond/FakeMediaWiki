@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { RouterView } from "vue-router";
+import { RouterView } from "vue-router"
 </script>
 
 <template>
-  <RouterView />
+	<RouterView />
 </template>
 
 <style lang="less">
@@ -11,10 +11,10 @@ import { RouterView } from "vue-router";
 @import (reference) "@wikimedia/codex/mixins/link.less";
 
 a {
-  .cdx-mixin-link();
+	.cdx-mixin-link();
 }
 
 .cdx-docs-link {
-  .cdx-mixin-link();
+	.cdx-mixin-link();
 }
 </style>

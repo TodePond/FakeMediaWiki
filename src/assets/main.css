@@ -4,29 +4,29 @@
 @import "./colors.css";
 
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 html {
-  /* background-color: var(--background-color-neutral); */
-  background-color: var(--background-color-base);
+	/* background-color: var(--background-color-neutral); */
+	background-color: var(--background-color-base);
 }
 
 body {
-  /* max-width: 850px; */
-  /* max-width: var(--min-width-breakpoint-tablet); */
-  max-width: 100%;
-  color: var(--color-base);
-  margin: 0px auto;
-  background-color: var(--background-color-base);
-  padding: var(--spacing-100);
-  font-family: var(--font-family-system-sans);
-  font-size: var(--font-size-medium);
-  line-height: var(--line-height-medium);
-  font-optical-sizing: auto;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  font-synthesis: style;
+	/* max-width: 850px; */
+	/* max-width: var(--min-width-breakpoint-tablet); */
+	max-width: 100%;
+	color: var(--color-base);
+	margin: 0px auto;
+	background-color: var(--background-color-base);
+	padding: var(--spacing-100);
+	font-family: var(--font-family-system-sans);
+	font-size: var(--font-size-medium);
+	line-height: var(--line-height-medium);
+	font-optical-sizing: auto;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	font-synthesis: style;
 }
 
 h1,
@@ -35,54 +35,54 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-family-heading-main);
-  color: var(--color-emphasized);
-  /* line-height: var(--line-height-medium) !important; */
-  font-weight: var(--font-weight-bold);
+	font-family: var(--font-family-heading-main);
+	color: var(--color-emphasized);
+	/* line-height: var(--line-height-medium) !important; */
+	font-weight: var(--font-weight-bold);
 }
 
 h1 {
-  /* font-size: var(--font-size-xxx-large); */
-  padding-bottom: var(--spacing-50) !important;
-  /* margin-bottom: var(--spacing-65) */
+	/* font-size: var(--font-size-xxx-large); */
+	padding-bottom: var(--spacing-50) !important;
+	/* margin-bottom: var(--spacing-65) */
 }
 
 h2 {
-  /* font-size: var(--font-size-xx-large); */
+	/* font-size: var(--font-size-xx-large); */
 }
 
 h3 {
-  /* font-size: var(--font-size-x-large); */
+	/* font-size: var(--font-size-x-large); */
 }
 
 ul,
 ol {
-  /* padding-left: var(--spacing-100); */
+	/* padding-left: var(--spacing-100); */
 }
 
 p {
-  /* line-height: var(--line-height-content); */
+	/* line-height: var(--line-height-content); */
 }
 
 .wikitable {
-  background-color: var(--background-color-neutral-subtle, #f8f9fa);
-  color: var(--color-base, #202122);
-  margin: 1em 0;
-  border: 1px solid var(--border-color-base, #a2a9b1);
-  border-collapse: collapse;
+	background-color: var(--background-color-neutral-subtle, #f8f9fa);
+	color: var(--color-base, #202122);
+	margin: 1em 0;
+	border: 1px solid var(--border-color-base, #a2a9b1);
+	border-collapse: collapse;
 }
 
 .wikitable > tr > th,
 .wikitable > tr > td,
 .wikitable > * > tr > th,
 .wikitable > * > tr > td {
-  border: 1px solid var(--border-color-base, #a2a9b1);
-  padding: 0.2em 0.4em;
+	border: 1px solid var(--border-color-base, #a2a9b1);
+	padding: 0.2em 0.4em;
 }
 
 .wikitable > tr > th,
 .wikitable > * > tr > th {
-  background-color: var(--background-color-neutral, #eaecf0);
-  color: var(--color-base, #202122);
-  text-align: center;
+	background-color: var(--background-color-neutral, #eaecf0);
+	color: var(--color-base, #202122);
+	text-align: center;
 }
