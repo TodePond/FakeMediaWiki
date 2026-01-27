@@ -73,8 +73,7 @@ export const prototypeMetadata: PrototypeMetadata[] = [
 	{
 		id: "PageFeedLined",
 		name: "Page feed: Lined variant",
-		description:
-			"A feed component displaying wiki pages in a lined list format with clear visual separation.",
+		description: "A feed component...",
 		category: "feed",
 		wrapper: "Special",
 		// new: true,
@@ -82,7 +81,7 @@ export const prototypeMetadata: PrototypeMetadata[] = [
 	{
 		id: "PageFeed",
 		name: "Page feed: Card variant",
-		description: "A standard feed component for displaying a list of wiki pages with metadata.",
+		description: "A feed component...",
 		category: "feed",
 		wrapper: "Special",
 	},
