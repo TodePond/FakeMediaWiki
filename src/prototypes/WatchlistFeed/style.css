@@ -1,0 +1,167 @@
+/* Watchlist-style feed: matches MediaWiki Watchlist / Recent Changes line format */
+
+.watchlist {
+	display: flex;
+	flex-direction: column;
+	max-width: 800px;
+	margin-top: -1rem;
+	font-size: 0.9rem;
+	line-height: 1.5;
+}
+
+.watchlist-item {
+	padding: 0.35rem 0;
+}
+
+.watchlist-line1 {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0 0.15rem;
+}
+
+.watchlist-bullet {
+	color: var(--color-progressive);
+	margin-right: 0.15rem;
+}
+
+.watchlist-diff-hist a,
+.watchlist-page,
+.watchlist-user,
+.watchlist-talk-contribs a,
+.watchlist-line1 a {
+	color: var(--color-progressive);
+	text-decoration: underline;
+}
+
+.watchlist-diff-hist a:visited,
+.watchlist-page:visited {
+	color: var(--color-progressive--visited, #7952b3);
+}
+
+.watchlist-semi {
+	color: var(--color-base);
+}
+
+.watchlist-sep {
+	color: var(--color-base);
+	white-space: pre;
+}
+
+.watchlist-time {
+	color: var(--color-base);
+}
+
+.watchlist-delta.positive {
+	color: var(--color-success, #00af89);
+}
+
+.watchlist-delta.negative {
+	color: var(--color-destructive, #b32424);
+}
+
+.watchlist-delta.neutral {
+	color: var(--color-base--subtle);
+}
+
+.watchlist-comment {
+	font-style: italic;
+	color: var(--color-base);
+}
+
+.watchlist-comment :deep(a) {
+	font-style: italic;
+}
+
+.watchlist-tags {
+	color: var(--color-base);
+}
+
+.watchlist-tag-names {
+	font-style: italic;
+}
+
+.watchlist-tag-names :deep(a) {
+	color: var(--color-progressive);
+	font-style: italic;
+	text-decoration: underline;
+}
+
+/* Form layout (same as other combined feed variants) */
+main {
+	display: flex;
+	gap: 2rem;
+	justify-content: space-between;
+	width: 100%;
+}
+
+form {
+	order: 2;
+	flex-grow: 1;
+	padding-bottom: 0.5rem;
+}
+
+.inputs-group {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: flex-end;
+	gap: 0.8rem 2rem;
+}
+
+.inputs {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.input-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.cdx-text-input {
+	max-width: 100%;
+	min-width: 0;
+	width: 256px;
+}
+
+.error {
+	color: var(--color-destructive);
+	margin-bottom: 0.5rem;
+}
+
+form footer {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	padding-top: 1rem;
+	justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+	main {
+		flex-direction: column;
+	}
+
+	form {
+		order: 0;
+	}
+
+	.watchlist {
+		max-width: 100%;
+	}
+
+	.inputs-group {
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+		align-items: center;
+	}
+
+	form footer {
+		justify-content: flex-start;
+	}
+}

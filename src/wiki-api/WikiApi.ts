@@ -789,12 +789,14 @@ export class WikiApi {
 	 * @returns HTML content
 	 */
 	async transformWikitextToHtml(wikitext: string, pageTitle = "Main_Page"): Promise<string> {
-		return (await this.request({
+		const html = (await this.request({
 			api: "mediawiki",
 			path: `transform/wikitext/to/html/${this.encode(pageTitle)}`,
 			body: { wikitext },
 			type: "text",
 		})) as string
+		// Transform API often returns leading/trailing newlines; trim so inline use doesn’t get line breaks
+		return html.trim()
 	}
 
 	/**
@@ -1128,6 +1130,42 @@ export class WikiApi {
 	 */
 	getPageUrl(pageName: string): string {
 		return `${this.base}wiki/${this.encode(pageName)}`
+	}
+
+	/**
+	 * Get URL for page history
+	 * @param pageName - Page title
+	 * @returns URL to page history
+	 */
+	getHistoryUrl(pageName: string): string {
+		return `${this.base}w/index.php?title=${this.encode(pageName)}&action=history`
+	}
+
+	/**
+	 * Get URL for user talk page
+	 * @param userName - Username
+	 * @returns URL to user talk page
+	 */
+	getUserTalkUrl(userName: string): string {
+		return `${this.base}wiki/User_talk:${encodeURIComponent(userName)}`
+	}
+
+	/**
+	 * Get URL for user contributions
+	 * @param userName - Username
+	 * @returns URL to Special:Contributions
+	 */
+	getUserContribsUrl(userName: string): string {
+		return `${this.base}wiki/Special:Contributions/${encodeURIComponent(userName)}`
+	}
+
+	/**
+	 * Get URL for editing a page
+	 * @param pageName - Page title
+	 * @returns URL to edit page
+	 */
+	getEditUrl(pageName: string): string {
+		return `${this.base}w/index.php?title=${this.encode(pageName)}&action=edit`
 	}
 
 	/**
