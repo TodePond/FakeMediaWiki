@@ -80,7 +80,8 @@ form {
 	/* margin: 0.5rem 0; */
 	display: flex;
 	flex-direction: column;
-	max-width: 800px;
+	/* max-width: 800px; */
+	width: 100%;
 	/* margin: 0 auto; */
 	margin-top: -1rem;
 }
@@ -215,8 +216,13 @@ form footer {
 	display: flex;
 	flex-wrap: wrap;
 	row-gap: 0px;
-	margin-right: -0.1rem;
-	margin-top: -0.2rem;
+	gap: 1rem;
+	padding-top: 0.5rem;
+	justify-content: flex-end;
+	/* margin-right: -0.1rem; */
+	/* margin-top: -0.2rem; */
+	/* padding-right:; */
+	align-items: center;
 }
 
 .change footer a {
@@ -230,9 +236,14 @@ form footer {
 	color: var(--color-progressive);
 }
 
-.change footer .cdx-icon:hover {
-	color: var(--color-progressive);
-	text-decoration: underline var(--color-progressive);
+.change footer a:hover .cdx-icon {
+	color: var(--color-progressive--hover);
+	text-decoration: underline var(--color-progressive--hover);
+}
+
+.change footer a {
+	display: flex;
+	align-items: center;
 }
 
 .change-page-name {

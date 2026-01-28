@@ -456,15 +456,14 @@ function formatTimestamp(timestamp: string): string {
 							<span class="diff-line-text">{{ line.text || " " }}</span>
 						</div>
 					</div>
+					<footer>
+						<a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName!)">
+							<CdxIcon :icon="cdxIconLinkExternal" />View change </a
+						>&nbsp;|<a target="_blank" :href="wiki.getThankUrl(change.id)">
+							<CdxIcon :icon="cdxIconHeart" />Give thanks
+						</a>
+					</footer>
 				</div>
-				<footer>
-					<a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName!)">
-						<CdxIcon :icon="cdxIconLinkExternal" />
-					</a>
-					<a target="_blank" :href="wiki.getThankUrl(change.id)">
-						<CdxIcon :icon="cdxIconHeart" />
-					</a>
-				</footer>
 			</div>
 		</section>
 	</main>
