@@ -404,7 +404,10 @@ function formatDelta(delta: number | null): string {
 							>
 							<span class="watchlist-sep"> .. </span>
 							<span
-								:class="['watchlist-delta', wiki.getDeltaClass(change.delta ?? 0)]"
+								:class="[
+									'watchlist-delta',
+									wiki.getDeltaClass(change.delta ?? 0, false),
+								]"
 							>
 								{{ formatDelta(change.delta) }}</span
 							><span class="watchlist-sep">.. </span>

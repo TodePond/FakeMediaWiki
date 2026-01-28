@@ -7,7 +7,7 @@
 	color: var(--color-content-added);
 }
 
-.positive.with-sign::before {
+.positive.delta-sign::before {
 	content: "+";
 }
 
@@ -19,6 +19,6 @@
 	color: var(--color-base);
 }
 
-.neutral.with-sign::before {
+.neutral.delta-sign::before {
 	content: "±";
 }
