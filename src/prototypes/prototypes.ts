@@ -109,8 +109,16 @@ export const prototypeMetadata: PrototypeDefinition[] = [
 		name: "Combined feed",
 		description: "A feed that combines multiple sources into one.",
 		category: "feed",
-		status: "updated",
 		variants: [
+			{
+				type: "variant",
+				id: "WatchlistFeed",
+				title: "Combined watchlist",
+				name: "Watchlist variant",
+				description: "Render each result exactly like the Watchlist.",
+				wrapper: "Special",
+				status: "new",
+			},
 			{
 				type: "variant",
 				id: "CustomPageFeed",
@@ -118,6 +126,7 @@ export const prototypeMetadata: PrototypeDefinition[] = [
 				name: "User variant",
 				description: "Use the user as the primary source.",
 				wrapper: "Special",
+				status: "updated",
 			},
 			{
 				type: "variant",
@@ -126,15 +135,7 @@ export const prototypeMetadata: PrototypeDefinition[] = [
 				name: "Page variant",
 				description: "Use the page as the primary source.",
 				wrapper: "Special",
-			},
-			{
-				type: "variant",
-				id: "WatchlistFeed",
-				title: "Combined watchlist",
-				name: "Watchlist variant",
-				description: "Render each result exactly like the Watchlist.",
-				wrapper: "Special",
-				status: "wip",
+				status: "updated",
 			},
 		],
 	},

@@ -3,6 +3,7 @@
 .watchlist-container {
 	display: flex;
 	flex-direction: column;
+	padding-bottom: 5rem;
 }
 
 .watchlist {
@@ -13,6 +14,7 @@
 	font-size: 0.9rem;
 	line-height: var(--line-height-content);
 	/* margin: 0; */
+	padding: 0;
 }
 
 .watchlist-date-header {
