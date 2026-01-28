@@ -168,7 +168,7 @@ nav {
 
 .nav-item-right .nav-button-bell .nav-badge {
 	position: absolute;
-	bottom: 0;
+	bottom: 2px;
 	right: 0;
 	background-color: var(--background-color-progressive);
 	color: var(--color-inverted);
