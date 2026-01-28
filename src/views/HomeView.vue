@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { RouterLink } from "vue-router"
-import { categories, getPrototypeGroupsByCategory } from "../prototypes/registry"
+import { categories, getPrototypeGroupsByCategory, getWrapperName } from "../prototypes/registry"
 
 const prototypeGroupsByCategory = getPrototypeGroupsByCategory()
 
@@ -25,10 +25,18 @@ const categoriesWithPrototypes = computed(() => {
 					<template v-if="group.type === 'prototype'">
 						<RouterLink :to="`/${group.wrapper}/${group.id}`" class="prototype-card">
 							<div class="prototype-header">
-								<span class="prototype-name">{{ group.name }}</span>
-								<span v-if="group.new" class="badge badge-new">New</span>
-								<span v-if="group.updated" class="badge badge-updated"
-									>Updated</span
+								<span class="prototype-header-item">
+									<span class="prototype-name">{{ group.name }}</span>
+
+									<span v-if="group.new" class="badge badge-new">New</span>
+									<span v-if="group.updated" class="badge badge-updated"
+										>Updated</span
+									>
+								</span>
+								<span
+									v-if="group.wrapper"
+									class="prototype-header-item badge badge-wrapper"
+									>{{ getWrapperName(group.wrapper) }}</span
 								>
 							</div>
 							<p class="prototype-description" v-html="group.description"></p>
@@ -55,12 +63,23 @@ const categoriesWithPrototypes = computed(() => {
 										class="prototype-card"
 									>
 										<div class="prototype-header">
-											<span class="prototype-name">{{ variant.name }}</span>
-											<span v-if="variant.new" class="badge badge-new"
-												>New</span
-											>
-											<span v-if="variant.updated" class="badge badge-updated"
-												>Updated</span
+											<span class="prototype-header-item">
+												<span class="prototype-name">{{
+													variant.name
+												}}</span>
+												<span v-if="variant.new" class="badge badge-new"
+													>New</span
+												>
+												<span
+													v-if="variant.updated"
+													class="badge badge-updated"
+													>Updated</span
+												>
+											</span>
+											<span
+												v-if="variant.wrapper"
+												class="prototype-header-item badge badge-wrapper"
+												>{{ getWrapperName(variant.wrapper) }}</span
 											>
 										</div>
 										<p
@@ -92,6 +111,7 @@ main {
 	/* max-width: 800px; */
 	max-width: var(--min-width-breakpoint-tablet);
 	margin: 0 auto;
+	padding: var(--spacing-100);
 }
 
 .category-section {
@@ -130,11 +150,23 @@ a.prototype-card:hover {
 	color: var(--color-base);
 }
 
+.prototype-group > .prototype-header {
+	justify-content: flex-start;
+}
+
 .prototype-header {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 	margin-bottom: 0.5rem;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.prototype-header-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 	flex-wrap: wrap;
 }
 
@@ -166,6 +198,8 @@ h1 {
 	font-size: 0.75em;
 	font-weight: 600;
 	text-transform: uppercase;
+	line-height: 1.4;
+	padding: 0.2rem 0.4rem;
 }
 
 .badge-new {
@@ -176,6 +210,16 @@ h1 {
 .badge-updated {
 	background-color: var(--background-color-progressive-subtle);
 	color: var(--color-progressive);
+}
+
+.badge-wrapper {
+	/* background-color: var(--background-color-neutral); */
+	color: var(--color-base--subtle);
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	/* padding: 0rem; */
+	font-weight: normal;
+	/* text-transform: none; */
 }
 
 .prototype-description {

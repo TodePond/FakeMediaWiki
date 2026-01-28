@@ -19,9 +19,9 @@ const router = createRouter({
 			component: () => import("./views/Fullscreen.vue"),
 		},
 		{
-			path: "/Tablet/:name",
-			name: "Tablet",
-			component: () => import("./views/TabletView.vue"),
+			path: "/Component/:name",
+			name: "Component",
+			component: () => import("./views/ComponentView.vue"),
 		},
 	],
 })

@@ -20,7 +20,7 @@ body {
 	color: var(--color-base);
 	margin: 0px auto;
 	background-color: var(--background-color-base);
-	padding: var(--spacing-100);
+	/* padding: var(--spacing-100); */
 	font-family: var(--font-family-system-sans);
 	font-size: var(--font-size-medium);
 	line-height: var(--line-height-medium);
@@ -44,7 +44,7 @@ h6 {
 
 h1 {
 	/* font-size: var(--font-size-xxx-large); */
-	padding-bottom: var(--spacing-50) !important;
+	padding-bottom: var(--spacing-50);
 	/* margin-bottom: var(--spacing-65) */
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
+import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi, type Result, type Revision } from "../../wiki-api/WikiApi"
@@ -328,8 +328,7 @@ function formatTimestamp(timestamp: string): string {
 				</div>
 			</div>
 			<footer>
-				<CdxButton>Refresh feed</CdxButton>
-				<CdxProgressIndicator v-if="isAnyLoading" aria-label="Loading pages" />
+				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
 			</footer>
 		</form>
 

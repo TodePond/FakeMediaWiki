@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
+import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconArticle, cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi, type PageHistoryRevision, type Revision } from "../../wiki-api/WikiApi"
@@ -422,8 +422,7 @@ function getDeltaClass(delta: number): string {
 				</div>
 			</div>
 			<footer>
-				<CdxButton>Refresh feed</CdxButton>
-				<CdxProgressIndicator v-if="isAnyLoading" aria-label="Loading pages" />
+				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
 			</footer>
 		</form>
 
@@ -508,7 +507,7 @@ function getDeltaClass(delta: number): string {
 .change {
 	padding: 1rem 0rem;
 	display: flex;
-	border-top: 0.5px solid var(--border-color-subtle);
+	border-bottom: 0.5px solid var(--border-color-subtle);
 	align-items: flex-start;
 	gap: 0.5rem;
 }
@@ -517,12 +516,26 @@ function getDeltaClass(delta: number): string {
 	padding-top: 0.4rem;
 }
 
+main {
+	display: flex;
+	gap: 2rem;
+	justify-content: space-between;
+	width: 100%;
+}
+
+form {
+	order: 2;
+	flex-grow: 1;
+	position: sticky;
+	top: 0;
+	padding-bottom: 0.5rem;
+}
+
 .changes {
-	margin: 0.5rem 0;
 	display: flex;
 	flex-direction: column;
 	max-width: 800px;
-	margin: 0 auto;
+	margin-top: -1rem;
 }
 
 .changes p {
@@ -564,7 +577,9 @@ function getDeltaClass(delta: number): string {
 .inputs-group {
 	display: flex;
 	gap: 0.8rem 2rem;
-	flex-wrap: wrap;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: flex-end;
 }
 
 .inputs {
@@ -596,10 +611,6 @@ function getDeltaClass(delta: number): string {
 	font-size: 0.875rem;
 }
 
-form {
-	padding-bottom: 1rem;
-}
-
 form > span {
 	display: flex;
 	gap: 0.25rem;
@@ -609,11 +620,10 @@ form > span {
 
 form footer {
 	display: flex;
-	/* flex-direction: column; */
 	gap: 0.25rem;
 	flex-wrap: wrap;
-	/* align-items: center; */
 	padding-top: 1rem;
+	justify-content: flex-end;
 }
 
 .change-header {
@@ -656,10 +666,6 @@ form footer {
 	margin-top: -0.2rem;
 }
 
-.change footer {
-	margin-top: -0.4rem;
-}
-
 .change-thumbnail {
 	width: 3rem;
 	height: 3rem;
@@ -690,6 +696,7 @@ form footer {
 	flex-wrap: wrap;
 	row-gap: 0px;
 	margin-right: -0.1rem;
+	margin-top: -0.2rem;
 }
 
 .change footer a {
@@ -722,6 +729,36 @@ form footer {
 	padding: 0.5rem;
 	border: 1px solid var(--color-destructive);
 	background-color: var(--background-color-destructive-subtle);
+}
+
+@media (max-width: 900px) {
+	main {
+		flex-direction: column;
+	}
+
+	form {
+		order: 0;
+	}
+
+	.changes {
+		max-width: 100%;
+	}
+
+	.inputs-group {
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+		align-items: center;
+	}
+
+	.change {
+		border-top: 1px solid var(--border-color-subtle);
+		border-bottom: none;
+	}
+
+	form footer {
+		justify-content: flex-start;
+	}
 }
 </style>
 <style>

@@ -1,8 +1,8 @@
 import type { Component } from "vue"
 import { defineAsyncComponent } from "vue"
-import { categories, prototypeMetadata } from "./prototypes"
+import { categories, PrototypeDefinition, prototypeMetadata, wrappers } from "./prototypes"
 
-export { categories }
+export { categories, wrappers }
 
 // Dynamically import all components using Vite's glob import (lazy loading)
 // @ts-ignore - import.meta.glob is a Vite-specific feature
@@ -21,37 +21,6 @@ for (const [path, loader] of Object.entries(componentModules)) {
 // Cache for async components to avoid recreating them
 const asyncComponentCache = new Map<string, Component>()
 
-export interface PrototypeDefinition {
-	id: string
-	name: string
-	description: string
-	category: string
-	new?: boolean
-	updated?: boolean
-	wrapper: string
-}
-
-export interface PrototypeVariant {
-	id: string
-	name: string
-	description: string
-	wrapper: string
-	new?: boolean
-	updated?: boolean
-}
-
-export interface PrototypeGroup {
-	id: string
-	name: string
-	description: string
-	category: string
-	type: "prototype" | "variants"
-	new?: boolean
-	updated?: boolean
-	wrapper?: string
-	variants?: PrototypeVariant[]
-}
-
 /**
  * Build flat list of all individual prototypes for component loading
  */
@@ -67,6 +36,8 @@ for (const meta of prototypeMetadata) {
 				wrapper: meta.wrapper,
 				new: meta.new,
 				updated: meta.updated,
+				type: "prototype",
+				title: meta.title,
 			})
 		}
 	} else if (meta.type === "variants") {
@@ -76,20 +47,29 @@ for (const meta of prototypeMetadata) {
 					id: variant.id,
 					name: variant.name,
 					description: variant.description,
-					category: meta.category,
 					wrapper: variant.wrapper,
 					new: variant.new ?? meta.new,
 					updated: variant.updated ?? meta.updated,
+					type: "variant",
+					title: variant.title,
 				})
 			}
 		}
 	}
 }
 
+export function getPrototype(id: string): PrototypeDefinition<"prototype" | "variant"> | undefined {
+	const prototype = prototypes.find(p => p.id === id)
+	if (prototype?.type === "variants") {
+		throw new Error(`Prototype ${id} is a group of variant and cannot be retrieved directly`)
+	}
+	return prototype
+}
+
 /**
  * Build prototype groups for display (preserves variant grouping)
  */
-export const prototypeGroups: PrototypeGroup[] = []
+export const prototypeGroups: PrototypeDefinition<"prototype" | "variants">[] = []
 for (const meta of prototypeMetadata) {
 	if (meta.type === "prototype") {
 		// Only include if component exists
@@ -103,13 +83,12 @@ for (const meta of prototypeMetadata) {
 				wrapper: meta.wrapper,
 				new: meta.new,
 				updated: meta.updated,
+				title: meta.title,
 			})
 		}
-	} else {
+	} else if (meta.type === "variants") {
 		// Only include if at least one variant component exists
-		const validVariants = meta.variants.filter(
-			v => componentLoaderMap[v.id] !== undefined
-		)
+		const validVariants = meta.variants.filter(v => componentLoaderMap[v.id] !== undefined)
 		if (validVariants.length > 0) {
 			prototypeGroups.push({
 				id: meta.id,
@@ -152,8 +131,11 @@ export function getPrototypeComponent(id: string): Component | undefined {
 /**
  * Get prototype groups grouped by category in the defined order
  */
-export function getPrototypeGroupsByCategory(): Record<string, PrototypeGroup[]> {
-	const grouped: Record<string, PrototypeGroup[]> = {}
+export function getPrototypeGroupsByCategory(): Record<
+	string,
+	PrototypeDefinition<"prototype" | "variants">[]
+> {
+	const grouped: Record<string, PrototypeDefinition<"prototype" | "variants">[]> = {}
 
 	// Initialize all categories from categories array
 	for (const category of categories) {
@@ -170,4 +152,19 @@ export function getPrototypeGroupsByCategory(): Record<string, PrototypeGroup[]>
 	}
 
 	return grouped
+}
+
+/**
+ * Get wrapper definition by ID
+ */
+export function getWrapper(id: string) {
+	return wrappers.find(w => w.id === id)
+}
+
+/**
+ * Get wrapper name by ID, falling back to the ID if not found
+ */
+export function getWrapperName(id: string): string {
+	const wrapper = getWrapper(id)
+	return wrapper?.name ?? id
 }
