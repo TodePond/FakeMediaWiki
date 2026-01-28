@@ -5,8 +5,8 @@ import {
 	cdxIconAppearance,
 	cdxIconBell,
 	cdxIconHelpNotice,
-	cdxIconListBullet,
 	cdxIconMenu,
+	cdxIconSearch,
 	cdxIconTray,
 	cdxIconUserAvatar,
 	cdxIconWatchlist,
@@ -52,10 +52,15 @@ watch(
 				<CdxButton>Search</CdxButton>
 			</div>
 			<div class="nav-item nav-item-right">
-				<a href="https://github.com/todepond/fakemediawiki" class="nav-button-text"
+				<CdxButton weight="quiet" aria-label="Search" class="nav-button-search">
+					<CdxIcon :icon="cdxIconSearch" />
+				</CdxButton>
+				<a
+					href="https://github.com/todepond/fakemediawiki"
+					class="nav-button-text nav-button-desktop"
 					>Todepond</a
 				>
-				<CdxButton weight="quiet" aria-label="Reading preferences">
+				<CdxButton weight="quiet" aria-label="Watchlist">
 					<CdxIcon :icon="cdxIconAppearance" />
 				</CdxButton>
 				<CdxButton weight="quiet" class="nav-button-bell" aria-label="Notifications">
@@ -65,7 +70,7 @@ watch(
 				<CdxButton weight="quiet" aria-label="Notices">
 					<CdxIcon :icon="cdxIconTray" />
 				</CdxButton>
-				<CdxButton weight="quiet" aria-label="Watchlist">
+				<CdxButton weight="quiet" aria-label="Watchlist" class="nav-button-desktop">
 					<CdxIcon :icon="cdxIconWatchlist" />
 				</CdxButton>
 				<CdxButton weight="quiet" href="#" class="nav-button-user" aria-label="User menu">
@@ -77,7 +82,7 @@ watch(
 		<div class="notice-container"></div>
 		<header>
 			<span class="header-item">
-				<CdxIcon :icon="cdxIconListBullet" />
+				<!-- <CdxIcon :icon="cdxIconListBullet" /> -->
 				<h1>{{ prototype?.title }}</h1>
 			</span>
 			<span class="header-item">
@@ -114,6 +119,8 @@ nav {
 	padding: 8px 0px;
 	display: flex;
 	gap: 16px;
+	flex-wrap: wrap;
+	min-height: fit-content;
 	/* align-items: center; */
 	/* justify-content: space-between; */
 }
@@ -152,6 +159,10 @@ nav {
 	height: var(--size-icon-medium);
 	/* padding: var(--size-50); */
 	padding: 0.5rem 0.4rem;
+}
+
+.nav-item-right .nav-button-search .cdx-button {
+	padding: 0px;
 }
 
 .nav-item-right .nav-button-text {
@@ -249,13 +260,42 @@ h1 {
 	padding-bottom: 2px;
 }
 
+.nav-button-search {
+	display: none;
+}
+
+@media (max-width: 640px) {
+	.nav-button-desktop {
+		display: none;
+	}
+}
+
 @media (max-width: 1120px) {
 	.special-view {
 		padding: 0rem 1.5rem;
 	}
 
+	.header-button-search {
+		display: unset;
+	}
+
 	.nav-item-search {
 		display: none;
+	}
+
+	.nav-button-search {
+		display: flex;
+	}
+	.nav-item-right .cdx-button {
+		/* padding: 1rem; */
+		height: var(--size-icon-large);
+		width: var(--size-icon-large);
+		padding: 0.7rem;
+	}
+
+	.nav-item-right .nav-button-bell .nav-badge {
+		bottom: 8px;
+		right: 4px;
 	}
 }
 </style>

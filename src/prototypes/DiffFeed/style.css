@@ -10,6 +10,57 @@
 	padding-top: 0.4rem;
 }
 
+.change-diff {
+	margin-top: 0.75rem;
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	overflow: hidden;
+	font-family: var(--font-family-mono, ui-monospace, monospace);
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	max-height: 12rem;
+	overflow-y: auto;
+}
+
+.diff-line {
+	display: flex;
+	white-space: pre-wrap;
+	word-break: break-word;
+	padding: 0.125rem 0.5rem;
+}
+
+.diff-line-prefix {
+	flex-shrink: 0;
+	width: 1.25rem;
+	user-select: none;
+	color: var(--color-subtle);
+}
+
+.diff-line-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.diff-line-context {
+	background-color: var(--background-color-base);
+	color: var(--color-base);
+}
+
+.diff-line-add {
+	background-color: var(--background-color-success-subtle, rgba(0, 127, 0, 0.08));
+	color: var(--color-base);
+}
+
+.diff-line-remove {
+	background-color: var(--background-color-destructive-subtle);
+	color: var(--color-base);
+}
+
+.diff-line-change {
+	background-color: var(--background-color-progressive-subtle);
+	color: var(--color-base);
+}
+
 main {
 	display: flex;
 	gap: 2rem;

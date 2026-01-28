@@ -526,8 +526,6 @@ main {
 form {
 	order: 2;
 	flex-grow: 1;
-	position: sticky;
-	top: 0;
 	padding-bottom: 0.5rem;
 }
 

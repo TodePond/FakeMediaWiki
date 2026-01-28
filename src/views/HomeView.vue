@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { RouterLink } from "vue-router"
+import type { PrototypeStatus } from "../prototypes/prototypes"
 import { categories, getPrototypeGroupsByCategory, getWrapperName } from "../prototypes/registry"
 
 const prototypeGroupsByCategory = getPrototypeGroupsByCategory()
+
+function statusLabel(status: PrototypeStatus): string {
+	const labels: Record<PrototypeStatus, string> = {
+		new: "New",
+		updated: "Updated",
+		wip: "WIP",
+	}
+	return labels[status]
+}
 
 const categoriesWithPrototypes = computed(() => {
 	return categories.filter(category => (prototypeGroupsByCategory[category.id]?.length ?? 0) > 0)
@@ -28,9 +38,10 @@ const categoriesWithPrototypes = computed(() => {
 								<span class="prototype-header-item">
 									<span class="prototype-name">{{ group.name }}</span>
 
-									<span v-if="group.new" class="badge badge-new">New</span>
-									<span v-if="group.updated" class="badge badge-updated"
-										>Updated</span
+									<span
+										v-if="group.status"
+										:class="['badge', `badge-${group.status}`]"
+										>{{ statusLabel(group.status) }}</span
 									>
 								</span>
 								<span
@@ -46,9 +57,10 @@ const categoriesWithPrototypes = computed(() => {
 						<div class="prototype-group">
 							<div class="prototype-header">
 								<span class="prototype-name">{{ group.name }}</span>
-								<span v-if="group.new" class="badge badge-new">New</span>
-								<span v-if="group.updated" class="badge badge-updated"
-									>Updated</span
+								<span
+									v-if="group.status"
+									:class="['badge', `badge-${group.status}`]"
+									>{{ statusLabel(group.status) }}</span
 								>
 							</div>
 							<p class="prototype-description" v-html="group.description"></p>
@@ -67,13 +79,10 @@ const categoriesWithPrototypes = computed(() => {
 												<span class="prototype-name">{{
 													variant.name
 												}}</span>
-												<span v-if="variant.new" class="badge badge-new"
-													>New</span
-												>
 												<span
-													v-if="variant.updated"
-													class="badge badge-updated"
-													>Updated</span
+													v-if="variant.status"
+													:class="['badge', `badge-${variant.status}`]"
+													>{{ statusLabel(variant.status) }}</span
 												>
 											</span>
 											<span
@@ -210,6 +219,11 @@ h1 {
 .badge-updated {
 	background-color: var(--background-color-progressive-subtle);
 	color: var(--color-progressive);
+}
+
+.badge-wip {
+	background-color: var(--background-color-destructive-subtle);
+	color: var(--color-destructive);
 }
 
 .badge-wrapper {

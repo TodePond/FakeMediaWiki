@@ -48,6 +48,21 @@ interface RelativeTimestampOptions {
 	years?: TimestampFormat
 }
 
+/** Diff line from MediaWiki REST API revision compare (type: 0=context, 1=add, 2=remove, 3=change, 4|5=move) */
+export interface DiffLine {
+	type: number
+	lineNumber?: number
+	text: string
+	highlightRanges?: Array<{ start: number; length: number; type: number }>
+	offset?: { from: number | null; to: number | null }
+}
+
+export interface CompareResponse {
+	from: { id: number }
+	to: { id: number }
+	diff: DiffLine[]
+}
+
 export interface Revision {
 	id: number
 	timestamp: string
@@ -65,6 +80,7 @@ export interface Revision {
 	pageName?: string
 	title?: string
 	thumbnailUrl?: string | null
+	diff?: CompareResponse | null
 }
 
 /**
@@ -619,16 +635,33 @@ export class WikiApi {
 	}
 
 	/**
+	 * Get the parent (previous) revision ID for a revision on a page.
+	 * Uses the page history endpoint with older_than so we don't rely on the
+	 * current list having the previous revision.
+	 * @param pageName - Page title
+	 * @param revId - Revision ID (we want the revision immediately older than this)
+	 * @returns Parent revision ID, or null if none (e.g. first revision)
+	 */
+	async getParentRevisionId(pageName: string, revId: number): Promise<number | null> {
+		const history = await this.getPageHistory(pageName, {
+			older_than: String(revId),
+			limit: 1,
+		})
+		const parent = history.revisions?.[0]
+		return parent?.id ?? null
+	}
+
+	/**
 	 * Compare two revisions
-	 * @param fromRevId - Source revision ID
-	 * @param toRevId - Target revision ID
+	 * @param fromRevId - Source revision ID (older)
+	 * @param toRevId - Target revision ID (newer)
 	 * @returns Diff between revisions
 	 */
-	async compareRevisions(fromRevId: number, toRevId: number): Promise<unknown> {
-		return this.request({
+	async compareRevisions(fromRevId: number, toRevId: number): Promise<CompareResponse> {
+		return (await this.request({
 			api: "mediawiki",
 			path: `revision/${fromRevId}/compare/${toRevId}`,
-		})
+		})) as CompareResponse
 	}
 
 	/**

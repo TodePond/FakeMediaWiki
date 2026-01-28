@@ -34,8 +34,7 @@ for (const meta of prototypeMetadata) {
 				description: meta.description,
 				category: meta.category,
 				wrapper: meta.wrapper,
-				new: meta.new,
-				updated: meta.updated,
+				status: meta.status,
 				type: "prototype",
 				title: meta.title,
 			})
@@ -48,8 +47,7 @@ for (const meta of prototypeMetadata) {
 					name: variant.name,
 					description: variant.description,
 					wrapper: variant.wrapper,
-					new: variant.new ?? meta.new,
-					updated: variant.updated ?? meta.updated,
+					status: variant.status ?? meta.status,
 					type: "variant",
 					title: variant.title,
 				})
@@ -81,8 +79,7 @@ for (const meta of prototypeMetadata) {
 				category: meta.category,
 				type: "prototype",
 				wrapper: meta.wrapper,
-				new: meta.new,
-				updated: meta.updated,
+				status: meta.status,
 				title: meta.title,
 			})
 		}
@@ -96,8 +93,7 @@ for (const meta of prototypeMetadata) {
 				description: meta.description,
 				category: meta.category,
 				type: "variants",
-				new: meta.new,
-				updated: meta.updated,
+				status: meta.status,
 				variants: validVariants,
 			})
 		}

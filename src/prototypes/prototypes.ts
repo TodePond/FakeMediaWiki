@@ -1,11 +1,12 @@
 export type PrototypeDefinitionType = "prototype" | "variants" | "variant"
 
+export type PrototypeStatus = "new" | "updated" | "wip"
+
 export type PrototypeDefinitionBase = {
 	id: string
 	name: string
 	description: string
-	new?: boolean
-	updated?: boolean
+	status?: PrototypeStatus
 }
 
 export type PrototypeDefinitionPrototype = PrototypeDefinitionBase & {
@@ -93,12 +94,22 @@ export const categories: CategoryDefinition[] = [
 
 export const prototypeMetadata: PrototypeDefinition[] = [
 	{
+		type: "prototype",
+		id: "DiffFeed",
+		name: "Diff feed",
+		description: "A feed that shows inline diffs of changes.",
+		category: "feed",
+		wrapper: "Special",
+		title: "Watchlist",
+		status: "wip",
+	},
+	{
 		type: "variants",
 		id: "CombinedFeed",
 		name: "Combined feed",
 		description: "A feed that combines multiple sources into one.",
 		category: "feed",
-		updated: true,
+		status: "updated",
 		variants: [
 			{
 				type: "variant",
@@ -126,7 +137,6 @@ export const prototypeMetadata: PrototypeDefinition[] = [
 		category: "feed",
 		wrapper: "Component",
 		title: "Multi-page feed",
-		// new: true,
 	},
 	{
 		type: "variants",
