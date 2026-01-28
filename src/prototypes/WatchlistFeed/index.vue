@@ -214,6 +214,30 @@ const allRevisions = computed(() => {
 	)
 })
 
+const revisionsByDate = computed(() => {
+	const grouped = new Map<string, { dateLabel: string; revisions: Revision[] }>()
+
+	allRevisions.value.forEach(revision => {
+		const dateKey = getDateKey(revision.timestamp)
+		const dateLabel = formatDate(revision.timestamp)
+
+		if (!grouped.has(dateKey)) {
+			grouped.set(dateKey, { dateLabel, revisions: [] })
+		}
+
+		grouped.get(dateKey)!.revisions.push(revision)
+	})
+
+	// Convert to array and sort by date (most recent first)
+	return Array.from(grouped.entries())
+		.sort((a, b) => b[0].localeCompare(a[0]))
+		.map(([dateKey, data]) => ({
+			dateKey,
+			dateLabel: data.dateLabel,
+			revisions: data.revisions,
+		}))
+})
+
 const isAnyLoading = computed(() => {
 	return pageResults.some(r => r.value.loading) || userResults.some(r => r.value.loading)
 })
@@ -228,6 +252,38 @@ const errors = computed(() => {
 	})
 	return errs
 })
+
+/** Format date as "DD Month YYYY" (e.g. "28 January 2026") */
+function formatDate(timestamp: string): string {
+	const d = new Date(timestamp)
+	const day = d.getDate()
+	const monthNames = [
+		"January",
+		"February",
+		"March",
+		"April",
+		"May",
+		"June",
+		"July",
+		"August",
+		"September",
+		"October",
+		"November",
+		"December",
+	]
+	const month = monthNames[d.getMonth()]
+	const year = d.getFullYear()
+	return `${day} ${month} ${year}`
+}
+
+/** Get date key for grouping (YYYY-MM-DD format) */
+function getDateKey(timestamp: string): string {
+	const d = new Date(timestamp)
+	const year = d.getFullYear()
+	const month = (d.getMonth() + 1).toString().padStart(2, "0")
+	const day = d.getDate().toString().padStart(2, "0")
+	return `${year}-${month}-${day}`
+}
 
 /** Watchlist-style time only (e.g. 17:29) */
 function formatTime(timestamp: string): string {
@@ -310,66 +366,88 @@ function formatDelta(delta: number | null): string {
 			</footer>
 		</form>
 
-		<ul class="watchlist">
+		<div class="watchlist-container">
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
-			<li
-				class="watchlist-item"
-				v-for="change in allRevisions"
-				:key="`${change.pageName}-${change.timestamp}`"
-			>
-				<div class="watchlist-line1">
-					<span class="watchlist-diff-hist">
-						(<a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName!)"
-							>diff</a
-						>
-						| <a target="_blank" :href="wiki.getHistoryUrl(change.pageName!)">hist</a>).
-					</span>
-					<span class="watchlist-sep"> </span>
-					<a
-						target="_blank"
-						:href="wiki.getPageUrl(change.pageName!)"
-						class="watchlist-page"
+			<template v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
+				<h4 class="watchlist-date-header">{{ dateGroup.dateLabel }}</h4>
+				<ul class="watchlist">
+					<li
+						class="watchlist-item"
+						v-for="change in dateGroup.revisions"
+						:key="`${change.pageName}-${change.timestamp}`"
 					>
-						{{ change.pageName }}</a
-					><span class="watchlist-semi">;</span>
-					<span class="watchlist-sep"> </span>
-					<span class="watchlist-time">&nbsp;{{ formatTime(change.timestamp) }}</span>
-					<span class="watchlist-sep"> .. </span>
-					<span :class="['watchlist-delta', wiki.getDeltaClass(change.delta ?? 0)]">
-						{{ formatDelta(change.delta) }}</span
-					><span class="watchlist-sep">.. </span>
-					<a
-						target="_blank"
-						:href="wiki.getUserUrl(change.user.name)"
-						class="watchlist-user"
-					>
-						{{ change.user.name }}</a
-					>
-					<span class="watchlist-talk-contribs">
-						(<a target="_blank" :href="wiki.getUserTalkUrl(change.user.name)">talk</a>
-						|
-						<a target="_blank" :href="wiki.getUserContribsUrl(change.user.name)"
-							>contribs</a
-						>)
-					</span>
-					<template v-if="change?.summary?.comment"
-						><span
-							class="watchlist-comment"
-							v-html="change.summary.comment ?? ''"
-						></span
-						>&nbsp;</template
-					>
-					<span v-if="change?.summary?.hashtags" class="watchlist-tags">
-						(Tags: <span class="watchlist-tag-names">{{ change.summary.hashtags }}</span
-						>)
-					</span>
-					<span class="watchlist-sep"> </span>
-					<span>(<a target="_blank" :href="wiki.getThankUrl(change.id)">thank</a>)</span>
-				</div>
-			</li>
-		</ul>
+						<div class="watchlist-line1">
+							<span class="watchlist-diff-hist">
+								(<a
+									target="_blank"
+									:href="wiki.getRevisionUrl(change.id, change.pageName!)"
+									>diff</a
+								>
+								|
+								<a target="_blank" :href="wiki.getHistoryUrl(change.pageName!)"
+									>hist</a
+								>).
+							</span>
+							<span class="watchlist-sep"> </span>
+							<a
+								target="_blank"
+								:href="wiki.getPageUrl(change.pageName!)"
+								class="watchlist-page"
+							>
+								{{ change.pageName }}</a
+							><span class="watchlist-semi">;</span>
+							<span class="watchlist-sep"> </span>
+							<span class="watchlist-time"
+								>&nbsp;{{ formatTime(change.timestamp) }}</span
+							>
+							<span class="watchlist-sep"> .. </span>
+							<span
+								:class="['watchlist-delta', wiki.getDeltaClass(change.delta ?? 0)]"
+							>
+								{{ formatDelta(change.delta) }}</span
+							><span class="watchlist-sep">.. </span>
+							<a
+								target="_blank"
+								:href="wiki.getUserUrl(change.user.name)"
+								class="watchlist-user"
+							>
+								{{ change.user.name }}</a
+							>
+							<span class="watchlist-talk-contribs">
+								(<a target="_blank" :href="wiki.getUserTalkUrl(change.user.name)"
+									>talk</a
+								>
+								|
+								<a target="_blank" :href="wiki.getUserContribsUrl(change.user.name)"
+									>contribs</a
+								>)
+							</span>
+							<template v-if="change?.summary?.comment"
+								><span
+									class="watchlist-comment"
+									v-html="change.summary.comment ?? ''"
+								></span
+								>&nbsp;</template
+							>
+							<span v-if="change?.summary?.hashtags" class="watchlist-tags">
+								(Tags:
+								<span class="watchlist-tag-names">{{
+									change.summary.hashtags
+								}}</span
+								>)
+							</span>
+							<span class="watchlist-sep"> </span>
+							<span
+								>(<a target="_blank" :href="wiki.getThankUrl(change.id)">thank</a
+								>)</span
+							>
+						</div>
+					</li>
+				</ul>
+			</template>
+		</div>
 	</main>
 </template>
 

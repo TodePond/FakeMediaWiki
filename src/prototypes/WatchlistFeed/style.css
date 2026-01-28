@@ -1,5 +1,10 @@
 /* Watchlist-style feed: matches MediaWiki Watchlist / Recent Changes line format */
 
+.watchlist-container {
+	display: flex;
+	flex-direction: column;
+}
+
 .watchlist {
 	display: flex;
 	flex-direction: column;
@@ -7,6 +12,19 @@
 	/* margin-top: -1rem; */
 	font-size: 0.9rem;
 	line-height: var(--line-height-content);
+	/* margin: 0; */
+}
+
+.watchlist-date-header {
+	font-weight: bold;
+	font-size: 1rem;
+	margin-top: 1rem;
+	margin-bottom: 0.5rem;
+	text-align: left;
+}
+
+.watchlist-date-header:first-child {
+	margin-top: 0;
 }
 
 .watchlist-comment {
