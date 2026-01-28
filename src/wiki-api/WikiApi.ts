@@ -1239,7 +1239,14 @@ export class WikiApi {
 	 * @param delta - Change size (positive, negative, or zero)
 	 * @returns CSS class name: "positive", "negative", or "neutral"
 	 */
-	getDeltaClass(delta: number): string {
+	getDeltaClass(delta: number, withSign = true): string {
+		if (withSign) {
+			return delta > 0
+				? "positive delta-sign"
+				: delta < 0
+					? "negative delta-sign"
+					: "neutral delta-sign"
+		}
 		return delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral"
 	}
 }

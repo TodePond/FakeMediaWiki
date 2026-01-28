@@ -3,15 +3,21 @@
 .watchlist {
 	display: flex;
 	flex-direction: column;
-	max-width: 800px;
-	margin-top: -1rem;
+	/* max-width: 800px; */
+	/* margin-top: -1rem; */
 	font-size: 0.9rem;
-	line-height: 1.5;
+	line-height: var(--line-height-content);
+}
+
+.watchlist-comment {
+	font-style: italic;
 }
 
 .watchlist-item {
-	padding: 0.35rem 0;
+	/* padding: 0.2rem 0; */
 }
+
+/* 
 
 .watchlist-line1 {
 	display: flex;
@@ -31,7 +37,6 @@
 .watchlist-talk-contribs a,
 .watchlist-line1 a {
 	color: var(--color-progressive);
-	text-decoration: underline;
 }
 
 .watchlist-diff-hist a:visited,
@@ -64,10 +69,7 @@
 	color: var(--color-base--subtle);
 }
 
-.watchlist-comment {
-	font-style: italic;
-	color: var(--color-base);
-}
+.wat
 
 .watchlist-comment :deep(a) {
 	font-style: italic;
@@ -85,7 +87,7 @@
 	color: var(--color-progressive);
 	font-style: italic;
 	text-decoration: underline;
-}
+} */
 
 /* Form layout (same as other combined feed variants) */
 main {

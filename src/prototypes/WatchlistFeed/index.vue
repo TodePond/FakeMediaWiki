@@ -103,7 +103,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 							reportBugs: null,
 						}
 				summary.comment = summary.comment
-					? await wiki.transformWikitextToHtml(summary.comment, pageName)
+					? await wiki.transformWikitextToHtml("(" + summary.comment + ")", pageName)
 					: ""
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
@@ -164,7 +164,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 							reportBugs: null,
 						}
 				summary.comment = summary.comment
-					? await wiki.transformWikitextToHtml(summary.comment, pageName)
+					? await wiki.transformWikitextToHtml("(" + summary.comment + ")", pageName)
 					: ""
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
@@ -244,17 +244,6 @@ function formatDelta(delta: number | null): string {
 	const sign = n >= 0 ? "+" : ""
 	return `(${sign}${n})`
 }
-
-/** Strip leading/trailing whitespace and line breaks from HTML comment */
-function cleanCommentHtml(html: string | null | undefined): string {
-	if (!html) return ""
-	// Remove leading/trailing whitespace, newlines, and <br> tags
-	return html
-		.replace(/^[\s\n\r]+/, "")
-		.replace(/[\s\n\r]+$/, "")
-		.replace(/^<br\s*\/?>/i, "")
-		.replace(/<br\s*\/?>$/i, "")
-}
 </script>
 
 <template>
@@ -321,19 +310,20 @@ function cleanCommentHtml(html: string | null | undefined): string {
 			</footer>
 		</form>
 
-		<section class="watchlist">
+		<ul class="watchlist">
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
-			<div
+			<li
 				class="watchlist-item"
 				v-for="change in allRevisions"
 				:key="`${change.pageName}-${change.timestamp}`"
 			>
 				<div class="watchlist-line1">
-					<span class="watchlist-bullet">•</span>
 					<span class="watchlist-diff-hist">
-						(<a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName!)">diff</a>
+						(<a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName!)"
+							>diff</a
+						>
 						| <a target="_blank" :href="wiki.getHistoryUrl(change.pageName!)">hist</a>).
 					</span>
 					<span class="watchlist-sep"> </span>
@@ -345,7 +335,7 @@ function cleanCommentHtml(html: string | null | undefined): string {
 						{{ change.pageName }}</a
 					><span class="watchlist-semi">;</span>
 					<span class="watchlist-sep"> </span>
-					<span class="watchlist-time">{{ formatTime(change.timestamp) }}</span>
+					<span class="watchlist-time">&nbsp;{{ formatTime(change.timestamp) }}</span>
 					<span class="watchlist-sep"> .. </span>
 					<span :class="['watchlist-delta', wiki.getDeltaClass(change.delta ?? 0)]">
 						{{ formatDelta(change.delta) }}</span
@@ -364,21 +354,22 @@ function cleanCommentHtml(html: string | null | undefined): string {
 							>contribs</a
 						>)
 					</span>
-					<span class="watchlist-sep"> </span>
 					<template v-if="change?.summary?.comment"
-						>(<span class="watchlist-comment" v-html="cleanCommentHtml(change.summary.comment)"></span
-					>)</template>
-					<span
-						v-if="change?.summary?.hashtags"
-						class="watchlist-tags"
+						><span
+							class="watchlist-comment"
+							v-html="change.summary.comment ?? ''"
+						></span
+						>&nbsp;</template
 					>
-						(Tags: <span class="watchlist-tag-names">{{ change.summary.hashtags }}</span>)
+					<span v-if="change?.summary?.hashtags" class="watchlist-tags">
+						(Tags: <span class="watchlist-tag-names">{{ change.summary.hashtags }}</span
+						>)
 					</span>
 					<span class="watchlist-sep"> </span>
 					<span>(<a target="_blank" :href="wiki.getThankUrl(change.id)">thank</a>)</span>
 				</div>
-			</div>
-		</section>
+			</li>
+		</ul>
 	</main>
 </template>
 
@@ -387,21 +378,20 @@ function cleanCommentHtml(html: string | null | undefined): string {
 </style>
 
 <style>
-.watchlist-comment :deep(p) {
-	margin: 0;
+.watchlist-comment p {
 	display: inline;
+	line-height: var(--line-height-content);
 }
 
-.watchlist-comment :deep(br:first-child),
-.watchlist-comment :deep(br:last-child) {
-	display: none;
+.watchlist-comment section {
+	display: inline;
+	line-height: var(--line-height-content);
 }
 
-.watchlist-comment :deep(a) {
-	color: var(--color-progressive);
-}
-
-.watchlist-comment :deep(em) {
-	font-style: italic;
+.watchlist-comment table {
+	display: inline-block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
 }
 </style>

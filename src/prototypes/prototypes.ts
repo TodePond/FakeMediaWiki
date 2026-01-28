@@ -130,7 +130,7 @@ export const prototypeMetadata: PrototypeDefinition[] = [
 			{
 				type: "variant",
 				id: "WatchlistFeed",
-				title: "Combined feed (watchlist)",
+				title: "Combined watchlist",
 				name: "Watchlist variant",
 				description: "Render each result exactly like the Watchlist.",
 				wrapper: "Special",
