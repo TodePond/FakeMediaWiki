@@ -119,15 +119,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
-				id: "WatchlistFeed",
-				title: "Combined watchlist",
-				name: "Combined watchlist",
-				description: "A combined feed that presents results exactly like the Watchlist.",
-				wrapper: "Special",
-				status: "new",
-			},
-			{
-				type: "variant",
 				id: "SmoothWatchlist",
 				title: "Enhanced watchlist",
 				name: "Enhanced watchlist",
@@ -135,6 +126,15 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 					"A combined feed that presents results like the Watchlist, but changed so that it doesn't break Lu's brain.",
 				wrapper: "Special",
 				status: "wip",
+			},
+			{
+				type: "variant",
+				id: "WatchlistFeed",
+				title: "Combined watchlist",
+				name: "Combined watchlist",
+				description: "A combined feed that presents results exactly like the Watchlist.",
+				wrapper: "Special",
+				status: "new",
 			},
 			{
 				type: "variant",
@@ -326,11 +326,11 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	{
 		type: "prototype",
 		id: "Chip",
-		name: "Chip",
-		description: "A single status chip with a combobox to pick done, todo, or in-progress.",
+		name: "Filter",
+		description: "An example of a chip filter component.",
 		category: "components",
 		wrapper: "Component",
-		title: "Chip",
+		title: "Filter",
 		status: "new",
 	},
 	{

@@ -219,31 +219,68 @@ function groupMatchesWrapperFilter(group: PrototypeDefinition<"prototype" | "var
 	return group.variants.some(v => wrappersSet.has(v.wrapper.toLowerCase()))
 }
 
-function textMatchesQueries(name: string, description: string, queries: Set<string>): boolean {
+function textMatchesQueries(
+	name: string,
+	description: string,
+	queries: Set<string>,
+	...extra: (string | undefined)[]
+): boolean {
 	if (queries.size === 0) return true
-	const nameLower = name.toLowerCase()
-	const descLower = description.toLowerCase()
-	return [...queries].every(q => nameLower.includes(q) || descLower.includes(q))
+	const searchable = [name, description, ...extra].filter(Boolean) as string[]
+	const searchableLower = searchable.map(s => s.toLowerCase())
+	return [...queries].every(q => searchableLower.some(s => s.includes(q)))
 }
 
 function groupMatchesTextFilter(group: PrototypeDefinition<"prototype" | "variants">): boolean {
 	const queries = plainChipQueries.value
 	if (queries.size === 0) return true
+	const category = categories.find(c => c.id === group.category)
 	if (group.type === "prototype") {
-		return textMatchesQueries(group.name, group.description, queries)
+		return textMatchesQueries(
+			group.name,
+			group.description,
+			queries,
+			getWrapperName(group.wrapper),
+			category?.name,
+			category?.description
+		)
 	}
-	// Variants: match if the group or any variant matches all queries
-	if (textMatchesQueries(group.name, group.description, queries)) return true
-	return group.variants.some(v => textMatchesQueries(v.name, v.description, queries))
+	// Variants: match if the group or any variant matches all queries (incl. wrapper/category)
+	if (
+		textMatchesQueries(
+			group.name,
+			group.description,
+			queries,
+			category?.name,
+			category?.description
+		)
+	)
+		return true
+	return group.variants.some(v =>
+		textMatchesQueries(v.name, v.description, queries, getWrapperName(v.wrapper))
+	)
+}
+
+function variantMatchesStatusAndWrapper(variant: PrototypeDefinition<"variant">): boolean {
+	const statuses = selectedStatuses.value
+	const wrappersSet = selectedWrappers.value
+	if (statuses.size > 0 && !statuses.has(effectiveStatus(variant))) return false
+	if (wrappersSet.size > 0 && !wrappersSet.has(variant.wrapper.toLowerCase())) return false
+	return true
 }
 
 function variantMatchesFilters(variant: PrototypeDefinition<"variant">): boolean {
-	const statuses = selectedStatuses.value
-	const wrappersSet = selectedWrappers.value
+	if (!variantMatchesStatusAndWrapper(variant)) return false
 	const queries = plainChipQueries.value
-	if (statuses.size > 0 && !statuses.has(effectiveStatus(variant))) return false
-	if (wrappersSet.size > 0 && !wrappersSet.has(variant.wrapper.toLowerCase())) return false
-	if (queries.size > 0 && !textMatchesQueries(variant.name, variant.description, queries))
+	if (
+		queries.size > 0 &&
+		!textMatchesQueries(
+			variant.name,
+			variant.description,
+			queries,
+			getWrapperName(variant.wrapper)
+		)
+	)
 		return false
 	return true
 }
@@ -251,6 +288,20 @@ function variantMatchesFilters(variant: PrototypeDefinition<"variant">): boolean
 function getFilteredVariants(
 	group: PrototypeDefinition<"variants">
 ): PrototypeDefinition<"variant">[] {
+	const queries = plainChipQueries.value
+	const category = categories.find(c => c.id === group.category)
+	const groupMatchesText =
+		queries.size === 0 ||
+		textMatchesQueries(
+			group.name,
+			group.description,
+			queries,
+			category?.name,
+			category?.description
+		)
+	if (groupMatchesText) {
+		return group.variants.filter(variantMatchesStatusAndWrapper)
+	}
 	return group.variants.filter(variantMatchesFilters)
 }
 
@@ -325,7 +376,7 @@ function getFilteredGroupsForCategory(categoryId: string) {
 				</template>
 			</CdxField>
 		</p>
-		<!-- <br /> -->
+		<br />
 
 		<div
 			v-for="category in filteredCategoriesWithPrototypes"
@@ -620,9 +671,9 @@ h1 {
 }
 
 .filter-bar :deep(.chip-filter-category) {
-	background-color: var(--background-color-progressive-subtle);
-	color: var(--color-progressive);
-	border-color: var(--border-color-progressive);
+	background-color: var(--background-color-neutral-subtle);
+	color: var(--color-base--subtle, #54595d);
+	border-color: var(--border-color-subtle);
 }
 
 .filter-accordion {
