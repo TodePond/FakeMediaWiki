@@ -4,6 +4,8 @@ export type PrototypeStatus = "new" | "updated" | "wip"
 
 export type PrototypeDefinitionBase = {
 	id: string
+	/** Component folder name to load; defaults to id when omitted */
+	component?: string
 	name: string
 	description: string
 	status?: PrototypeStatus
@@ -341,7 +343,8 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 
 	{
 		type: "prototype",
-		id: "WrapperDemo",
+		id: "WrapperDemo-Special",
+		component: "WrapperDemo",
 		title: "Special page wrapper",
 		name: "Special page wrapper",
 		description: "View this prototype in the Special page layout.",
@@ -351,7 +354,8 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	},
 	{
 		type: "prototype",
-		id: "WrapperDemo",
+		id: "WrapperDemo-Component",
+		component: "WrapperDemo",
 		title: "Component wrapper",
 		name: "Component wrapper",
 		description: "View this prototype in the Component (tablet) layout.",
@@ -361,7 +365,8 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	},
 	{
 		type: "prototype",
-		id: "WrapperDemo",
+		id: "WrapperDemo-Fullscreen",
+		component: "WrapperDemo",
 		title: "Fullscreen wrapper",
 		name: "Fullscreen wrapper",
 		description: "View this prototype in the Fullscreen layout.",

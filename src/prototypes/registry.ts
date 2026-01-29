@@ -27,9 +27,11 @@ const asyncComponentCache = new Map<string, Component>()
 export const prototypes: PrototypeDefinition[] = []
 for (const meta of prototypeMetadata) {
 	if (meta.type === "prototype") {
-		if (componentLoaderMap[meta.id] !== undefined) {
+		const component = meta.component ?? meta.id
+		if (componentLoaderMap[component] !== undefined) {
 			prototypes.push({
 				id: meta.id,
+				component,
 				name: meta.name,
 				description: meta.description,
 				category: meta.category,
@@ -41,9 +43,11 @@ for (const meta of prototypeMetadata) {
 		}
 	} else if (meta.type === "variants") {
 		for (const variant of meta.variants) {
-			if (componentLoaderMap[variant.id] !== undefined) {
+			const component = variant.component ?? variant.id
+			if (componentLoaderMap[component] !== undefined) {
 				prototypes.push({
 					id: variant.id,
+					component,
 					name: variant.name,
 					description: variant.description,
 					wrapper: variant.wrapper,
@@ -71,9 +75,11 @@ export const prototypeGroups: PrototypeDefinition<"prototype" | "variants">[] = 
 for (const meta of prototypeMetadata) {
 	if (meta.type === "prototype") {
 		// Only include if component exists
-		if (componentLoaderMap[meta.id] !== undefined) {
+		const component = meta.component ?? meta.id
+		if (componentLoaderMap[component] !== undefined) {
 			prototypeGroups.push({
 				id: meta.id,
+				component,
 				name: meta.name,
 				description: meta.description,
 				category: meta.category,
@@ -85,7 +91,9 @@ for (const meta of prototypeMetadata) {
 		}
 	} else if (meta.type === "variants") {
 		// Only include if at least one variant component exists
-		const validVariants = meta.variants.filter(v => componentLoaderMap[v.id] !== undefined)
+		const validVariants = meta.variants.filter(
+			v => componentLoaderMap[v.component ?? v.id] !== undefined
+		)
 		if (validVariants.length > 0) {
 			prototypeGroups.push({
 				id: meta.id,
@@ -113,7 +121,8 @@ export function getPrototypeComponent(id: string): Component | undefined {
 	if (!prototype) {
 		return undefined
 	}
-	const loader = componentLoaderMap[prototype.id]
+	const component = prototype.component ?? prototype.id
+	const loader = componentLoaderMap[component]
 	if (!loader) {
 		return undefined
 	}

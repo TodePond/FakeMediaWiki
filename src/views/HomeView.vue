@@ -24,7 +24,8 @@ const categoriesWithPrototypes = computed(() => {
 	<main>
 		<h1>Prototypes</h1>
 		<p class="subtle">
-			Hello, this is my work-in-progress prototyping system. The source code is
+			Hello, I'm <a href="https://wikimedia.enterprise.slack.com/team/U0A4XK2020H">Lu</a>, and
+			this is my work-in-progress prototyping system. The source code is
 			<a href="https://github.com/todepond/fakemediawiki">here</a>. The prototypes are below.
 		</p>
 		<br />
@@ -112,6 +113,10 @@ const categoriesWithPrototypes = computed(() => {
 </template>
 
 <style scoped>
+.subtle {
+	margin-top: -10px;
+}
+
 h1 {
 	padding-bottom: var(--spacing-50);
 }

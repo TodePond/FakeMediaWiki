@@ -1,31 +1,39 @@
 <script setup lang="ts">
+import { PrototypeDefinition } from "@/prototypes/prototypes"
 import type { Component } from "vue"
 import { computed, ref, watch } from "vue"
 import { useRoute } from "vue-router"
-import { getPrototypeComponent } from "../prototypes/registry"
+import { getPrototype, getPrototypeComponent } from "../prototypes/registry"
 
 const route = useRoute()
 const prototypeName = computed(() => route.params.name as string)
 const PrototypeComponent = ref<Component | undefined>(undefined)
+const prototype = ref<PrototypeDefinition<"prototype" | "variant"> | undefined>(undefined)
 
 watch(
 	prototypeName,
 	async newName => {
 		PrototypeComponent.value = getPrototypeComponent(newName)
+		prototype.value = getPrototype(newName)
 	},
 	{ immediate: true }
 )
 </script>
 
 <template>
-	<div class="tablet-view">
+	<div class="component-view">
+		<h1>{{ prototype?.title }}</h1>
 		<component v-if="PrototypeComponent" :is="PrototypeComponent" />
 		<p v-else>Prototype "{{ prototypeName }}" not found</p>
 	</div>
 </template>
 
 <style scoped>
-.tablet-view {
+h1 {
+	padding-bottom: var(--spacing-50);
+}
+
+.component-view {
 	max-width: var(--min-width-breakpoint-tablet);
 	margin: 0 auto;
 	padding: var(--spacing-100);
