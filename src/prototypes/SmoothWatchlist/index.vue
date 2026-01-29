@@ -3,6 +3,10 @@ import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi, type Result, type Revision } from "../../wiki-api/WikiApi"
 
+defineProps<{
+	indentCommentAndLinks?: boolean
+}>()
+
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "SmoothWatchlist"
 
@@ -16,7 +20,7 @@ const pageSearchQueries = ref<string[]>([
 ])
 const userSearchQueries = ref<string[]>([
 	localStorage.getItem(userStorageKeys[0]!) ?? "Samwalton9",
-	localStorage.getItem(userStorageKeys[1]!) ?? "GearsDatapack",
+	localStorage.getItem(userStorageKeys[1]!) ?? "SNUGGUMS",
 	localStorage.getItem(userStorageKeys[2]!) ?? "TrademarkedTWOrantula",
 ])
 
@@ -366,7 +370,10 @@ function formatDelta(delta: number | null): string {
 			</footer>
 		</form>
 
-		<div class="watchlist-container">
+		<div
+			class="watchlist-container"
+			:class="{ 'watchlist-indented': $props.indentCommentAndLinks }"
+		>
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
@@ -422,8 +429,7 @@ function formatDelta(delta: number | null): string {
 									class="watchlist-comment"
 									v-html="change.summary.comment ?? ''"
 								></span
-								>&nbsp;</template
-							>
+							></template>
 							<span v-if="change?.summary?.hashtags" class="watchlist-tags">
 								(Tags:
 								<span class="watchlist-tag-names">{{
@@ -431,8 +437,6 @@ function formatDelta(delta: number | null): string {
 								}}</span
 								>)
 							</span>
-							<span class="watchlist-sep"> </span>
-							<br />
 							<span class="watchlist-diff-hist">
 								(<a
 									target="_blank"

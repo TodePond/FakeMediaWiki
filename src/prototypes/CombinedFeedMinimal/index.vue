@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
-import { cdxIconArticle, cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
+import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi, type PageHistoryRevision, type Revision } from "../../wiki-api/WikiApi"
 
@@ -106,7 +106,7 @@ async function search(): Promise<void> {
 }
 
 async function loadUser(
-	userNum: number,
+	_userNum: number,
 	userName: string,
 	resultsRef: Ref<Revision[]>,
 	loadingRef: Ref<boolean>,
@@ -124,10 +124,8 @@ async function loadUser(
 			return
 		}
 
-		// Process revisions - but don't await thumbnail loading
 		const processedRevisions = await Promise.all(
 			_history.revisions.map(async revision => {
-				// getUserHistory may include pageName from Action API transformation
 				const pageName =
 					(
 						revision as PageHistoryRevision & {
@@ -172,20 +170,14 @@ async function loadUser(
 						reportBugs: summary.reportBugs ?? null,
 					},
 					pageName,
-					thumbnailUrl: null, // Will be loaded separately
+					thumbnailUrl: null,
 				}
 				return processedRevision
 			})
 		)
 
-		// Store revisions immediately
 		resultsRef.value = processedRevisions
 		loadingRef.value = false
-
-		// Load thumbnails asynchronously - don't block UI
-		processedRevisions.forEach(revision => {
-			loadThumbnailForRevision(userNum, revision, resultsRef)
-		})
 	} catch (e) {
 		loadingRef.value = false
 		const errorObj = e as Error
@@ -199,7 +191,7 @@ async function loadUser(
 }
 
 async function loadPage(
-	pageNum: number,
+	_pageNum: number,
 	pageName: string,
 	resultsRef: Ref<Revision[]>,
 	loadingRef: Ref<boolean>,
@@ -217,7 +209,6 @@ async function loadPage(
 			return
 		}
 
-		// Process revisions - but don't await thumbnail loading
 		const processedRevisions = await Promise.all(
 			_history.revisions.map(async revision => {
 				const _summary = wiki.preprocessEditSummary(revision.comment, pageName)
@@ -249,20 +240,14 @@ async function loadPage(
 						reportBugs: summary.reportBugs ?? null,
 					},
 					pageName,
-					thumbnailUrl: null, // Will be loaded separately
+					thumbnailUrl: null,
 				}
 				return processedRevision
 			})
 		)
 
-		// Store revisions immediately
 		resultsRef.value = processedRevisions
 		loadingRef.value = false
-
-		// Load thumbnails asynchronously - don't block UI
-		processedRevisions.forEach(revision => {
-			loadThumbnailForRevision(pageNum, revision, resultsRef)
-		})
 	} catch (e) {
 		loadingRef.value = false
 		const errorObj = e as Error
@@ -272,28 +257,6 @@ async function loadPage(
 			errorRef.value = `${pageName}: ${errorObj.message}`
 		}
 		resultsRef.value = []
-	}
-}
-
-// Load thumbnail asynchronously and update the revision
-async function loadThumbnailForRevision(
-	_pageNum: number,
-	revision: Revision,
-	resultsRef: Ref<Revision[]>
-): Promise<void> {
-	try {
-		if (!revision.pageName) return
-		const thumbnailUrl = await wiki.getPageThumbnail(revision.pageName)
-		// Update the revision in the results array
-		const revIndex = resultsRef.value.findIndex(r => r.id === revision.id)
-		if (revIndex !== -1 && resultsRef.value[revIndex]) {
-			resultsRef.value[revIndex]!.thumbnailUrl = thumbnailUrl
-			// Trigger reactivity by reassigning
-			resultsRef.value = [...resultsRef.value]
-		}
-	} catch (e) {
-		console.error("Failed to load thumbnail", e)
-		// Thumbnail will remain null, placeholder will show
 	}
 }
 
@@ -318,7 +281,6 @@ const allRevisions = computed(() => {
 			}
 		})
 	})
-	// Sort by timestamp (most recent first)
 	return revisions.sort(
 		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 	)
@@ -435,18 +397,6 @@ function getDeltaClass(delta: number): string {
 				v-for="change in allRevisions"
 				:key="`${change.pageName}-${change.timestamp}`"
 			>
-				<a v-if="change.pageName" target="_blank" :href="wiki.getPageUrl(change.pageName)"
-					><img
-						v-if="change.thumbnailUrl"
-						class="change-thumbnail"
-						:src="change.thumbnailUrl"
-						:alt="`Thumbnail for ${change.pageName}`"
-					/>
-					<div v-else class="change-thumbnail-placeholder">
-						<CdxIcon :icon="cdxIconArticle" />
-					</div>
-				</a>
-
 				<div class="change-body">
 					<span class="change-page-name-and-delta">
 						<a
@@ -455,8 +405,9 @@ function getDeltaClass(delta: number): string {
 							:href="wiki.getPageUrl(change.pageName)"
 							class="change-page-name"
 						>
-							{{ change.pageName }} </a
-						>&nbsp;<span :class="getDeltaClass(change.delta ?? 0)">{{
+							{{ change.pageName }}
+						</a>
+						&nbsp;<span :class="getDeltaClass(change.delta ?? 0)">{{
 							change.delta ?? 0
 						}}</span>
 					</span>
@@ -544,6 +495,7 @@ form {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
+	min-width: 0;
 }
 
 .positive {
@@ -593,29 +545,6 @@ form {
 	gap: 0.25rem;
 }
 
-.input-controls {
-	display: flex;
-	gap: 0.25rem;
-	align-items: center;
-	flex-wrap: wrap;
-}
-
-.page-indicator {
-	flex-shrink: 0;
-}
-
-.page-error {
-	color: var(--color-destructive);
-	font-size: 0.875rem;
-}
-
-form > span {
-	display: flex;
-	gap: 0.25rem;
-	width: 100%;
-	flex-wrap: wrap;
-}
-
 form footer {
 	display: flex;
 	gap: 0.25rem;
@@ -662,31 +591,6 @@ form footer {
 
 .change-page-name-and-delta {
 	margin-top: -0.2rem;
-}
-
-.change-thumbnail {
-	width: 3rem;
-	height: 3rem;
-	border-radius: 2px;
-	object-fit: cover;
-	flex-shrink: 0;
-}
-
-.change-thumbnail-placeholder {
-	width: 3rem;
-	height: 3rem;
-	border-radius: 2px;
-	flex-shrink: 0;
-	background-color: var(--background-color-interactive-subtle);
-	border: 1px solid var(--border-color-subtle);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.change-thumbnail-placeholder .cdx-icon {
-	width: 1.5rem;
-	height: 1.5rem;
 }
 
 .change footer {
@@ -766,15 +670,5 @@ form footer {
 .change .wikitable {
 	margin: 0.5rem 0;
 	font-size: 0.8rem;
-}
-
-.change img {
-	width: 100%;
-	height: auto;
-	object-fit: contain;
-}
-
-.change-thumbnail-placeholder .cdx-icon svg {
-	color: var(--color-icon-notice);
 }
 </style>
