@@ -91,3 +91,50 @@
 .diff-char-remove {
 	background-color: var(--background-color-destructive-subtle, rgba(215, 51, 51, 0.2));
 }
+
+/* Thank button (mock): link-style; "thank" and "thanked" look the same */
+.watchlist-thank-link {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: var(--color-progressive, #36c);
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.watchlist-thank-link:hover {
+	text-decoration: underline;
+}
+
+/* Rising heart overlay (ASCII "<3" and "</3") */
+.thank-hearts-overlay {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 100;
+}
+
+.thank-heart {
+	position: fixed;
+	transform: translate(-50%, 0);
+	font-size: 0.75rem;
+	font-family: inherit;
+	color: var(--color-progressive, #36c);
+	animation: thank-heart-rise 2.5s ease-out forwards;
+}
+
+.thank-heart-broken {
+	font-size: 0.75rem;
+}
+
+@keyframes thank-heart-rise {
+	0% {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+	100% {
+		opacity: 0;
+		transform: translate(-50%, -320px);
+	}
+}
