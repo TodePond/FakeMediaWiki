@@ -303,21 +303,21 @@ function getFilteredGroupsForCategory(categoryId: string) {
 						<CdxSelect
 							v-model:selected="selectedStatusFilter"
 							:menu-items="statusFilterOptions"
-							default-label="by status"
+							default-label="status"
 							:default-icon="cdxIconAdd"
 							class="filter-dropdown"
 						/>
 						<CdxSelect
 							v-model:selected="selectedWrapperFilter"
 							:menu-items="wrapperFilterOptions"
-							default-label="by wrapper"
+							default-label="wrapper"
 							:default-icon="cdxIconAdd"
 							class="filter-dropdown"
 						/>
 						<CdxSelect
 							v-model:selected="selectedCategoryFilter"
 							:menu-items="categoryFilterOptions"
-							default-label="by category"
+							default-label="category"
 							:default-icon="cdxIconAdd"
 							class="filter-dropdown"
 						/>
