@@ -101,14 +101,31 @@ export const categories: CategoryDefinition[] = [
 
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
-		type: "prototype",
+		type: "variants",
 		id: "DiffFeed",
 		name: "Diff feed",
 		description: "A feed that shows inline diffs of changes.",
 		category: "feed",
-		wrapper: "Special",
-		title: "Change feed",
-		status: "new",
+		variants: [
+			{
+				type: "variant",
+				id: "DiffFeed",
+				title: "Diff user feed",
+				name: "Diff user feed",
+				description: "A feed that shows inline diffs with user avatars.",
+				wrapper: "Special",
+				status: "new",
+			},
+			{
+				type: "variant",
+				id: "DiffFeedThumbnail",
+				title: "Diff page feed",
+				name: "Diff page feed",
+				description: "A feed that shows inline diffs with page thumbnails.",
+				wrapper: "Special",
+				status: "new",
+			},
+		],
 	},
 	{
 		type: "variants",
