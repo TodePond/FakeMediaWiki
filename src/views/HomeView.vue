@@ -305,18 +305,21 @@ function getFilteredGroupsForCategory(categoryId: string) {
 							:menu-items="statusFilterOptions"
 							default-label="by status"
 							:default-icon="cdxIconAdd"
+							class="filter-dropdown"
 						/>
 						<CdxSelect
 							v-model:selected="selectedWrapperFilter"
 							:menu-items="wrapperFilterOptions"
 							default-label="by wrapper"
 							:default-icon="cdxIconAdd"
+							class="filter-dropdown"
 						/>
 						<CdxSelect
 							v-model:selected="selectedCategoryFilter"
 							:menu-items="categoryFilterOptions"
 							default-label="by category"
 							:default-icon="cdxIconAdd"
+							class="filter-dropdown"
 						/>
 					</div>
 				</template>
@@ -643,5 +646,25 @@ h1 {
 .filter-dropdowns .cdx-select-vue__handle {
 	width: 100%;
 	min-width: 100%;
+}
+
+.filter-bar .cdx-chip-input {
+	border-radius: 2px 2px 0px 0px;
+	/* background-color: red !important; */
+}
+
+.filter-dropdown:first-child .cdx-select-vue__handle {
+	border-radius: 0px 0px 0px 2px;
+}
+
+.filter-dropdown:last-child .cdx-select-vue__handle {
+	border-radius: 0px 0px 2px 0px;
+	border-right: 1px solid var(--border-color-interactive);
+}
+
+.filter-dropdowns .cdx-select-vue__handle {
+	border-radius: 0px 0px 0px 0px;
+	border-right: none;
+	border-top: none;
 }
 </style>
