@@ -107,6 +107,10 @@ const categoriesWithPrototypes = computed(() => {
 </template>
 
 <style scoped>
+h1 {
+	padding-bottom: var(--spacing-50);
+}
+
 ul {
 	list-style-type: none;
 	margin-left: 0;
