@@ -2,7 +2,7 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
-import { WikiApi, type Result, type Revision } from "../../wiki-api/WikiApi"
+import { WikiApi, type DiffLine, type Result, type Revision } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "DiffFeed"
@@ -257,6 +257,57 @@ async function loadDiffForRevision(
 	}
 }
 
+/** Segment of a diff line for character-level display (API highlightRanges: type 0 = add, 1 = remove) */
+interface DiffSegment {
+	text: string
+	type: "add" | "remove" | null
+}
+
+/** UTF-8 byte offset to character index in string */
+function byteOffsetToCharIndex(str: string, byteOffset: number): number {
+	let bytes = 0
+	let i = 0
+	while (i < str.length) {
+		const c = str.codePointAt(i) ?? 0
+		if (c <= 0x7f) bytes += 1
+		else if (c <= 0x7ff) bytes += 2
+		else if (c <= 0xffff) bytes += 3
+		else bytes += 4
+		if (bytes > byteOffset) return i
+		i += c > 0xffff ? 2 : 1
+	}
+	return str.length
+}
+
+/** Split a change line into segments for add/remove character-level styling */
+function getDiffLineSegments(line: DiffLine): DiffSegment[] {
+	const text = line.text ?? ""
+	const ranges = line.highlightRanges ?? []
+	if (ranges.length === 0) {
+		return [{ text, type: null }]
+	}
+	const sorted = [...ranges].sort((a, b) => a.start - b.start)
+	const segments: DiffSegment[] = []
+	let pos = 0
+	for (const range of sorted) {
+		const { start, length, type } = range
+		const charStart = byteOffsetToCharIndex(text, start)
+		const charEnd = byteOffsetToCharIndex(text, start + length)
+		if (charStart > pos) {
+			segments.push({ text: text.slice(pos, charStart), type: null })
+		}
+		segments.push({
+			text: text.slice(charStart, charEnd),
+			type: type === 0 ? "add" : type === 1 ? "remove" : null,
+		})
+		pos = charEnd
+	}
+	if (pos < text.length) {
+		segments.push({ text: text.slice(pos), type: null })
+	}
+	return segments
+}
+
 function getDiffLineClass(type: number): string {
 	switch (type) {
 		case 0:
@@ -453,7 +504,30 @@ function formatTimestamp(timestamp: string): string {
 							<span class="diff-line-prefix">{{
 								line.type === 1 ? "+" : line.type === 2 ? "-" : " "
 							}}</span>
-							<span class="diff-line-text">{{ line.text || " " }}</span>
+							<span class="diff-line-text">
+								<template
+									v-if="
+										(line.type === 3 || line.type === 4 || line.type === 5) &&
+										line.highlightRanges?.length
+									"
+								>
+									<template
+										v-for="(seg, segIdx) in getDiffLineSegments(line)"
+										:key="segIdx"
+									>
+										<span v-if="seg.type === 'add'" class="diff-char-add">{{
+											seg.text
+										}}</span>
+										<span
+											v-else-if="seg.type === 'remove'"
+											class="diff-char-remove"
+											>{{ seg.text }}</span
+										>
+										<template v-else>{{ seg.text }}</template>
+									</template>
+								</template>
+								<template v-else>{{ line.text || " " }}</template>
+							</span>
 						</div>
 					</div>
 					<footer>
