@@ -82,3 +82,12 @@
 	background-color: var(--background-color-progressive-subtle);
 	color: var(--color-base);
 }
+
+/* Character-level changes within updated lines (from API highlightRanges) */
+.diff-char-add {
+	background-color: var(--background-color-success-subtle, rgba(0, 166, 68, 0.2));
+}
+
+.diff-char-remove {
+	background-color: var(--background-color-destructive-subtle, rgba(215, 51, 51, 0.2));
+}
