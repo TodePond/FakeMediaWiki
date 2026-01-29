@@ -25,7 +25,7 @@ async function search(): Promise<void> {
 	const pageName = searchQuery.value
 	let _history: PageHistoryResponse
 	try {
-		_history = await wiki.getPageHistory(pageName, { limit: 5 })
+		_history = await wiki.getPageHistory(pageName, { limit: 10 })
 	} catch (e) {
 		const errorObj = e as Error
 		if (errorObj.message.includes("404")) {

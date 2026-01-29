@@ -116,7 +116,7 @@ async function loadUser(
 	errorRef.value = null
 
 	try {
-		const _history = await wiki.getUserHistory(userName, { limit: 5 })
+		const _history = await wiki.getUserHistory(userName, { limit: 10 })
 
 		if (!_history.revisions) {
 			resultsRef.value = []
@@ -201,7 +201,7 @@ async function loadPage(
 	errorRef.value = null
 
 	try {
-		const _history = await wiki.getPageHistory(pageName, { limit: 5 })
+		const _history = await wiki.getPageHistory(pageName, { limit: 10 })
 
 		if (!_history.revisions) {
 			resultsRef.value = []

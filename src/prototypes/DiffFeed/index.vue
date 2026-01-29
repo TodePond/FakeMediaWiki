@@ -72,7 +72,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 	resultRef.value.error = null
 
 	try {
-		const _history = (await wiki.getUserHistory(userName, { limit: 5 })) as {
+		const _history = (await wiki.getUserHistory(userName, { limit: 10 })) as {
 			revisions?: Array<{
 				comment?: string
 				pageName?: string
@@ -89,8 +89,8 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 			return
 		}
 
-		// Limit to only the first 5 revisions
-		const limitedRevisions = _history.revisions.slice(0, 5)
+		// Limit to only the first 10 revisions
+		const limitedRevisions = _history.revisions.slice(0, 10)
 
 		const processedRevisions = await Promise.all(
 			limitedRevisions.map(async revision => {
@@ -155,7 +155,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 	resultRef.value.error = null
 
 	try {
-		const _history = (await wiki.getPageHistory(pageName, { limit: 5 })) as {
+		const _history = (await wiki.getPageHistory(pageName, { limit: 10 })) as {
 			revisions?: Array<{
 				comment: string
 				user: { name: string }
@@ -170,8 +170,8 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 			return
 		}
 
-		// Limit to only the first 5 revisions
-		const limitedRevisions = _history.revisions.slice(0, 5)
+		// Limit to only the first 10 revisions
+		const limitedRevisions = _history.revisions.slice(0, 10)
 
 		const processedRevisions = await Promise.all(
 			limitedRevisions.map(async revision => {

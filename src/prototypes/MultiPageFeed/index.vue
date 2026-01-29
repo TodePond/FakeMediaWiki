@@ -42,7 +42,7 @@ async function search(): Promise<void> {
 	await Promise.all(
 		pageNames.map(async pageName => {
 			try {
-				const _history = await wiki.getPageHistory(pageName, { limit: 5 })
+				const _history = await wiki.getPageHistory(pageName, { limit: 10 })
 
 				if (_history.revisions) {
 					const processedRevisions: Revision[] = await Promise.all(

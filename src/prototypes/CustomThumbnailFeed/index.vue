@@ -116,7 +116,7 @@ async function loadUser(
 	errorRef.value = null
 
 	try {
-		const _history = await wiki.getUserHistory(userName, { limit: 5 })
+		const _history = await wiki.getUserHistory(userName, { limit: 10 })
 
 		if (!_history.revisions) {
 			resultsRef.value = []
@@ -209,7 +209,7 @@ async function loadPage(
 	errorRef.value = null
 
 	try {
-		const _history = await wiki.getPageHistory(pageName, { limit: 5 })
+		const _history = await wiki.getPageHistory(pageName, { limit: 10 })
 
 		if (!_history.revisions) {
 			resultsRef.value = []
@@ -665,16 +665,16 @@ form footer {
 }
 
 .change-thumbnail {
-	width: 3rem;
-	height: 3rem;
+	width: 3.8rem;
+	height: 3.8rem;
 	border-radius: 2px;
 	object-fit: cover;
 	flex-shrink: 0;
 }
 
 .change-thumbnail-placeholder {
-	width: 3rem;
-	height: 3rem;
+	width: 3.8rem;
+	height: 3.8rem;
 	border-radius: 2px;
 	flex-shrink: 0;
 	background-color: var(--background-color-interactive-subtle);
@@ -685,8 +685,10 @@ form footer {
 }
 
 .change-thumbnail-placeholder .cdx-icon {
-	width: 1.5rem;
-	height: 1.5rem;
+	width: 1.5rem !important;
+	height: 1.5rem !important;
+	display: flex;
+	padding: 0rem !important;
 }
 
 .change footer {
@@ -772,6 +774,13 @@ form footer {
 	width: 100%;
 	height: auto;
 	object-fit: contain;
+}
+
+.change-thumbnail-placeholder .cdx-icon {
+	width: 1.5rem !important;
+	height: 1.5rem !important;
+	display: flex;
+	padding: 0rem !important;
 }
 
 .change-thumbnail-placeholder .cdx-icon svg {

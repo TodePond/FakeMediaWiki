@@ -313,12 +313,3 @@ form footer {
 	align-items: center;
 	justify-content: center;
 }
-
-.change-thumbnail-placeholder .cdx-icon {
-	width: 1.5rem;
-	height: 1.5rem;
-}
-
-.change-thumbnail-placeholder .cdx-icon svg {
-	color: var(--color-icon-notice);
-}

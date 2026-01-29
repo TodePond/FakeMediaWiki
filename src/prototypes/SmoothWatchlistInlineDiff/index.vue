@@ -91,7 +91,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 	resultRef.value.error = null
 
 	try {
-		const _history = (await wiki.getUserHistory(userName, { limit: 5 })) as {
+		const _history = (await wiki.getUserHistory(userName, { limit: 10 })) as {
 			revisions?: Array<{
 				comment?: string
 				pageName?: string
@@ -155,7 +155,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 	resultRef.value.error = null
 
 	try {
-		const _history = (await wiki.getPageHistory(pageName, { limit: 5 })) as {
+		const _history = (await wiki.getPageHistory(pageName, { limit: 10 })) as {
 			revisions?: Array<{
 				comment: string
 				user: { name: string }
