@@ -156,6 +156,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 			},
 			{
 				type: "variant",
+				id: "SmoothWatchlistInlineDiff",
+				title: "Watchlist with inline diff",
+				name: "Watchlist with inline diff",
+				description:
+					"A watchlist where you can view a diff inline by clicking the diff button.",
+				wrapper: "Special",
+				status: "new",
+			},
+			{
+				type: "variant",
 				id: "WatchlistFeed",
 				title: "Combined watchlist",
 				name: "Combined watchlist",
