@@ -44,6 +44,12 @@ h1 {
 	/* margin-bottom: var(--spacing-65) */
 }
 
+p.subtle {
+	color: var(--color-base--subtle);
+	font-size: 0.9rem;
+	/* font-size: var(--font-size-small); */
+}
+
 h2 {
 	/* font-size: var(--font-size-xx-large); */
 }

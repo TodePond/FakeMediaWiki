@@ -220,7 +220,7 @@ nav {
 header {
 	display: flex;
 	width: 100%;
-	border-bottom: 1px solid var(--border-color-subtle);
+	border-bottom: 1px solid var(--border-color-base);
 	margin-bottom: var(--spacing-100);
 	align-items: baseline;
 	justify-content: space-between;

@@ -23,6 +23,11 @@ const categoriesWithPrototypes = computed(() => {
 <template>
 	<main>
 		<h1>Prototypes</h1>
+		<p class="subtle">
+			Hello, this is my work-in-progress prototyping system. The source code is
+			<a href="https://github.com/todepond/fakemediawiki">here</a>. The prototypes are below.
+		</p>
+		<br />
 		<div
 			v-for="category in categoriesWithPrototypes"
 			:key="category.id"
