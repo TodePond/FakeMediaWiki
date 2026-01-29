@@ -359,16 +359,16 @@ function getFilteredGroupsForCategory(categoryId: string) {
 							class="filter-dropdown"
 						/>
 						<CdxSelect
-							v-model:selected="selectedWrapperFilter"
-							:menu-items="wrapperFilterOptions"
-							default-label="wrapper"
+							v-model:selected="selectedCategoryFilter"
+							:menu-items="categoryFilterOptions"
+							default-label="category"
 							:default-icon="cdxIconAdd"
 							class="filter-dropdown"
 						/>
 						<CdxSelect
-							v-model:selected="selectedCategoryFilter"
-							:menu-items="categoryFilterOptions"
-							default-label="category"
+							v-model:selected="selectedWrapperFilter"
+							:menu-items="wrapperFilterOptions"
+							default-label="wrapper"
 							:default-icon="cdxIconAdd"
 							class="filter-dropdown"
 						/>
