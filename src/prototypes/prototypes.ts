@@ -128,6 +128,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 			},
 			{
 				type: "variant",
+				id: "SmoothWatchlist",
+				title: "Enhanced watchlist",
+				name: "Enhanced watchlist",
+				description:
+					"A combined feed that presents results like the Watchlist, but changed so that it doesn't break Lu's brain.",
+				wrapper: "Special",
+				status: "wip",
+			},
+			{
+				type: "variant",
 				id: "CustomPageFeed",
 				title: "Combined user feed",
 				name: "Combined user feed",
@@ -312,6 +322,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "page",
 		wrapper: "Component",
 		title: "Page summary",
+	},
+	{
+		type: "prototype",
+		id: "Chip",
+		name: "Chip",
+		description: "A single status chip with a combobox to pick done, todo, or in-progress.",
+		category: "components",
+		wrapper: "Component",
+		title: "Chip",
+		status: "new",
 	},
 	{
 		type: "prototype",

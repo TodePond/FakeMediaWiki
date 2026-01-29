@@ -1,10 +1,192 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import type { ChipInputItem } from "@wikimedia/codex"
+import { CdxChipInput, CdxField, CdxSelect } from "@wikimedia/codex"
+import { cdxIconAdd } from "@wikimedia/codex-icons"
+import { computed, ref, watch } from "vue"
 import { RouterLink } from "vue-router"
-import type { PrototypeStatus } from "../prototypes/prototypes"
-import { categories, getPrototypeGroupsByCategory, getWrapperName } from "../prototypes/registry"
+import type { PrototypeDefinition, PrototypeStatus } from "../prototypes/prototypes"
+import {
+	categories,
+	getPrototypeGroupsByCategory,
+	getWrapperName,
+	wrappers,
+} from "../prototypes/registry"
 
 const prototypeGroupsByCategory = getPrototypeGroupsByCategory()
+
+type StatusFilterValue = PrototypeStatus | "none"
+
+// Chip filter: status (incl. none), wrapper, category
+const statusFilterOptions: { value: StatusFilterValue; label: string }[] = [
+	{ value: "new", label: "New" },
+	{ value: "wip", label: "WIP" },
+	{ value: "updated", label: "Updated" },
+	{ value: "none", label: "None" },
+]
+const wrapperFilterOptions = wrappers.map(w => ({ value: w.id, label: w.name }))
+const categoryFilterOptions = categories.map(c => ({ value: c.id, label: c.name }))
+
+const chips = ref<ChipInputItem[]>([])
+const filterInputValue = ref<string>("")
+const selectedStatusFilter = ref<StatusFilterValue | null>(null)
+const selectedWrapperFilter = ref<string | null>(null)
+const selectedCategoryFilter = ref<string | null>(null)
+
+function wrapperChipValue(id: string): string {
+	return `wrapper:${id.toLowerCase()}`
+}
+
+function categoryChipValue(id: string): string {
+	return `category:${id.toLowerCase()}`
+}
+
+function toLowerChip(c: ChipInputItem): ChipInputItem {
+	const normalized = String(c.label != null ? c.label : c.value).toLowerCase()
+	return { ...c, value: normalized, label: normalized }
+}
+
+function normalizeChip(c: ChipInputItem): ChipInputItem {
+	const raw = (c.label != null ? String(c.label) : String(c.value)).trim()
+	const lower = raw.toLowerCase()
+
+	// Status:
+	if (lower.startsWith("status:")) {
+		const rest = raw.slice(7).trim().toLowerCase()
+		if (rest === "new" || rest === "wip" || rest === "updated" || rest === "none") {
+			const value = `status:${rest}`
+			const statusClass = rest === "none" ? "chip-filter-no-status" : `chip-filter-${rest}`
+			return { value, label: value, className: statusClass }
+		}
+	}
+
+	// Wrapper:
+	if (lower.startsWith("wrapper:")) {
+		const rest = raw.slice(8).trim()
+		const wrapper = wrappers.find(
+			w =>
+				w.id.toLowerCase() === rest.toLowerCase() ||
+				w.name.toLowerCase() === rest.toLowerCase()
+		)
+		if (wrapper) {
+			const value = wrapperChipValue(wrapper.id)
+			return { value, label: value, className: "chip-filter-wrapper" }
+		}
+	}
+
+	// Category:
+	if (lower.startsWith("category:")) {
+		const rest = raw.slice(9).trim()
+		const category = categories.find(
+			c =>
+				c.id.toLowerCase() === rest.toLowerCase() ||
+				c.name.toLowerCase() === rest.toLowerCase()
+		)
+		if (category) {
+			const value = categoryChipValue(category.id)
+			return { value, label: value, className: "chip-filter-category" }
+		}
+	}
+
+	return toLowerChip(c)
+}
+
+function normalizeChips(list: ChipInputItem[]): ChipInputItem[] {
+	return list.map(normalizeChip)
+}
+
+function onChipsUpdate(newChips: ChipInputItem[]) {
+	chips.value = normalizeChips(newChips)
+}
+
+// Derive active filters from chips (status:*, wrapper:*, category:*)
+const selectedStatuses = computed<Set<string>>(() => {
+	const set = new Set<string>()
+	chips.value.forEach(c => {
+		const v = String(c.value)
+		if (v.startsWith("status:")) set.add(v.slice(7))
+	})
+	return set
+})
+const selectedWrappers = computed<Set<string>>(() => {
+	const set = new Set<string>()
+	chips.value.forEach(c => {
+		const v = String(c.value)
+		if (v.startsWith("wrapper:")) set.add(v.slice(8))
+	})
+	return set
+})
+const selectedCategories = computed<Set<string>>(() => {
+	const set = new Set<string>()
+	chips.value.forEach(c => {
+		const v = String(c.value)
+		if (v.startsWith("category:")) set.add(v.slice(9))
+	})
+	return set
+})
+
+// Plain (manually typed) chips + current input text: filter by name/description match
+const plainChipQueries = computed<Set<string>>(() => {
+	const set = new Set<string>()
+	chips.value.forEach(c => {
+		const v = String(c.value).trim()
+		if (
+			v &&
+			!v.startsWith("status:") &&
+			!v.startsWith("wrapper:") &&
+			!v.startsWith("category:")
+		) {
+			set.add(v.toLowerCase())
+		}
+	})
+	// Include text currently in the input (before user presses Enter)
+	const typed = String(filterInputValue.value).trim().toLowerCase()
+	if (
+		typed &&
+		!typed.startsWith("status:") &&
+		!typed.startsWith("wrapper:") &&
+		!typed.startsWith("category:")
+	) {
+		set.add(typed)
+	}
+	return set
+})
+
+watch(selectedStatusFilter, val => {
+	if (val !== null) {
+		const value = `status:${val}`
+		if (!chips.value.some(c => c.value === value)) {
+			const className = val === "none" ? "chip-filter-no-status" : `chip-filter-${val}`
+			chips.value = [...chips.value, { value, label: value, className }]
+		}
+		selectedStatusFilter.value = null
+	}
+})
+
+watch(selectedWrapperFilter, val => {
+	if (val !== null) {
+		const value = wrapperChipValue(val)
+		if (!chips.value.some(c => c.value === value)) {
+			chips.value = [
+				...chips.value,
+				{ value, label: value, className: "chip-filter-wrapper" },
+			]
+		}
+		selectedWrapperFilter.value = null
+	}
+})
+
+watch(selectedCategoryFilter, val => {
+	if (val !== null) {
+		const value = categoryChipValue(val)
+		if (!chips.value.some(c => c.value === value)) {
+			chips.value = [
+				...chips.value,
+				{ value, label: value, className: "chip-filter-category" },
+			]
+		}
+		selectedCategoryFilter.value = null
+	}
+})
 
 function statusLabel(status: PrototypeStatus): string {
 	const labels: Record<PrototypeStatus, string> = {
@@ -15,9 +197,87 @@ function statusLabel(status: PrototypeStatus): string {
 	return labels[status]
 }
 
-const categoriesWithPrototypes = computed(() => {
-	return categories.filter(category => (prototypeGroupsByCategory[category.id]?.length ?? 0) > 0)
+function effectiveStatus(item: { status?: PrototypeStatus }): StatusFilterValue {
+	return item.status ?? "none"
+}
+
+function groupMatchesStatusFilter(group: PrototypeDefinition<"prototype" | "variants">): boolean {
+	const statuses = selectedStatuses.value
+	if (statuses.size === 0) return true
+	if (group.type === "prototype") {
+		return statuses.has(effectiveStatus(group))
+	}
+	return group.variants.some(v => statuses.has(effectiveStatus(v)))
+}
+
+function groupMatchesWrapperFilter(group: PrototypeDefinition<"prototype" | "variants">): boolean {
+	const wrappersSet = selectedWrappers.value
+	if (wrappersSet.size === 0) return true
+	if (group.type === "prototype") {
+		return wrappersSet.has(group.wrapper.toLowerCase())
+	}
+	return group.variants.some(v => wrappersSet.has(v.wrapper.toLowerCase()))
+}
+
+function textMatchesQueries(name: string, description: string, queries: Set<string>): boolean {
+	if (queries.size === 0) return true
+	const nameLower = name.toLowerCase()
+	const descLower = description.toLowerCase()
+	return [...queries].every(q => nameLower.includes(q) || descLower.includes(q))
+}
+
+function groupMatchesTextFilter(group: PrototypeDefinition<"prototype" | "variants">): boolean {
+	const queries = plainChipQueries.value
+	if (queries.size === 0) return true
+	if (group.type === "prototype") {
+		return textMatchesQueries(group.name, group.description, queries)
+	}
+	// Variants: match if the group or any variant matches all queries
+	if (textMatchesQueries(group.name, group.description, queries)) return true
+	return group.variants.some(v => textMatchesQueries(v.name, v.description, queries))
+}
+
+function variantMatchesFilters(variant: PrototypeDefinition<"variant">): boolean {
+	const statuses = selectedStatuses.value
+	const wrappersSet = selectedWrappers.value
+	const queries = plainChipQueries.value
+	if (statuses.size > 0 && !statuses.has(effectiveStatus(variant))) return false
+	if (wrappersSet.size > 0 && !wrappersSet.has(variant.wrapper.toLowerCase())) return false
+	if (queries.size > 0 && !textMatchesQueries(variant.name, variant.description, queries))
+		return false
+	return true
+}
+
+function getFilteredVariants(
+	group: PrototypeDefinition<"variants">
+): PrototypeDefinition<"variant">[] {
+	return group.variants.filter(variantMatchesFilters)
+}
+
+function groupMatchesFilters(group: PrototypeDefinition<"prototype" | "variants">): boolean {
+	return (
+		groupMatchesStatusFilter(group) &&
+		groupMatchesWrapperFilter(group) &&
+		groupMatchesTextFilter(group)
+	)
+}
+
+const filteredCategoriesWithPrototypes = computed(() => {
+	const cats = selectedCategories.value
+	const categoryFilter = (category: (typeof categories)[0]) =>
+		cats.size === 0 || cats.has(category.id)
+	return categories.filter(category => {
+		if (!categoryFilter(category)) return false
+		const groups = prototypeGroupsByCategory[category.id] ?? []
+		const visibleGroups = groups.filter(groupMatchesFilters)
+		return visibleGroups.length > 0
+	})
 })
+
+function getFilteredGroupsForCategory(categoryId: string) {
+	const groups = prototypeGroupsByCategory[categoryId] ?? []
+	return groups.filter(groupMatchesFilters)
+}
 </script>
 
 <template>
@@ -28,16 +288,51 @@ const categoriesWithPrototypes = computed(() => {
 			this is my work-in-progress prototyping system. The source code is
 			<a href="https://github.com/todepond/fakemediawiki">here</a>. The prototypes are below.
 		</p>
-		<br />
+
+		<!-- <br /> -->
+		<p class="filter-bar">
+			<CdxField>
+				<template #default>
+					<CdxChipInput
+						v-model:input-value="filterInputValue"
+						:input-chips="chips"
+						placeholder="Filter"
+						@update:input-chips="onChipsUpdate"
+					/>
+					<div class="filter-dropdowns">
+						<CdxSelect
+							v-model:selected="selectedStatusFilter"
+							:menu-items="statusFilterOptions"
+							default-label="by status"
+							:default-icon="cdxIconAdd"
+						/>
+						<CdxSelect
+							v-model:selected="selectedWrapperFilter"
+							:menu-items="wrapperFilterOptions"
+							default-label="by wrapper"
+							:default-icon="cdxIconAdd"
+						/>
+						<CdxSelect
+							v-model:selected="selectedCategoryFilter"
+							:menu-items="categoryFilterOptions"
+							default-label="by category"
+							:default-icon="cdxIconAdd"
+						/>
+					</div>
+				</template>
+			</CdxField>
+		</p>
+		<!-- <br /> -->
+
 		<div
-			v-for="category in categoriesWithPrototypes"
+			v-for="category in filteredCategoriesWithPrototypes"
 			:key="category.id"
 			class="category-section"
 		>
 			<h2>{{ category.name }}</h2>
 			<p class="category-description">{{ category.description }}</p>
 			<ul>
-				<li v-for="group in prototypeGroupsByCategory[category.id]!" :key="group.id">
+				<li v-for="group in getFilteredGroupsForCategory(category.id)" :key="group.id">
 					<template v-if="group.type === 'prototype'">
 						<RouterLink :to="`/${group.wrapper}/${group.id}`" class="prototype-card">
 							<div class="prototype-header">
@@ -72,7 +367,7 @@ const categoriesWithPrototypes = computed(() => {
 							<p class="prototype-description" v-html="group.description"></p>
 							<ul class="variant-list">
 								<li
-									v-for="variant in group.variants"
+									v-for="variant in getFilteredVariants(group)"
 									:key="variant.id"
 									class="variant-item"
 								>
@@ -277,5 +572,76 @@ h1 {
 	flex-direction: column;
 	gap: 1rem;
 	padding-top: 1rem;
+}
+
+.filter-dropdowns {
+	display: flex;
+	/* grid-template-columns: repeat(3, 1fr); */
+	/* flex-direction: column; */
+	/* flex-wrap: wrap; */
+	justify-content: stretch;
+	/* gap: 0rem; */
+	/* align-items: flex-start; */
+	/* margin-top: 0.75rem; */
+}
+
+/* Chip filter colors (same as Chip prototype) */
+.filter-bar :deep(.chip-filter-wip) {
+	background-color: var(--background-color-destructive-subtle);
+	color: var(--color-destructive);
+	border-color: var(--border-color-destructive);
+}
+
+.filter-bar :deep(.chip-filter-new) {
+	background-color: var(--background-color-success-subtle, #d5fdf4);
+	color: var(--color-success, #00af89);
+	border-color: var(--color-success, #00af89);
+}
+
+.filter-bar :deep(.chip-filter-updated) {
+	background-color: var(--background-color-progressive-subtle);
+	color: var(--color-progressive);
+	border-color: var(--border-color-progressive);
+}
+
+.filter-bar :deep(.chip-filter-no-status) {
+	background-color: var(--background-color-neutral-subtle);
+	color: var(--color-base--subtle, #54595d);
+	border-color: var(--border-color-subtle);
+}
+
+.filter-bar :deep(.chip-filter-wrapper) {
+	background-color: var(--background-color-neutral-subtle);
+	color: var(--color-base--subtle, #54595d);
+	border-color: var(--border-color-subtle);
+}
+
+.filter-bar :deep(.chip-filter-category) {
+	background-color: var(--background-color-progressive-subtle);
+	color: var(--color-progressive);
+	border-color: var(--border-color-progressive);
+}
+
+.filter-accordion {
+	overflow: visible;
+}
+
+.filter-bar {
+	/* padding-bottom: 1rem;
+	padding-top: 1rem;
+	padding-left: 1rem;
+	padding-right: 1rem;
+	background-color: var(--background-color-progressive-subtle); */
+}
+</style>
+
+<style>
+.filter-dropdowns .cdx-select-vue {
+	/* width: 100% !important; */
+	flex-grow: 1;
+}
+.filter-dropdowns .cdx-select-vue__handle {
+	width: 100%;
+	min-width: 100%;
 }
 </style>
