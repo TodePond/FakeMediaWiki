@@ -38,10 +38,6 @@ const loadingDiffIds = ref<Set<number>>(new Set())
 
 /** Revision ids that have been "thanked" (mock) */
 const thankedRevisionIds = ref<Set<number>>(new Set())
-/** Rising heart particles: id, viewport position, and thank vs unthank */
-const risingHearts = ref<Array<{ id: number; x: number; y: number; type: "thank" | "unthank" }>>([])
-let nextHeartId = 0
-const HEART_RISE_DURATION_MS = 2500
 
 onMounted(search)
 
@@ -430,29 +426,12 @@ function formatDelta(delta: number | null): string {
 function onThankClick(change: Revision, e: MouseEvent): void {
 	e.preventDefault()
 	const id = change.id
-	const target = e.currentTarget as HTMLElement
-	const rect = target.getBoundingClientRect()
-	const x = rect.left + rect.width / 2
-	const heartId = ++nextHeartId
-
 	if (thankedRevisionIds.value.has(id)) {
 		thankedRevisionIds.value = new Set(thankedRevisionIds.value)
 		thankedRevisionIds.value.delete(id)
-		risingHearts.value = [
-			...risingHearts.value,
-			{ id: heartId, x, y: rect.top, type: "unthank" },
-		]
 	} else {
 		thankedRevisionIds.value = new Set(thankedRevisionIds.value).add(id)
-		risingHearts.value = [
-			...risingHearts.value,
-			{ id: heartId, x, y: rect.top, type: "thank" },
-		]
 	}
-
-	setTimeout(() => {
-		risingHearts.value = risingHearts.value.filter(h => h.id !== heartId)
-	}, HEART_RISE_DURATION_MS)
 }
 </script>
 
@@ -672,17 +651,6 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 					</li>
 				</ul>
 			</template>
-		</div>
-
-		<div class="thank-hearts-overlay" aria-hidden="true">
-			<div
-				v-for="heart in risingHearts"
-				:key="heart.id"
-				:class="['thank-heart', heart.type === 'unthank' ? 'thank-heart-broken' : '']"
-				:style="{ left: heart.x + 'px', top: heart.y + 'px' }"
-			>
-				{{ heart.type === "unthank" ? "</3" : "<3" }}
-			</div>
 		</div>
 	</main>
 </template>
