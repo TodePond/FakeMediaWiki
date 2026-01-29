@@ -9,9 +9,9 @@ const wiki = new WikiApi()
 const storageKey1 = "searchQueryFeed1"
 const storageKey2 = "searchQueryFeed2"
 const storageKey3 = "searchQueryFeed3"
-const searchQuery1 = ref(sessionStorage.getItem(storageKey1) || "Wikipedia")
-const searchQuery2 = ref(sessionStorage.getItem(storageKey2) || "Life")
-const searchQuery3 = ref(sessionStorage.getItem(storageKey3) || "Water")
+const searchQuery1 = ref(localStorage.getItem(storageKey1) || "Wikipedia")
+const searchQuery2 = ref(localStorage.getItem(storageKey2) || "Wet Leg")
+const searchQuery3 = ref(localStorage.getItem(storageKey3) || "Water")
 const history = ref<{ revisions?: Revision[] }>({})
 const isLoading = ref(false)
 const errors = ref<string[]>([])
@@ -19,9 +19,9 @@ const errors = ref<string[]>([])
 onMounted(search)
 
 function saveSearchQueries(): void {
-	sessionStorage.setItem(storageKey1, searchQuery1.value)
-	sessionStorage.setItem(storageKey2, searchQuery2.value)
-	sessionStorage.setItem(storageKey3, searchQuery3.value)
+	localStorage.setItem(storageKey1, searchQuery1.value)
+	localStorage.setItem(storageKey2, searchQuery2.value)
+	localStorage.setItem(storageKey3, searchQuery3.value)
 }
 
 async function search(): Promise<void> {

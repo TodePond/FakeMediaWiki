@@ -5,7 +5,7 @@ import { WikiApi, type UserSearchResult } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const searchQuery = ref(sessionStorage.getItem("searchUsersQuery") || "samwalton")
+const searchQuery = ref(localStorage.getItem("searchUsersQuery") || "samwalton")
 const results = ref<UserSearchResult[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -15,7 +15,7 @@ let searchId = 0
 const search = async (): Promise<void> => {
 	searchId++
 	const currentSearchId = searchId
-	sessionStorage.setItem("searchUsersQuery", searchQuery.value)
+	localStorage.setItem("searchUsersQuery", searchQuery.value)
 	if (!searchQuery.value.trim()) return
 
 	isLoading.value = true

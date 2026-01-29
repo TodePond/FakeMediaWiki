@@ -5,7 +5,7 @@ import { WikiApi } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const pageName = ref(sessionStorage.getItem("pageSourceQuery") || "Wet Leg")
+const pageName = ref(localStorage.getItem("pageSourceQuery") || "Wet Leg")
 const sourceContent = ref("")
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -16,7 +16,7 @@ const loadPage = async (): Promise<void> => {
 	try {
 		const source = await wiki.getPageSource(pageName.value)
 		sourceContent.value = source
-		sessionStorage.setItem("pageSourceQuery", pageName.value)
+		localStorage.setItem("pageSourceQuery", pageName.value)
 	} catch (err) {
 		const errorObj = err as Error
 		error.value = errorObj.message

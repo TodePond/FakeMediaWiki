@@ -5,7 +5,7 @@ import { WikiApi, type PageSearchResult } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const searchQuery = ref(sessionStorage.getItem("searchPagesQuery") || "")
+const searchQuery = ref(localStorage.getItem("searchPagesQuery") || "")
 const results = ref<PageSearchResult[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -30,7 +30,7 @@ const search = async (): Promise<void> => {
 }
 
 function saveSearchQuery(query: string): void {
-	sessionStorage.setItem("searchPagesQuery", query)
+	localStorage.setItem("searchPagesQuery", query)
 }
 
 onMounted(() => {

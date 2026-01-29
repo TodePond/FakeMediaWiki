@@ -9,7 +9,7 @@ const wiki = new WikiApi()
 const PROTOTYPE_NAME = "PageFeedLined"
 
 const storageKey = wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")
-const searchQuery = ref(sessionStorage.getItem(storageKey) || "Wikipedia")
+const searchQuery = ref(localStorage.getItem(storageKey) || "Wikipedia")
 const history = ref<{ revisions?: Revision[] }>({})
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -17,7 +17,7 @@ const error = ref<string | null>(null)
 onMounted(search)
 
 function saveSearchQuery(query: string): void {
-	sessionStorage.setItem(storageKey, query)
+	localStorage.setItem(storageKey, query)
 }
 
 async function search(): Promise<void> {

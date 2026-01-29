@@ -8,7 +8,7 @@ const wiki = new WikiApi()
 const PROTOTYPE_NAME = "PageChanges"
 
 const searchQuery = ref(
-	sessionStorage.getItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")) || "Wet Leg"
+	localStorage.getItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")) || "Wet Leg"
 )
 const history = ref<{
 	revisions?: Array<PageHistoryRevision & { html?: string }>
@@ -19,7 +19,7 @@ const error = ref<string | null>(null)
 onMounted(search)
 
 function saveSearchQuery(query: string): void {
-	sessionStorage.setItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery"), query)
+	localStorage.setItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery"), query)
 }
 
 // If a comment begins with a /* comment block */

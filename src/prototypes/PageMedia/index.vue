@@ -5,7 +5,7 @@ import { WikiApi, type MediaItem } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const pageName = ref(sessionStorage.getItem("pageMediaQuery") || "Wet Leg")
+const pageName = ref(localStorage.getItem("pageMediaQuery") || "Wet Leg")
 const mediaItems = ref<MediaItem[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -16,7 +16,7 @@ const loadPage = async (): Promise<void> => {
 	try {
 		const data = await wiki.getPageMedia(pageName.value)
 		mediaItems.value = data.items || []
-		sessionStorage.setItem("pageMediaQuery", pageName.value)
+		localStorage.setItem("pageMediaQuery", pageName.value)
 	} catch (err) {
 		const errorObj = err as Error
 		if (errorObj.message.includes("404")) {

@@ -17,14 +17,14 @@ const userStorageKeys: [string, string, string] = [
 	"searchQueryFeed6",
 ]
 const pageSearchQueries = ref<string[]>([
-	sessionStorage.getItem(pageStorageKeys[0]) ?? "Wikipedia",
-	sessionStorage.getItem(pageStorageKeys[1]) ?? "Life",
-	sessionStorage.getItem(pageStorageKeys[2]) ?? "Water",
+	localStorage.getItem(pageStorageKeys[0]) ?? "Wikipedia",
+	localStorage.getItem(pageStorageKeys[1]) ?? "Wet Leg",
+	localStorage.getItem(pageStorageKeys[2]) ?? "Water",
 ])
 const userSearchQueries = ref<string[]>([
-	sessionStorage.getItem(userStorageKeys[0]) ?? "Samwalton9",
-	sessionStorage.getItem(userStorageKeys[1]) ?? "GearsDatapack",
-	sessionStorage.getItem(userStorageKeys[2]) ?? "TrademarkedTWOrantula",
+	localStorage.getItem(userStorageKeys[0]) ?? "Samwalton9",
+	localStorage.getItem(userStorageKeys[1]) ?? "GearsDatapack",
+	localStorage.getItem(userStorageKeys[2]) ?? "TrademarkedTWOrantula",
 ])
 
 // Store results separately for each page
@@ -47,12 +47,12 @@ onMounted(search)
 function saveSearchQueries(): void {
 	pageSearchQueries.value.forEach((query, index) => {
 		if (pageStorageKeys[index]) {
-			sessionStorage.setItem(pageStorageKeys[index], query)
+			localStorage.setItem(pageStorageKeys[index], query)
 		}
 	})
 	userSearchQueries.value.forEach((query, index) => {
 		if (userStorageKeys[index]) {
-			sessionStorage.setItem(userStorageKeys[index], query)
+			localStorage.setItem(userStorageKeys[index], query)
 		}
 	})
 }

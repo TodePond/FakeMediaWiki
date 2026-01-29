@@ -10,7 +10,7 @@ const title = ref("")
 const description = ref("")
 const supportingText = ref("")
 const thumbnail = ref<{ url: string } | null>(null)
-const searchQuery = ref(sessionStorage.getItem("pageSearchQuery") || "Wet Leg")
+const searchQuery = ref(localStorage.getItem("pageSearchQuery") || "Wet Leg")
 const isLoading = ref(false)
 const search = async (): Promise<void> => {
 	isLoading.value = true
@@ -30,7 +30,7 @@ const search = async (): Promise<void> => {
 }
 
 function saveSearchQuery(query: string): void {
-	sessionStorage.setItem("pageSearchQuery", query)
+	localStorage.setItem("pageSearchQuery", query)
 }
 
 onMounted(search)

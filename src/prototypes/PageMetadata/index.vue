@@ -5,7 +5,7 @@ import { WikiApi, type PageMetadata } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const pageName = ref(sessionStorage.getItem("pageMetadataQuery") || "Wet Leg")
+const pageName = ref(localStorage.getItem("pageMetadataQuery") || "Wet Leg")
 const metadata = ref<PageMetadata | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -16,7 +16,7 @@ const loadPage = async (): Promise<void> => {
 	try {
 		const data = await wiki.getPage(pageName.value)
 		metadata.value = data
-		sessionStorage.setItem("pageMetadataQuery", pageName.value)
+		localStorage.setItem("pageMetadataQuery", pageName.value)
 	} catch (err) {
 		const errorObj = err as Error
 		error.value = errorObj.message

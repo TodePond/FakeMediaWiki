@@ -5,7 +5,7 @@ import { WikiApi } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const pageName = ref(sessionStorage.getItem("pageMobileHtmlQuery") || "Wet Leg")
+const pageName = ref(localStorage.getItem("pageMobileHtmlQuery") || "Wet Leg")
 const htmlContent = ref("")
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -16,7 +16,7 @@ const loadPage = async (): Promise<void> => {
 	try {
 		const html = await wiki.getPageMobileHtml(pageName.value)
 		htmlContent.value = html
-		sessionStorage.setItem("pageMobileHtmlQuery", pageName.value)
+		localStorage.setItem("pageMobileHtmlQuery", pageName.value)
 	} catch (err) {
 		const errorObj = err as Error
 		error.value = errorObj.message
