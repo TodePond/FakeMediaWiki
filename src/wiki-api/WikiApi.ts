@@ -937,6 +937,7 @@ export class WikiApi {
 
 	async getEditSummaryHtml(summary: string, pageName: string): Promise<string> {
 		summary = this.preprocessEditSummary(summary, pageName)
+		summary = "(" + summary + ")"
 		summary = this.getTableFromToolbarComment(summary)
 		return await this.transformWikitextToHtml(summary)
 	}

@@ -112,7 +112,7 @@
 	margin: 0rem 0.15rem;
 }
 
-/* Inline history box: same structure as top-level watchlist results */
+/* Inline history box: bullet list, same structure as top-level watchlist results */
 .change-history {
 	margin-top: 0.25rem;
 	border: 1px solid var(--border-color-subtle);
@@ -121,11 +121,40 @@
 	line-height: var(--line-height-content);
 	max-height: 20rem;
 	overflow-y: auto;
-	padding: 0.5rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
+	padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+	list-style: disc;
 	font-size: 0.9rem;
+	margin-left: 0;
+}
+
+.change-history-current {
+	/* background-color: var(--background-color-progressive-subtle); */
+	/* Stretch background into list padding so it reaches full width */
+	/* margin-left: -1.5rem; */
+	/* margin-right: -0.5rem; */
+	/* padding-left: 1.5rem; */
+	/* padding-right: 0.5rem; */
+	position: relative;
+}
+
+.change-history-current .watchlist-line1::after {
+	width: 100%;
+	height: 100%;
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	background-color: var(--background-color-progressive-subtle);
+	z-index: -1;
+	margin-left: -1.5rem;
+	margin-right: -0.5rem;
+	padding-left: 1.5rem;
+	padding-right: 0.5rem;
+}
+
+.change-history-current .watchlist-line1 {
+	z-index: 1;
+	position: relative;
 }
 
 /* Comment inline so ( edit summary ) stays on one line like top-level */
@@ -136,7 +165,6 @@
 /* Link styling inside history box (same as top-level) */
 .change-history .watchlist-page {
 	color: var(--color-progressive, #36c);
-	font-weight: normal;
 }
 
 .change-history .watchlist-page:hover {
@@ -157,7 +185,11 @@
 	color: var(--color-progressive, #36c);
 }
 
-/* Thank button (mock): link-style; "thanked" is bold */
+/* Thank: "thanked" is normal text; "thank" is link-style button */
+.watchlist-thank-text {
+	color: inherit;
+}
+
 .watchlist-thank-link {
 	background: none;
 	border: none;
@@ -170,10 +202,6 @@
 
 .watchlist-thank-link:hover {
 	text-decoration: underline;
-}
-
-.watchlist-thank-link-thanked {
-	font-weight: bold;
 }
 
 /* Rising heart overlay (ASCII "<3" and "</3") */

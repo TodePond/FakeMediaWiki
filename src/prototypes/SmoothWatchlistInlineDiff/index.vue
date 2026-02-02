@@ -45,6 +45,8 @@ const loadingDiffIds = ref<Set<number>>(new Set())
 
 /** Which revision ids have inline history expanded */
 const expandedHistoryIds = ref<Set<number>>(new Set())
+/** Per change (change.id): set of revision ids with inline diff expanded in that history */
+const expandedHistoryDiffIds = ref<Map<number, Set<number>>>(new Map())
 /** Loaded history data keyed by page name (revisions include commentHtml) */
 const loadedHistories = ref<
 	Map<string, Omit<PageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }>
@@ -104,6 +106,7 @@ async function search(): Promise<void> {
 	loadedDiffs.value = new Map()
 	loadingDiffIds.value = new Set()
 	expandedHistoryIds.value = new Set()
+	expandedHistoryDiffIds.value = new Map()
 	loadedHistories.value = new Map()
 	loadingHistoryPageNames.value = new Set()
 	thankedRevisionIds.value = new Set()
@@ -243,9 +246,46 @@ function toggleDiff(change: Revision): void {
 	}
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.add(id)
+	// expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	// expandedHistoryIds.value.delete(id)
 	if (loadedDiffs.value.has(id)) return
 	const pageName = change.pageName
 	if (!pageName) return
+	loadingDiffIds.value = new Set(loadingDiffIds.value)
+	loadingDiffIds.value.add(id)
+	wiki.getParentRevisionId(pageName, id)
+		.then(parentId => {
+			if (parentId != null) {
+				return wiki.compareRevisions(parentId, id).then(response => {
+					loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
+					loadingDiffIds.value = new Set(loadingDiffIds.value)
+					loadingDiffIds.value.delete(id)
+				})
+			}
+			loadingDiffIds.value = new Set(loadingDiffIds.value)
+			loadingDiffIds.value.delete(id)
+		})
+		.catch(e => {
+			console.error("Failed to load diff", e)
+			loadingDiffIds.value = new Set(loadingDiffIds.value)
+			loadingDiffIds.value.delete(id)
+		})
+}
+
+function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: string): void {
+	const id = rev.id
+	const set = expandedHistoryDiffIds.value.get(changeId) ?? new Set<number>()
+	const expanded = set.has(id)
+	let newSet: Set<number>
+	if (expanded) {
+		newSet = new Set(set)
+		newSet.delete(id)
+	} else {
+		newSet = new Set(set).add(id)
+	}
+	expandedHistoryDiffIds.value = new Map(expandedHistoryDiffIds.value).set(changeId, newSet)
+	if (expanded) return
+	if (loadedDiffs.value.has(id)) return
 	loadingDiffIds.value = new Set(loadingDiffIds.value)
 	loadingDiffIds.value.add(id)
 	wiki.getParentRevisionId(pageName, id)
@@ -279,6 +319,8 @@ function toggleHistory(change: Revision): void {
 	}
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.add(id)
+	// expandedDiffIds.value = new Set(expandedDiffIds.value)
+	// expandedDiffIds.value.delete(id)
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
@@ -288,7 +330,7 @@ function toggleHistory(change: Revision): void {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => ({
 					...rev,
-					commentHtml: await wiki.getEditSummaryHtml("(" + (rev.comment || "") + ")", pageName),
+					commentHtml: await wiki.getEditSummaryHtml(rev.comment || "", pageName),
 				}))
 			)
 			loadedHistories.value = new Map(loadedHistories.value).set(pageName, {
@@ -609,7 +651,7 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 								]"
 							>
 								{{ formatDelta(change.delta) }}</span
-							><span class="watchlist-sep">.. </span>
+							><span class="watchlist-sep"> .. </span>
 							<a
 								target="_blank"
 								:href="wiki.getUserUrl(change.user.name)"
@@ -667,20 +709,18 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 									hist
 								</button>
 								|
-								<button
+								<span
+									v-if="thankedRevisionIds.has(change.id)"
+									class="watchlist-thank-text"
+									>thanked</span
+								><button
+									v-else
 									type="button"
 									class="watchlist-thank-link"
-									:class="{
-										'watchlist-thank-link-thanked': thankedRevisionIds.has(
-											change.id
-										),
-									}"
 									@click="onThankClick(change, $event)"
 								>
-									{{
-										thankedRevisionIds.has(change.id) ? "thanked" : "thank"
-									}}</button
-								>)
+									thank
+								</button>)
 							</span>
 						</div>
 						<div v-if="expandedDiffIds.has(change.id)" class="watchlist-inline-diff">
@@ -747,14 +787,17 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 							>
 								Loading history…
 							</div>
-							<div
+							<ul
 								v-else-if="loadedHistories.get(change.pageName!)?.revisions?.length"
 								class="change-history"
 							>
-								<div
+								<li
 									v-for="rev in loadedHistories.get(change.pageName!)!.revisions"
 									:key="rev.id"
-									class="watchlist-item"
+									:class="[
+										'watchlist-item',
+										{ 'change-history-current': rev.id === change.id },
+									]"
 								>
 									<div class="watchlist-line1">
 										<span class="watchlist-sep"> </span>
@@ -764,10 +807,9 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 											class="watchlist-page"
 										>
 											{{ change.pageName }}</a
-										><span class="watchlist-semi">;</span>
-										<span class="watchlist-sep"> </span>
+										><span class="watchlist-semi">; </span>
 										<span class="watchlist-time">
-											&nbsp;<a
+											<a
 												target="_blank"
 												:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
 												>{{ formatTime(rev.timestamp) }}</a
@@ -781,7 +823,7 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 											]"
 										>
 											{{ formatDelta(rev.delta) }}</span
-										><span class="watchlist-sep">.. </span>
+										><span class="watchlist-sep"> .. </span>
 										<a
 											target="_blank"
 											:href="wiki.getUserUrl(rev.user.name)"
@@ -810,19 +852,91 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 											></span>
 										</template>
 										<span class="watchlist-diff-hist">
-											(<a
-												target="_blank"
-												:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
-												>diff</a
+											(<button
+												type="button"
+												class="watchlist-diff-link"
+												:class="{
+													'watchlist-diff-link-expanded':
+														expandedHistoryDiffIds.get(change.id)?.has(rev.id),
+												}"
+												@click="toggleHistoryDiff(change.id, rev, change.pageName!)"
+												>diff</button
 											>
 											|
-											<a target="_blank" :href="wiki.getThankUrl(rev.id)"
-												>thank</a
+											<span
+												v-if="thankedRevisionIds.has(rev.id)"
+												class="watchlist-thank-text"
+												>thanked</span
+											><button
+												v-else
+												type="button"
+												class="watchlist-thank-link"
+												@click="onThankClick(rev, $event)"
+												>thank</button
 											>)
 										</span>
 									</div>
-								</div>
-							</div>
+									<div
+										v-if="expandedHistoryDiffIds.get(change.id)?.has(rev.id)"
+										class="watchlist-inline-diff change-history-inline-diff"
+									>
+										<div
+											v-if="loadingDiffIds.has(rev.id)"
+											class="watchlist-diff-loading"
+										>
+											Loading diff…
+										</div>
+										<div
+											v-else-if="loadedDiffs.get(rev.id)?.diff?.length"
+											class="change-diff"
+										>
+											<div
+												v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!.diff"
+												:key="lineIdx"
+												:class="['diff-line', getDiffLineClass(line.type)]"
+											>
+												<span class="diff-line-text">
+													<template
+														v-if="
+															(line.type === 0 ||
+																line.type === 1 ||
+																line.type === 2 ||
+																line.type === 3 ||
+																line.type === 4 ||
+																line.type === 5) &&
+															line.highlightRanges?.length
+														"
+													>
+														<template
+															v-for="(seg, segIdx) in getDiffLineSegments(line)"
+															:key="segIdx"
+														>
+															<span
+																v-if="seg.type === 'add'"
+																class="diff-char-add"
+																>{{ seg.text }}</span
+															>
+															<span
+																v-else-if="seg.type === 'remove'"
+																class="diff-char-remove"
+																>{{ seg.text }}</span
+															>
+															<span
+																v-else-if="seg.type === 'change'"
+																class="diff-char-change"
+																>{{ seg.text }}</span
+															>
+															<template v-else>{{ seg.text }}</template>
+														</template>
+													</template>
+													<template v-else>{{ line.text || " " }}</template>
+												</span>
+											</div>
+										</div>
+										<div v-else class="watchlist-diff-loading">No diff available.</div>
+									</div>
+								</li>
+							</ul>
 							<div v-else class="watchlist-diff-loading">No history available.</div>
 						</div>
 					</li>
