@@ -270,7 +270,7 @@ function byteOffsetToCharIndex(str: string, byteOffset: number): number {
 	return str.length
 }
 
-/** Split a change line into segments for add (bold) and remove (strikethrough) styling */
+/** Split a change line into segments for add/remove/change character-level styling */
 function getDiffLineSegments(line: DiffLine): DiffSegment[] {
 	const text = line.text ?? ""
 	const ranges = line.highlightRanges ?? []
@@ -628,43 +628,46 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 								v-else-if="loadedDiffs.get(change.id)?.diff?.length"
 								class="change-diff"
 							>
-								<div
-									v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
-									:key="lineIdx"
-									:class="['diff-line', getDiffLineClass(line.type)]"
-								>
-									<span class="diff-line-prefix">{{
-										line.type === 1 ? "+" : line.type === 2 ? "-" : " "
-									}}</span>
-									<span class="diff-line-text">
+							<div
+								v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
+								:key="lineIdx"
+								:class="['diff-line', getDiffLineClass(line.type)]"
+							>
+								<span class="diff-line-text">
+									<template
+										v-if="
+											(line.type === 0 ||
+												line.type === 1 ||
+												line.type === 2 ||
+												line.type === 3 ||
+												line.type === 4 ||
+												line.type === 5) &&
+											line.highlightRanges?.length
+										"
+									>
 										<template
-											v-if="
-												(line.type === 3 ||
-													line.type === 4 ||
-													line.type === 5) &&
-												line.highlightRanges?.length
-											"
+											v-for="(seg, segIdx) in getDiffLineSegments(line)"
+											:key="segIdx"
 										>
-											<template
-												v-for="(seg, segIdx) in getDiffLineSegments(line)"
-												:key="segIdx"
+											<span v-if="seg.type === 'add'" class="diff-char-add">{{
+												seg.text
+											}}</span>
+											<span
+												v-else-if="seg.type === 'remove'"
+												class="diff-char-remove"
+												>{{ seg.text }}</span
 											>
-												<span
-													v-if="seg.type === 'add'"
-													class="diff-char-add"
-													>{{ seg.text }}</span
-												>
-												<span
-													v-else-if="seg.type === 'remove'"
-													class="diff-char-remove"
-													>{{ seg.text }}</span
-												>
-												<template v-else>{{ seg.text }}</template>
-											</template>
+											<span
+												v-else-if="seg.type === 'change'"
+												class="diff-char-change"
+												>{{ seg.text }}</span
+											>
+											<template v-else>{{ seg.text }}</template>
 										</template>
-										<template v-else>{{ line.text || " " }}</template>
-									</span>
-								</div>
+									</template>
+									<template v-else>{{ line.text || " " }}</template>
+								</span>
+							</div>
 							</div>
 							<div v-else class="watchlist-diff-loading">No diff available.</div>
 						</div>
