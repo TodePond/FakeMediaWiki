@@ -109,12 +109,20 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
+				id: "DiffFeedPlain",
+				title: "Diff feed",
+				name: "Diff feed",
+				description: "A feed that shows inline diffs.",
+				wrapper: "Special",
+				status: "new",
+			},
+			{
+				type: "variant",
 				id: "DiffFeed",
 				title: "Diff user feed",
 				name: "Diff user feed",
 				description: "A feed that shows inline diffs with user avatars.",
 				wrapper: "Special",
-				status: "new",
 			},
 			{
 				type: "variant",
@@ -123,7 +131,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Diff page feed",
 				description: "A feed that shows inline diffs with page thumbnails.",
 				wrapper: "Special",
-				status: "new",
 			},
 		],
 	},
@@ -146,20 +153,20 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 			},
 			{
 				type: "variant",
-				id: "SmoothWatchlist",
-				title: "Re-ordered watchlist",
-				name: "Re-ordered watchlist",
-				description:
-					"Presents results like the Watchlist, but with the information in each result re-ordered to group similar information together.",
-				wrapper: "Special",
-			},
-			{
-				type: "variant",
 				id: "SmoothWatchlistIndented",
 				title: "Indented watchlist",
 				name: "Indented watchlist",
 				description:
 					"A watchlist where the edit summary and CTAs are indented on their own lines. ",
+				wrapper: "Special",
+			},
+			{
+				type: "variant",
+				id: "SmoothWatchlist",
+				title: "Re-ordered watchlist",
+				name: "Re-ordered watchlist",
+				description:
+					"Presents results like the Watchlist, but with the information in each result re-ordered to group similar information together.",
 				wrapper: "Special",
 			},
 			{
