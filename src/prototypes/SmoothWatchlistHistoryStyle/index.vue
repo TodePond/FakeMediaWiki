@@ -375,40 +375,35 @@ function formatDelta(delta: number | null): string {
 					<div
 						v-for="change in dateGroup.revisions"
 						:key="`${change.pageName}-${change.timestamp}`"
-						class="history-row"
+						class="history-item"
 					>
-						<a
-							target="_blank"
-							:href="wiki.getPageUrl(change.pageName!)"
-							class="history-page"
-						>
-							{{ change.pageName }}
-						</a>
-						<span class="history-sep"> </span>
-						<a
-							target="_blank"
-							:href="wiki.getRevisionUrl(change.id, change.pageName!)"
-							class="history-time"
-						>
-							{{ formatTime(change.timestamp) }}
-						</a>
-						<span class="history-sep"> </span>
-						<a
-							target="_blank"
-							:href="wiki.getUserUrl(change.user.name)"
-							class="history-user"
-						>
-							{{ change.user.name }}
-						</a>
-						<span
-							:class="['history-delta', wiki.getDeltaClass(change.delta ?? 0, false)]"
-						>
-							{{ formatDelta(change.delta) }}
-						</span>
-						<span
-							class="history-comment"
-							v-html="change?.summary?.comment ?? ''"
-						></span>
+						<div class="history-row">
+							<a
+								target="_blank"
+								:href="wiki.getPageUrl(change.pageName!)"
+								class="history-page"
+								>{{ change.pageName }}</a
+							><a
+								target="_blank"
+								:href="wiki.getRevisionUrl(change.id, change.pageName!)"
+								class="history-time"
+								>{{ formatTime(change.timestamp) }}</a
+							><a
+								target="_blank"
+								:href="wiki.getUserUrl(change.user.name)"
+								class="history-user"
+								>{{ change.user.name }}</a
+							><span
+								:class="[
+									'history-delta',
+									wiki.getDeltaClass(change.delta ?? 0, false),
+								]"
+								>{{ formatDelta(change.delta) }}</span
+							><span
+								class="history-comment"
+								v-html="change?.summary?.comment ?? ''"
+							></span>
+						</div>
 					</div>
 				</div>
 			</template>
