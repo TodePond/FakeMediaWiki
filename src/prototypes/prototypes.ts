@@ -151,13 +151,22 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
+				id: "SmoothWatchlistHistoryStyle",
+				title: "Styled watchlist",
+				name: "Styled watchlist",
+				description: "A watchlist but with more opinionated styling.",
+				wrapper: "Special",
+				status: "new",
+			},
+			{
+				type: "variant",
 				id: "SmoothWatchlistInlineDiff",
 				title: "Inline watchlist",
 				name: "Inline watchlist",
 				description:
 					"A watchlist where you can view a diff inline by clicking the diff button.",
 				wrapper: "Special",
-				status: "new",
+				status: "updated",
 			},
 			{
 				type: "variant",

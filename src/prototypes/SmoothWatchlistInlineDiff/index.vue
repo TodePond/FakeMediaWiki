@@ -5,6 +5,7 @@ import {
 	WikiApi,
 	type CompareResponse,
 	type DiffLine,
+	type PageHistoryResponse,
 	type Result,
 	type Revision,
 } from "../../wiki-api/WikiApi"
@@ -35,6 +36,13 @@ const expandedDiffIds = ref<Set<number>>(new Set())
 const loadedDiffs = ref<Map<number, CompareResponse>>(new Map())
 /** Revision ids currently loading their diff */
 const loadingDiffIds = ref<Set<number>>(new Set())
+
+/** Which revision ids have inline history expanded */
+const expandedHistoryIds = ref<Set<number>>(new Set())
+/** Loaded history data keyed by page name */
+const loadedHistories = ref<Map<string, PageHistoryResponse>>(new Map())
+/** Page names currently loading history */
+const loadingHistoryPageNames = ref<Set<string>>(new Set())
 
 /** Revision ids that have been "thanked" (mock) */
 const thankedRevisionIds = ref<Set<number>>(new Set())
@@ -83,10 +91,13 @@ async function search(): Promise<void> {
 
 	await Promise.all(loadPromises)
 	saveSearchQueries()
-	// Clear expanded/loaded diffs when feed is refreshed
+	// Clear expanded/loaded diffs and history when feed is refreshed
 	expandedDiffIds.value = new Set()
 	loadedDiffs.value = new Map()
 	loadingDiffIds.value = new Set()
+	expandedHistoryIds.value = new Set()
+	loadedHistories.value = new Map()
+	loadingHistoryPageNames.value = new Set()
 	thankedRevisionIds.value = new Set()
 }
 
@@ -245,6 +256,35 @@ function toggleDiff(change: Revision): void {
 			console.error("Failed to load diff", e)
 			loadingDiffIds.value = new Set(loadingDiffIds.value)
 			loadingDiffIds.value.delete(id)
+		})
+}
+
+function toggleHistory(change: Revision): void {
+	const id = change.id
+	const pageName = change.pageName
+	if (!pageName) return
+	const expanded = expandedHistoryIds.value.has(id)
+	if (expanded) {
+		expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+		expandedHistoryIds.value.delete(id)
+		return
+	}
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.add(id)
+	if (loadedHistories.value.has(pageName)) return
+	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
+	loadingHistoryPageNames.value.add(pageName)
+	wiki
+		.getPageHistory(pageName, { limit: 20 })
+		.then(response => {
+			loadedHistories.value = new Map(loadedHistories.value).set(pageName, response)
+			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
+			loadingHistoryPageNames.value.delete(pageName)
+		})
+		.catch(e => {
+			console.error("Failed to load history", e)
+			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
+			loadingHistoryPageNames.value.delete(pageName)
 		})
 }
 
@@ -597,9 +637,18 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 									diff
 								</button>
 								|
-								<a target="_blank" :href="wiki.getHistoryUrl(change.pageName!)"
-									>hist</a
+								<button
+									type="button"
+									class="watchlist-hist-link"
+									:class="{
+										'watchlist-hist-link-expanded': expandedHistoryIds.has(
+											change.id
+										),
+									}"
+									@click="toggleHistory(change)"
 								>
+									hist
+								</button>
 								|
 								<button
 									type="button"
@@ -670,6 +719,53 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 							</div>
 							</div>
 							<div v-else class="watchlist-diff-loading">No diff available.</div>
+						</div>
+						<div
+							v-if="expandedHistoryIds.has(change.id)"
+							class="watchlist-inline-history"
+						>
+							<div
+								v-if="loadingHistoryPageNames.has(change.pageName!)"
+								class="watchlist-diff-loading"
+							>
+								Loading history…
+							</div>
+							<div
+								v-else-if="loadedHistories.get(change.pageName!)?.revisions?.length"
+								class="change-history"
+							>
+								<div
+									v-for="rev in loadedHistories.get(change.pageName!)!.revisions"
+									:key="rev.id"
+									class="history-row"
+								>
+									<a
+										target="_blank"
+										:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
+										class="history-time"
+									>
+										{{ formatTime(rev.timestamp) }}
+									</a>
+									<span class="history-sep"> </span>
+									<a
+										target="_blank"
+										:href="wiki.getUserUrl(rev.user.name)"
+										class="history-user"
+									>
+										{{ rev.user.name }}
+									</a>
+									<span
+										:class="[
+											'history-delta',
+											wiki.getDeltaClass(rev.delta ?? 0, false),
+										]"
+									>
+										{{ formatDelta(rev.delta) }}
+									</span>
+									<span class="history-comment">{{ rev.comment || "" }}</span>
+								</div>
+							</div>
+							<div v-else class="watchlist-diff-loading">No history available.</div>
 						</div>
 					</li>
 				</ul>

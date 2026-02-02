@@ -24,6 +24,29 @@
 	margin-left: 0;
 }
 
+.watchlist-hist-link {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: var(--color-progressive, #36c);
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.watchlist-hist-link:hover {
+	text-decoration: underline;
+}
+
+.watchlist-hist-link-expanded {
+	font-weight: bold;
+}
+
+.watchlist-inline-history {
+	margin-top: 0.5rem;
+	margin-left: 0;
+}
+
 .watchlist-diff-loading {
 	font-size: 0.9rem;
 	color: var(--color-subtle);
@@ -87,6 +110,52 @@
 	background-color: var(--red300);
 	text-decoration: line-through;
 	margin: 0rem 0.15rem;
+}
+
+/* Inline history box (same containment as diff) */
+.change-history {
+	margin-top: 0.25rem;
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	overflow: hidden;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	max-height: 20rem;
+	overflow-y: auto;
+}
+
+.history-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.25rem;
+	padding: 0.25rem 0.5rem;
+	border-bottom: 1px solid var(--border-color-subtle);
+}
+
+.history-row:last-child {
+	border-bottom: none;
+}
+
+.history-time {
+	color: var(--color-progressive, #36c);
+}
+
+.history-user {
+	color: var(--color-progressive, #36c);
+}
+
+.history-delta {
+	font-variant-numeric: tabular-nums;
+}
+
+.history-comment {
+	color: var(--color-subtle);
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* Thank button (mock): link-style; "thanked" is bold */
