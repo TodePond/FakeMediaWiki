@@ -109,12 +109,20 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
+				id: "DiffFeedStyled",
+				title: "Styled diff feed",
+				name: "Styled diff feed",
+				description: "A feed that shows inline diffs, styled to be more easily readable.",
+				wrapper: "Special",
+				status: "new",
+			},
+			{
+				type: "variant",
 				id: "DiffFeedPlain",
 				title: "Diff feed",
 				name: "Diff feed",
 				description: "A feed that shows inline diffs.",
 				wrapper: "Special",
-				status: "new",
 			},
 			{
 				type: "variant",
