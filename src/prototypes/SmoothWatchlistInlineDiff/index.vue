@@ -6,9 +6,15 @@ import {
 	type CompareResponse,
 	type DiffLine,
 	type PageHistoryResponse,
+	type PageHistoryRevision,
 	type Result,
 	type Revision,
 } from "../../wiki-api/WikiApi"
+
+/** History revision with edit summary rendered as HTML */
+interface HistoryRevisionWithHtml extends PageHistoryRevision {
+	commentHtml: string
+}
 
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "SmoothWatchlistInlineDiff"
@@ -39,8 +45,10 @@ const loadingDiffIds = ref<Set<number>>(new Set())
 
 /** Which revision ids have inline history expanded */
 const expandedHistoryIds = ref<Set<number>>(new Set())
-/** Loaded history data keyed by page name */
-const loadedHistories = ref<Map<string, PageHistoryResponse>>(new Map())
+/** Loaded history data keyed by page name (revisions include commentHtml) */
+const loadedHistories = ref<
+	Map<string, Omit<PageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }>
+>(new Map())
 /** Page names currently loading history */
 const loadingHistoryPageNames = ref<Set<string>>(new Set())
 
@@ -276,8 +284,17 @@ function toggleHistory(change: Revision): void {
 	loadingHistoryPageNames.value.add(pageName)
 	wiki
 		.getPageHistory(pageName, { limit: 20 })
-		.then(response => {
-			loadedHistories.value = new Map(loadedHistories.value).set(pageName, response)
+		.then(async response => {
+			const revisions = await Promise.all(
+				(response.revisions || []).map(async rev => ({
+					...rev,
+					commentHtml: await wiki.getEditSummaryHtml("(" + (rev.comment || "") + ")", pageName),
+				}))
+			)
+			loadedHistories.value = new Map(loadedHistories.value).set(pageName, {
+				...response,
+				revisions,
+			})
 			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 			loadingHistoryPageNames.value.delete(pageName)
 		})
@@ -737,32 +754,73 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 								<div
 									v-for="rev in loadedHistories.get(change.pageName!)!.revisions"
 									:key="rev.id"
-									class="history-row"
+									class="watchlist-item"
 								>
-									<a
-										target="_blank"
-										:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
-										class="history-time"
-									>
-										{{ formatTime(rev.timestamp) }}
-									</a>
-									<span class="history-sep"> </span>
-									<a
-										target="_blank"
-										:href="wiki.getUserUrl(rev.user.name)"
-										class="history-user"
-									>
-										{{ rev.user.name }}
-									</a>
-									<span
-										:class="[
-											'history-delta',
-											wiki.getDeltaClass(rev.delta ?? 0, false),
-										]"
-									>
-										{{ formatDelta(rev.delta) }}
-									</span>
-									<span class="history-comment">{{ rev.comment || "" }}</span>
+									<div class="watchlist-line1">
+										<span class="watchlist-sep"> </span>
+										<a
+											target="_blank"
+											:href="wiki.getPageUrl(change.pageName!)"
+											class="watchlist-page"
+										>
+											{{ change.pageName }}</a
+										><span class="watchlist-semi">;</span>
+										<span class="watchlist-sep"> </span>
+										<span class="watchlist-time">
+											&nbsp;<a
+												target="_blank"
+												:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
+												>{{ formatTime(rev.timestamp) }}</a
+											>
+										</span>
+										<span class="watchlist-sep"> .. </span>
+										<span
+											:class="[
+												'watchlist-delta',
+												wiki.getDeltaClass(rev.delta ?? 0, false),
+											]"
+										>
+											{{ formatDelta(rev.delta) }}</span
+										><span class="watchlist-sep">.. </span>
+										<a
+											target="_blank"
+											:href="wiki.getUserUrl(rev.user.name)"
+											class="watchlist-user"
+										>
+											{{ rev.user.name }}</a
+										>
+										<span class="watchlist-talk-contribs">
+											(<a
+												target="_blank"
+												:href="wiki.getUserTalkUrl(rev.user.name)"
+												>talk</a
+											>
+											|
+											<a
+												target="_blank"
+												:href="wiki.getUserContribsUrl(rev.user.name)"
+												>contribs</a
+											>)
+										</span>
+										<br />
+										<template v-if="rev.commentHtml ?? rev.comment">
+											<span
+												class="watchlist-comment"
+												v-html="rev.commentHtml ?? rev.comment ?? ''"
+											></span>
+										</template>
+										<span class="watchlist-diff-hist">
+											(<a
+												target="_blank"
+												:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
+												>diff</a
+											>
+											|
+											<a target="_blank" :href="wiki.getThankUrl(rev.id)"
+												>thank</a
+											>)
+										</span>
+									</div>
 								</div>
 							</div>
 							<div v-else class="watchlist-diff-loading">No history available.</div>
@@ -790,17 +848,20 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 </style>
 
 <style>
-.watchlist-comment p {
+.watchlist-comment p,
+.history-comment p {
 	display: inline;
 	line-height: var(--line-height-content);
 }
 
-.watchlist-comment section {
+.watchlist-comment section,
+.history-comment section {
 	display: inline;
 	line-height: var(--line-height-content);
 }
 
-.watchlist-comment table {
+.watchlist-comment table,
+.history-comment table {
 	display: inline-block;
 	background-color: var(--background-color-base);
 	border: 1px solid var(--border-color-base);

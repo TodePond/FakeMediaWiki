@@ -112,50 +112,49 @@
 	margin: 0rem 0.15rem;
 }
 
-/* Inline history box (same containment as diff) */
+/* Inline history box: same structure as top-level watchlist results */
 .change-history {
 	margin-top: 0.25rem;
 	border: 1px solid var(--border-color-subtle);
 	border-radius: 2px;
 	overflow: hidden;
-	font-size: 0.8125rem;
-	line-height: 1.4;
+	line-height: var(--line-height-content);
 	max-height: 20rem;
 	overflow-y: auto;
-}
-
-.history-row {
+	padding: 0.5rem;
 	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: 0.25rem;
-	padding: 0.25rem 0.5rem;
-	border-bottom: 1px solid var(--border-color-subtle);
+	flex-direction: column;
+	gap: 0.4rem;
+	font-size: 0.9rem;
 }
 
-.history-row:last-child {
-	border-bottom: none;
+/* Comment inline so ( edit summary ) stays on one line like top-level */
+.change-history .watchlist-comment {
+	display: inline;
 }
 
-.history-time {
+/* Link styling inside history box (same as top-level) */
+.change-history .watchlist-page {
+	color: var(--color-progressive, #36c);
+	font-weight: normal;
+}
+
+.change-history .watchlist-page:hover {
+	text-decoration: underline;
+}
+
+.change-history .watchlist-time a,
+.change-history .watchlist-user {
 	color: var(--color-progressive, #36c);
 }
 
-.history-user {
+.change-history .watchlist-time a:hover,
+.change-history .watchlist-user:hover {
+	text-decoration: underline;
+}
+
+.change-history .watchlist-diff-hist a {
 	color: var(--color-progressive, #36c);
-}
-
-.history-delta {
-	font-variant-numeric: tabular-nums;
-}
-
-.history-comment {
-	color: var(--color-subtle);
-	flex: 1;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 /* Thank button (mock): link-style; "thanked" is bold */
