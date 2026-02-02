@@ -430,9 +430,8 @@ function formatDelta(delta: number | null): string {
 function onThankClick(change: Revision, e: MouseEvent): void {
 	e.preventDefault()
 	const id = change.id
-	const target = e.currentTarget as HTMLElement
-	const rect = target.getBoundingClientRect()
-	const x = rect.left + rect.width / 2
+	const x = e.clientX
+	const y = e.clientY
 	const heartId = ++nextHeartId
 
 	if (thankedRevisionIds.value.has(id)) {
@@ -440,13 +439,13 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 		thankedRevisionIds.value.delete(id)
 		risingHearts.value = [
 			...risingHearts.value,
-			{ id: heartId, x, y: rect.top, type: "unthank" },
+			{ id: heartId, x, y: y - 15, type: "unthank" },
 		]
 	} else {
 		thankedRevisionIds.value = new Set(thankedRevisionIds.value).add(id)
 		risingHearts.value = [
 			...risingHearts.value,
-			{ id: heartId, x, y: rect.top, type: "thank" },
+			{ id: heartId, x, y: y - 15, type: "thank" },
 		]
 	}
 

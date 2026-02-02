@@ -136,13 +136,22 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
+				id: "SmoothWatchlistInlineDiff",
+				title: "Inline watchlist",
+				name: "Inline watchlist",
+				description:
+					"A watchlist where you can view a diff inline by clicking the diff button.",
+				wrapper: "Special",
+				status: "new",
+			},
+			{
+				type: "variant",
 				id: "SmoothWatchlist",
 				title: "Re-ordered watchlist",
 				name: "Re-ordered watchlist",
 				description:
 					"Presents results like the Watchlist, but with the information in each result re-ordered to group similar information together.",
 				wrapper: "Special",
-				status: "new",
 			},
 			{
 				type: "variant",
@@ -152,17 +161,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				description:
 					"A watchlist where the edit summary and CTAs are indented on their own lines. ",
 				wrapper: "Special",
-				status: "new",
-			},
-			{
-				type: "variant",
-				id: "SmoothWatchlistInlineDiff",
-				title: "Watchlist with inline diff",
-				name: "Watchlist with inline diff",
-				description:
-					"A watchlist where you can view a diff inline by clicking the diff button.",
-				wrapper: "Special",
-				status: "new",
 			},
 			{
 				type: "variant",
@@ -171,7 +169,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Combined watchlist",
 				description: "Presents results exactly like the Watchlist.",
 				wrapper: "Special",
-				status: "new",
 			},
 		],
 	},
@@ -184,12 +181,20 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
+				id: "CombinedFeedMinimal",
+				title: "Combined feed",
+				name: "Combined feed",
+				description: "A stripped-back combined feed with no avatar or thumbnail.",
+				wrapper: "Special",
+				status: "new",
+			},
+			{
+				type: "variant",
 				id: "CustomPageFeed",
 				title: "Combined user feed",
 				name: "Combined user feed",
 				description: "A combined feed that presents results exactly like the Custom page.",
 				wrapper: "Special",
-				status: "updated",
 			},
 			{
 				type: "variant",
@@ -198,16 +203,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Combined page feed",
 				description: "Use the page as the primary source.",
 				wrapper: "Special",
-				status: "updated",
-			},
-			{
-				type: "variant",
-				id: "CombinedFeedMinimal",
-				title: "Combined feed",
-				name: "Combined feed",
-				description: "A stripped-back combined feed with no avatar or thumbnail.",
-				wrapper: "Special",
-				status: "new",
 			},
 		],
 	},

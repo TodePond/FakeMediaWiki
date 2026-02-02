@@ -121,7 +121,7 @@
 	font-size: 0.75rem;
 	font-family: inherit;
 	color: var(--color-progressive, #36c);
-	animation: thank-heart-rise 2.5s ease-out forwards;
+	animation: thank-heart-rise 3s ease-out forwards;
 }
 
 .thank-heart-broken {
@@ -135,6 +135,6 @@
 	}
 	100% {
 		opacity: 0;
-		transform: translate(-50%, -320px);
+		transform: translate(-50%, -120px);
 	}
 }
