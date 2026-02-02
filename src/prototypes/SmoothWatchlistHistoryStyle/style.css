@@ -74,6 +74,130 @@
 	font-variant-numeric: tabular-nums;
 }
 
+/* Clickable delta and timestamp (buttons that look like existing elements) */
+.history-delta[type="button"],
+.history-time[type="button"] {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.history-time[type="button"] {
+	color: var(--color-base) !important;
+}
+
+.history-time[type="button"]:hover,
+.history-delta[type="button"]:hover {
+	text-decoration: underline;
+}
+
+/* Bold the button that opened the inline content (applies immediately on click) */
+.history-time[type="button"].history-time-expanded,
+.history-delta[type="button"].history-delta-expanded {
+	font-weight: bold;
+}
+
+/* Inline diff block: no gap between entry and diff */
+.history-inline-diff {
+	margin-top: 0;
+	margin-left: 0;
+}
+
+.history-inline-diff-nested {
+	margin-left: 0;
+}
+
+.history-diff-empty {
+	font-size: 0.9rem;
+	color: var(--color-subtle);
+	font-style: italic;
+}
+
+/* Inline history: same look as top-level, slightly indented; no gap */
+.history-inline-history {
+	margin-top: 0;
+}
+
+.history-inline-history-box {
+	margin-left: 1.5rem;
+	border-radius: 0;
+	overflow: hidden;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	max-height: 20rem;
+	overflow-y: auto;
+}
+
+.history-inline-history-box .history-item {
+	border-bottom: none;
+}
+
+.history-inline-history-box .history-item:last-child {
+	border-bottom: none;
+}
+
+.history-inline-history-box .history-item-current {
+	background-color: var(--background-color-progressive-subtle);
+}
+
+/* Same diff block styling as DiffFeedStyled / SmoothWatchlistInlineDiff */
+.change-diff {
+	margin-top: 0;
+	overflow: hidden;
+	font-family: var(--font-family-mono, ui-monospace, monospace);
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	max-height: 20rem;
+	overflow-y: auto;
+}
+
+.diff-line {
+	display: flex;
+	white-space: pre-wrap;
+	word-break: break-word;
+	padding: 0.125rem 0.5rem;
+}
+
+.diff-line-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.diff-line-context {
+	background-color: var(--background-color-base);
+	color: var(--color-base);
+}
+
+.diff-line-add {
+	background-color: var(--green100);
+	color: var(--color-base);
+}
+
+.diff-line-remove {
+	background-color: var(--red300);
+	color: var(--color-base);
+	text-decoration: line-through;
+}
+
+.diff-line-change {
+	background-color: var(--blue100);
+	color: var(--color-base);
+}
+
+.diff-char-add {
+	background-color: var(--green300);
+	font-weight: bold;
+}
+
+.diff-char-remove {
+	background-color: var(--red300);
+	text-decoration: line-through;
+	margin: 0rem 0.15rem;
+}
+
 .history-comment {
 	color: var(--color-subtle);
 	flex: 1;
