@@ -114,14 +114,13 @@
 
 /* Inline history box: bullet list, same structure as top-level watchlist results */
 .change-history {
-	margin-top: 0.25rem;
 	border: 1px solid var(--border-color-subtle);
 	border-radius: 2px;
 	overflow: hidden;
 	line-height: var(--line-height-content);
 	max-height: 20rem;
 	overflow-y: auto;
-	padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+	padding: 0.1rem 0.5rem;
 	list-style: disc;
 	font-size: 0.9rem;
 	margin-left: 0;
@@ -150,6 +149,16 @@
 	margin-right: -0.5rem;
 	padding-left: 1.5rem;
 	padding-right: 0.5rem;
+	margin-top: -0.25rem;
+	padding-top: 0.25rem;
+	margin-bottom: -0.2rem;
+	padding-bottom: 0.2rem;
+}
+
+.change-history-current ::marker {
+	z-index: 2;
+	position: relative;
+	order: 2;
 }
 
 .change-history-current .watchlist-line1 {

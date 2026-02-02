@@ -410,7 +410,7 @@ function formatDelta(delta: number | null): string {
 								]"
 							>
 								{{ formatDelta(change.delta) }}</span
-							><span class="watchlist-sep">.. </span>
+							><span class="watchlist-sep"> .. </span>
 							<a
 								target="_blank"
 								:href="wiki.getUserUrl(change.user.name)"

@@ -324,8 +324,7 @@ function toggleHistory(change: Revision): void {
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
-	wiki
-		.getPageHistory(pageName, { limit: 20 })
+	wiki.getPageHistory(pageName, { limit: 20 })
 		.then(async response => {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => ({
@@ -536,16 +535,10 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 	if (thankedRevisionIds.value.has(id)) {
 		thankedRevisionIds.value = new Set(thankedRevisionIds.value)
 		thankedRevisionIds.value.delete(id)
-		risingHearts.value = [
-			...risingHearts.value,
-			{ id: heartId, x, y: y - 15, type: "unthank" },
-		]
+		risingHearts.value = [...risingHearts.value, { id: heartId, x, y: y - 15, type: "unthank" }]
 	} else {
 		thankedRevisionIds.value = new Set(thankedRevisionIds.value).add(id)
-		risingHearts.value = [
-			...risingHearts.value,
-			{ id: heartId, x, y: y - 15, type: "thank" },
-		]
+		risingHearts.value = [...risingHearts.value, { id: heartId, x, y: y - 15, type: "thank" }]
 	}
 
 	setTimeout(() => {
@@ -719,8 +712,8 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 									class="watchlist-thank-link"
 									@click="onThankClick(change, $event)"
 								>
-									thank
-								</button>)
+									thank</button
+								>)
 							</span>
 						</div>
 						<div v-if="expandedDiffIds.has(change.id)" class="watchlist-inline-diff">
@@ -734,46 +727,48 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 								v-else-if="loadedDiffs.get(change.id)?.diff?.length"
 								class="change-diff"
 							>
-							<div
-								v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
-								:key="lineIdx"
-								:class="['diff-line', getDiffLineClass(line.type)]"
-							>
-								<span class="diff-line-text">
-									<template
-										v-if="
-											(line.type === 0 ||
-												line.type === 1 ||
-												line.type === 2 ||
-												line.type === 3 ||
-												line.type === 4 ||
-												line.type === 5) &&
-											line.highlightRanges?.length
-										"
-									>
+								<div
+									v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
+									:key="lineIdx"
+									:class="['diff-line', getDiffLineClass(line.type)]"
+								>
+									<span class="diff-line-text">
 										<template
-											v-for="(seg, segIdx) in getDiffLineSegments(line)"
-											:key="segIdx"
+											v-if="
+												(line.type === 0 ||
+													line.type === 1 ||
+													line.type === 2 ||
+													line.type === 3 ||
+													line.type === 4 ||
+													line.type === 5) &&
+												line.highlightRanges?.length
+											"
 										>
-											<span v-if="seg.type === 'add'" class="diff-char-add">{{
-												seg.text
-											}}</span>
-											<span
-												v-else-if="seg.type === 'remove'"
-												class="diff-char-remove"
-												>{{ seg.text }}</span
+											<template
+												v-for="(seg, segIdx) in getDiffLineSegments(line)"
+												:key="segIdx"
 											>
-											<span
-												v-else-if="seg.type === 'change'"
-												class="diff-char-change"
-												>{{ seg.text }}</span
-											>
-											<template v-else>{{ seg.text }}</template>
+												<span
+													v-if="seg.type === 'add'"
+													class="diff-char-add"
+													>{{ seg.text }}</span
+												>
+												<span
+													v-else-if="seg.type === 'remove'"
+													class="diff-char-remove"
+													>{{ seg.text }}</span
+												>
+												<span
+													v-else-if="seg.type === 'change'"
+													class="diff-char-change"
+													>{{ seg.text }}</span
+												>
+												<template v-else>{{ seg.text }}</template>
+											</template>
 										</template>
-									</template>
-									<template v-else>{{ line.text || " " }}</template>
-								</span>
-							</div>
+										<template v-else>{{ line.text || " " }}</template>
+									</span>
+								</div>
 							</div>
 							<div v-else class="watchlist-diff-loading">No diff available.</div>
 						</div>
@@ -800,22 +795,10 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 									]"
 								>
 									<div class="watchlist-line1">
-										<span class="watchlist-sep"> </span>
-										<a
-											target="_blank"
-											:href="wiki.getPageUrl(change.pageName!)"
-											class="watchlist-page"
-										>
-											{{ change.pageName }}</a
-										><span class="watchlist-semi">; </span>
-										<span class="watchlist-time">
-											<a
-												target="_blank"
-												:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
-												>{{ formatTime(rev.timestamp) }}</a
-											>
-										</span>
-										<span class="watchlist-sep"> .. </span>
+										<!-- <span class="watchlist-time">
+											{{ formatTime(rev.timestamp) }}
+										</span> -->
+										<!-- <span class="watchlist-sep"> .. </span> -->
 										<span
 											:class="[
 												'watchlist-delta',
@@ -857,11 +840,20 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 												class="watchlist-diff-link"
 												:class="{
 													'watchlist-diff-link-expanded':
-														expandedHistoryDiffIds.get(change.id)?.has(rev.id),
+														expandedHistoryDiffIds
+															.get(change.id)
+															?.has(rev.id),
 												}"
-												@click="toggleHistoryDiff(change.id, rev, change.pageName!)"
-												>diff</button
+												@click="
+													toggleHistoryDiff(
+														change.id,
+														rev,
+														change.pageName!
+													)
+												"
 											>
+												diff
+											</button>
 											|
 											<span
 												v-if="thankedRevisionIds.has(rev.id)"
@@ -872,7 +864,8 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 												type="button"
 												class="watchlist-thank-link"
 												@click="onThankClick(rev, $event)"
-												>thank</button
+											>
+												thank</button
 											>)
 										</span>
 									</div>
@@ -891,7 +884,8 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 											class="change-diff"
 										>
 											<div
-												v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!.diff"
+												v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!
+													.diff"
 												:key="lineIdx"
 												:class="['diff-line', getDiffLineClass(line.type)]"
 											>
@@ -908,7 +902,9 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 														"
 													>
 														<template
-															v-for="(seg, segIdx) in getDiffLineSegments(line)"
+															v-for="(
+																seg, segIdx
+															) in getDiffLineSegments(line)"
 															:key="segIdx"
 														>
 															<span
@@ -926,14 +922,20 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 																class="diff-char-change"
 																>{{ seg.text }}</span
 															>
-															<template v-else>{{ seg.text }}</template>
+															<template v-else>{{
+																seg.text
+															}}</template>
 														</template>
 													</template>
-													<template v-else>{{ line.text || " " }}</template>
+													<template v-else>{{
+														line.text || " "
+													}}</template>
 												</span>
 											</div>
 										</div>
-										<div v-else class="watchlist-diff-loading">No diff available.</div>
+										<div v-else class="watchlist-diff-loading">
+											No diff available.
+										</div>
 									</div>
 								</li>
 							</ul>
@@ -951,7 +953,7 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 				:class="['thank-heart', heart.type === 'unthank' ? 'thank-heart-broken' : '']"
 				:style="{ left: heart.x + 'px', top: heart.y + 'px' }"
 			>
-				{{ heart.type === "unthank" ? "</3" : "<3" }}
+				{{ heart.type === "unthank" ? "\</3" : "\<3" }}
 			</div>
 		</div>
 	</main>
