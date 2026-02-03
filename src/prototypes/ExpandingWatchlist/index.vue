@@ -57,6 +57,13 @@ const loadingHistoryPageNames = ref<Set<string>>(new Set())
 /** Which revision ids have the feed item body expanded */
 const expandedItemIds = ref<Set<number>>(new Set())
 
+/** Revision ids that have been "thanked" (mock) */
+const thankedRevisionIds = ref<Set<number>>(new Set())
+/** Rising heart particles: id, viewport position, and thank vs unthank */
+const risingHearts = ref<Array<{ id: number; x: number; y: number; type: "thank" | "unthank" }>>([])
+let nextHeartId = 0
+const HEART_RISE_DURATION_MS = 2500
+
 onMounted(search)
 
 function saveSearchQueries(): void {
@@ -106,6 +113,7 @@ async function search(): Promise<void> {
 	loadedHistories.value = new Map()
 	loadingHistoryPageNames.value = new Set()
 	expandedItemIds.value = new Set()
+	// Keep thanked state - don't clear it on refresh
 }
 
 async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
@@ -406,7 +414,38 @@ function expandItem(change: Revision, event: MouseEvent): void {
 	}
 	const id = change.id
 	// Only one item can be expanded at a time - collapse any previously expanded item
+	const previousExpandedId = Array.from(expandedItemIds.value)[0]
+	if (previousExpandedId !== undefined && previousExpandedId !== id) {
+		// Collapse diff and history of the previously expanded item
+		expandedDiffIds.value = new Set(expandedDiffIds.value)
+		expandedDiffIds.value.delete(previousExpandedId)
+		expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+		expandedHistoryIds.value.delete(previousExpandedId)
+	}
 	expandedItemIds.value = new Set([id])
+	// Automatically expand diff view
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.add(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
+	// Load diff if not already loaded
+	if (!loadedDiffs.value.has(id)) {
+		const pageName = change.pageName
+		if (!pageName) return
+		loadingDiffIds.value = new Set(loadingDiffIds.value)
+		loadingDiffIds.value.add(id)
+		wiki.getRevisionDiff(pageName, id)
+			.then(response => {
+				loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
+				loadingDiffIds.value = new Set(loadingDiffIds.value)
+				loadingDiffIds.value.delete(id)
+			})
+			.catch(e => {
+				console.error("Failed to load diff", e)
+				loadingDiffIds.value = new Set(loadingDiffIds.value)
+				loadingDiffIds.value.delete(id)
+			})
+	}
 }
 
 function collapseItem(id: number): void {
@@ -589,6 +628,27 @@ function getDiffLineClass(type: number): string {
 			return "diff-line-context"
 	}
 }
+
+function onThankClick(change: Revision, e: MouseEvent): void {
+	e.preventDefault()
+	const id = change.id
+	const x = e.clientX
+	const y = e.clientY
+	const heartId = ++nextHeartId
+
+	if (thankedRevisionIds.value.has(id)) {
+		thankedRevisionIds.value = new Set(thankedRevisionIds.value)
+		thankedRevisionIds.value.delete(id)
+		risingHearts.value = [...risingHearts.value, { id: heartId, x, y: y - 15, type: "unthank" }]
+	} else {
+		thankedRevisionIds.value = new Set(thankedRevisionIds.value).add(id)
+		risingHearts.value = [...risingHearts.value, { id: heartId, x, y: y - 15, type: "thank" }]
+	}
+
+	setTimeout(() => {
+		risingHearts.value = risingHearts.value.filter(h => h.id !== heartId)
+	}, HEART_RISE_DURATION_MS)
+}
 </script>
 
 <template>
@@ -769,6 +829,39 @@ function getDiffLineClass(type: number): string {
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
+								<footer class="history-expanded-footer">
+									<button
+										type="button"
+										class="history-action-button"
+										:class="{
+											'history-action-button-active': expandedDiffIds.has(change.id),
+										}"
+										@click.stop="toggleDiff(change)"
+									>
+										(diff)
+									</button>
+									<button
+										type="button"
+										class="history-action-button"
+										:class="{
+											'history-action-button-active': expandedHistoryIds.has(change.id),
+										}"
+										@click.stop="toggleHistory(change)"
+									>
+										(hist)
+									</button>
+									<button
+										type="button"
+										class="history-action-button"
+										:class="{
+											'history-action-button-thanked': thankedRevisionIds.has(change.id),
+										}"
+										:disabled="thankedRevisionIds.has(change.id)"
+										@click.stop="onThankClick(change, $event)"
+									>
+										{{ thankedRevisionIds.has(change.id) ? "(thanked)" : "(thanks)" }}
+									</button>
+								</footer>
 							</div>
 						</template>
 						<div v-if="expandedDiffIds.has(change.id)" class="history-inline-diff">
@@ -959,6 +1052,17 @@ function getDiffLineClass(type: number): string {
 					</div>
 				</div>
 			</template>
+		</div>
+
+		<div class="thank-hearts-overlay" aria-hidden="true">
+			<div
+				v-for="heart in risingHearts"
+				:key="heart.id"
+				:class="['thank-heart', heart.type === 'unthank' ? 'thank-heart-broken' : '']"
+				:style="{ left: heart.x + 'px', top: heart.y + 'px' }"
+			>
+				{{ heart.type === "unthank" ? "</3" : "<3" }}
+			</div>
 		</div>
 	</main>
 </template>
