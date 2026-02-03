@@ -129,17 +129,10 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 		processedRevisions.forEach(revision => {
 			loadThumbnailForRevision(revision, resultRef)
 		})
-		// Load diffs: get parent revision from page history (we can't rely on the
-		// contributions list having the previous revision on the same page).
+		// Load diffs: get revision diff (parent vs current) for each revision.
 		for (const revision of processedRevisions) {
 			if (!revision.pageName) continue
-			wiki.getParentRevisionId(revision.pageName, revision.id)
-				.then(parentId => {
-					if (parentId != null) {
-						loadDiffForRevision(revision, parentId, resultRef)
-					}
-				})
-				.catch(e => console.error("Failed to get parent revision for diff", e))
+			loadDiffForRevision(revision, resultRef)
 		}
 	} catch (e) {
 		const errorObj = e as Error
@@ -208,12 +201,10 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 		processedRevisions.forEach(revision => {
 			loadThumbnailForRevision(revision, resultRef)
 		})
-		// Load diffs: page history returns a single page newest-first, so the next
-		// revision in the list is the direct parent.
-		for (let i = 0; i < processedRevisions.length - 1; i++) {
-			const currentRev = processedRevisions[i]!
-			const parentRev = processedRevisions[i + 1]!
-			loadDiffForRevision(currentRev, parentRev.id, resultRef)
+		// Load diffs for each revision.
+		for (const revision of processedRevisions) {
+			if (!revision.pageName) continue
+			loadDiffForRevision(revision, resultRef)
 		}
 	} catch (e) {
 		const errorObj = e as Error
@@ -243,11 +234,12 @@ async function loadThumbnailForRevision(
 
 async function loadDiffForRevision(
 	revision: Revision,
-	fromRevId: number,
 	resultRef: Ref<Result<Revision>>
 ): Promise<void> {
+	if (!revision.pageName) return
 	try {
-		const response = await wiki.compareRevisions(fromRevId, revision.id)
+		const response = await wiki.getRevisionDiff(revision.pageName, revision.id)
+		if (response == null) return
 		const revIndex = resultRef.value.data.findIndex(r => r.id === revision.id)
 		if (revIndex !== -1 && resultRef.value.data[revIndex]) {
 			resultRef.value.data[revIndex]!.diff = response
