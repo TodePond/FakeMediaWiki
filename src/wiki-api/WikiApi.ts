@@ -665,6 +665,18 @@ export class WikiApi {
 	}
 
 	/**
+	 * Get diff for a revision by comparing it with its parent (previous) revision.
+	 * @param pageName - Page title
+	 * @param revId - Revision ID to diff
+	 * @returns Diff from parent to this revision, or null if there is no parent (e.g. first revision)
+	 */
+	async getRevisionDiff(pageName: string, revId: number): Promise<CompareResponse | null> {
+		const parentId = await this.getParentRevisionId(pageName, revId)
+		if (parentId == null) return null
+		return this.compareRevisions(parentId, revId)
+	}
+
+	/**
 	 * Get a random page
 	 * @param format - Format: 'summary', 'html', or 'title' (default: 'summary')
 	 * @returns Random page content - string for 'title' format, RandomPageSummary for 'summary' or 'html' format
