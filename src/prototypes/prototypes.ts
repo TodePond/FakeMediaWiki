@@ -114,7 +114,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Expanding watchlist",
 				description: "A feed with expandable items.",
 				wrapper: "Special",
-				status: "new",
+				status: "wip",
 			},
 			{
 				type: "variant",
