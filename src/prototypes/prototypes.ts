@@ -102,6 +102,59 @@ export const categories: CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "variants",
+		id: "Watchlist",
+		name: "Watchlist",
+		description: "Feed variants that present results like the Watchlist.",
+		category: "feed",
+		variants: [
+			{
+				type: "variant",
+				id: "SmoothWatchlistHistoryStyle",
+				title: "Styled watchlist",
+				name: "Styled watchlist",
+				description: "A watchlist but with more opinionated styling.",
+				wrapper: "Special",
+				status: "updated",
+			},
+			{
+				type: "variant",
+				id: "SmoothWatchlistInlineDiff",
+				title: "Inline watchlist",
+				name: "Inline watchlist",
+				description:
+					"A watchlist where you can view a diff inline by clicking the diff button.",
+				wrapper: "Special",
+			},
+			{
+				type: "variant",
+				id: "SmoothWatchlistIndented",
+				title: "Indented watchlist",
+				name: "Indented watchlist",
+				description:
+					"A watchlist where the edit summary and CTAs are indented on their own lines. ",
+				wrapper: "Special",
+			},
+			{
+				type: "variant",
+				id: "SmoothWatchlist",
+				title: "Re-ordered watchlist",
+				name: "Re-ordered watchlist",
+				description:
+					"Presents results like the Watchlist, but with the information in each result re-ordered to group similar information together.",
+				wrapper: "Special",
+			},
+			{
+				type: "variant",
+				id: "WatchlistFeed",
+				title: "Combined watchlist",
+				name: "Combined watchlist",
+				description: "Presents results exactly like the Watchlist.",
+				wrapper: "Special",
+			},
+		],
+	},
+	{
+		type: "variants",
 		id: "DiffFeed",
 		name: "Diff feed",
 		description: "A feed that shows inline diffs of changes.",
@@ -142,60 +195,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 			// },
 		],
 	},
-	{
-		type: "variants",
-		id: "Watchlist",
-		name: "Watchlist",
-		description: "Feed variants that present results like the Watchlist.",
-		category: "feed",
-		variants: [
-			{
-				type: "variant",
-				id: "SmoothWatchlistHistoryStyle",
-				title: "Styled watchlist",
-				name: "Styled watchlist",
-				description: "A watchlist but with more opinionated styling.",
-				wrapper: "Special",
-				status: "new",
-			},
-			{
-				type: "variant",
-				id: "SmoothWatchlistInlineDiff",
-				title: "Inline watchlist",
-				name: "Inline watchlist",
-				description:
-					"A watchlist where you can view a diff inline by clicking the diff button.",
-				wrapper: "Special",
-				status: "updated",
-			},
-			{
-				type: "variant",
-				id: "SmoothWatchlistIndented",
-				title: "Indented watchlist",
-				name: "Indented watchlist",
-				description:
-					"A watchlist where the edit summary and CTAs are indented on their own lines. ",
-				wrapper: "Special",
-			},
-			{
-				type: "variant",
-				id: "SmoothWatchlist",
-				title: "Re-ordered watchlist",
-				name: "Re-ordered watchlist",
-				description:
-					"Presents results like the Watchlist, but with the information in each result re-ordered to group similar information together.",
-				wrapper: "Special",
-			},
-			{
-				type: "variant",
-				id: "WatchlistFeed",
-				title: "Combined watchlist",
-				name: "Combined watchlist",
-				description: "Presents results exactly like the Watchlist.",
-				wrapper: "Special",
-			},
-		],
-	},
+
 	{
 		type: "variants",
 		id: "CombinedFeed",

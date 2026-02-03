@@ -25,7 +25,9 @@
 	/* border: 1px solid var(--border-color-subtle); */
 	border-radius: 2px;
 	overflow: hidden;
-	font-size: 0.8125rem;
+	/* font-size: 0.8125rem; */
+	/* font-size: 0.9rem; */
+	font-size: 13px;
 	line-height: 1.4;
 	/* padding: 0.25rem 0.5rem; */
 }
@@ -97,12 +99,26 @@
 .history-delta[type="button"].history-delta-expanded {
 	/* font-weight: bold; */
 	/* color: var(--color-base); */
-	background-color: var(--background-color-progressive-subtle--active);
+	background-color: var(--blue100);
+	/* background-color: var(--background-color-progressive-subtle--active); */
 	/* background-color: var(--background-color-progressive-subtle); */
 	padding: 0rem 0.1rem;
 	margin-left: -0.1rem;
 	margin-right: 0.3rem;
 	border-radius: 1px;
+}
+
+.history-diff-loading {
+	margin-top: -0.25rem;
+	/* margin-top: -0.125rem; */
+	/* margin-bottom: -0.125rem; */
+	position: relative;
+	top: calc(0.25px + 0.125rem);
+}
+
+.history-item-current .history-time[type="button"].history-time-expanded,
+.history-item-current .history-delta[type="button"].history-delta-expanded {
+	background-color: var(--background-color-base);
 }
 
 /* Inline diff block: no gap between entry and diff */
@@ -133,7 +149,9 @@
 	border-radius: 2px;
 	/* padding-left: 1.5rem; */
 	overflow: hidden;
-	font-size: 0.8125rem;
+	/* font-size: 0.8125rem; */
+	/* font-size: 0.9rem; */
+	font-size: 13px;
 	line-height: 1.4;
 	margin-bottom: 0.5rem;
 	max-height: 20rem;
@@ -154,7 +172,7 @@
 }
 
 .history-inline-history-box .history-item-current {
-	background-color: var(--background-color-progressive-subtle);
+	background-color: var(--blue100);
 }
 
 /* Same diff block styling as DiffFeedStyled / SmoothWatchlistInlineDiff */
@@ -162,7 +180,9 @@
 	margin-top: 0;
 	overflow: hidden;
 	font-family: var(--font-family-mono, ui-monospace, monospace);
-	font-size: 0.8125rem;
+	/* font-size: 0.8125rem; */
+	/* font-size: 0.9rem; */
+	font-size: 13px;
 	line-height: 1.4;
 	max-height: 20rem;
 	overflow-y: auto;
