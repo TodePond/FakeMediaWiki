@@ -362,6 +362,10 @@
 	/* top: calc(0.25px + 0.125rem); */
 }
 
+.history-item .history-diff-loading {
+	top: 0.1rem;
+}
+
 .history-item-current .history-time[type="button"].history-time-expanded,
 .history-item-current .history-delta[type="button"].history-delta-expanded {
 	/* background-color: var(--background-color-base); */
@@ -400,7 +404,7 @@
 	font-size: 13px;
 	line-height: 1.4;
 	margin-top: 0.5rem;
-	max-height: 15rem;
+	max-height: 25rem;
 	overflow-y: auto;
 }
 
@@ -439,6 +443,8 @@
 
 .history-item .change-diff {
 	margin-bottom: 0;
+	margin-top: 0.1rem;
+	max-height: 8rem;
 }
 
 .history-item:has(.change-diff) {

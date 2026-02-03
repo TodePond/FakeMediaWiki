@@ -522,6 +522,26 @@ function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: stri
 		})
 }
 
+function handleHistoryItemClick(
+	changeId: number,
+	rev: { id: number },
+	pageName: string,
+	event: MouseEvent
+): void {
+	// Don't toggle if clicking on links or buttons
+	const target = event.target as HTMLElement
+	if (
+		target.tagName === "A" ||
+		target.tagName === "BUTTON" ||
+		target.closest("a") ||
+		target.closest("button")
+	) {
+		return
+	}
+	// Toggle the diff for this history item
+	toggleHistoryDiff(changeId, rev, pageName)
+}
+
 function toggleHistory(change: Revision): void {
 	const id = change.id
 	const pageName = change.pageName
@@ -935,6 +955,7 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 										'history-item',
 										{ 'history-item-current': rev.id === change.id },
 									]"
+									@click="handleHistoryItemClick(change.id, rev, change.pageName!, $event)"
 								>
 									<div class="history-row">
 										<span class="history-time">{{
