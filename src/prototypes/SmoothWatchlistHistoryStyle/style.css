@@ -62,8 +62,10 @@
 }
 
 .history-time {
+	/* color: red !important; */
 	color: var(--color-base) !important;
 	/* color: var(--color-progressive, #36c); */
+	/* color: var(--color-subtle); */
 }
 
 .history-user {
@@ -85,10 +87,6 @@
 	text-decoration: none;
 }
 
-.history-time[type="button"] {
-	color: var(--color-base) !important;
-}
-
 .history-time[type="button"]:hover,
 .history-delta[type="button"]:hover {
 	text-decoration: underline;
@@ -97,7 +95,14 @@
 /* Bold the button that opened the inline content (applies immediately on click) */
 .history-time[type="button"].history-time-expanded,
 .history-delta[type="button"].history-delta-expanded {
-	font-weight: bold;
+	/* font-weight: bold; */
+	/* color: var(--color-base); */
+	background-color: var(--background-color-progressive-subtle--active);
+	/* background-color: var(--background-color-progressive-subtle); */
+	padding: 0rem 0.1rem;
+	margin-left: -0.1rem;
+	margin-right: 0.3rem;
+	border-radius: 1px;
 }
 
 /* Inline diff block: no gap between entry and diff */
@@ -119,24 +124,33 @@
 /* Inline history: same look as top-level, slightly indented; no gap */
 .history-inline-history {
 	margin-top: 0;
+	/* bord */
 }
 
 .history-inline-history-box {
-	margin-left: 1.5rem;
-	border-radius: 0;
+	/* margin-left: 1.5rem; */
+	border: 2px solid var(--border-color-subtle);
+	border-radius: 2px;
+	/* padding-left: 1.5rem; */
 	overflow: hidden;
 	font-size: 0.8125rem;
 	line-height: 1.4;
+	margin-bottom: 0.5rem;
 	max-height: 20rem;
 	overflow-y: auto;
 }
 
 .history-inline-history-box .history-item {
 	border-bottom: none;
+	padding: 0rem 0.6rem;
 }
 
 .history-inline-history-box .history-item:last-child {
 	border-bottom: none;
+}
+
+.history-inline-history-box .history-item:first-child {
+	border-top: none;
 }
 
 .history-inline-history-box .history-item-current {
@@ -152,6 +166,17 @@
 	line-height: 1.4;
 	max-height: 20rem;
 	overflow-y: auto;
+	border: 2px solid var(--border-color-subtle);
+	border-radius: 2px;
+	margin-bottom: 0.5rem;
+}
+
+.history-item .change-diff {
+	margin-bottom: 0;
+}
+
+.history-item:has(.change-diff) {
+	padding-bottom: 0.5rem;
 }
 
 .diff-line {

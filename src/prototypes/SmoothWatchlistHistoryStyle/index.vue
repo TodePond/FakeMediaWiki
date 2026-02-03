@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
+import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref, type Ref } from "vue"
 import {
 	WikiApi,
@@ -141,8 +141,18 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 							useThisBot: null,
 							reportBugs: null,
 						}
-				summary.comment = summary.comment
-					? await wiki.transformWikitextToHtml("(" + summary.comment + ")", pageName)
+				const commentText = summary.comment
+					? summary.comment +
+						(summary.suggestedBy
+							? " Suggested by [[User:" +
+								summary.suggestedBy +
+								"|" +
+								summary.suggestedBy +
+								"]]"
+							: "")
+					: ""
+				summary.comment = commentText
+					? await wiki.transformWikitextToHtml("(" + commentText + ")", pageName)
 					: ""
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
@@ -202,8 +212,18 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 							useThisBot: null,
 							reportBugs: null,
 						}
-				summary.comment = summary.comment
-					? await wiki.transformWikitextToHtml("(" + summary.comment + ")", pageName)
+				const commentText = summary.comment
+					? summary.comment +
+						(summary.suggestedBy
+							? " Suggested by [[User:" +
+								summary.suggestedBy +
+								"|" +
+								summary.suggestedBy +
+								"]]"
+							: "")
+					: ""
+				summary.comment = commentText
+					? await wiki.transformWikitextToHtml("(" + commentText + ")", pageName)
 					: ""
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
@@ -349,6 +369,8 @@ function toggleDiff(change: Revision): void {
 	}
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.add(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
 	if (loadedDiffs.value.has(id)) return
 	const pageName = change.pageName
 	if (!pageName) return
@@ -420,6 +442,8 @@ function toggleHistory(change: Revision): void {
 	}
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.add(id)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.delete(id)
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
@@ -674,11 +698,12 @@ function getDiffLineClass(type: number): string {
 								</div>
 							</div>
 							<div
-								v-else-if="!loadingDiffIds.has(change.id)"
-								class="history-diff-empty"
+								v-else-if="loadingDiffIds.has(change.id)"
+								class="history-diff-loading"
 							>
-								No diff
+								<CdxProgressBar inline />
 							</div>
+							<div v-else class="history-diff-empty">No diff</div>
 						</div>
 						<div
 							v-if="expandedHistoryIds.has(change.id)"
@@ -790,13 +815,17 @@ function getDiffLineClass(type: number): string {
 											</div>
 										</div>
 										<div
-											v-else-if="!loadingDiffIds.has(rev.id)"
-											class="history-diff-empty"
+											v-else-if="loadingDiffIds.has(rev.id)"
+											class="history-diff-loading"
 										>
-											No diff
+											<CdxProgressBar inline />
 										</div>
+										<div v-else class="history-diff-empty">No diff</div>
 									</div>
 								</div>
+							</div>
+							<div v-else class="history-diff-loading">
+								<CdxProgressBar inline />
 							</div>
 						</div>
 					</div>

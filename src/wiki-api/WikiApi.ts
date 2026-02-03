@@ -865,18 +865,28 @@ export class WikiApi {
 			return comment
 		}
 
-		let table = `${toolbar.comment ?? ""}\n{| class="wikitable" class="wikitable"\n|-\n`
+		// Keep main comment and toolbar hashtags (e.g. #UCB_toolbar) inline so the full comment
+		// displays as one line; only Suggested by / Use this bot / Report bugs go in the table.
+		let fullComment = (toolbar.comment ?? "").trim()
+		if (Array.isArray(toolbar.hashtags) && toolbar.hashtags.length > 0) {
+			fullComment += " " + toolbar.hashtags.join(" ")
+		}
+		const toolbarMarkerOther = toolbar.other.filter(part => /^#\w+\)?$/.test(part.trim()))
+		const restOther = toolbar.other.filter(part => !/^#\w+\)?$/.test(part.trim()))
+		toolbarMarkerOther.forEach(m => {
+			fullComment += " " + m.replace(/\)$/, "")
+		})
+		fullComment = fullComment.trim()
+
+		let table = `(${fullComment})\n{| class="wikitable" class="wikitable"\n|-\n`
 		if (toolbar.suggestedBy) {
 			table += `| Suggested by [[User:${toolbar.suggestedBy}|${toolbar.suggestedBy}]]\n|-\n`
 		}
 		if (toolbar.useThisBot && toolbar.reportBugs) {
 			table += `| ${toolbar.useThisBot}. ${toolbar.reportBugs}\n|-\n`
 		}
-		if (Array.isArray(toolbar.hashtags) && toolbar.hashtags.length > 0) {
-			table += `| ${toolbar.hashtags.join(" ")}\n|-\n`
-		}
-		if (toolbar.other.length > 0) {
-			table += `| ${toolbar.other.join("\n|-\n|")}\n|-\n`
+		if (restOther.length > 0) {
+			table += `| ${restOther.join("\n|-\n|")}\n|-\n`
 		}
 
 		table += `\n|}`
@@ -937,9 +947,19 @@ export class WikiApi {
 
 	async getEditSummaryHtml(summary: string, pageName: string): Promise<string> {
 		summary = this.preprocessEditSummary(summary, pageName)
-		summary = "(" + summary + ")"
-		summary = this.getTableFromToolbarComment(summary)
-		return await this.transformWikitextToHtml(summary)
+		const toolbar = this.parseToolbarComment(summary)
+		let wrapped: string
+		if (toolbar === null) {
+			wrapped = "(" + summary + ")"
+		} else {
+			let text = (toolbar.comment ?? "").trim()
+			if (toolbar.suggestedBy) {
+				text +=
+					" Suggested by [[User:" + toolbar.suggestedBy + "|" + toolbar.suggestedBy + "]]"
+			}
+			wrapped = "(" + text + ")"
+		}
+		return await this.transformWikitextToHtml(wrapped)
 	}
 
 	/**
