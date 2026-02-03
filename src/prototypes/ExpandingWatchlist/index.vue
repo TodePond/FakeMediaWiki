@@ -961,8 +961,7 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 										<span class="history-time">{{
 											formatTime(rev.timestamp)
 										}}</span
-										><button
-											type="button"
+										><span
 											:class="[
 												'history-delta',
 												wiki.getDeltaClass(
@@ -977,9 +976,6 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 														?.has(rev.id),
 												},
 											]"
-											@click="
-												toggleHistoryDiff(change.id, rev, change.pageName!)
-											"
 										>
 											{{
 												formatDelta(
@@ -987,7 +983,7 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 														? (change.delta ?? rev.delta)
 														: rev.delta
 												)
-											}}</button
+											}}</span
 										><a
 											target="_blank"
 											:href="wiki.getUserUrl(rev.user.name)"

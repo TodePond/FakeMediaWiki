@@ -444,7 +444,7 @@
 .history-item .change-diff {
 	margin-bottom: 0;
 	margin-top: 0.1rem;
-	max-height: 8rem;
+	max-height: 9rem;
 }
 
 .history-item:has(.change-diff) {
