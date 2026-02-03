@@ -413,16 +413,8 @@ function expandItem(change: Revision, event: MouseEvent): void {
 		return
 	}
 	const id = change.id
-	// Only one item can be expanded at a time - collapse any previously expanded item
-	const previousExpandedId = Array.from(expandedItemIds.value)[0]
-	if (previousExpandedId !== undefined && previousExpandedId !== id) {
-		// Collapse diff and history of the previously expanded item
-		expandedDiffIds.value = new Set(expandedDiffIds.value)
-		expandedDiffIds.value.delete(previousExpandedId)
-		expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-		expandedHistoryIds.value.delete(previousExpandedId)
-	}
-	expandedItemIds.value = new Set([id])
+	// Add this item to the set of expanded items
+	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
 	// Automatically expand diff view
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.add(id)
@@ -449,10 +441,8 @@ function expandItem(change: Revision, event: MouseEvent): void {
 }
 
 function collapseItem(id: number): void {
-	expandedItemIds.value = new Set()
-	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedItemIds.value.delete(id)	
 	expandedDiffIds.value.delete(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
 }
 
@@ -669,6 +659,21 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 		risingHearts.value = risingHearts.value.filter(h => h.id !== heartId)
 	}, HEART_RISE_DURATION_MS)
 }
+
+function getItemZIndex(dateKey: string, changeIndex: number): number {
+	// Calculate cumulative index across all date groups
+	// Items lower down the page get higher z-index values
+	let cumulativeIndex = 0
+	for (const group of revisionsByDate.value) {
+		if (group.dateKey === dateKey) {
+			// Return a higher z-index for items further down
+			// Start from 10 to ensure it's above other elements
+			return 10 + cumulativeIndex + changeIndex
+		}
+		cumulativeIndex += group.revisions.length
+	}
+	return 10 + cumulativeIndex + changeIndex
+}
 </script>
 
 <template>
@@ -743,12 +748,15 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 				<h4 class="watchlist-date-header">{{ dateGroup.dateLabel }}</h4>
 				<div class="watchlist-history-box">
 					<div
-						v-for="change in dateGroup.revisions"
+						v-for="(change, changeIndex) in dateGroup.revisions"
 						:key="`${change.pageName}-${change.timestamp}`"
 						:class="[
 							'history-item',
 							{ 'history-item-expanded': expandedItemIds.has(change.id) },
 						]"
+						:style="{
+							zIndex: String(getItemZIndex(dateGroup.dateKey, changeIndex)),
+						}"
 						@click="handleItemClick(change, $event)"
 					>
 						<template v-if="!expandedItemIds.has(change.id)">

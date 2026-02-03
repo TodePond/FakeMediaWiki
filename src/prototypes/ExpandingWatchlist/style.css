@@ -6,6 +6,8 @@
 	padding-bottom: 5rem;
 	max-width: 800px;
 	margin: 0 auto;
+	position: relative;
+	isolation: isolate;
 }
 
 .watchlist-date-header {
@@ -24,6 +26,8 @@
 /* Same containment as inline history box */
 .watchlist-history-box {
 	margin-top: 0.25rem;
+	position: relative;
+	isolation: isolate;
 	/* border: 1px solid var(--border-color-subtle); */
 	/* border-radius: 2px; */
 	/* overflow: hidden; */
@@ -60,7 +64,8 @@
 
 .history-item {
 	border-top: 1px solid var(--border-color-subtle);
-
+	position: relative;
+	background-color: var(--background-color-base);
 	transition: min-height 0.2s ease-in-out;
 	min-height: auto;
 	padding: 0.25rem 0.5rem;
@@ -134,7 +139,8 @@
 	border: 1px solid var(--border-color-subtle);
 	padding: 0.5rem;
 	box-shadow: var(--box-shadow-medium);
-	/* background-color: var(--blue100); */
+	background-color: var(--background-color-base);
+	position: relative;
 }
 
 .history-item:has(.history-expanded) + .history-item {
