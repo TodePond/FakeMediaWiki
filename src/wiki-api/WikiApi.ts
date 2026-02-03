@@ -665,15 +665,42 @@ export class WikiApi {
 	}
 
 	/**
+	 * Get wikitext source for a revision by ID.
+	 * @param revId - Revision ID
+	 * @returns Revision source (e.g. wikitext)
+	 */
+	async getRevisionSource(revId: number): Promise<string> {
+		const revision = (await this.request({
+			api: "mediawiki",
+			path: `revision/${revId}`,
+		})) as { source: string }
+		return revision.source
+	}
+
+	/**
 	 * Get diff for a revision by comparing it with its parent (previous) revision.
+	 * When there is no parent (e.g. first revision), returns a synthetic diff where
+	 * every line is shown as added.
 	 * @param pageName - Page title
 	 * @param revId - Revision ID to diff
-	 * @returns Diff from parent to this revision, or null if there is no parent (e.g. first revision)
+	 * @returns Diff from parent to this revision, or a full-content "all added" diff when there is no parent
 	 */
-	async getRevisionDiff(pageName: string, revId: number): Promise<CompareResponse | null> {
+	async getRevisionDiff(pageName: string, revId: number): Promise<CompareResponse> {
 		const parentId = await this.getParentRevisionId(pageName, revId)
-		if (parentId == null) return null
-		return this.compareRevisions(parentId, revId)
+		if (parentId != null) return this.compareRevisions(parentId, revId)
+		// No parent: treat as first revision and show entire content as added.
+		const source = await this.getRevisionSource(revId)
+		const lines = source.split(/\n/)
+		const diff: DiffLine[] = lines.map((text, i) => ({
+			type: 1, // add
+			lineNumber: i + 1,
+			text: text || "",
+		}))
+		return {
+			from: { id: 0 },
+			to: { id: revId },
+			diff,
+		}
 	}
 
 	/**

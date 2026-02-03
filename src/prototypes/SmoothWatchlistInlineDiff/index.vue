@@ -255,9 +255,7 @@ function toggleDiff(change: Revision): void {
 	loadingDiffIds.value.add(id)
 	wiki.getRevisionDiff(pageName, id)
 		.then(response => {
-			if (response != null) {
-				loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-			}
+			loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
 			loadingDiffIds.value = new Set(loadingDiffIds.value)
 			loadingDiffIds.value.delete(id)
 		})
@@ -286,9 +284,7 @@ function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: stri
 	loadingDiffIds.value.add(id)
 	wiki.getRevisionDiff(pageName, id)
 		.then(response => {
-			if (response != null) {
-				loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-			}
+			loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
 			loadingDiffIds.value = new Set(loadingDiffIds.value)
 			loadingDiffIds.value.delete(id)
 		})
