@@ -617,11 +617,6 @@ function getDiffLineClass(type: number): string {
 								@click="toggleHistory(change)"
 							>
 								{{ formatTime(change.timestamp) }}</button
-							><a
-								target="_blank"
-								:href="wiki.getUserUrl(change.user.name)"
-								class="history-user"
-								>{{ change.user.name }}</a
 							><button
 								type="button"
 								:class="[
@@ -632,6 +627,11 @@ function getDiffLineClass(type: number): string {
 								@click="toggleDiff(change)"
 							>
 								{{ formatDelta(change.delta) }}</button
+							><a
+								target="_blank"
+								:href="wiki.getUserUrl(change.user.name)"
+								class="history-user"
+								>{{ change.user.name }}</a
 							><span
 								class="history-comment"
 								v-html="change?.summary?.comment ?? ''"

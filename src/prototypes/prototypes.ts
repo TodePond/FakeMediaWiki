@@ -109,6 +109,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
+				id: "ExpandingWatchlist",
+				title: "Expanding watchlist",
+				name: "Expanding watchlist",
+				description:
+					"When you click on the body of a feed item, it expands that feed item into a larger height.",
+				wrapper: "Special",
+				status: "wip",
+			},
+			{
+				type: "variant",
 				id: "UserWatchlist",
 				title: "Re-ordered styled watchlist",
 				name: "Re-ordered styled watchlist",
@@ -119,7 +129,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 			},
 			{
 				type: "variant",
-				id: "SmoothWatchlistHistoryStyle",
+				id: "StyledWatchlistBase",
 				title: "Styled watchlist",
 				name: "Styled watchlist",
 				description: "A watchlist but with more opinionated styling.",

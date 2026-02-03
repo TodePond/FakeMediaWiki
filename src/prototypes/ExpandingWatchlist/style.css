@@ -1,0 +1,427 @@
+/* Watchlist presented in history-box style: one box per date with rows */
+
+.watchlist-container {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: 5rem;
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.watchlist-date-header {
+	font-weight: 300 !important;
+	font-size: 1rem;
+	margin-top: 2rem;
+	text-align: left;
+	margin-bottom: 0;
+	/* color: var(--color-placeholder); */
+}
+
+.watchlist-date-header:first-child {
+	margin-top: 1rem;
+}
+
+/* Same containment as inline history box */
+.watchlist-history-box {
+	margin-top: 0.25rem;
+	/* border: 1px solid var(--border-color-subtle); */
+	/* border-radius: 2px; */
+	/* overflow: hidden; */
+	/* font-size: 0.8125rem; */
+	/* font-size: 0.9rem; */
+	font-size: 13px;
+	line-height: 1.4;
+	/* padding: 0.25rem 0.5rem; */
+}
+
+.history-row {
+	/* display: flex; */
+	/* flex-wrap: wrap; */
+	/* align-items: baseline; */
+	/* gap: 0.25rem; */
+	line-height: var(--line-height-content);
+	/* padding: 0.25rem 0rem; */
+	/* padding: 0.25rem 0.25rem; */
+	/* border-bottom: 1px solid var(--border-color-subtle); */
+}
+
+.history-row > * {
+	margin-right: 0.4rem;
+}
+
+.history-row-second {
+	/* margin-top: 0.25rem; */
+	/* padding-top: 0.25rem; */
+}
+
+.history-item {
+	border-top: 1px solid var(--border-color-subtle);
+	cursor: pointer;
+	transition: min-height 0.2s ease-in-out;
+	min-height: auto;
+	padding: 0.25rem 0.5rem;
+	/* margin: 0rem -0.5rem; */
+}
+
+.history-item:hover:not(.history-item-expanded) {
+	background-color: var(--background-color-progressive-subtle, rgba(51, 102, 204, 0.05));
+}
+
+.history-item a,
+.history-item button {
+	cursor: pointer;
+}
+
+.history-item-expanded {
+	/* min-height: 8rem; */
+	padding: 1rem 1rem;
+	cursor: default;
+}
+
+.history-expanded {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	align-items: flex-start;
+}
+
+.history-item:has(.history-expanded) {
+	/* border: 2px solid var(--border-color-base); */
+	/* border-radius: 2px; */
+
+	border: 1px solid var(--border-color-subtle);
+	padding: 0.5rem;
+	box-shadow: var(--box-shadow-medium);
+	/* background-color: var(--blue100); */
+}
+
+.history-item:has(.history-expanded) + .history-item {
+	border-top: none;
+}
+
+.history-page-expanded {
+	font-size: 1.5rem;
+	font-weight: bold;
+	color: var(--color-base) !important;
+	/* color: var(--color-progressive, #36c); */
+	line-height: 1.2;
+	text-decoration: none;
+}
+
+.history-page-expanded:hover {
+	text-decoration: underline;
+}
+
+.history-user-expanded {
+	font-size: 1.25rem;
+	font-weight: bold;
+	line-height: 1.2;
+	color: var(--color-progressive) !important;
+	text-decoration: none;
+}
+
+.history-user-expanded:hover {
+	text-decoration: underline;
+}
+
+.history-date-expanded {
+	font-size: 0.875rem;
+	color: var(--color-subtle);
+	line-height: 1.4;
+}
+
+.history-expanded-actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.25rem;
+}
+
+.history-expanded-actions .history-delta,
+.history-expanded-actions .history-time {
+	font-size: 0.875rem;
+}
+
+.history-comment-expanded {
+	font-size: 0.875rem;
+	color: var(--color-subtle);
+	line-height: 1.4;
+	margin-top: 0.5rem;
+}
+
+.history-item:last-child {
+	border-bottom: 1px solid var(--border-color-subtle);
+}
+
+.history-page {
+	color: var(--color-base);
+	font-weight: bold;
+}
+
+.history-page:hover {
+	color: var(--color-base);
+}
+
+.history-time {
+	/* color: red !important; */
+	color: var(--color-base) !important;
+	/* color: var(--color-progressive, #36c); */
+	/* color: var(--color-subtle); */
+}
+
+.history-user {
+	color: var(--color-progressive, #36c);
+}
+
+.history-delta {
+	font-variant-numeric: tabular-nums;
+}
+
+/* Clickable delta and timestamp (buttons that look like existing elements) */
+.history-delta[type="button"],
+.history-time[type="button"] {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.history-time[type="button"]:hover,
+.history-delta[type="button"]:hover {
+	text-decoration: underline;
+}
+
+/* Bold the button that opened the inline content (applies immediately on click) */
+.history-time[type="button"].history-time-expanded,
+.history-delta[type="button"].history-delta-expanded {
+	/* font-weight: bold; */
+	/* color: var(--color-base); */
+	background-color: var(--blue100);
+	/* background-color: var(--background-color-progressive-subtle--active); */
+	/* background-color: var(--background-color-progressive-subtle); */
+	padding: 0rem 0.1rem;
+	margin-left: -0.1rem;
+	margin-right: 0.3rem;
+	border-radius: 1px;
+}
+
+.history-diff-loading {
+	margin-top: -0.25rem;
+	/* margin-top: -0.125rem; */
+	/* margin-bottom: -0.125rem; */
+	position: relative;
+	top: calc(0.25px + 0.125rem);
+}
+
+.history-item-current .history-time[type="button"].history-time-expanded,
+.history-item-current .history-delta[type="button"].history-delta-expanded {
+	background-color: var(--background-color-base);
+}
+
+/* Inline diff block: no gap between entry and diff */
+.history-inline-diff {
+	margin-top: 0;
+	margin-left: 0;
+}
+
+.history-inline-diff-nested {
+	margin-left: 0;
+}
+
+.history-diff-empty {
+	font-size: 0.9rem;
+	color: var(--color-subtle);
+	font-style: italic;
+}
+
+/* Inline history: same look as top-level, slightly indented; no gap */
+.history-inline-history {
+	margin-top: 0;
+	/* bord */
+}
+
+.history-inline-history-box {
+	/* margin-left: 1.5rem; */
+	border: 2px solid var(--border-color-subtle);
+	border-radius: 2px;
+	/* padding-left: 1.5rem; */
+	overflow: hidden;
+	/* font-size: 0.8125rem; */
+	/* font-size: 0.9rem; */
+	font-size: 13px;
+	line-height: 1.4;
+	margin-bottom: 0.5rem;
+	max-height: 20rem;
+	overflow-y: auto;
+}
+
+.history-inline-history-box .history-item {
+	border-bottom: none;
+	padding: 0rem 0.4rem;
+}
+
+.history-inline-history-box .history-item:last-child {
+	border-bottom: none;
+}
+
+.history-inline-history-box .history-item:first-child {
+	border-top: none;
+}
+
+.history-inline-history-box .history-item-current {
+	background-color: var(--blue100);
+}
+
+/* Same diff block styling as DiffFeedStyled / SmoothWatchlistInlineDiff */
+.change-diff {
+	margin-top: 0;
+	overflow: hidden;
+	font-family: var(--font-family-mono, ui-monospace, monospace);
+	/* font-size: 0.8125rem; */
+	/* font-size: 0.9rem; */
+	font-size: 13px;
+	line-height: 1.4;
+	max-height: 20rem;
+	overflow-y: auto;
+	border: 2px solid var(--border-color-subtle);
+	border-radius: 2px;
+	margin-bottom: 0.5rem;
+}
+
+.history-item .change-diff {
+	margin-bottom: 0;
+}
+
+.history-item:has(.change-diff) {
+	padding-bottom: 0.5rem;
+}
+
+.diff-line {
+	display: flex;
+	white-space: pre-wrap;
+	word-break: break-word;
+	padding: 0.125rem 0.5rem;
+}
+
+.diff-line-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.diff-line-context {
+	background-color: var(--background-color-base);
+	color: var(--color-base);
+}
+
+.diff-line-add {
+	background-color: var(--green100);
+	color: var(--color-base);
+}
+
+.diff-line-remove {
+	background-color: var(--red300);
+	color: var(--color-base);
+	text-decoration: line-through;
+}
+
+.diff-line-change {
+	background-color: var(--blue100);
+	color: var(--color-base);
+}
+
+.diff-char-add {
+	background-color: var(--green300);
+	font-weight: bold;
+}
+
+.diff-char-remove {
+	background-color: var(--red300);
+	text-decoration: line-through;
+	margin: 0rem 0.15rem;
+}
+
+.history-comment {
+	color: var(--color-subtle);
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	margin-left: -0.35rem;
+	/* wrap words mid-word */
+	word-break: break-word;
+}
+
+/* Form layout (same as other watchlist variants) */
+main {
+	display: flex;
+	gap: 2rem;
+	justify-content: space-between;
+	width: 100%;
+}
+
+form {
+	order: 2;
+	flex-grow: 1;
+	padding-bottom: 0.5rem;
+}
+
+.inputs-group {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: flex-end;
+	gap: 0.8rem 2rem;
+}
+
+.inputs {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.input-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.cdx-text-input {
+	max-width: 100%;
+	min-width: 0;
+	width: 256px;
+}
+
+.error {
+	color: var(--color-destructive);
+	margin-bottom: 0.5rem;
+}
+
+form footer {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	padding-top: 1rem;
+	justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+	main {
+		flex-direction: column;
+	}
+
+	form {
+		order: 0;
+	}
+
+	.inputs-group {
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+		align-items: center;
+	}
+
+	form footer {
+		justify-content: flex-start;
+	}
+}
