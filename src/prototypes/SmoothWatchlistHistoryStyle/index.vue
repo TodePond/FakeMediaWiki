@@ -710,12 +710,7 @@ function getDiffLineClass(type: number): string {
 									]"
 								>
 									<div class="history-row">
-										<a
-											target="_blank"
-											:href="wiki.getPageUrl(change.pageName!)"
-											class="history-page"
-											>{{ change.pageName }}</a
-										><span class="history-time">{{
+										<span class="history-time">{{
 											formatTime(rev.timestamp)
 										}}</span
 										><a

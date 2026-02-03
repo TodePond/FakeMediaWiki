@@ -28,26 +28,37 @@
 	/* font-size: 0.8125rem; */
 	/* font-size: 0.9rem; */
 	font-size: 13px;
-	line-height: 1.4;
+	/* line-height: 1.4; */
+	line-height: var(--line-height-content);
 	/* padding: 0.25rem 0.5rem; */
 }
 
+.history-delta-separator {
+	color: var(--color-subtle);
+}
+
+.history-inline-history-box .history-row {
+}
+
 .history-row {
-	/* display: flex; */
 	/* flex-wrap: wrap; */
 	/* align-items: baseline; */
-	/* gap: 0.25rem; */
-	padding: 0.25rem 0rem;
+	/* padding: 0.25rem 0rem; */
 	/* padding: 0.25rem 0.25rem; */
 	/* border-bottom: 1px solid var(--border-color-subtle); */
+	/* display: block; */
 }
 
 .history-row > * {
-	margin-right: 0.4rem;
+	/* margin-right: 0.4rem; */
 }
 
 .history-item {
 	border-top: 1px solid var(--border-color-subtle);
+	padding: 0.25rem 0rem;
+	display: flex;
+	flex-direction: column;
+	/* gap: 0.25rem; */
 }
 
 .history-item:last-child {
@@ -64,8 +75,9 @@
 }
 
 .history-time {
+	color: var(--color-subtle);
 	/* color: red !important; */
-	color: var(--color-base) !important;
+	/* color: var(--color-base) !important; */
 	/* color: var(--color-progressive, #36c); */
 	/* color: var(--color-subtle); */
 }
@@ -104,7 +116,7 @@
 	/* background-color: var(--background-color-progressive-subtle); */
 	padding: 0rem 0.1rem;
 	margin-left: -0.1rem;
-	margin-right: 0.3rem;
+	margin-right: -0.1rem;
 	border-radius: 1px;
 }
 
@@ -113,7 +125,12 @@
 	/* margin-top: -0.125rem; */
 	/* margin-bottom: -0.125rem; */
 	position: relative;
-	top: calc(0.25px + 0.125rem);
+	top: calc(0.25rem + 0.5px);
+	/* top: calc(0.25px + 0.125rem); */
+}
+
+.history-inline-history-box .history-diff-loading {
+	top: 2px;
 }
 
 .history-item-current .history-time[type="button"].history-time-expanded,
@@ -146,7 +163,7 @@
 .history-inline-history-box {
 	/* margin-left: 1.5rem; */
 	border: 2px solid var(--border-color-subtle);
-	border-radius: 2px;
+	/* border-radius: 2px; */
 	/* padding-left: 1.5rem; */
 	overflow: hidden;
 	/* font-size: 0.8125rem; */
@@ -160,7 +177,7 @@
 
 .history-inline-history-box .history-item {
 	border-bottom: none;
-	padding: 0rem 0.4rem;
+	padding: 0rem 0.25rem;
 }
 
 .history-inline-history-box .history-item:last-child {
@@ -196,7 +213,7 @@
 }
 
 .history-item:has(.change-diff) {
-	padding-bottom: 0.5rem;
+	padding-bottom: 0.2rem;
 }
 
 .diff-line {
@@ -248,7 +265,7 @@
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
-	margin-left: -0.35rem;
+	/* margin-left: -0.35rem; */
 	/* wrap words mid-word */
 	word-break: break-word;
 }

@@ -102,11 +102,21 @@ export const categories: CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "variants",
-		id: "Watchlist",
-		name: "Watchlist",
-		description: "Feed variants that present results like the Watchlist.",
+		id: "StyledWatchlist",
+		name: "Styled watchlist",
+		description: "Feeds based on the Watchlist, but with more opinionated styling.",
 		category: "feed",
 		variants: [
+			{
+				type: "variant",
+				id: "UserWatchlist",
+				title: "Re-ordered styled watchlist",
+				name: "Re-ordered styled watchlist",
+				description:
+					"A styled watchlist but with the information re-ordered over multiple lines.",
+				wrapper: "Special",
+				status: "new",
+			},
 			{
 				type: "variant",
 				id: "SmoothWatchlistHistoryStyle",
@@ -116,6 +126,15 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				wrapper: "Special",
 				status: "updated",
 			},
+		],
+	},
+	{
+		type: "variants",
+		id: "Watchlist",
+		name: "Watchlist",
+		description: "Feed variants that present results like the Watchlist.",
+		category: "feed",
+		variants: [
 			{
 				type: "variant",
 				id: "SmoothWatchlistInlineDiff",
@@ -167,7 +186,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Diff feed",
 				description: "A feed that shows inline diffs.",
 				wrapper: "Special",
-				status: "updated",
 			},
 			// {
 			// 	type: "variant",
@@ -210,7 +228,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Combined feed",
 				description: "A stripped-back combined feed with no avatar or thumbnail.",
 				wrapper: "Special",
-				status: "new",
 			},
 			{
 				type: "variant",
@@ -405,7 +422,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "components",
 		wrapper: "Component",
 		title: "Filter",
-		status: "new",
 	},
 	{
 		type: "prototype",
@@ -444,7 +460,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		description: "View this prototype in the Special page layout.",
 		wrapper: "Special",
 		category: "wrappers",
-		status: "new",
 	},
 	{
 		type: "prototype",
@@ -455,7 +470,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		description: "View this prototype in the Component (tablet) layout.",
 		wrapper: "Component",
 		category: "wrappers",
-		status: "new",
 	},
 	{
 		type: "prototype",
@@ -466,6 +480,5 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		description: "View this prototype in the Fullscreen layout.",
 		wrapper: "Fullscreen",
 		category: "wrappers",
-		status: "new",
 	},
 ]
