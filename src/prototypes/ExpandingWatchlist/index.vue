@@ -156,7 +156,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 							: "")
 					: ""
 				summary.comment = commentText
-					? await wiki.transformWikitextToHtml("(" + commentText + ")", pageName)
+					? await wiki.transformWikitextToHtml(commentText, pageName)
 					: ""
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
@@ -227,7 +227,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 							: "")
 					: ""
 				summary.comment = commentText
-					? await wiki.transformWikitextToHtml("(" + commentText + ")", pageName)
+					? await wiki.transformWikitextToHtml(commentText, pageName)
 					: ""
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
@@ -409,7 +409,16 @@ function expandItem(change: Revision, event: MouseEvent): void {
 	expandedItemIds.value = new Set([id])
 }
 
+function collapseItem(id: number): void {
+	expandedItemIds.value = new Set()
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.delete(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
+}
+
 function handleItemClick(change: Revision, event: MouseEvent): void {
+	// Only expand if not already expanded
 	if (!expandedItemIds.value.has(change.id)) {
 		expandItem(change, event)
 	}
@@ -669,8 +678,7 @@ function getDiffLineClass(type: number): string {
 									:href="wiki.getPageUrl(change.pageName!)"
 									class="history-page"
 									>{{ change.pageName }}</a
-								><button
-									type="button"
+								><span
 									:class="[
 										'history-time',
 										{
@@ -679,11 +687,9 @@ function getDiffLineClass(type: number): string {
 											),
 										},
 									]"
-									@click="toggleHistory(change)"
 								>
-									{{ formatTime(change.timestamp) }}</button
-								><button
-									type="button"
+									{{ formatTime(change.timestamp) }}</span
+								><span
 									:class="[
 										'history-delta',
 										wiki.getDeltaClass(change.delta ?? 0, false),
@@ -693,9 +699,8 @@ function getDiffLineClass(type: number): string {
 											),
 										},
 									]"
-									@click="toggleDiff(change)"
 								>
-									{{ formatDelta(change.delta) }}</button
+									{{ formatDelta(change.delta) }}</span
 								><a
 									target="_blank"
 									:href="wiki.getUserUrl(change.user.name)"
@@ -709,34 +714,56 @@ function getDiffLineClass(type: number): string {
 						</template>
 						<template v-else>
 							<div class="history-expanded">
+								<div class="history-title-row">
+									<a
+										target="_blank"
+										:href="wiki.getPageUrl(change.pageName!)"
+										class="history-page-expanded"
+										>{{ change.pageName }}</a
+									><button
+										type="button"
+										:class="[
+											'history-delta',
+											wiki.getDeltaClass(change.delta ?? 0, false),
+											{
+												'history-delta-expanded': expandedDiffIds.has(
+													change.id
+												),
+											},
+										]"
+										@click.stop="toggleDiff(change)"
+									>
+										{{ formatDelta(change.delta) }}
+									</button>
+									<button
+										type="button"
+										class="history-collapse-button"
+										@click.stop="collapseItem(change.id)"
+										aria-label="Collapse"
+									>
+										−
+									</button>
+								</div>
 								<a
-									target="_blank"
-									:href="wiki.getPageUrl(change.pageName!)"
-									class="history-page-expanded"
-									>{{ change.pageName }}</a
-								><button
-									type="button"
-									:class="[
-										'history-delta',
-										wiki.getDeltaClass(change.delta ?? 0, false),
-										{
-											'history-delta-expanded': expandedDiffIds.has(
-												change.id
-											),
-										},
-									]"
-									@click.stop="toggleDiff(change)"
-								>
-									{{ formatDelta(change.delta) }}</button
-								><a
 									target="_blank"
 									:href="wiki.getUserUrl(change.user.name)"
 									class="history-user-expanded"
 									>{{ change.user.name }}</a
 								>
-								<div class="history-date-expanded">
+								<button
+									type="button"
+									:class="[
+										'history-date-expanded',
+										{
+											'history-time-expanded': expandedHistoryIds.has(
+												change.id
+											),
+										},
+									]"
+									@click.stop="toggleHistory(change)"
+								>
 									{{ formatRelativeDate(change.timestamp) }}
-								</div>
+								</button>
 								<div
 									v-if="change?.summary?.comment"
 									class="history-comment-expanded"

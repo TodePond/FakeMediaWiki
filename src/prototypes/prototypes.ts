@@ -112,10 +112,9 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				id: "ExpandingWatchlist",
 				title: "Expanding watchlist",
 				name: "Expanding watchlist",
-				description:
-					"When you click on the body of a feed item, it expands that feed item into a larger height.",
+				description: "A feed with expandable items.",
 				wrapper: "Special",
-				status: "wip",
+				status: "new",
 			},
 			{
 				type: "variant",

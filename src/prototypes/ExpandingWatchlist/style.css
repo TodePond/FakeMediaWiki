@@ -54,9 +54,13 @@
 	/* padding-top: 0.25rem; */
 }
 
+.history-item:not(.history-item-expanded) {
+	cursor: pointer;
+}
+
 .history-item {
 	border-top: 1px solid var(--border-color-subtle);
-	cursor: pointer;
+
 	transition: min-height 0.2s ease-in-out;
 	min-height: auto;
 	padding: 0.25rem 0.5rem;
@@ -75,14 +79,51 @@
 .history-item-expanded {
 	/* min-height: 8rem; */
 	padding: 1rem 1rem;
-	cursor: default;
 }
 
 .history-expanded {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	/* gap: 0.5rem; */
 	align-items: flex-start;
+}
+
+.history-title-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	position: relative;
+	width: 100%;
+}
+
+.history-collapse-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: none;
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	width: 1.5rem;
+	height: 1.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 1.25rem;
+	line-height: 1;
+	color: var(--color-base);
+	padding: 0;
+	margin: 0;
+}
+
+.history-collapse-button:hover {
+	background-color: var(--background-color-progressive-subtle, rgba(51, 102, 204, 0.05));
+	border-color: var(--border-color-base);
+}
+
+.history-expanded .history-delta {
+	/* font-size: 1.25rem !important; */
 }
 
 .history-item:has(.history-expanded) {
@@ -125,9 +166,31 @@
 }
 
 .history-date-expanded {
-	font-size: 0.875rem;
+	font-size: 13px;
 	color: var(--color-subtle);
 	line-height: 1.4;
+}
+
+.history-date-expanded[type="button"] {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	text-decoration: none;
+	text-align: left;
+}
+
+.history-date-expanded[type="button"]:hover {
+	text-decoration: underline;
+}
+
+.history-date-expanded[type="button"].history-time-expanded {
+	background-color: var(--blue100);
+	padding: 0rem 0.1rem;
+	margin-left: -0.1rem;
+	margin-right: 0.3rem;
+	border-radius: 1px;
 }
 
 .history-expanded-actions {
@@ -211,7 +274,8 @@
 	/* margin-top: -0.125rem; */
 	/* margin-bottom: -0.125rem; */
 	position: relative;
-	top: calc(0.25px + 0.125rem);
+	top: 0.5rem;
+	/* top: calc(0.25px + 0.125rem); */
 }
 
 .history-item-current .history-time[type="button"].history-time-expanded,
@@ -251,7 +315,7 @@
 	/* font-size: 0.9rem; */
 	font-size: 13px;
 	line-height: 1.4;
-	margin-bottom: 0.5rem;
+	margin-top: 0.5rem;
 	max-height: 20rem;
 	overflow-y: auto;
 }
@@ -275,7 +339,7 @@
 
 /* Same diff block styling as DiffFeedStyled / SmoothWatchlistInlineDiff */
 .change-diff {
-	margin-top: 0;
+	margin-top: 0.5rem;
 	overflow: hidden;
 	font-family: var(--font-family-mono, ui-monospace, monospace);
 	/* font-size: 0.8125rem; */
