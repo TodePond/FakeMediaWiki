@@ -727,7 +727,12 @@ function getDiffLineClass(type: number): string {
 											type="button"
 											:class="[
 												'history-delta',
-												wiki.getDeltaClass(rev.delta ?? 0, false),
+												wiki.getDeltaClass(
+													(rev.id === change.id
+														? (change.delta ?? rev.delta)
+														: rev.delta) ?? 0,
+													false
+												),
 												{
 													'history-delta-expanded': expandedHistoryDiffIds
 														.get(change.id)
@@ -738,7 +743,13 @@ function getDiffLineClass(type: number): string {
 												toggleHistoryDiff(change.id, rev, change.pageName!)
 											"
 										>
-											{{ formatDelta(rev.delta) }}</button
+											{{
+												formatDelta(
+													rev.id === change.id
+														? (change.delta ?? rev.delta)
+														: rev.delta
+												)
+											}}</button
 										><span
 											class="history-comment"
 											v-html="rev.commentHtml ?? rev.comment ?? ''"
