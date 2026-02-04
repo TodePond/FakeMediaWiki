@@ -25,14 +25,17 @@ const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)
 const userStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "userQuery", 3)
 
 const pageSearchQueries = ref<string[]>([
-	localStorage.getItem(pageStorageKeys[0]!) ?? "Wikipedia",
-	localStorage.getItem(pageStorageKeys[1]!) ?? "Wet Leg",
-	localStorage.getItem(pageStorageKeys[2]!) ?? "Water",
+	"Wikipedia",
+	"Wet Leg",
+	"Water",
+	"Confidence Man (band)",
+	"Algorave",
 ])
 const userSearchQueries = ref<string[]>([
-	localStorage.getItem(userStorageKeys[0]!) ?? "Samwalton9",
-	localStorage.getItem(userStorageKeys[1]!) ?? "GearsDatapack",
-	localStorage.getItem(userStorageKeys[2]!) ?? "TrademarkedTWOrantula",
+	"Samwalton9",
+	"TrademarkedTWOrantula",
+	"Todepond",
+	// "GearsDatapack",
 ])
 
 const pageResults = wiki.createResults<Revision>(3).map(r => ref(r))
@@ -204,7 +207,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 	resultRef.value.error = null
 
 	try {
-		const _history = (await wiki.getPageHistory(pageName, { limit: 10 })) as {
+		const _history = (await wiki.getPageHistory(pageName)) as {
 			revisions?: Array<{
 				comment: string
 				user: { name: string }
@@ -472,7 +475,7 @@ function expandItem(change: Revision, event: MouseEvent): void {
 }
 
 function collapseItem(id: number): void {
-	expandedItemIds.value.delete(id)	
+	expandedItemIds.value.delete(id)
 	expandedDiffIds.value.delete(id)
 	expandedHistoryIds.value.delete(id)
 }
@@ -580,7 +583,7 @@ function toggleHistory(change: Revision): void {
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
-	wiki.getPageHistory(pageName, { limit: 20 })
+	wiki.getPageHistory(pageName)
 		.then(async response => {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => {
@@ -853,11 +856,12 @@ function isNewcomer(userName: string): boolean {
 									:href="wiki.getUserUrl(change.user.name)"
 									class="history-user"
 									>{{ change.user.name }}</a
-								><CdxIcon
-									v-if="isNewcomer(change.user.name)"
-									:icon="cdxIconHeart"
-									class="newcomer-heart-icon"
-								/><span
+								><span v-if="isNewcomer(change.user.name)"
+									><CdxIcon
+										:icon="cdxIconHeart"
+										size="small"
+										class="newcomer-heart-icon" /></span
+								><span
 									class="history-comment"
 									v-html="change?.summary?.comment ?? ''"
 								></span>
@@ -895,16 +899,17 @@ function isNewcomer(userName: string): boolean {
 										−
 									</button>
 								</div>
-								<a
-									target="_blank"
-									:href="wiki.getUserUrl(change.user.name)"
-									class="history-user-expanded"
-									>{{ change.user.name }}</a
-								><CdxIcon
-									v-if="isNewcomer(change.user.name)"
-									:icon="cdxIconHeart"
-									class="newcomer-heart-icon"
-								/>
+								<span
+									><a
+										target="_blank"
+										:href="wiki.getUserUrl(change.user.name)"
+										class="history-user-expanded"
+										>{{ change.user.name }}</a
+									><CdxIcon
+										v-if="isNewcomer(change.user.name)"
+										:icon="cdxIconHeart"
+										class="newcomer-heart-icon"
+								/></span>
 								<button
 									type="button"
 									:class="[
@@ -929,7 +934,9 @@ function isNewcomer(userName: string): boolean {
 										type="button"
 										class="history-action-button"
 										:class="{
-											'history-action-button-active': expandedDiffIds.has(change.id),
+											'history-action-button-active': expandedDiffIds.has(
+												change.id
+											),
 										}"
 										@click.stop="toggleDiff(change)"
 									>
@@ -939,7 +946,9 @@ function isNewcomer(userName: string): boolean {
 										type="button"
 										class="history-action-button"
 										:class="{
-											'history-action-button-active': expandedHistoryIds.has(change.id),
+											'history-action-button-active': expandedHistoryIds.has(
+												change.id
+											),
 										}"
 										@click.stop="toggleHistory(change)"
 									>
@@ -949,12 +958,18 @@ function isNewcomer(userName: string): boolean {
 										type="button"
 										class="history-action-button"
 										:class="{
-											'history-action-button-thanked': thankedRevisionIds.has(change.id),
+											'history-action-button-thanked': thankedRevisionIds.has(
+												change.id
+											),
 										}"
 										:disabled="thankedRevisionIds.has(change.id)"
 										@click.stop="onThankClick(change, $event)"
 									>
-										{{ thankedRevisionIds.has(change.id) ? "(thanked)" : "(thanks)" }}
+										{{
+											thankedRevisionIds.has(change.id)
+												? "(thanked)"
+												: "(thanks)"
+										}}
 									</button>
 								</footer>
 							</div>
@@ -1030,7 +1045,14 @@ function isNewcomer(userName: string): boolean {
 										'history-item',
 										{ 'history-item-current': rev.id === change.id },
 									]"
-									@click="handleHistoryItemClick(change.id, rev, change.pageName!, $event)"
+									@click="
+										handleHistoryItemClick(
+											change.id,
+											rev,
+											change.pageName!,
+											$event
+										)
+									"
 								>
 									<div class="history-row">
 										<span class="history-time">{{
@@ -1159,7 +1181,7 @@ function isNewcomer(userName: string): boolean {
 				:class="['thank-heart', heart.type === 'unthank' ? 'thank-heart-broken' : '']"
 				:style="{ left: heart.x + 'px', top: heart.y + 'px' }"
 			>
-				{{ heart.type === "unthank" ? "</3" : "<3" }}
+				{{ heart.type === "unthank" ? "\</3" : "\<3" }}
 			</div>
 		</div>
 	</main>

@@ -571,36 +571,82 @@ export class WikiApi {
 				.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
 			this.pageHistoryCache.set(pageName, merged)
-			return { ...response, revisions: merged }
+
+			// Filter merged results based on older_than/newer_than to ensure we only return requested range
+			let filtered = merged
+			if (older_than) {
+				// older_than can be a revision ID or timestamp
+				const olderThanId = /^\d+$/.test(older_than) ? parseInt(older_than, 10) : null
+				if (olderThanId !== null) {
+					// Filter to only revisions with ID less than older_than
+					filtered = filtered.filter(rev => rev.id < olderThanId)
+				} else {
+					// It's a timestamp, filter by timestamp
+					const olderThanTime = new Date(older_than).getTime()
+					filtered = filtered.filter(
+						rev => new Date(rev.timestamp).getTime() < olderThanTime
+					)
+				}
+			}
+			if (newer_than) {
+				// newer_than can be a revision ID or timestamp
+				const newerThanId = /^\d+$/.test(newer_than) ? parseInt(newer_than, 10) : null
+				if (newerThanId !== null) {
+					// Filter to only revisions with ID greater than newer_than
+					filtered = filtered.filter(rev => rev.id > newerThanId)
+				} else {
+					// It's a timestamp, filter by timestamp
+					const newerThanTime = new Date(newer_than).getTime()
+					filtered = filtered.filter(
+						rev => new Date(rev.timestamp).getTime() > newerThanTime
+					)
+				}
+			}
+
+			return { ...response, revisions: filtered }
 		}
 
 		// Use startDate-based pagination with gap detection
+		// If startDate is provided, we want revisions older than that date
+		// If startDate is not provided, we want the most recent revisions
+		const hasStartDate = !!startDate
 		const targetStartTime = startDate ? new Date(startDate).getTime() : Date.now()
 
-		// Find cached revisions older than startDate (sorted newest first)
-		const cachedOlder = cached.filter(
-			rev => new Date(rev.timestamp).getTime() < targetStartTime
-		)
+		// Find cached revisions (filtered by startDate if provided)
+		const cachedRelevant = hasStartDate
+			? cached.filter(rev => new Date(rev.timestamp).getTime() < targetStartTime)
+			: cached
 
 		// Check if we have enough cached data (API returns ~20 revisions)
-		// If we have 20+ cached revisions older than startDate, return from cache
-		if (cachedOlder.length >= 20) {
-			return { revisions: cachedOlder.slice(0, 20) }
+		if (cachedRelevant.length >= 20) {
+			return { revisions: cachedRelevant.slice(0, 20) }
 		}
 
 		// Determine where to fetch from:
-		// - If no cache or cache doesn't reach startDate: fetch from startDate
-		// - If cache has gaps: fetch from the oldest cached revision (to fill the gap)
+		// - If startDate provided and cache has gaps: fetch from oldest cached revision
+		// - If startDate provided and no cache: fetch from startDate
+		// - If no startDate: fetch from oldest cached revision (if any), otherwise fetch latest
 		let fetchFrom: string | undefined = undefined
-		if (cachedOlder.length > 0) {
-			// Find the oldest cached revision (last in sorted array)
-			const oldestCached = cachedOlder[cachedOlder.length - 1]
-			if (oldestCached) {
-				fetchFrom = String(oldestCached.id)
+		if (hasStartDate) {
+			if (cachedRelevant.length > 0) {
+				// Find the oldest cached revision (last in sorted array)
+				const oldestCached = cachedRelevant[cachedRelevant.length - 1]
+				if (oldestCached) {
+					fetchFrom = String(oldestCached.id)
+				}
+			} else {
+				// No cache older than startDate, fetch from startDate
+				fetchFrom = startDate
 			}
-		} else if (startDate) {
-			// No cache older than startDate, fetch from startDate
-			fetchFrom = startDate
+		} else {
+			// No startDate: if we have cache, fetch from oldest cached revision to get more
+			if (cached.length > 0) {
+				const oldestCached = cached[cached.length - 1]
+				if (oldestCached) {
+					fetchFrom = String(oldestCached.id)
+				}
+			}
+			// If no cache and no startDate, fetch latest (no older_than param)
 		}
 
 		// Fetch from API
@@ -623,11 +669,11 @@ export class WikiApi {
 
 		this.pageHistoryCache.set(pageName, merged)
 
-		// Return revisions older than startDate
-		const resultOlder = merged.filter(
-			rev => new Date(rev.timestamp).getTime() < targetStartTime
-		)
-		return { ...response, revisions: resultOlder.slice(0, 20) }
+		// Return revisions (filtered by startDate if provided)
+		const result = hasStartDate
+			? merged.filter(rev => new Date(rev.timestamp).getTime() < targetStartTime)
+			: merged
+		return { ...response, revisions: result.slice(0, 20) }
 	}
 
 	/**

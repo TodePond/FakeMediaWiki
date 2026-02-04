@@ -8,6 +8,7 @@
 	margin: 0 auto;
 	position: relative;
 	isolation: isolate;
+	/* min-width: 0px; */
 }
 
 .watchlist-date-header {
@@ -326,12 +327,19 @@
 }
 
 .newcomer-heart-icon {
-	display: inline-block;
-	width: 0.75em;
-	height: 0.75em;
-	margin-left: 0.25em;
-	color: var(--color-destructive, #d33);
-	vertical-align: middle;
+	/* display: inline-block; */
+	width: 0.25em;
+	height: 0.25em;
+	margin-left: -0.1em;
+	/* margin-right: 0.75em; */
+	color: var(--green400);
+	/* vertical-align: middle; */
+}
+
+.history-expanded .newcomer-heart-icon {
+	margin-left: 0.3em;
+	width: 1em;
+	height: 1em;
 }
 
 a {
