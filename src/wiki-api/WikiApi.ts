@@ -208,6 +208,42 @@ export interface OnThisDayResponse {
 	holidays?: OnThisDayHoliday[]
 }
 
+/** Lift Wing API prediction score */
+export interface LiftWingPrediction {
+	prediction: boolean | string
+	probability: {
+		true?: number
+		false?: number
+		[key: string]: number | undefined
+	}
+}
+
+/** Lift Wing API response structure */
+export interface LiftWingResponse {
+	[wiki: string]: {
+		models?: {
+			[modelName: string]: {
+				version: string
+			}
+		}
+		scores: {
+			[revisionId: string]: {
+				[modelName: string]: {
+					score: LiftWingPrediction
+				}
+			}
+		}
+	}
+}
+
+/** Map of revision ID to prediction score */
+export interface RevisionPredictions {
+	[revisionId: number]: {
+		damaging?: LiftWingPrediction
+		goodfaith?: LiftWingPrediction
+	}
+}
+
 export interface PageSummary {
 	title?: string
 	description?: string
@@ -1859,5 +1895,194 @@ export class WikiApi {
 					: "neutral delta-sign"
 		}
 		return delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral"
+	}
+
+	/**
+	 * Get wiki code from base URL (e.g., "en.wikipedia.org" -> "enwiki")
+	 * @param baseUrl - Base URL (defaults to this.base)
+	 * @returns Wiki code string
+	 */
+	private getWikiCode(baseUrl?: string): string {
+		const url = baseUrl || this.base
+		// Extract domain from URL (e.g., "en.wikipedia.org" or "https://en.wikipedia.org/")
+		const match = url.match(/(?:https?:\/\/)?([^.]+)\.wikipedia\.org/)
+		if (match && match[1]) {
+			return `${match[1]}wiki`
+		}
+		// Default to enwiki if we can't determine
+		return "enwiki"
+	}
+
+	/**
+	 * Get damaging prediction for a single revision from Lift Wing API
+	 * @param revisionId - Revision ID
+	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
+	 * @returns Prediction score with probability
+	 */
+	async getDamagingPrediction(
+		revisionId: number,
+		wiki?: string
+	): Promise<LiftWingPrediction | null> {
+		const wikiCode = wiki || this.getWikiCode()
+		const url = `https://api.wikimedia.org/service/lw/inference/v1/models/${wikiCode}-damaging:predict`
+
+		try {
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+				},
+				body: JSON.stringify({ rev_id: revisionId }),
+			})
+
+			if (!response.ok) {
+				throw new Error(`Lift Wing API error: ${response.status}`)
+			}
+
+			const data = (await response.json()) as LiftWingResponse
+			const wikiData = data[wikiCode]
+			if (!wikiData?.scores?.[String(revisionId)]?.damaging) {
+				return null
+			}
+
+			return wikiData.scores[String(revisionId)].damaging.score
+		} catch (error) {
+			console.error(`Failed to get damaging prediction for revision ${revisionId}:`, error)
+			return null
+		}
+	}
+
+	/**
+	 * Get goodfaith prediction for a single revision from Lift Wing API
+	 * @param revisionId - Revision ID
+	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
+	 * @returns Prediction score with probability
+	 */
+	async getGoodfaithPrediction(
+		revisionId: number,
+		wiki?: string
+	): Promise<LiftWingPrediction | null> {
+		const wikiCode = wiki || this.getWikiCode()
+		const url = `https://api.wikimedia.org/service/lw/inference/v1/models/${wikiCode}-goodfaith:predict`
+
+		try {
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+				},
+				body: JSON.stringify({ rev_id: revisionId }),
+			})
+
+			if (!response.ok) {
+				throw new Error(`Lift Wing API error: ${response.status}`)
+			}
+
+			const data = (await response.json()) as LiftWingResponse
+			const wikiData = data[wikiCode]
+			if (!wikiData?.scores?.[String(revisionId)]?.goodfaith) {
+				return null
+			}
+
+			return wikiData.scores[String(revisionId)].goodfaith.score
+		} catch (error) {
+			console.error(`Failed to get goodfaith prediction for revision ${revisionId}:`, error)
+			return null
+		}
+	}
+
+	/**
+	 * Get damaging predictions for multiple revisions in parallel
+	 * @param revisionIds - Array of revision IDs
+	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
+	 * @returns Map of revision ID to prediction score
+	 */
+	async getDamagingPredictions(
+		revisionIds: number[],
+		wiki?: string
+	): Promise<Map<number, LiftWingPrediction>> {
+		const results = new Map<number, LiftWingPrediction>()
+
+		// Make requests in parallel
+		const predictions = await Promise.allSettled(
+			revisionIds.map(async revId => {
+				const prediction = await this.getDamagingPrediction(revId, wiki)
+				return { revId, prediction }
+			})
+		)
+
+		// Collect successful results
+		for (const result of predictions) {
+			if (result.status === "fulfilled" && result.value.prediction) {
+				results.set(result.value.revId, result.value.prediction)
+			}
+		}
+
+		return results
+	}
+
+	/**
+	 * Get goodfaith predictions for multiple revisions in parallel
+	 * @param revisionIds - Array of revision IDs
+	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
+	 * @returns Map of revision ID to prediction score
+	 */
+	async getGoodfaithPredictions(
+		revisionIds: number[],
+		wiki?: string
+	): Promise<Map<number, LiftWingPrediction>> {
+		const results = new Map<number, LiftWingPrediction>()
+
+		// Make requests in parallel
+		const predictions = await Promise.allSettled(
+			revisionIds.map(async revId => {
+				const prediction = await this.getGoodfaithPrediction(revId, wiki)
+				return { revId, prediction }
+			})
+		)
+
+		// Collect successful results
+		for (const result of predictions) {
+			if (result.status === "fulfilled" && result.value.prediction) {
+				results.set(result.value.revId, result.value.prediction)
+			}
+		}
+
+		return results
+	}
+
+	/**
+	 * Get both damaging and goodfaith predictions for multiple revisions in parallel
+	 * @param revisionIds - Array of revision IDs
+	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
+	 * @returns Map of revision ID to both prediction scores
+	 */
+	async getRevisionPredictions(
+		revisionIds: number[],
+		wiki?: string
+	): Promise<RevisionPredictions> {
+		// Fetch both predictions in parallel
+		const [damagingResults, goodfaithResults] = await Promise.all([
+			this.getDamagingPredictions(revisionIds, wiki),
+			this.getGoodfaithPredictions(revisionIds, wiki),
+		])
+
+		// Combine results
+		const combined: RevisionPredictions = {}
+		const allIds = new Set([...damagingResults.keys(), ...goodfaithResults.keys()])
+
+		for (const revId of allIds) {
+			combined[revId] = {}
+			if (damagingResults.has(revId)) {
+				combined[revId].damaging = damagingResults.get(revId)!
+			}
+			if (goodfaithResults.has(revId)) {
+				combined[revId].goodfaith = goodfaithResults.get(revId)!
+			}
+		}
+
+		return combined
 	}
 }

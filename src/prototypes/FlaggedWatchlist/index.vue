@@ -2,9 +2,12 @@
 import { CdxButton, CdxIcon, CdxProgressBar } from "@wikimedia/codex"
 import type { Icon } from "@wikimedia/codex-icons"
 import {
+	cdxIconAlert,
 	cdxIconArrowNext,
 	cdxIconArrowPrevious,
+	cdxIconEllipsis,
 	cdxIconHeart,
+	cdxIconSuccess,
 	cdxIconUnStar,
 } from "@wikimedia/codex-icons"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
@@ -12,6 +15,7 @@ import {
 	WikiApi,
 	type CompareResponse,
 	type DiffLine,
+	type LiftWingPrediction,
 	type PageHistoryResponse,
 	type PageHistoryRevision,
 	type Revision,
@@ -118,6 +122,13 @@ const expandedTalkIds = ref<Set<number>>(new Set())
 const talkPageText = ref<Map<number, string>>(new Map())
 /** Current editor mode: 'visual' or 'source' */
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
+
+/** Cache of revision predictions (damaging and goodfaith) */
+const revisionPredictions = ref<
+	Map<number, { damaging?: LiftWingPrediction; goodfaith?: LiftWingPrediction }>
+>(new Map())
+/** Revision IDs currently loading predictions */
+const loadingPredictions = ref<Set<number>>(new Set())
 
 onMounted(() => {
 	search()
@@ -379,6 +390,8 @@ async function loadFeed(after?: string, append = false): Promise<void> {
 				return processedRevision
 			})
 		)
+
+		// Don't fetch predictions here - they'll be loaded lazily
 
 		if (append) {
 			// Append new revisions, deduplicating by ID
@@ -1075,6 +1088,149 @@ function hasNext(currentId: number): boolean {
 	const currentIndex = revisions.findIndex(r => r.id === currentId)
 	return currentIndex >= 0 && currentIndex < revisions.length - 1
 }
+
+/** Lazily load predictions for a revision */
+async function loadPrediction(revisionId: number): Promise<void> {
+	// Skip if already loaded or currently loading
+	if (revisionPredictions.value.has(revisionId) || loadingPredictions.value.has(revisionId)) {
+		return
+	}
+
+	loadingPredictions.value.add(revisionId)
+
+	try {
+		const predictions = await wiki.getRevisionPredictions([revisionId])
+		const pred = predictions[revisionId]
+		if (pred) {
+			revisionPredictions.value.set(revisionId, pred)
+		}
+	} catch (error) {
+		console.error(`Failed to load prediction for revision ${revisionId}:`, error)
+	} finally {
+		loadingPredictions.value.delete(revisionId)
+	}
+}
+
+/** Get prediction icon and color for a revision */
+function getPredictionIcon(revisionId: number): {
+	icon: Icon | null
+	color: string
+	isLoading: boolean
+} {
+	// Check if loading
+	if (loadingPredictions.value.has(revisionId)) {
+		return {
+			icon: cdxIconEllipsis,
+			color: "var(--color-subtle)",
+			isLoading: true,
+		}
+	}
+
+	const predictions = revisionPredictions.value.get(revisionId)
+	if (!predictions) {
+		// No predictions available yet - trigger lazy load and show ellipsis
+		loadPrediction(revisionId)
+		return {
+			icon: cdxIconEllipsis,
+			color: "var(--color-subtle)",
+			isLoading: true,
+		}
+	}
+
+	const damaging = predictions.damaging
+	const goodfaith = predictions.goodfaith
+
+	// Check for biggest risks (very likely have problems OR very likely bad faith)
+	const damagingProb = damaging?.probability?.true ?? 0
+	const goodfaithProb = goodfaith?.probability?.false ?? 0 // false = bad faith
+
+	if (damagingProb > 0.9 || goodfaithProb > 0.9) {
+		// Red exclamation mark for biggest risks
+		return {
+			icon: cdxIconAlert,
+			color: "var(--color-destructive)",
+			isLoading: false,
+		}
+	}
+
+	// Check for slight risks (may have problems OR may be bad faith)
+	if (damagingProb > 0.3 || goodfaithProb > 0.3) {
+		// Yellow exclamation mark for slight risks
+		return {
+			icon: cdxIconAlert,
+			color: "var(--color-warning)",
+			isLoading: false,
+		}
+	}
+
+	// Check if fairly sure it's good (very likely good AND very likely good faith)
+	const notDamagingProb = damaging?.probability?.false ?? 0
+	const isGoodfaithProb = goodfaith?.probability?.true ?? 0
+
+	if (notDamagingProb > 0.99 && isGoodfaithProb > 0.99) {
+		// Green tick for very likely good
+		return {
+			icon: cdxIconSuccess,
+			color: "var(--color-success)",
+			isLoading: false,
+		}
+	}
+
+	// Default: blue tick
+	return {
+		icon: cdxIconSuccess,
+		color: "var(--color-progressive)",
+		isLoading: false,
+	}
+}
+
+/** Get prediction text description for a revision */
+function getPredictionText(revisionId: number): string | null {
+	const predictions = revisionPredictions.value.get(revisionId)
+	if (!predictions) {
+		// No predictions available yet
+		return null
+	}
+
+	const damaging = predictions.damaging
+	const goodfaith = predictions.goodfaith
+
+	// Check for biggest risks (very likely have problems OR very likely bad faith)
+	const damagingProb = damaging?.probability?.true ?? 0
+	const goodfaithProb = goodfaith?.probability?.false ?? 0 // false = bad faith
+
+	if (damagingProb > 0.9 || goodfaithProb > 0.9) {
+		if (damagingProb > 0.9 && goodfaithProb > 0.9) {
+			return "It's very likely that this edit is damaging and made in bad faith"
+		} else if (damagingProb > 0.9) {
+			return "It's very likely that this edit is damaging"
+		} else {
+			return "It's very likely that this edit was made in bad faith"
+		}
+	}
+
+	// Check for slight risks (may have problems OR may be bad faith)
+	if (damagingProb > 0.3 || goodfaithProb > 0.3) {
+		if (damagingProb > 0.3 && goodfaithProb > 0.3) {
+			return "It's possible that this edit has a problem or made in bad faith"
+		} else if (damagingProb > 0.3) {
+			return "It's possible that this edit has a problem"
+		} else {
+			return "It's possible that this edit was made in bad faith"
+		}
+	}
+
+	// Check if fairly sure it's good (very likely good AND very likely good faith)
+	const notDamagingProb = damaging?.probability?.false ?? 0
+	const isGoodfaithProb = goodfaith?.probability?.true ?? 0
+
+	if (notDamagingProb > 0.99 && isGoodfaithProb > 0.99) {
+		return "It's very likely that this edit is good and made in good faith"
+	}
+
+	// Default: neutral
+	return "It's possible that this edit is okay"
+}
 </script>
 
 <template>
@@ -1165,6 +1321,19 @@ function hasNext(currentId: number): boolean {
 					>
 						<template v-if="!expandedItemIds.has(change.id)">
 							<div class="history-row">
+								<CdxIcon
+									v-if="getPredictionIcon(change.id).icon"
+									:icon="getPredictionIcon(change.id).icon!"
+									:style="{ color: getPredictionIcon(change.id).color }"
+									:class="[
+										'prediction-icon',
+										{
+											'prediction-icon-loading': getPredictionIcon(change.id)
+												.isLoading,
+										},
+									]"
+									size="small"
+								/>
 								<a
 									target="_blank"
 									:href="wiki.getPageUrl(change.pageName!)"
@@ -1309,6 +1478,25 @@ function hasNext(currentId: number): boolean {
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
+								<div v-if="getPredictionText(change.id)" class="prediction-card">
+									<CdxIcon
+										v-if="getPredictionIcon(change.id).icon"
+										:icon="getPredictionIcon(change.id).icon!"
+										:style="{ color: getPredictionIcon(change.id).color }"
+										:class="[
+											'prediction-card-icon',
+											{
+												'prediction-icon-loading': getPredictionIcon(
+													change.id
+												).isLoading,
+											},
+										]"
+										size="small"
+									/>
+									<span class="prediction-card-text">{{
+										getPredictionText(change.id)
+									}}</span>
+								</div>
 								<footer class="history-expanded-footer">
 									<button
 										type="button"

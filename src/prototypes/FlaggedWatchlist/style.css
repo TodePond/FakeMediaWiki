@@ -71,6 +71,52 @@
 	margin-right: 0.4rem;
 }
 
+.prediction-icon {
+	flex-shrink: 0;
+	margin-right: 0.5rem;
+	vertical-align: middle;
+}
+
+.prediction-icon-expanded {
+	margin-right: 0.5rem;
+}
+
+.prediction-icon-loading {
+	opacity: 0.6;
+	animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 0.6;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+
+.prediction-card {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+	padding: 0.5rem 0.75rem;
+	background-color: var(--background-color-subtle, #f8f9fa);
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	font-size: 0.875rem;
+	line-height: 1.4;
+}
+
+.prediction-card-icon {
+	flex-shrink: 0;
+}
+
+.prediction-card-text {
+	color: var(--color-base);
+}
+
 .history-row-second {
 	/* margin-top: 0.25rem; */
 	/* padding-top: 0.25rem; */
