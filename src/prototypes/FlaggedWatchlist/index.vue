@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxProgressBar } from "@wikimedia/codex"
 import type { Icon } from "@wikimedia/codex-icons"
-import { cdxIconHeart, cdxIconUnStar } from "@wikimedia/codex-icons"
-import { computed, onMounted, ref } from "vue"
+import {
+	cdxIconArrowNext,
+	cdxIconArrowPrevious,
+	cdxIconHeart,
+	cdxIconUnStar,
+} from "@wikimedia/codex-icons"
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import {
 	WikiApi,
 	type CompareResponse,
@@ -114,7 +119,188 @@ const talkPageText = ref<Map<number, string>>(new Map())
 /** Current editor mode: 'visual' or 'source' */
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
-onMounted(search)
+onMounted(() => {
+	search()
+	setupKeyboardNavigation()
+})
+
+function setupKeyboardNavigation(): void {
+	const handleKeyDown = (event: KeyboardEvent): void => {
+		// Don't handle if a form element is focused
+		const activeElement = document.activeElement
+		if (!activeElement) {
+			return
+		}
+		const isInputElement =
+			activeElement.tagName === "INPUT" ||
+			activeElement.tagName === "TEXTAREA" ||
+			activeElement.tagName === "SELECT"
+		const isContentEditable =
+			activeElement instanceof HTMLElement && activeElement.isContentEditable
+		if (isInputElement || isContentEditable) {
+			return
+		}
+
+		// Only handle left/right arrow keys
+		if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+			return
+		}
+
+		// Find the currently expanded item
+		const expandedIds = Array.from(expandedItemIds.value)
+		if (expandedIds.length === 0) {
+			return
+		}
+
+		// Get the first expanded item (there should typically only be one)
+		const currentId = expandedIds[0]
+		const revisions = allRevisionsInOrder.value
+		const currentIndex = revisions.findIndex(r => r.id === currentId)
+
+		// Store scroll position before navigation
+		const scrollYBefore = window.scrollY
+
+		if (event.key === "ArrowLeft") {
+			// Navigate to previous
+			if (currentIndex > 0) {
+				const previousRevision = revisions[currentIndex - 1]
+				if (previousRevision) {
+					// Find the current button to get its position
+					const currentButton = document.querySelector(
+						`[data-navigation-button="previous"]`
+					) as HTMLElement
+					const buttonTopRelativeToViewport = currentButton
+						? currentButton.getBoundingClientRect().top + window.scrollY
+						: scrollYBefore
+
+					// Close current item
+					collapseItem(currentId)
+
+					// Expand previous item
+					const id = previousRevision.id
+					expandedItemIds.value = new Set(expandedItemIds.value).add(id)
+					expandedDiffIds.value = new Set(expandedDiffIds.value)
+					expandedDiffIds.value.add(id)
+					expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+					expandedHistoryIds.value.delete(id)
+					// Load diff if not already loaded
+					if (!loadedDiffs.value.has(id)) {
+						const pageName = previousRevision.pageName
+						if (pageName) {
+							loadingDiffIds.value = new Set(loadingDiffIds.value)
+							loadingDiffIds.value.add(id)
+							wiki.getRevisionDiff(pageName, id)
+								.then(response => {
+									loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
+									loadingDiffIds.value = new Set(loadingDiffIds.value)
+									loadingDiffIds.value.delete(id)
+								})
+								.catch(e => {
+									console.error("Failed to load diff", e)
+									loadingDiffIds.value = new Set(loadingDiffIds.value)
+									loadingDiffIds.value.delete(id)
+								})
+						}
+					}
+
+					// Wait for DOM update, then restore scroll position
+					nextTick(() => {
+						const allItems = document.querySelectorAll(".history-item-expanded")
+						for (const item of allItems) {
+							const navButton = item.querySelector(
+								'[data-navigation-button="previous"]'
+							) as HTMLElement
+							if (navButton) {
+								const newButtonRect = navButton.getBoundingClientRect()
+								const newButtonTopRelativeToViewport =
+									newButtonRect.top + window.scrollY
+								const scrollDelta =
+									newButtonTopRelativeToViewport - buttonTopRelativeToViewport
+								window.scrollBy(0, scrollDelta)
+								break
+							}
+						}
+					})
+				}
+			}
+		} else if (event.key === "ArrowRight") {
+			// Navigate to next
+			if (currentIndex >= 0 && currentIndex < revisions.length - 1) {
+				const nextRevision = revisions[currentIndex + 1]
+				if (nextRevision) {
+					// Find the current button to get its position
+					const currentButton = document.querySelector(
+						`[data-navigation-button="next"]`
+					) as HTMLElement
+					const buttonTopRelativeToViewport = currentButton
+						? currentButton.getBoundingClientRect().top + window.scrollY
+						: scrollYBefore
+
+					// Close current item
+					collapseItem(currentId)
+
+					// Expand next item
+					const id = nextRevision.id
+					expandedItemIds.value = new Set(expandedItemIds.value).add(id)
+					expandedDiffIds.value = new Set(expandedDiffIds.value)
+					expandedDiffIds.value.add(id)
+					expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+					expandedHistoryIds.value.delete(id)
+					// Load diff if not already loaded
+					if (!loadedDiffs.value.has(id)) {
+						const pageName = nextRevision.pageName
+						if (pageName) {
+							loadingDiffIds.value = new Set(loadingDiffIds.value)
+							loadingDiffIds.value.add(id)
+							wiki.getRevisionDiff(pageName, id)
+								.then(response => {
+									loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
+									loadingDiffIds.value = new Set(loadingDiffIds.value)
+									loadingDiffIds.value.delete(id)
+								})
+								.catch(e => {
+									console.error("Failed to load diff", e)
+									loadingDiffIds.value = new Set(loadingDiffIds.value)
+									loadingDiffIds.value.delete(id)
+								})
+						}
+					}
+
+					// Wait for DOM update, then restore scroll position
+					nextTick(() => {
+						const allItems = document.querySelectorAll(".history-item-expanded")
+						for (const item of allItems) {
+							const navButton = item.querySelector(
+								'[data-navigation-button="next"]'
+							) as HTMLElement
+							if (navButton) {
+								const newButtonRect = navButton.getBoundingClientRect()
+								const newButtonTopRelativeToViewport =
+									newButtonRect.top + window.scrollY
+								const scrollDelta =
+									newButtonTopRelativeToViewport - buttonTopRelativeToViewport
+								window.scrollBy(0, scrollDelta)
+								break
+							}
+						}
+					})
+				}
+			}
+		}
+	}
+
+	window.addEventListener("keydown", handleKeyDown)
+	// Store the handler so we can remove it later
+	;(window as any).__flaggedWatchlistKeyHandler = handleKeyDown
+}
+
+onUnmounted(() => {
+	const handler = (window as any).__flaggedWatchlistKeyHandler
+	if (handler) {
+		window.removeEventListener("keydown", handler)
+		delete (window as any).__flaggedWatchlistKeyHandler
+	}
+})
 
 function saveSearchQueries(): void {
 	pageSearchQueries.value.forEach((query, index) => {
@@ -250,6 +436,15 @@ async function loadMore(): Promise<void> {
 }
 
 const allRevisions = computed(() => allRevisionsData.value)
+
+/** Get all revisions in order (flattened from revisionsByDate) */
+const allRevisionsInOrder = computed(() => {
+	const result: Revision[] = []
+	for (const group of revisionsByDate.value) {
+		result.push(...group.revisions)
+	}
+	return result
+})
 
 const revisionsByDate = computed(() => {
 	const grouped = new Map<string, { dateLabel: string; revisions: Revision[] }>()
@@ -738,6 +933,148 @@ function handleAddTopic(change: Revision): void {
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
 	expandedTalkIds.value.delete(change.id)
 }
+
+/** Navigate to previous item, maintaining scroll position */
+function navigateToPrevious(currentId: number, event: MouseEvent): void {
+	event.stopPropagation()
+	const revisions = allRevisionsInOrder.value
+	const currentIndex = revisions.findIndex(r => r.id === currentId)
+	if (currentIndex <= 0) return // No previous item
+
+	const previousRevision = revisions[currentIndex - 1]
+	if (!previousRevision) return
+
+	// Store the button's position relative to viewport
+	const button = event.currentTarget as HTMLElement
+	const buttonRect = button.getBoundingClientRect()
+	const buttonTopRelativeToViewport = buttonRect.top + window.scrollY
+
+	// Close current item
+	collapseItem(currentId)
+
+	// Expand previous item
+	const id = previousRevision.id
+	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.add(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
+	// Load diff if not already loaded
+	if (!loadedDiffs.value.has(id)) {
+		const pageName = previousRevision.pageName
+		if (pageName) {
+			loadingDiffIds.value = new Set(loadingDiffIds.value)
+			loadingDiffIds.value.add(id)
+			wiki.getRevisionDiff(pageName, id)
+				.then(response => {
+					loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
+					loadingDiffIds.value = new Set(loadingDiffIds.value)
+					loadingDiffIds.value.delete(id)
+				})
+				.catch(e => {
+					console.error("Failed to load diff", e)
+					loadingDiffIds.value = new Set(loadingDiffIds.value)
+					loadingDiffIds.value.delete(id)
+				})
+		}
+	}
+
+	// Wait for DOM update, then restore scroll position
+	nextTick(() => {
+		// Find the same button in the newly expanded item
+		// Look for the item that contains the expanded content and has the previous button
+		const allItems = document.querySelectorAll(".history-item-expanded")
+		for (const item of allItems) {
+			const navButton = item.querySelector(
+				'[data-navigation-button="previous"]'
+			) as HTMLElement
+			if (navButton) {
+				const newButtonRect = navButton.getBoundingClientRect()
+				const newButtonTopRelativeToViewport = newButtonRect.top + window.scrollY
+				const scrollDelta = newButtonTopRelativeToViewport - buttonTopRelativeToViewport
+				window.scrollBy(0, scrollDelta)
+				break
+			}
+		}
+	})
+}
+
+/** Navigate to next item, maintaining scroll position */
+function navigateToNext(currentId: number, event: MouseEvent): void {
+	event.stopPropagation()
+	const revisions = allRevisionsInOrder.value
+	const currentIndex = revisions.findIndex(r => r.id === currentId)
+	if (currentIndex < 0 || currentIndex >= revisions.length - 1) return // No next item
+
+	const nextRevision = revisions[currentIndex + 1]
+	if (!nextRevision) return
+
+	// Store the button's position relative to viewport
+	const button = event.currentTarget as HTMLElement
+	const buttonRect = button.getBoundingClientRect()
+	const buttonTopRelativeToViewport = buttonRect.top + window.scrollY
+
+	// Close current item
+	collapseItem(currentId)
+
+	// Expand next item
+	const id = nextRevision.id
+	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.add(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
+	// Load diff if not already loaded
+	if (!loadedDiffs.value.has(id)) {
+		const pageName = nextRevision.pageName
+		if (pageName) {
+			loadingDiffIds.value = new Set(loadingDiffIds.value)
+			loadingDiffIds.value.add(id)
+			wiki.getRevisionDiff(pageName, id)
+				.then(response => {
+					loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
+					loadingDiffIds.value = new Set(loadingDiffIds.value)
+					loadingDiffIds.value.delete(id)
+				})
+				.catch(e => {
+					console.error("Failed to load diff", e)
+					loadingDiffIds.value = new Set(loadingDiffIds.value)
+					loadingDiffIds.value.delete(id)
+				})
+		}
+	}
+
+	// Wait for DOM update, then restore scroll position
+	nextTick(() => {
+		// Find the same button in the newly expanded item
+		// Look for the item that contains the expanded content and has the next button
+		const allItems = document.querySelectorAll(".history-item-expanded")
+		for (const item of allItems) {
+			const navButton = item.querySelector('[data-navigation-button="next"]') as HTMLElement
+			if (navButton) {
+				const newButtonRect = navButton.getBoundingClientRect()
+				const newButtonTopRelativeToViewport = newButtonRect.top + window.scrollY
+				const scrollDelta = newButtonTopRelativeToViewport - buttonTopRelativeToViewport
+				window.scrollBy(0, scrollDelta)
+				break
+			}
+		}
+	})
+}
+
+/** Check if there is a previous item */
+function hasPrevious(currentId: number): boolean {
+	const revisions = allRevisionsInOrder.value
+	const currentIndex = revisions.findIndex(r => r.id === currentId)
+	return currentIndex > 0
+}
+
+/** Check if there is a next item */
+function hasNext(currentId: number): boolean {
+	const revisions = allRevisionsInOrder.value
+	const currentIndex = revisions.findIndex(r => r.id === currentId)
+	return currentIndex >= 0 && currentIndex < revisions.length - 1
+}
 </script>
 
 <template>
@@ -882,6 +1219,28 @@ function handleAddTopic(change: Revision): void {
 							</div>
 						</template>
 						<template v-else>
+							<div class="history-navigation-buttons">
+								<button
+									type="button"
+									class="history-nav-button history-nav-button-previous"
+									:disabled="!hasPrevious(change.id)"
+									data-navigation-button="previous"
+									@click.stop="navigateToPrevious(change.id, $event)"
+									aria-label="Previous item"
+								>
+									<CdxIcon :icon="cdxIconArrowPrevious" size="small" />
+								</button>
+								<button
+									type="button"
+									class="history-nav-button history-nav-button-next"
+									:disabled="!hasNext(change.id)"
+									data-navigation-button="next"
+									@click.stop="navigateToNext(change.id, $event)"
+									aria-label="Next item"
+								>
+									<CdxIcon :icon="cdxIconArrowNext" size="small" />
+								</button>
+							</div>
 							<div class="history-expanded">
 								<div class="history-title-row">
 									<a
