@@ -24,7 +24,7 @@ const pageSearchQueries = ref<string[]>([
 const userSearchQueries = ref<string[]>([
 	localStorage.getItem(userStorageKeys[0]) ?? "Samwalton9",
 	localStorage.getItem(userStorageKeys[1]) ?? "GearsDatapack",
-	localStorage.getItem(userStorageKeys[2]) ?? "TrademarkedTWOrantula",
+	localStorage.getItem(userStorageKeys[2]) ?? "Satayboi",
 ])
 
 // Store results separately for each page

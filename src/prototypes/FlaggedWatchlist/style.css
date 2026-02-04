@@ -42,7 +42,7 @@
 
 /* Same containment as inline history box */
 .watchlist-history-box {
-	margin-top: 0.25rem;
+	/* margin-top: 0.25rem; */
 	position: relative;
 	isolation: isolate;
 	/* border: 1px solid var(--border-color-subtle); */
@@ -242,10 +242,24 @@
 	row-gap: 0px;
 	gap: 0.2rem;
 	padding-top: 0.5rem;
-	justify-content: flex-end;
+	justify-content: space-between;
 	align-items: center;
 	margin-top: auto;
-	align-self: flex-end;
+	align-self: stretch;
+}
+
+.history-action-buttons-right {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2rem;
+	align-items: center;
+	margin-left: auto;
+	margin-right: -0.1rem;
+}
+
+.history-action-button-left {
+	margin-left: -0.25rem;
+	/* margin-bottom: -0.5rem; */
 }
 
 .history-action-button {
@@ -343,18 +357,26 @@
 	color: var(--color-progressive, #36c);
 }
 
-.newcomer-heart-icon {
+.user-name-container {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.user-type-icon {
 	/* display: inline-block; */
-	width: 0.25em;
-	height: 0.25em;
-	margin-left: -0.1em;
+	/* margin-left: -0.2em; */
+	/* margin-top: -0.3em; */
 	/* margin-right: 0.75em; */
-	color: var(--green400);
 	/* vertical-align: middle; */
 }
 
-.history-expanded .newcomer-heart-icon {
-	margin-left: 0.3em;
+.history-expanded .user-name-container {
+	gap: 0.4rem;
+}
+
+.history-expanded .user-type-icon-expanded {
+	/* margin-left: 0.3em; */
 	width: 1em;
 	height: 1em;
 }
@@ -435,6 +457,134 @@ a:hover {
 	font-style: italic;
 }
 
+/* Inline talk page: text editor */
+.history-inline-talk {
+	margin-top: 0;
+}
+
+.talk-editor {
+	margin-top: 0.5rem;
+	/* border: 1px solid var(--border-color-subtle); */
+	border-radius: 2px;
+	background-color: var(--background-color-base);
+	overflow: hidden;
+}
+
+.talk-editor-toolbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.5rem;
+	border: 1px solid var(--border-color-subtle);
+	background-color: var(--background-color-base);
+}
+
+.talk-editor-toolbar-left {
+	display: flex;
+	gap: 0.25rem;
+	align-items: center;
+}
+
+.talk-editor-toolbar-right {
+	display: flex;
+	gap: 0;
+	align-items: center;
+}
+
+.talk-editor-button {
+	background: none;
+	border: none;
+	padding: 0.25rem 0.5rem;
+	cursor: pointer;
+	color: var(--color-subtle);
+	font-size: 0.875rem;
+	display: flex;
+	align-items: center;
+	gap: 0.125rem;
+	border-radius: 2px;
+}
+
+.talk-editor-button:hover {
+	background-color: var(--background-color-interactive);
+	color: var(--color-base);
+}
+
+.talk-editor-button-text {
+	font-weight: bold;
+	font-size: 0.875rem;
+}
+
+.talk-editor-button-caret {
+	font-size: 0.625rem;
+	margin-left: 0.125rem;
+}
+
+.talk-editor-button-icon {
+	font-size: 0.875rem;
+}
+
+.talk-editor-mode-button {
+	background: none;
+	border: none;
+	padding: 0.25rem 0.5rem;
+	cursor: pointer;
+	color: var(--color-base);
+	font-size: 0.875rem;
+	font-weight: bold;
+	border-radius: 0;
+	position: relative;
+}
+
+.talk-editor-mode-button:hover {
+	background-color: var(--background-color-interactive);
+}
+
+.talk-editor-mode-button-active {
+	color: var(--color-progressive);
+}
+
+.talk-editor-mode-button-active::after {
+	content: "";
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background-color: var(--color-progressive);
+}
+
+.talk-editor-textarea {
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	width: 100%;
+	min-height: 8rem;
+	padding: 0.75rem;
+	resize: vertical;
+	font-family: inherit;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--color-base);
+	background-color: var(--background-color-base);
+}
+
+.talk-editor-textarea:focus {
+	outline: none;
+}
+
+.talk-editor-textarea::placeholder {
+	color: var(--color-subtle);
+}
+
+.talk-editor-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	padding-top: 0.5rem;
+	/* padding-bottom: 0.25rem; */
+	/* padding: 0.75rem; */
+	background-color: var(--background-color-base);
+}
+
 /* Inline history: same look as top-level, slightly indented; no gap */
 .history-inline-history {
 	margin-top: 0;
@@ -475,7 +625,7 @@ a:hover {
 
 /* Same diff block styling as DiffFeedStyled / SmoothWatchlistInlineDiff */
 .change-diff {
-	margin-top: 0.5rem;
+	/* margin-top: 0.5rem; */
 	overflow: hidden;
 	font-family: var(--font-family-mono, ui-monospace, monospace);
 	/* font-size: 0.8125rem; */
@@ -491,7 +641,7 @@ a:hover {
 
 .history-item .change-diff {
 	margin-bottom: 0;
-	margin-top: 0.1rem;
+	margin-top: 0.5rem;
 	max-height: 9rem;
 }
 

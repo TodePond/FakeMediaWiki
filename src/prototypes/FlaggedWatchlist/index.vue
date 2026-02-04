@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxProgressBar } from "@wikimedia/codex"
-import { cdxIconHeart } from "@wikimedia/codex-icons"
+import type { Icon } from "@wikimedia/codex-icons"
+import { cdxIconHeart, cdxIconUnStar } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref } from "vue"
 import {
 	WikiApi,
@@ -11,6 +12,35 @@ import {
 	type Revision,
 	type UserInfo,
 } from "../../wiki-api/WikiApi"
+
+/** Configuration for user type icons and colors */
+interface UserTypeConfig {
+	icon: Icon | null
+	color: string
+}
+
+/** User type display configuration */
+const userTypeConfig: Record<
+	"unregistered" | "newcomer" | "learner" | "experienced",
+	UserTypeConfig
+> = {
+	unregistered: {
+		icon: null, // No icon for unregistered users
+		color: "var(--color-subtle)",
+	},
+	newcomer: {
+		icon: cdxIconHeart,
+		color: "var(--green400)",
+	},
+	learner: {
+		icon: null,
+		color: "var(--yellow400)",
+	},
+	experienced: {
+		icon: cdxIconUnStar,
+		color: "var(--yellow400)",
+	},
+}
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends PageHistoryRevision {
@@ -32,7 +62,7 @@ const pageSearchQueries = ref<string[]>([
 ])
 const userSearchQueries = ref<string[]>([
 	"Samwalton9",
-	"TrademarkedTWOrantula",
+	"Satayboi",
 	"Todepond",
 	// "GearsDatapack",
 ])
@@ -76,6 +106,13 @@ const HEART_RISE_DURATION_MS = 2500
 const userInfoCache = ref<Map<string, UserInfo | null>>(new Map())
 /** Cache of user categories by username */
 const userCategoriesCache = ref<Map<string, string>>(new Map())
+
+/** Which revision ids have the talk page expanded */
+const expandedTalkIds = ref<Set<number>>(new Set())
+/** Talk page text content keyed by revision id */
+const talkPageText = ref<Map<number, string>>(new Map())
+/** Current editor mode: 'visual' or 'source' */
+const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
 onMounted(search)
 
@@ -198,7 +235,9 @@ async function search(): Promise<void> {
 	loadedHistories.value = new Map()
 	loadingHistoryPageNames.value = new Set()
 	expandedItemIds.value = new Set()
+	expandedTalkIds.value = new Set()
 	// Keep thanked state - don't clear it on refresh
+	// Keep talk page text cached
 }
 
 async function loadMore(): Promise<void> {
@@ -378,6 +417,7 @@ function collapseItem(id: number): void {
 	expandedItemIds.value.delete(id)
 	expandedDiffIds.value.delete(id)
 	expandedHistoryIds.value.delete(id)
+	expandedTalkIds.value.delete(id)
 }
 
 function handleItemClick(change: Revision, event: MouseEvent): void {
@@ -399,6 +439,8 @@ function toggleDiff(change: Revision): void {
 	expandedDiffIds.value.add(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.delete(id)
 	if (loadedDiffs.value.has(id)) return
 	const pageName = change.pageName
 	if (!pageName) return
@@ -480,6 +522,8 @@ function toggleHistory(change: Revision): void {
 	expandedHistoryIds.value.add(id)
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.delete(id)
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.delete(id)
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
@@ -632,9 +676,67 @@ async function fetchUserCategory(userName: string): Promise<void> {
 	}
 }
 
-/** Check if a user is a newcomer */
-function isNewcomer(userName: string): boolean {
-	return userCategoriesCache.value.get(userName) === "newcomer"
+/** Get user category for a username */
+function getUserCategory(
+	userName: string
+): "unregistered" | "newcomer" | "learner" | "experienced" | null {
+	const category = userCategoriesCache.value.get(userName)
+	if (
+		category === "unregistered" ||
+		category === "newcomer" ||
+		category === "learner" ||
+		category === "experienced"
+	) {
+		return category
+	}
+	return null
+}
+
+/** Get user type config for a username */
+function getUserTypeConfig(userName: string): UserTypeConfig | null {
+	const category = getUserCategory(userName)
+	return category ? userTypeConfig[category] : null
+}
+
+function toggleTalk(change: Revision): void {
+	const id = change.id
+	const expanded = expandedTalkIds.value.has(id)
+	if (expanded) {
+		expandedTalkIds.value = new Set(expandedTalkIds.value)
+		expandedTalkIds.value.delete(id)
+		return
+	}
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.add(id)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.delete(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
+	// Initialize text content and editor mode if not already set
+	if (!talkPageText.value.has(id)) {
+		talkPageText.value = new Map(talkPageText.value).set(id, "")
+	}
+	if (!editorMode.value.has(id)) {
+		editorMode.value = new Map(editorMode.value).set(id, "source")
+	}
+}
+
+function setEditorMode(id: number, mode: "visual" | "source"): void {
+	editorMode.value = new Map(editorMode.value).set(id, mode)
+}
+
+function updateTalkText(id: number, text: string): void {
+	talkPageText.value = new Map(talkPageText.value).set(id, text)
+}
+
+function handleAddTopic(change: Revision): void {
+	// TODO: Implement add topic functionality
+	const text = talkPageText.value.get(change.id) || ""
+	console.log("Add topic:", text)
+	// For now, just close the talk tab
+	// Keep the item expanded though
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.delete(change.id)
 }
 </script>
 
@@ -754,16 +856,25 @@ function isNewcomer(userName: string): boolean {
 									]"
 								>
 									{{ formatDelta(change.delta) }}</span
-								><a
-									target="_blank"
-									:href="wiki.getUserUrl(change.user.name)"
-									class="history-user"
-									>{{ change.user.name }}</a
-								><span v-if="isNewcomer(change.user.name)"
-									><CdxIcon
-										:icon="cdxIconHeart"
-										size="small"
-										class="newcomer-heart-icon" /></span
+								>
+								<span class="user-name-container"
+									><a
+										target="_blank"
+										:href="wiki.getUserUrl(change.user.name)"
+										class="history-user"
+										>{{ change.user.name }}</a
+									>
+									<CdxIcon
+										v-if="getUserTypeConfig(change.user.name)?.icon"
+										:class="[
+											'user-type-icon',
+											`user-type-icon-${getUserCategory(change.user.name) || ''}`,
+										]"
+										:style="{
+											color: getUserTypeConfig(change.user.name)?.color,
+										}"
+										:icon="getUserTypeConfig(change.user.name)!.icon!"
+										size="x-small" /></span
 								><span
 									class="history-comment"
 									v-html="change?.summary?.comment ?? ''"
@@ -802,16 +913,23 @@ function isNewcomer(userName: string): boolean {
 										−
 									</button>
 								</div>
-								<span
+								<span class="user-name-container"
 									><a
 										target="_blank"
 										:href="wiki.getUserUrl(change.user.name)"
 										class="history-user-expanded"
 										>{{ change.user.name }}</a
 									><CdxIcon
-										v-if="isNewcomer(change.user.name)"
-										:icon="cdxIconHeart"
-										class="newcomer-heart-icon"
+										v-if="getUserTypeConfig(change.user.name)?.icon"
+										:icon="getUserTypeConfig(change.user.name)!.icon!"
+										:class="[
+											'user-type-icon',
+											'user-type-icon-expanded',
+											`user-type-icon-${getUserCategory(change.user.name) || ''}`,
+										]"
+										:style="{
+											color: getUserTypeConfig(change.user.name)?.color,
+										}"
 								/></span>
 								<button
 									type="button"
@@ -835,45 +953,57 @@ function isNewcomer(userName: string): boolean {
 								<footer class="history-expanded-footer">
 									<button
 										type="button"
-										class="history-action-button"
+										class="history-action-button history-action-button-left"
 										:class="{
-											'history-action-button-active': expandedDiffIds.has(
+											'history-action-button-active': expandedTalkIds.has(
 												change.id
 											),
 										}"
-										@click.stop="toggleDiff(change)"
+										@click.stop="toggleTalk(change)"
 									>
-										(diff)
+										(talk)
 									</button>
-									<button
-										type="button"
-										class="history-action-button"
-										:class="{
-											'history-action-button-active': expandedHistoryIds.has(
-												change.id
-											),
-										}"
-										@click.stop="toggleHistory(change)"
-									>
-										(hist)
-									</button>
-									<button
-										type="button"
-										class="history-action-button"
-										:class="{
-											'history-action-button-thanked': thankedRevisionIds.has(
-												change.id
-											),
-										}"
-										:disabled="thankedRevisionIds.has(change.id)"
-										@click.stop="onThankClick(change, $event)"
-									>
-										{{
-											thankedRevisionIds.has(change.id)
-												? "(thanked)"
-												: "(thanks)"
-										}}
-									</button>
+									<div class="history-action-buttons-right">
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-active': expandedDiffIds.has(
+													change.id
+												),
+											}"
+											@click.stop="toggleDiff(change)"
+										>
+											(diff)
+										</button>
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-active':
+													expandedHistoryIds.has(change.id),
+											}"
+											@click.stop="toggleHistory(change)"
+										>
+											(hist)
+										</button>
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-thanked':
+													thankedRevisionIds.has(change.id),
+											}"
+											:disabled="thankedRevisionIds.has(change.id)"
+											@click.stop="onThankClick(change, $event)"
+										>
+											{{
+												thankedRevisionIds.has(change.id)
+													? "(thanked)"
+													: "(thanks)"
+											}}
+										</button>
+									</div>
 								</footer>
 							</div>
 						</template>
@@ -932,6 +1062,33 @@ function isNewcomer(userName: string): boolean {
 								<CdxProgressBar inline />
 							</div>
 							<div v-else class="history-diff-empty">No diff</div>
+						</div>
+						<div v-if="expandedTalkIds.has(change.id)" class="history-inline-talk">
+							<div class="talk-editor">
+								<textarea
+									class="talk-editor-textarea"
+									placeholder="Write on the editor's talk page..."
+									:value="talkPageText.get(change.id) || ''"
+									@input="
+										updateTalkText(
+											change.id,
+											($event.target as HTMLTextAreaElement).value
+										)
+									"
+								></textarea>
+								<div class="talk-editor-footer">
+									<!-- <CdxButton
+										weight="quiet"
+										action="destructive"
+										@click="collapseItem(change.id)"
+									>
+										Cancel
+									</CdxButton> -->
+									<CdxButton weight="primary" @click="handleAddTopic(change)">
+										Add topic
+									</CdxButton>
+								</div>
+							</div>
 						</div>
 						<div
 							v-if="expandedHistoryIds.has(change.id)"
@@ -992,9 +1149,16 @@ function isNewcomer(userName: string): boolean {
 											class="history-user"
 											>{{ rev.user.name }}</a
 										><CdxIcon
-											v-if="isNewcomer(rev.user.name)"
-											:icon="cdxIconHeart"
-											class="newcomer-heart-icon"
+											v-if="getUserTypeConfig(rev.user.name)?.icon"
+											:icon="getUserTypeConfig(rev.user.name)!.icon!"
+											size="x-small"
+											:class="[
+												'user-type-icon',
+												`user-type-icon-${getUserCategory(rev.user.name) || ''}`,
+											]"
+											:style="{
+												color: getUserTypeConfig(rev.user.name)?.color,
+											}"
 										/><span
 											class="history-comment"
 											v-html="rev.commentHtml ?? rev.comment ?? ''"

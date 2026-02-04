@@ -1410,7 +1410,7 @@ export class WikiApi {
 	 */
 	getUserCategory(
 		userInfo: UserInfo | null
-	): "unregistered" | "registered" | "newcomer" | "learner" | "experienced" {
+	): "unregistered" | "newcomer" | "learner" | "experienced" {
 		if (!userInfo) {
 			return "unregistered"
 		}

@@ -30,7 +30,7 @@ const pageSearchQueries = ref<string[]>([
 const userSearchQueries = ref<string[]>([
 	localStorage.getItem(userStorageKeys[0]!) ?? "Samwalton9",
 	localStorage.getItem(userStorageKeys[1]!) ?? "GearsDatapack",
-	localStorage.getItem(userStorageKeys[2]!) ?? "TrademarkedTWOrantula",
+	localStorage.getItem(userStorageKeys[2]!) ?? "Satayboi",
 ])
 
 const pageResults = wiki.createResults<Revision>(3).map(r => ref(r))
@@ -183,7 +183,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 	resultRef.value.error = null
 
 	try {
-		const _history = (await wiki.getPageHistory(pageName, { limit: 10 })) as {
+		const _history = (await wiki.getPageHistory(pageName)) as {
 			revisions?: Array<{
 				comment: string
 				user: { name: string }
@@ -435,7 +435,7 @@ function toggleHistory(change: Revision): void {
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
-	wiki.getPageHistory(pageName, { limit: 20 })
+	wiki.getPageHistory(pageName)
 		.then(async response => {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => ({

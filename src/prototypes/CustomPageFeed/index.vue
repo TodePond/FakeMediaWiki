@@ -18,7 +18,7 @@ const pageSearchQueries = ref<string[]>([
 const userSearchQueries = ref<string[]>([
 	localStorage.getItem(userStorageKeys[0]!) ?? "Samwalton9",
 	localStorage.getItem(userStorageKeys[1]!) ?? "GearsDatapack",
-	localStorage.getItem(userStorageKeys[2]!) ?? "TrademarkedTWOrantula",
+	localStorage.getItem(userStorageKeys[2]!) ?? "Satayboi",
 ])
 
 // Store results using Result type
@@ -140,7 +140,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 	resultRef.value.error = null
 
 	try {
-		const _history = (await wiki.getPageHistory(pageName, { limit: 10 })) as {
+		const _history = (await wiki.getPageHistory(pageName)) as {
 			revisions?: Array<{
 				comment: string
 				user: { name: string }
