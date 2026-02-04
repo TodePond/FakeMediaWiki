@@ -12,13 +12,13 @@ import {
 	cdxIconWatchlist,
 } from "@wikimedia/codex-icons"
 import type { Component } from "vue"
-import { computed, ref, watch } from "vue"
+import { computed, ref, shallowRef, watch } from "vue"
 import { useRoute } from "vue-router"
 import { getPrototype, getPrototypeComponent } from "../prototypes/registry"
 
 const route = useRoute()
 const prototypeName = computed(() => route.params.name as string)
-const PrototypeComponent = ref<Component | undefined>(undefined)
+const PrototypeComponent = shallowRef<Component | undefined>(undefined)
 const prototype = ref<PrototypeDefinition<"prototype" | "variant"> | undefined>(undefined)
 
 watch(

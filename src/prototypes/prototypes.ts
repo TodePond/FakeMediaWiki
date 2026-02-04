@@ -109,12 +109,21 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
+				id: "FlaggedWatchlist",
+				title: "Flagged watchlist",
+				name: "Flagged watchlist",
+				description: "A feed with flagged items.",
+				wrapper: "Special",
+				status: "wip",
+			},
+			{
+				type: "variant",
 				id: "ExpandingWatchlist",
 				title: "Expanding watchlist",
 				name: "Expanding watchlist",
 				description: "A feed with expandable items.",
 				wrapper: "Special",
-				status: "wip",
+				status: "new",
 			},
 			{
 				type: "variant",
@@ -235,8 +244,10 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				id: "CombinedFeedMinimal",
 				title: "Combined feed",
 				name: "Combined feed",
-				description: "A stripped-back combined feed with no avatar or thumbnail.",
+				description:
+					"A stripped-back combined feed with no avatar or thumbnail.<br />Updated to test out an improved combined feed endpoint.",
 				wrapper: "Special",
+				status: "updated",
 			},
 			{
 				type: "variant",

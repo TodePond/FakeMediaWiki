@@ -209,7 +209,7 @@ async function loadPage(
 	errorRef.value = null
 
 	try {
-		const _history = await wiki.getPageHistory(pageName, { limit: 10 })
+		const _history = await wiki.getPageHistory(pageName)
 
 		if (!_history.revisions) {
 			resultsRef.value = []

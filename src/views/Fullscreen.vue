@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import type { Component } from "vue"
+import { computed, shallowRef, watch } from "vue"
 import { useRoute } from "vue-router"
 import { getPrototypeComponent } from "../prototypes/registry"
-import type { Component } from "vue"
 
 const route = useRoute()
 const prototypeName = computed(() => route.params.name as string)
-const PrototypeComponent = ref<Component | undefined>(undefined)
+const PrototypeComponent = shallowRef<Component | undefined>(undefined)
 
 watch(
 	prototypeName,

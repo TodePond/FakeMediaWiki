@@ -101,6 +101,16 @@ export interface UserSearchResult {
 	avatar: { url: string } | null
 }
 
+export interface UserInfo {
+	userid?: number
+	name: string
+	editcount?: number
+	registration?: string
+	tempexpired?: boolean | null
+	invalid?: boolean
+	missing?: boolean
+}
+
 export interface PageSearchResult {
 	key?: string
 	title: string
@@ -171,6 +181,8 @@ export interface PageHistoryRevision {
 	delta: number | null
 }
 
+type CachedRevision = PageHistoryRevision & { pageName?: string }
+
 export interface PageHistoryResponse {
 	revisions?: PageHistoryRevision[]
 	latest?: string
@@ -226,6 +238,11 @@ export interface FeaturedPage {
  */
 export class WikiApi {
 	base: string
+	private userInfoCache: Map<string, UserInfo | null>
+	// Cache for page histories: key = pageName, value = sorted array of revisions (newest first)
+	private pageHistoryCache = new Map<string, PageHistoryRevision[]>()
+	// Cache for user histories: key = userName, value = sorted array of revisions (newest first)
+	private userHistoryCache = new Map<string, (PageHistoryRevision & { pageName: string })[]>()
 
 	/**
 	 * Create a new WikiApi instance
@@ -233,6 +250,7 @@ export class WikiApi {
 	 */
 	constructor(base = "https://en.wikipedia.org/") {
 		this.base = base
+		this.userInfoCache = new Map()
 	}
 
 	/**
@@ -517,54 +535,193 @@ export class WikiApi {
 
 	/**
 	 * Get page revision history
+	 * Uses caching to avoid fetching the same data twice.
+	 * Looks backwards from startDate by fetching ~20 revisions.
 	 * @param pageName - Page title
-	 * @param options - Options (limit, older_than, newer_than, etc.)
+	 * @param options - Options
+	 * @param options.startDate - ISO timestamp string - look backwards from this date (default: now)
+	 * @param options.older_than - Revision ID or timestamp - for explicit pagination
+	 * @param options.newer_than - Revision ID or timestamp - for explicit pagination
 	 * @returns Revision history with revisions array
+	 * @note The MediaWiki REST API returns 20 revisions per request.
 	 */
 	async getPageHistory(
 		pageName: string,
-		options: HistoryOptions = {}
+		options: { startDate?: string; older_than?: string; newer_than?: string } = {}
 	): Promise<PageHistoryResponse> {
+		const cached = this.pageHistoryCache.get(pageName) || []
+		const { startDate, older_than, newer_than } = options
+
+		// If explicit older_than/newer_than provided, use those
+		if (older_than || newer_than) {
+			const params = new URLSearchParams()
+			if (older_than) params.append("older_than", older_than)
+			if (newer_than) params.append("newer_than", newer_than)
+
+			const query = params.toString()
+			const path = `page/${this.encode(pageName)}/history${query ? `?${query}` : ""}`
+			const response = (await this.request({
+				api: "mediawiki",
+				path,
+			})) as PageHistoryResponse
+
+			const newRevisions = response.revisions || []
+			const merged = [...cached, ...newRevisions]
+				.filter((rev, index, self) => index === self.findIndex(r => r.id === rev.id))
+				.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+			this.pageHistoryCache.set(pageName, merged)
+			return { ...response, revisions: merged }
+		}
+
+		// Use startDate-based pagination with gap detection
+		const targetStartTime = startDate ? new Date(startDate).getTime() : Date.now()
+
+		// Find cached revisions older than startDate (sorted newest first)
+		const cachedOlder = cached.filter(
+			rev => new Date(rev.timestamp).getTime() < targetStartTime
+		)
+
+		// Check if we have enough cached data (API returns ~20 revisions)
+		// If we have 20+ cached revisions older than startDate, return from cache
+		if (cachedOlder.length >= 20) {
+			return { revisions: cachedOlder.slice(0, 20) }
+		}
+
+		// Determine where to fetch from:
+		// - If no cache or cache doesn't reach startDate: fetch from startDate
+		// - If cache has gaps: fetch from the oldest cached revision (to fill the gap)
+		let fetchFrom: string | undefined = undefined
+		if (cachedOlder.length > 0) {
+			// Find the oldest cached revision (last in sorted array)
+			const oldestCached = cachedOlder[cachedOlder.length - 1]
+			if (oldestCached) {
+				fetchFrom = String(oldestCached.id)
+			}
+		} else if (startDate) {
+			// No cache older than startDate, fetch from startDate
+			fetchFrom = startDate
+		}
+
+		// Fetch from API
 		const params = new URLSearchParams()
-		if (options.limit) params.append("limit", String(options.limit))
-		if (options.older_than) params.append("older_than", options.older_than)
-		if (options.newer_than) params.append("newer_than", options.newer_than)
+		if (fetchFrom) params.append("older_than", fetchFrom)
 
 		const query = params.toString()
 		const path = `page/${this.encode(pageName)}/history${query ? `?${query}` : ""}`
-		return (await this.request({
+		const response = (await this.request({
 			api: "mediawiki",
 			path,
 		})) as PageHistoryResponse
+
+		const newRevisions = response.revisions || []
+
+		// Merge with cache, deduplicate by revision ID, sort by timestamp
+		const merged = [...cached, ...newRevisions]
+			.filter((rev, index, self) => index === self.findIndex(r => r.id === rev.id))
+			.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+		this.pageHistoryCache.set(pageName, merged)
+
+		// Return revisions older than startDate
+		const resultOlder = merged.filter(
+			rev => new Date(rev.timestamp).getTime() < targetStartTime
+		)
+		return { ...response, revisions: resultOlder.slice(0, 20) }
 	}
 
 	/**
 	 * Get user contribution history (revisions made by a user)
+	 * Uses caching to avoid fetching the same data twice.
+	 * Looks backwards from startDate by fetching ~20 revisions.
 	 * @param userName - Username
-	 * @param options - Options (limit, older_than, newer_than, etc.)
+	 * @param options - Options
+	 * @param options.startDate - ISO timestamp string - look backwards from this date (default: now)
+	 * @param options.limit - Limit (default: 20)
+	 * @param options.older_than - Timestamp - for explicit pagination
+	 * @param options.newer_than - Timestamp - for explicit pagination
 	 * @returns User revision history with same structure as getPageHistory
 	 */
 	async getUserHistory(
 		userName: string,
-		options: HistoryOptions = {}
+		options: HistoryOptions & { startDate?: string } = {}
 	): Promise<PageHistoryResponse> {
-		// Try REST API endpoint first (if it exists)
-		try {
-			const params = new URLSearchParams()
-			if (options.limit) params.append("limit", String(options.limit))
-			if (options.older_than) params.append("older_than", options.older_than)
-			if (options.newer_than) params.append("newer_than", options.newer_than)
+		const cached = this.userHistoryCache.get(userName) || []
+		const { startDate, older_than, newer_than, limit = 20 } = options
+		const limitNum =
+			typeof limit === "number" ? limit : typeof limit === "string" ? parseInt(limit, 10) : 20
 
-			const query = params.toString()
-			const path = `user/${encodeURIComponent(userName)}/contributions${query ? `?${query}` : ""}`
-			return (await this.request({
-				api: "mediawiki",
-				path,
-			})) as PageHistoryResponse
-		} catch {
-			// If REST API doesn't have this endpoint, fall back to Action API
-			return this.getUserHistoryViaActionApi(userName, options)
+		// If explicit older_than/newer_than provided, use those
+		if (older_than || newer_than) {
+			const fetched = await this.getUserHistoryViaActionApi(userName, {
+				limit: limitNum,
+				older_than,
+				newer_than,
+			})
+			const newRevisions = (fetched.revisions || []).map(
+				rev => rev as PageHistoryRevision & { pageName: string }
+			)
+			const merged: (PageHistoryRevision & { pageName: string })[] = [
+				...cached,
+				...newRevisions,
+			]
+				.filter((rev, index, self) => index === self.findIndex(r => r.id === rev.id))
+				.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+			this.userHistoryCache.set(userName, merged)
+			return { ...fetched, revisions: merged }
 		}
+
+		// Use startDate-based pagination with gap detection
+		const targetStartTime = startDate ? new Date(startDate).getTime() : Date.now()
+
+		// Find cached revisions older than startDate (sorted newest first)
+		const cachedOlder = cached.filter(
+			rev => new Date(rev.timestamp).getTime() < targetStartTime
+		)
+
+		// Check if we have enough cached data
+		if (cachedOlder.length >= limitNum) {
+			return { revisions: cachedOlder.slice(0, limitNum) }
+		}
+
+		// Determine where to fetch from:
+		// - If no cache or cache doesn't reach startDate: fetch from startDate
+		// - If cache has gaps: fetch from the oldest cached revision (to fill the gap)
+		let fetchFrom: string | undefined = undefined
+		if (cachedOlder.length > 0) {
+			// Find the oldest cached revision (last in sorted array)
+			const oldestCached = cachedOlder[cachedOlder.length - 1]
+			if (oldestCached) {
+				fetchFrom = oldestCached.timestamp
+			}
+		} else if (startDate) {
+			// No cache older than startDate, fetch from startDate
+			fetchFrom = startDate
+		}
+
+		// Fetch from API
+		const fetched = await this.getUserHistoryViaActionApi(userName, {
+			limit: limitNum,
+			older_than: fetchFrom,
+		})
+
+		const newRevisions = (fetched.revisions || []).map(
+			rev => rev as PageHistoryRevision & { pageName: string }
+		)
+
+		// Merge with cache, deduplicate by revision ID, sort by timestamp
+		const merged = [...cached, ...newRevisions]
+			.filter((rev, index, self) => index === self.findIndex(r => r.id === rev.id))
+			.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+		this.userHistoryCache.set(userName, merged)
+
+		// Return revisions older than startDate
+		const resultOlder = merged.filter(
+			rev => new Date(rev.timestamp).getTime() < targetStartTime
+		)
+		return { ...fetched, revisions: resultOlder.slice(0, limitNum) }
 	}
 
 	/**
@@ -635,6 +792,139 @@ export class WikiApi {
 	}
 
 	/**
+	 * Get contributions for multiple users by calling getUserHistory for each.
+	 * Uses caching to avoid fetching the same data twice.
+	 * Looks backwards from startDate by fetching ~20 revisions per user.
+	 * @param userNames - Array of usernames
+	 * @param options - Options
+	 * @param options.startDate - ISO timestamp string - look backwards from this date (default: now)
+	 * @param options.limit - Limit per user (default: 20)
+	 * @param options.older_than - Timestamp - for explicit pagination
+	 * @param options.newer_than - Timestamp - for explicit pagination
+	 * @returns Map of username to their revision history
+	 */
+	async getUsersHistory(
+		userNames: string[],
+		options: HistoryOptions & { startDate?: string } = {}
+	): Promise<Map<string, PageHistoryResponse>> {
+		if (userNames.length === 0) {
+			return new Map()
+		}
+
+		// Call getUserHistory for each user in parallel
+		const userPromises = userNames.map(async userName => {
+			try {
+				const history = await this.getUserHistory(userName, options)
+				return { userName, history }
+			} catch (e) {
+				// Silently skip users that fail
+				return { userName, history: { revisions: [] } as PageHistoryResponse }
+			}
+		})
+
+		const userResults = await Promise.all(userPromises)
+		const allResults = new Map<string, PageHistoryResponse>()
+
+		for (const { userName, history } of userResults) {
+			allResults.set(userName, history)
+		}
+
+		return allResults
+	}
+
+	/**
+	 * Get a combined feed of revisions from multiple users and/or pages.
+	 * Returns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.
+	 * Caching is handled internally by getUserHistory and getPageHistory.
+	 * @param options - Configuration object
+	 * @param options.userNames - Array of usernames to include
+	 * @param options.pageNames - Array of page titles to include
+	 * @param options.limit - Maximum total number of revisions to return (default: 20, max: 20)
+	 * @param options.after - Revision ID (as string) - only returns revisions older than this
+	 * @returns Array of revisions sorted by timestamp (newest first), deduplicated by revision ID
+	 */
+	async getCombinedFeed(options: {
+		userNames?: string[]
+		pageNames?: string[]
+		limit?: number
+		after?: string // Revision ID (as string) - for pagination
+	}): Promise<CachedRevision[]> {
+		const { userNames = [], pageNames = [], limit = 20, after } = options
+		const totalLimit = Math.min(Math.max(limit, 1), 20)
+		const allRevisions: CachedRevision[] = []
+		const seenIds = new Set<number>()
+
+		// Convert 'after' revision ID to a timestamp for startDate
+		let startDate: string | undefined = undefined
+		if (after) {
+			const afterId = parseInt(after, 10)
+			// Try to find the timestamp in caches
+			for (const [, cached] of this.pageHistoryCache) {
+				const rev = cached.find(r => r.id === afterId)
+				if (rev) {
+					startDate = rev.timestamp
+					break
+				}
+			}
+			if (!startDate) {
+				for (const [, cached] of this.userHistoryCache) {
+					const rev = cached.find(r => r.id === afterId)
+					if (rev) {
+						startDate = rev.timestamp
+						break
+					}
+				}
+			}
+		}
+
+		// Fetch user contributions - caching handled internally
+		if (userNames.length > 0) {
+			const userResultsMap = await this.getUsersHistory(userNames, {
+				limit: 20,
+				startDate,
+			})
+
+			for (const [, history] of userResultsMap) {
+				if (history.revisions) {
+					for (const rev of history.revisions) {
+						if (rev.id && !seenIds.has(rev.id)) {
+							seenIds.add(rev.id)
+							allRevisions.push(rev as CachedRevision)
+						}
+					}
+				}
+			}
+		}
+
+		// Fetch page histories - caching handled internally
+		if (pageNames.length > 0) {
+			const pagePromises = pageNames.map(async pageName => {
+				try {
+					const history = await this.getPageHistory(pageName, { startDate })
+					return { pageName, revisions: history.revisions || [] }
+				} catch (e) {
+					return { pageName, revisions: [] }
+				}
+			})
+
+			const pageResults = await Promise.all(pagePromises)
+			for (const { pageName, revisions } of pageResults) {
+				for (const rev of revisions) {
+					if (rev.id && !seenIds.has(rev.id)) {
+						seenIds.add(rev.id)
+						allRevisions.push({ ...rev, pageName } as CachedRevision)
+					}
+				}
+			}
+		}
+
+		// Sort by timestamp (newest first), then limit
+		return allRevisions
+			.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+			.slice(0, totalLimit)
+	}
+
+	/**
 	 * Get the parent (previous) revision ID for a revision on a page.
 	 * Uses the page history endpoint with older_than so we don't rely on the
 	 * current list having the previous revision.
@@ -645,7 +935,6 @@ export class WikiApi {
 	async getParentRevisionId(pageName: string, revId: number): Promise<number | null> {
 		const history = await this.getPageHistory(pageName, {
 			older_than: String(revId),
-			limit: 1,
 		})
 		const parent = history.revisions?.[0]
 		return parent?.id ?? null
@@ -895,6 +1184,160 @@ export class WikiApi {
 			// If no image found, use the default
 			return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
 		}
+	}
+
+	/**
+	 * Get user information including edit count, registration date, and account type
+	 * Results are cached in memory to avoid repeated API calls for the same user.
+	 * @param userName - Username or IP address
+	 * @returns User information including edit count, registration date, and account status
+	 */
+	async getUserInfo(userName: string): Promise<UserInfo | null> {
+		// Check cache first
+		if (this.userInfoCache.has(userName)) {
+			return this.userInfoCache.get(userName) ?? null
+		}
+
+		try {
+			const data = (await this.request({
+				api: "action",
+				params: {
+					action: "query",
+					list: "users",
+					ususers: userName,
+					usprop: "editcount|registration|tempexpired",
+				},
+			})) as {
+				query?: {
+					users?: Array<{
+						userid?: number
+						name: string
+						editcount?: number
+						registration?: string
+						tempexpired?: boolean | null
+						invalid?: boolean
+						missing?: boolean
+					}>
+				}
+			}
+
+			const users = data.query?.users
+			if (!users || users.length === 0) {
+				this.userInfoCache.set(userName, null)
+				return null
+			}
+
+			const user = users[0]
+			if (!user) {
+				this.userInfoCache.set(userName, null)
+				return null
+			}
+
+			const userInfo: UserInfo = {
+				userid: user.userid,
+				name: user.name,
+				editcount: user.editcount,
+				registration: user.registration,
+				tempexpired: user.tempexpired,
+				invalid: user.invalid,
+				missing: user.missing,
+			}
+
+			// Store in cache
+			this.userInfoCache.set(userName, userInfo)
+			return userInfo
+		} catch (error) {
+			console.error("Failed to get user info:", error)
+			// Cache null result to avoid retrying failed requests
+			this.userInfoCache.set(userName, null)
+			return null
+		}
+	}
+
+	/**
+	 * Check if a username is a temporary account (starts with ~)
+	 * @param userName - Username to check
+	 * @returns True if the username is a temporary account
+	 */
+	isTemporaryAccount(userName: string): boolean {
+		return userName.startsWith("~")
+	}
+
+	/**
+	 * Check if a username is an IP address
+	 * @param userName - Username to check
+	 * @returns True if the username appears to be an IP address
+	 */
+	isIPAddress(userName: string): boolean {
+		// Simple check: IP addresses contain dots and/or colons (for IPv6)
+		// More sophisticated regex could be used, but this covers most cases
+		return /^[\d.:]+$/.test(userName) && (userName.includes(".") || userName.includes(":"))
+	}
+
+	/**
+	 * Calculate days of activity from registration date
+	 * @param registrationDate - ISO timestamp string (e.g., "2007-06-07T16:36:03Z")
+	 * @returns Number of days since registration, or null if date is invalid
+	 */
+	getDaysOfActivity(registrationDate: string | undefined): number | null {
+		if (!registrationDate) {
+			return null
+		}
+
+		try {
+			const registration = new Date(registrationDate)
+			const now = new Date()
+			const diffMs = now.getTime() - registration.getTime()
+			const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+			return diffDays >= 0 ? diffDays : null
+		} catch {
+			return null
+		}
+	}
+
+	/**
+	 * Determine user category based on edit count and days of activity
+	 * @param userInfo - User information object
+	 * @returns User category: "unregistered", "registered", "newcomer", "learner", or "experienced"
+	 */
+	getUserCategory(
+		userInfo: UserInfo | null
+	): "unregistered" | "registered" | "newcomer" | "learner" | "experienced" {
+		if (!userInfo) {
+			return "unregistered"
+		}
+
+		// Unregistered: invalid, missing, or IP address
+		if (userInfo.invalid || userInfo.missing || this.isIPAddress(userInfo.name)) {
+			return "unregistered"
+		}
+
+		// Temporary accounts are also considered unregistered for filtering purposes
+		if (this.isTemporaryAccount(userInfo.name)) {
+			return "unregistered"
+		}
+
+		// Must have userid to be registered
+		if (!userInfo.userid) {
+			return "unregistered"
+		}
+
+		// Registered users: categorize by edit count and days of activity
+		const editCount = userInfo.editcount ?? 0
+		const daysOfActivity = this.getDaysOfActivity(userInfo.registration) ?? 0
+
+		// Experienced: more than 500 edits AND more than 30 days
+		if (editCount > 500 && daysOfActivity > 30) {
+			return "experienced"
+		}
+
+		// Newcomer: fewer than 10 edits OR fewer than 4 days
+		if (editCount < 10 || daysOfActivity < 4) {
+			return "newcomer"
+		}
+
+		// Learner: between newcomer and experienced thresholds
+		return "learner"
 	}
 
 	getTableFromToolbarComment(comment: string): string {

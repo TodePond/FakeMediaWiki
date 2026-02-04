@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
-import { computed, onMounted, ref, type Ref } from "vue"
+import { onMounted, ref } from "vue"
 import { WikiApi, type PageHistoryRevision, type Revision } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
@@ -27,21 +27,11 @@ const userSearchQueries = ref<string[]>([
 	localStorage.getItem(userStorageKeys[2]) ?? "TrademarkedTWOrantula",
 ])
 
-// Store results separately for each page
-const pageResults: [Ref<Revision[]>, Ref<Revision[]>, Ref<Revision[]>] = [ref([]), ref([]), ref([])]
-const userResults: [Ref<Revision[]>, Ref<Revision[]>, Ref<Revision[]>] = [ref([]), ref([]), ref([])]
-const pageLoading: [Ref<boolean>, Ref<boolean>, Ref<boolean>] = [ref(false), ref(false), ref(false)]
-const userLoading: [Ref<boolean>, Ref<boolean>, Ref<boolean>] = [ref(false), ref(false), ref(false)]
-const pageError: [Ref<string | null>, Ref<string | null>, Ref<string | null>] = [
-	ref(null),
-	ref(null),
-	ref(null),
-]
-const userError: [Ref<string | null>, Ref<string | null>, Ref<string | null>] = [
-	ref(null),
-	ref(null),
-	ref(null),
-]
+// Combined feed results
+const allRevisions = ref<Revision[]>([])
+const isLoading = ref(false)
+const errors = ref<string[]>([])
+
 onMounted(search)
 
 function saveSearchQueries(): void {
@@ -58,88 +48,26 @@ function saveSearchQueries(): void {
 }
 
 async function search(): Promise<void> {
-	// Load each page independently
-	const loadPromises: Promise<void>[] = []
-	for (let i = 0; i < pageSearchQueries.value.length; i++) {
-		const query = pageSearchQueries.value[i]
-		const results = pageResults[i]
-		const loading = pageLoading[i]
-		const error = pageError[i]
-		if (
-			query !== undefined &&
-			results !== undefined &&
-			loading !== undefined &&
-			error !== undefined
-		) {
-			if (query.trim()) {
-				loadPromises.push(loadPage(i + 1, query, results, loading, error))
-			} else {
-				results.value = []
-				loading.value = false
-				error.value = null
-			}
-		}
-	}
-	for (let i = 0; i < userSearchQueries.value.length; i++) {
-		const query = userSearchQueries.value[i]
-		const results = userResults[i]
-		const loading = userLoading[i]
-		const error = userError[i]
-		if (
-			query !== undefined &&
-			results !== undefined &&
-			loading !== undefined &&
-			error !== undefined
-		) {
-			if (query.trim()) {
-				loadPromises.push(loadUser(i + 1, query, results, loading, error))
-			} else {
-				results.value = []
-				loading.value = false
-				error.value = null
-			}
-		}
-	}
+	isLoading.value = true
+	errors.value = []
 
-	await Promise.all(loadPromises)
-	saveSearchQueries()
-}
-
-async function loadUser(
-	_userNum: number,
-	userName: string,
-	resultsRef: Ref<Revision[]>,
-	loadingRef: Ref<boolean>,
-	errorRef: Ref<string | null>
-): Promise<void> {
-	loadingRef.value = true
-	errorRef.value = null
+	// Collect non-empty page and user names
+	const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
+	const userNames = userSearchQueries.value.filter(name => name.trim() !== "")
 
 	try {
-		const _history = await wiki.getUserHistory(userName, { limit: 10 })
+		// Fetch combined feed
+		const revisions = await wiki.getCombinedFeed({
+			pageNames,
+			userNames,
+			limit: 20,
+		})
 
-		if (!_history.revisions) {
-			resultsRef.value = []
-			loadingRef.value = false
-			return
-		}
-
+		// Process revisions (transform comments, etc.)
 		const processedRevisions = await Promise.all(
-			_history.revisions.map(async revision => {
+			revisions.map(async revision => {
 				const pageName =
-					(
-						revision as PageHistoryRevision & {
-							pageName?: string
-							title?: string
-						}
-					).pageName ||
-					(
-						revision as PageHistoryRevision & {
-							pageName?: string
-							title?: string
-						}
-					).title ||
-					""
+					(revision as PageHistoryRevision & { pageName?: string }).pageName || ""
 				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
 				const toolbar = wiki.parseToolbarComment(_summary)
 				const summary = toolbar
@@ -176,130 +104,17 @@ async function loadUser(
 			})
 		)
 
-		resultsRef.value = processedRevisions
-		loadingRef.value = false
+		allRevisions.value = processedRevisions
+		isLoading.value = false
 	} catch (e) {
-		loadingRef.value = false
+		isLoading.value = false
 		const errorObj = e as Error
-		if (errorObj.message.includes("404")) {
-			errorRef.value = `${userName}: User not found`
-		} else {
-			errorRef.value = `${userName}: ${errorObj.message}`
-		}
-		resultsRef.value = []
+		errors.value = [errorObj.message]
+		allRevisions.value = []
 	}
+
+	saveSearchQueries()
 }
-
-async function loadPage(
-	_pageNum: number,
-	pageName: string,
-	resultsRef: Ref<Revision[]>,
-	loadingRef: Ref<boolean>,
-	errorRef: Ref<string | null>
-): Promise<void> {
-	loadingRef.value = true
-	errorRef.value = null
-
-	try {
-		const _history = await wiki.getPageHistory(pageName, { limit: 10 })
-
-		if (!_history.revisions) {
-			resultsRef.value = []
-			loadingRef.value = false
-			return
-		}
-
-		const processedRevisions = await Promise.all(
-			_history.revisions.map(async revision => {
-				const _summary = wiki.preprocessEditSummary(revision.comment, pageName)
-				const toolbar = wiki.parseToolbarComment(_summary)
-				const summary = toolbar
-					? toolbar
-					: {
-							comment: _summary,
-							hashtags: [],
-							other: [],
-							suggestedBy: null,
-							useThisBot: null,
-							reportBugs: null,
-						}
-				summary.comment = summary.comment
-					? await wiki.transformWikitextToHtml(summary.comment, pageName)
-					: ""
-				summary.hashtags = Array.isArray(summary.hashtags)
-					? summary.hashtags.join(" ")
-					: summary.hashtags
-				const processedRevision: Revision = {
-					...revision,
-					delta: revision.delta ?? 0,
-					summary: {
-						comment: summary.comment ?? null,
-						suggestedBy: summary.suggestedBy ?? null,
-						hashtags: summary.hashtags,
-						useThisBot: summary.useThisBot ?? null,
-						reportBugs: summary.reportBugs ?? null,
-					},
-					pageName,
-					thumbnailUrl: null,
-				}
-				return processedRevision
-			})
-		)
-
-		resultsRef.value = processedRevisions
-		loadingRef.value = false
-	} catch (e) {
-		loadingRef.value = false
-		const errorObj = e as Error
-		if (errorObj.message.includes("404")) {
-			errorRef.value = `${pageName}: Page not found`
-		} else {
-			errorRef.value = `${pageName}: ${errorObj.message}`
-		}
-		resultsRef.value = []
-	}
-}
-
-// Combined view of all revisions from all pages and users, sorted by timestamp
-const allRevisions = computed(() => {
-	const revisions: Revision[] = []
-	const seenIds = new Set<number>()
-
-	pageResults.forEach(result => {
-		result.value.forEach(revision => {
-			if (revision.id && !seenIds.has(revision.id)) {
-				seenIds.add(revision.id)
-				revisions.push(revision)
-			}
-		})
-	})
-	userResults.forEach(result => {
-		result.value.forEach(revision => {
-			if (revision.id && !seenIds.has(revision.id)) {
-				seenIds.add(revision.id)
-				revisions.push(revision)
-			}
-		})
-	})
-	return revisions.sort(
-		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-	)
-})
-
-const isAnyLoading = computed(() => {
-	return pageLoading.some(loading => loading.value) || userLoading.some(loading => loading.value)
-})
-
-const errors = computed(() => {
-	const errs: string[] = []
-	pageError.forEach(error => {
-		if (error.value) errs.push(error.value)
-	})
-	userError.forEach(error => {
-		if (error.value) errs.push(error.value)
-	})
-	return errs
-})
 
 function formatTimestamp(timestamp: string): string {
 	return wiki.getRelativeTimestamp(timestamp, {
@@ -384,7 +199,7 @@ function getDeltaClass(delta: number): string {
 				</div>
 			</div>
 			<footer>
-				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
+				<CdxButton :disabled="isLoading">Refresh feed</CdxButton>
 			</footer>
 		</form>
 
@@ -483,7 +298,8 @@ form {
 .changes {
 	display: flex;
 	flex-direction: column;
-	max-width: 800px;
+	max-width: 100%;
+	flex-grow: 1;
 	margin-top: -1rem;
 }
 
