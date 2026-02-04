@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { CdxIcon, CdxProgressBar } from "@wikimedia/codex"
+import { CdxButton, CdxIcon, CdxProgressBar } from "@wikimedia/codex"
 import { cdxIconHeart } from "@wikimedia/codex-icons"
-import { computed, onMounted, ref, type Ref } from "vue"
+import { computed, onMounted, ref } from "vue"
 import {
 	WikiApi,
 	type CompareResponse,
 	type DiffLine,
 	type PageHistoryResponse,
 	type PageHistoryRevision,
-	type Result,
 	type Revision,
 	type UserInfo,
 } from "../../wiki-api/WikiApi"
@@ -38,8 +37,12 @@ const userSearchQueries = ref<string[]>([
 	// "GearsDatapack",
 ])
 
-const pageResults = wiki.createResults<Revision>(3).map(r => ref(r))
-const userResults = wiki.createResults<Revision>(3).map(r => ref(r))
+// Combined feed results
+const allRevisionsData = ref<Revision[]>([])
+const isLoading = ref(false)
+const isLoadingMore = ref(false)
+const errors = ref<string[]>([])
+const hasMore = ref(true) // Whether there are more revisions to load
 
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
@@ -87,70 +90,32 @@ function saveSearchQueries(): void {
 	})
 }
 
-async function search(): Promise<void> {
-	const loadPromises: Promise<void>[] = []
-
-	for (let i = 0; i < pageSearchQueries.value.length; i++) {
-		const query = pageSearchQueries.value[i]
-		const result = pageResults[i]
-		if (!result) continue
-		if (query?.trim()) {
-			loadPromises.push(loadPage(query, result))
-		} else {
-			result.value = { data: [], loading: false, error: null }
-		}
+async function loadFeed(after?: string, append = false): Promise<void> {
+	if (!append) {
+		isLoading.value = true
+		errors.value = []
+	} else {
+		isLoadingMore.value = true
 	}
 
-	for (let i = 0; i < userSearchQueries.value.length; i++) {
-		const query = userSearchQueries.value[i]
-		const result = userResults[i]
-		if (!result) continue
-		if (query?.trim()) {
-			loadPromises.push(loadUser(query, result))
-		} else {
-			result.value = { data: [], loading: false, error: null }
-		}
-	}
-
-	await Promise.all(loadPromises)
-	saveSearchQueries()
-	// Clear expanded/loaded diffs and history when feed is refreshed
-	expandedDiffIds.value = new Set()
-	loadedDiffs.value = new Map()
-	loadingDiffIds.value = new Set()
-	expandedHistoryIds.value = new Set()
-	expandedHistoryDiffIds.value = new Map()
-	loadedHistories.value = new Map()
-	loadingHistoryPageNames.value = new Set()
-	expandedItemIds.value = new Set()
-	// Keep thanked state - don't clear it on refresh
-}
-
-async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
-	resultRef.value.loading = true
-	resultRef.value.error = null
+	// Collect non-empty page and user names
+	const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
+	const userNames = userSearchQueries.value.filter(name => name.trim() !== "")
 
 	try {
-		const _history = (await wiki.getUserHistory(userName, { limit: 10 })) as {
-			revisions?: Array<{
-				comment?: string
-				pageName?: string
-				title?: string
-				user: { name: string }
-				id: number
-				timestamp: string
-				delta: number
-			}>
-		}
+		// Fetch combined feed
+		const revisions = await wiki.getCombinedFeed({
+			pageNames,
+			userNames,
+			limit: 20,
+			after,
+		})
 
-		if (!_history.revisions) {
-			resultRef.value = { data: [], loading: false, error: null }
-			return
-		}
-
+		// Process revisions (transform comments, fetch user categories, etc.)
 		const processedRevisions = await Promise.all(
-			_history.revisions.map(async revision => {
-				const pageName = revision.pageName || revision.title || ""
+			revisions.map(async revision => {
+				const pageName =
+					(revision as PageHistoryRevision & { pageName?: string }).pageName || ""
 				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
 				const toolbar = wiki.parseToolbarComment(_summary)
 				const summary = toolbar
@@ -192,112 +157,60 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 			})
 		)
 
-		resultRef.value = { data: processedRevisions, loading: false, error: null }
+		if (append) {
+			// Append new revisions, deduplicating by ID
+			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
+			const newRevisions = processedRevisions.filter(r => !existingIds.has(r.id))
+			// Merge and sort by timestamp (newest first)
+			const merged = [...allRevisionsData.value, ...newRevisions].sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+			allRevisionsData.value = merged
+			hasMore.value = newRevisions.length > 0
+		} else {
+			allRevisionsData.value = processedRevisions
+			hasMore.value = processedRevisions.length === 20
+		}
+
+		isLoading.value = false
+		isLoadingMore.value = false
 	} catch (e) {
+		isLoading.value = false
+		isLoadingMore.value = false
 		const errorObj = e as Error
-		const errorMsg = errorObj.message.includes("404")
-			? `${userName}: User not found`
-			: `${userName}: ${errorObj.message}`
-		resultRef.value = { data: [], loading: false, error: errorMsg }
+		if (!append) {
+			errors.value = [errorObj.message]
+			allRevisionsData.value = []
+		}
+		hasMore.value = false
 	}
 }
 
-async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
-	resultRef.value.loading = true
-	resultRef.value.error = null
-
-	try {
-		const _history = (await wiki.getPageHistory(pageName)) as {
-			revisions?: Array<{
-				comment: string
-				user: { name: string }
-				id: number
-				timestamp: string
-				delta: number
-			}>
-		}
-
-		if (!_history.revisions) {
-			resultRef.value = { data: [], loading: false, error: null }
-			return
-		}
-
-		const processedRevisions = await Promise.all(
-			_history.revisions.map(async revision => {
-				const _summary = wiki.preprocessEditSummary(revision.comment, pageName)
-				const toolbar = wiki.parseToolbarComment(_summary)
-				const summary = toolbar
-					? toolbar
-					: {
-							comment: _summary,
-							hashtags: [],
-							other: [],
-							suggestedBy: null,
-							useThisBot: null,
-							reportBugs: null,
-						}
-				const commentText = summary.comment
-					? summary.comment +
-						(summary.suggestedBy
-							? " Suggested by [[User:" +
-								summary.suggestedBy +
-								"|" +
-								summary.suggestedBy +
-								"]]"
-							: "")
-					: ""
-				summary.comment = commentText
-					? await wiki.transformWikitextToHtml(commentText, pageName)
-					: ""
-				summary.hashtags = Array.isArray(summary.hashtags)
-					? summary.hashtags.join(" ")
-					: summary.hashtags
-				const processedRevision: Revision = {
-					...revision,
-					summary,
-					pageName,
-					avatarUrl: null,
-				}
-				// Fetch user info for categorization
-				await fetchUserCategory(revision.user.name)
-				return processedRevision
-			})
-		)
-
-		resultRef.value = { data: processedRevisions, loading: false, error: null }
-	} catch (e) {
-		const errorObj = e as Error
-		const errorMsg = errorObj.message.includes("404")
-			? `${pageName}: Page not found`
-			: `${pageName}: ${errorObj.message}`
-		resultRef.value = { data: [], loading: false, error: errorMsg }
-	}
+async function search(): Promise<void> {
+	await loadFeed(undefined, false)
+	saveSearchQueries()
+	// Clear expanded/loaded diffs and history when feed is refreshed
+	expandedDiffIds.value = new Set()
+	loadedDiffs.value = new Map()
+	loadingDiffIds.value = new Set()
+	expandedHistoryIds.value = new Set()
+	expandedHistoryDiffIds.value = new Map()
+	loadedHistories.value = new Map()
+	loadingHistoryPageNames.value = new Set()
+	expandedItemIds.value = new Set()
+	// Keep thanked state - don't clear it on refresh
 }
 
-const allRevisions = computed(() => {
-	const revisions: Revision[] = []
-	const seenIds = new Set<number>()
+async function loadMore(): Promise<void> {
+	if (allRevisionsData.value.length === 0) return
+	// Get the oldest revision from current results (they're sorted newest first)
+	const oldestRevision = allRevisionsData.value[allRevisionsData.value.length - 1]
+	if (!oldestRevision) return
+	// Pass the revision ID instead of timestamp for better pagination
+	await loadFeed(String(oldestRevision.id), true)
+}
 
-	pageResults.forEach(result => {
-		result.value.data.forEach(revision => {
-			if (revision.id && !seenIds.has(revision.id)) {
-				seenIds.add(revision.id)
-				revisions.push(revision)
-			}
-		})
-	})
-	userResults.forEach(result => {
-		result.value.data.forEach(revision => {
-			if (revision.id && !seenIds.has(revision.id)) {
-				seenIds.add(revision.id)
-				revisions.push(revision)
-			}
-		})
-	})
-	return revisions.sort(
-		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-	)
-})
+const allRevisions = computed(() => allRevisionsData.value)
 
 const revisionsByDate = computed(() => {
 	const grouped = new Map<string, { dateLabel: string; revisions: Revision[] }>()
@@ -322,20 +235,7 @@ const revisionsByDate = computed(() => {
 		}))
 })
 
-const isAnyLoading = computed(() => {
-	return pageResults.some(r => r.value.loading) || userResults.some(r => r.value.loading)
-})
-
-const errors = computed(() => {
-	const errs: string[] = []
-	pageResults.forEach(result => {
-		if (result.value.error) errs.push(result.value.error)
-	})
-	userResults.forEach(result => {
-		if (result.value.error) errs.push(result.value.error)
-	})
-	return errs
-})
+const isAnyLoading = computed(() => isLoading.value)
 
 /** Format date as "DD Month YYYY" (e.g. "28 January 2026") */
 function formatDate(timestamp: string): string {
@@ -806,7 +706,10 @@ function isNewcomer(userName: string): boolean {
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
-			<template v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
+			<div v-if="isLoading" class="watchlist-loading">
+				<CdxProgressBar inline />
+			</div>
+			<template v-else v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
 				<h4 class="watchlist-date-header">{{ dateGroup.dateLabel }}</h4>
 				<div class="watchlist-history-box">
 					<div
@@ -1172,6 +1075,11 @@ function isNewcomer(userName: string): boolean {
 					</div>
 				</div>
 			</template>
+			<div v-if="!isLoading && hasMore" class="load-more-container">
+				<CdxButton :disabled="isLoadingMore" @click="loadMore">
+					{{ isLoadingMore ? "Loading..." : "Load more" }}
+				</CdxButton>
+			</div>
 		</div>
 
 		<div class="thank-hearts-overlay" aria-hidden="true">
