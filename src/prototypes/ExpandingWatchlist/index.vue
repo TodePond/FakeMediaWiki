@@ -363,6 +363,26 @@ function formatTime(timestamp: string): string {
 	return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
 }
 
+/** Check if timestamp is from today */
+function isToday(timestamp: string): boolean {
+	const d = new Date(timestamp)
+	const today = new Date()
+	return (
+		d.getDate() === today.getDate() &&
+		d.getMonth() === today.getMonth() &&
+		d.getFullYear() === today.getFullYear()
+	)
+}
+
+/** Format date as DD.MM.YY (e.g. 04.02.26) */
+function formatDateShort(timestamp: string): string {
+	const d = new Date(timestamp)
+	const day = d.getDate().toString().padStart(2, "0")
+	const month = (d.getMonth() + 1).toString().padStart(2, "0")
+	const year = d.getFullYear().toString().slice(-2)
+	return `${day}.${month}.${year}`
+}
+
 /** Format relative date (e.g. "10 hours ago", "2 days ago") */
 function formatRelativeDate(timestamp: string): string {
 	const now = new Date()
@@ -967,7 +987,9 @@ function getItemZIndex(dateKey: string, changeIndex: number): number {
 								>
 									<div class="history-row">
 										<span class="history-time">{{
-											formatTime(rev.timestamp)
+											isToday(rev.timestamp)
+												? formatTime(rev.timestamp)
+												: formatDateShort(rev.timestamp)
 										}}</span
 										><span
 											:class="[
