@@ -554,6 +554,48 @@ export class WikiApi {
 
 		// If explicit older_than/newer_than provided, use those
 		if (older_than || newer_than) {
+			// Helper function to filter revisions by older_than/newer_than criteria
+			const filterByCriteria = (revisions: PageHistoryRevision[]): PageHistoryRevision[] => {
+				let filtered = revisions
+				if (older_than) {
+					// older_than can be a revision ID or timestamp
+					const olderThanId = /^\d+$/.test(older_than) ? parseInt(older_than, 10) : null
+					if (olderThanId !== null) {
+						// Filter to only revisions with ID less than older_than
+						filtered = filtered.filter(rev => rev.id < olderThanId)
+					} else {
+						// It's a timestamp, filter by timestamp
+						const olderThanTime = new Date(older_than).getTime()
+						filtered = filtered.filter(
+							rev => new Date(rev.timestamp).getTime() < olderThanTime
+						)
+					}
+				}
+				if (newer_than) {
+					// newer_than can be a revision ID or timestamp
+					const newerThanId = /^\d+$/.test(newer_than) ? parseInt(newer_than, 10) : null
+					if (newerThanId !== null) {
+						// Filter to only revisions with ID greater than newer_than
+						filtered = filtered.filter(rev => rev.id > newerThanId)
+					} else {
+						// It's a timestamp, filter by timestamp
+						const newerThanTime = new Date(newer_than).getTime()
+						filtered = filtered.filter(
+							rev => new Date(rev.timestamp).getTime() > newerThanTime
+						)
+					}
+				}
+				return filtered
+			}
+
+			// Check cache first
+			const cachedFiltered = filterByCriteria(cached)
+			// If we have enough cached data (API returns ~20 revisions), return from cache
+			if (cachedFiltered.length >= 20) {
+				return { revisions: cachedFiltered.slice(0, 20) }
+			}
+
+			// Need to fetch from API
 			const params = new URLSearchParams()
 			if (older_than) params.append("older_than", older_than)
 			if (newer_than) params.append("newer_than", newer_than)
@@ -573,35 +615,7 @@ export class WikiApi {
 			this.pageHistoryCache.set(pageName, merged)
 
 			// Filter merged results based on older_than/newer_than to ensure we only return requested range
-			let filtered = merged
-			if (older_than) {
-				// older_than can be a revision ID or timestamp
-				const olderThanId = /^\d+$/.test(older_than) ? parseInt(older_than, 10) : null
-				if (olderThanId !== null) {
-					// Filter to only revisions with ID less than older_than
-					filtered = filtered.filter(rev => rev.id < olderThanId)
-				} else {
-					// It's a timestamp, filter by timestamp
-					const olderThanTime = new Date(older_than).getTime()
-					filtered = filtered.filter(
-						rev => new Date(rev.timestamp).getTime() < olderThanTime
-					)
-				}
-			}
-			if (newer_than) {
-				// newer_than can be a revision ID or timestamp
-				const newerThanId = /^\d+$/.test(newer_than) ? parseInt(newer_than, 10) : null
-				if (newerThanId !== null) {
-					// Filter to only revisions with ID greater than newer_than
-					filtered = filtered.filter(rev => rev.id > newerThanId)
-				} else {
-					// It's a timestamp, filter by timestamp
-					const newerThanTime = new Date(newer_than).getTime()
-					filtered = filtered.filter(
-						rev => new Date(rev.timestamp).getTime() > newerThanTime
-					)
-				}
-			}
+			const filtered = filterByCriteria(merged)
 
 			return { ...response, revisions: filtered }
 		}
@@ -699,6 +713,50 @@ export class WikiApi {
 
 		// If explicit older_than/newer_than provided, use those
 		if (older_than || newer_than) {
+			// Helper function to filter revisions by older_than/newer_than criteria
+			const filterByCriteria = (
+				revisions: (PageHistoryRevision & { pageName: string })[]
+			): (PageHistoryRevision & { pageName: string })[] => {
+				let filtered = revisions
+				if (older_than) {
+					// older_than can be a revision ID or timestamp
+					const olderThanId = /^\d+$/.test(older_than) ? parseInt(older_than, 10) : null
+					if (olderThanId !== null) {
+						// Filter to only revisions with ID less than older_than
+						filtered = filtered.filter(rev => rev.id < olderThanId)
+					} else {
+						// It's a timestamp, filter by timestamp
+						const olderThanTime = new Date(older_than).getTime()
+						filtered = filtered.filter(
+							rev => new Date(rev.timestamp).getTime() < olderThanTime
+						)
+					}
+				}
+				if (newer_than) {
+					// newer_than can be a revision ID or timestamp
+					const newerThanId = /^\d+$/.test(newer_than) ? parseInt(newer_than, 10) : null
+					if (newerThanId !== null) {
+						// Filter to only revisions with ID greater than newer_than
+						filtered = filtered.filter(rev => rev.id > newerThanId)
+					} else {
+						// It's a timestamp, filter by timestamp
+						const newerThanTime = new Date(newer_than).getTime()
+						filtered = filtered.filter(
+							rev => new Date(rev.timestamp).getTime() > newerThanTime
+						)
+					}
+				}
+				return filtered
+			}
+
+			// Check cache first
+			const cachedFiltered = filterByCriteria(cached)
+			// If we have enough cached data, return from cache
+			if (cachedFiltered.length >= limitNum) {
+				return { revisions: cachedFiltered.slice(0, limitNum) }
+			}
+
+			// Need to fetch from API
 			const fetched = await this.getUserHistoryViaActionApi(userName, {
 				limit: limitNum,
 				older_than,
@@ -715,7 +773,11 @@ export class WikiApi {
 				.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
 			this.userHistoryCache.set(userName, merged)
-			return { ...fetched, revisions: merged }
+
+			// Filter merged results based on older_than/newer_than to ensure we only return requested range
+			const filtered = filterByCriteria(merged)
+
+			return { ...fetched, revisions: filtered }
 		}
 
 		// Use startDate-based pagination with gap detection

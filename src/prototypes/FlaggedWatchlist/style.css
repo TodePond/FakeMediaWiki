@@ -82,7 +82,7 @@
 .history-item {
 	border-top: 1px solid var(--border-color-subtle);
 	position: relative;
-	background-color: var(--background-color-base);
+	/* background-color: var(--background-color-base); */
 	transition: min-height 0.2s ease-in-out;
 	min-height: auto;
 	padding: 0.25rem 0.5rem;
@@ -155,7 +155,8 @@
 
 	border: 1px solid var(--border-color-subtle);
 	padding: 0.5rem;
-	box-shadow: var(--box-shadow-medium);
+	/* box-shadow: var(--box-shadow-medium); */
+	box-shadow: var(--box-shadow-outset-medium-around) var(--box-shadow-color-alpha-base);
 	background-color: var(--background-color-base);
 	position: relative;
 }
