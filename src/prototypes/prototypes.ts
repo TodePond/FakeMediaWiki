@@ -114,7 +114,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Flagged watchlist",
 				description: "A feed with flagged items.",
 				wrapper: "Special",
-				status: "wip",
+				status: "new",
 			},
 			{
 				type: "variant",
@@ -133,7 +133,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				description:
 					"A styled watchlist but with the information re-ordered over multiple lines.",
 				wrapper: "Special",
-				status: "new",
 			},
 			{
 				type: "variant",
@@ -142,7 +141,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Styled watchlist",
 				description: "A watchlist but with more opinionated styling.",
 				wrapper: "Special",
-				status: "updated",
 			},
 		],
 	},

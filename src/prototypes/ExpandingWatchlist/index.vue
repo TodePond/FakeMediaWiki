@@ -62,6 +62,13 @@ const loadingHistoryPageNames = ref<Set<string>>(new Set())
 /** Which revision ids have the feed item body expanded */
 const expandedItemIds = ref<Set<number>>(new Set())
 
+/** Which revision ids have the talk page expanded */
+const expandedTalkIds = ref<Set<number>>(new Set())
+/** Talk page text content keyed by revision id */
+const talkPageText = ref<Map<number, string>>(new Map())
+/** Current editor mode: 'visual' or 'source' */
+const editorMode = ref<Map<number, "visual" | "source">>(new Map())
+
 /** Revision ids that have been "thanked" (mock) */
 const thankedRevisionIds = ref<Set<number>>(new Set())
 /** Rising heart particles: id, viewport position, and thank vs unthank */
@@ -188,7 +195,9 @@ async function search(): Promise<void> {
 	loadedHistories.value = new Map()
 	loadingHistoryPageNames.value = new Set()
 	expandedItemIds.value = new Set()
+	expandedTalkIds.value = new Set()
 	// Keep thanked state - don't clear it on refresh
+	// Keep talk page text cached
 }
 
 async function loadMore(): Promise<void> {
@@ -368,6 +377,7 @@ function collapseItem(id: number): void {
 	expandedItemIds.value.delete(id)	
 	expandedDiffIds.value.delete(id)
 	expandedHistoryIds.value.delete(id)
+	expandedTalkIds.value.delete(id)
 }
 
 function handleItemClick(change: Revision, event: MouseEvent): void {
@@ -389,6 +399,8 @@ function toggleDiff(change: Revision): void {
 	expandedDiffIds.value.add(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.delete(id)
 	if (loadedDiffs.value.has(id)) return
 	const pageName = change.pageName
 	if (!pageName) return
@@ -470,6 +482,8 @@ function toggleHistory(change: Revision): void {
 	expandedHistoryIds.value.add(id)
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.delete(id)
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.delete(id)
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
@@ -597,6 +611,47 @@ function getItemZIndex(dateKey: string, changeIndex: number): number {
 		cumulativeIndex += group.revisions.length
 	}
 	return 10 + cumulativeIndex + changeIndex
+}
+
+function toggleTalk(change: Revision): void {
+	const id = change.id
+	const expanded = expandedTalkIds.value.has(id)
+	if (expanded) {
+		expandedTalkIds.value = new Set(expandedTalkIds.value)
+		expandedTalkIds.value.delete(id)
+		return
+	}
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.add(id)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.delete(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
+	// Initialize text content and editor mode if not already set
+	if (!talkPageText.value.has(id)) {
+		talkPageText.value = new Map(talkPageText.value).set(id, "")
+	}
+	if (!editorMode.value.has(id)) {
+		editorMode.value = new Map(editorMode.value).set(id, "source")
+	}
+}
+
+function setEditorMode(id: number, mode: "visual" | "source"): void {
+	editorMode.value = new Map(editorMode.value).set(id, mode)
+}
+
+function updateTalkText(id: number, text: string): void {
+	talkPageText.value = new Map(talkPageText.value).set(id, text)
+}
+
+function handleAddTopic(change: Revision): void {
+	// TODO: Implement add topic functionality
+	const text = talkPageText.value.get(change.id) || ""
+	console.log("Add topic:", text)
+	// For now, just close the talk tab
+	// Keep the item expanded though
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.delete(change.id)
 }
 </script>
 
@@ -787,35 +842,47 @@ function getItemZIndex(dateKey: string, changeIndex: number): number {
 								<footer class="history-expanded-footer">
 									<button
 										type="button"
-										class="history-action-button"
+										class="history-action-button history-action-button-left"
 										:class="{
-											'history-action-button-active': expandedDiffIds.has(change.id),
+											'history-action-button-active': expandedTalkIds.has(change.id),
 										}"
-										@click.stop="toggleDiff(change)"
+										@click.stop="toggleTalk(change)"
 									>
-										(diff)
+										(talk)
 									</button>
-									<button
-										type="button"
-										class="history-action-button"
-										:class="{
-											'history-action-button-active': expandedHistoryIds.has(change.id),
-										}"
-										@click.stop="toggleHistory(change)"
-									>
-										(hist)
-									</button>
-									<button
-										type="button"
-										class="history-action-button"
-										:class="{
-											'history-action-button-thanked': thankedRevisionIds.has(change.id),
-										}"
-										:disabled="thankedRevisionIds.has(change.id)"
-										@click.stop="onThankClick(change, $event)"
-									>
-										{{ thankedRevisionIds.has(change.id) ? "(thanked)" : "(thanks)" }}
-									</button>
+									<div class="history-action-buttons-right">
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-active': expandedDiffIds.has(change.id),
+											}"
+											@click.stop="toggleDiff(change)"
+										>
+											(diff)
+										</button>
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-active': expandedHistoryIds.has(change.id),
+											}"
+											@click.stop="toggleHistory(change)"
+										>
+											(hist)
+										</button>
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-thanked': thankedRevisionIds.has(change.id),
+											}"
+											:disabled="thankedRevisionIds.has(change.id)"
+											@click.stop="onThankClick(change, $event)"
+										>
+											{{ thankedRevisionIds.has(change.id) ? "(thanked)" : "(thanks)" }}
+										</button>
+									</div>
 								</footer>
 							</div>
 						</template>
@@ -874,6 +941,33 @@ function getItemZIndex(dateKey: string, changeIndex: number): number {
 								<CdxProgressBar inline />
 							</div>
 							<div v-else class="history-diff-empty">No diff</div>
+						</div>
+						<div v-if="expandedTalkIds.has(change.id)" class="history-inline-talk">
+							<div class="talk-editor">
+								<textarea
+									class="talk-editor-textarea"
+									placeholder="Write on the editor's talk page..."
+									:value="talkPageText.get(change.id) || ''"
+									@input="
+										updateTalkText(
+											change.id,
+											($event.target as HTMLTextAreaElement).value
+										)
+									"
+								></textarea>
+								<div class="talk-editor-footer">
+									<!-- <CdxButton
+										weight="quiet"
+										action="destructive"
+										@click="collapseItem(change.id)"
+									>
+										Cancel
+									</CdxButton> -->
+									<CdxButton weight="primary" @click="handleAddTopic(change)">
+										Add topic
+									</CdxButton>
+								</div>
+							</div>
 						</div>
 						<div
 							v-if="expandedHistoryIds.has(change.id)"
