@@ -70,7 +70,7 @@ export const categories: CategoryDefinition[] = [
 	{
 		id: "recommendations",
 		name: "Recommendations",
-		description: "Experiments in how to source personalizedrecommendations.",
+		description: "Experiments in how to source personalized recommendations.",
 	},
 	{
 		id: "feed",
