@@ -1218,6 +1218,89 @@ export class WikiApi {
 	}
 
 	/**
+	 * Get outgoing wikilinks for multiple pages (intra-language links)
+	 * Automatically handles pagination to fetch all links.
+	 * @param pageNames - Array of page titles
+	 * @param options - Options
+	 * @param options.namespace - Filter by namespace (e.g., 0 for main namespace)
+	 * @returns Map of page title to array of linked page titles
+	 */
+	async getPagesLinks(
+		pageNames: string[],
+		options: { namespace?: number } = {}
+	): Promise<Map<string, string[]>> {
+		if (pageNames.length === 0) {
+			return new Map()
+		}
+
+		const { namespace } = options
+		const result = new Map<string, string[]>()
+
+		// Initialize result map with empty arrays
+		for (const pageName of pageNames) {
+			result.set(pageName, [])
+		}
+
+		// Join page titles with pipe separator
+		const titles = pageNames.join("|")
+
+		let plcontinue: string | undefined = undefined
+
+		do {
+			const params: Record<string, unknown> = {
+				action: "query",
+				prop: "links",
+				titles,
+				pllimit: 500, // Maximum per request
+			}
+
+			if (namespace !== undefined) {
+				params.plnamespace = namespace
+			}
+
+			if (plcontinue) {
+				params.plcontinue = plcontinue
+			}
+
+			const data = (await this.request({
+				api: "action",
+				params,
+			})) as {
+				query?: {
+					pages?: {
+						[pageId: string]: {
+							title: string
+							links?: Array<{ title: string }>
+						}
+					}
+				}
+				continue?: {
+					plcontinue?: string
+				}
+			}
+
+			const pages = data.query?.pages
+
+			if (pages) {
+				for (const page of Object.values(pages)) {
+					if (page.title && page.links) {
+						const existingLinks = result.get(page.title) || []
+						result.set(
+							page.title,
+							[...existingLinks, ...page.links.map(link => link.title)]
+						)
+					}
+				}
+			}
+
+			// Check for continuation token (at root level, not under query)
+			plcontinue = data.continue?.plcontinue
+		} while (plcontinue)
+
+		return result
+	}
+
+	/**
 	 * Get thumbnail image for a page
 	 * @param pageName - Page title
 	 * @returns Thumbnail URL or null
@@ -1280,18 +1363,6 @@ export class WikiApi {
 		return this.request({
 			api: "wikimedia",
 			path: `page/metadata/${this.encode(pageName)}`,
-		})
-	}
-
-	/**
-	 * Get related pages (links, etc.)
-	 * @param pageName - Page title
-	 * @returns Related pages data
-	 */
-	async getRelatedPages(pageName: string): Promise<unknown> {
-		return this.request({
-			api: "wikimedia",
-			path: `page/links/${this.encode(pageName)}`,
 		})
 	}
 

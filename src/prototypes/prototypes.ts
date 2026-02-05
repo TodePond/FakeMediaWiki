@@ -68,6 +68,11 @@ export const wrappers: WrapperDefinition[] = [
 // Define categories with their descriptions in display order
 export const categories: CategoryDefinition[] = [
 	{
+		id: "recommendations",
+		name: "Recommendations",
+		description: "Experiments in how to source personalizedrecommendations.",
+	},
+	{
 		id: "feed",
 		name: "Feed",
 		description: 'Early dashboard explorations based on the "feed" metaphor.',
@@ -100,6 +105,16 @@ export const categories: CategoryDefinition[] = [
 ]
 
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
+	{
+		type: "prototype",
+		id: "PageLinks",
+		name: "Page links",
+		description: "How to get outgoing links from multiple pages.",
+		category: "recommendations",
+		wrapper: "Component",
+		title: "Page links",
+		status: "new",
+	},
 	{
 		type: "variants",
 		id: "StyledWatchlist",
