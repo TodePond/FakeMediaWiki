@@ -22,8 +22,11 @@ const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)
 const userStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "userQuery", 3)
 
 const pageSearchQueries = ref<string[]>([
-	"Wikipedia", "Wet Leg", "Water",
-	"Confidence Man (band)", "Algorave"
+	"Wikipedia",
+	"Wet Leg",
+	"Water",
+	"Confidence Man (band)",
+	"Algorave",
 ])
 const userSearchQueries = ref<string[]>([
 	"Samwalton9",
@@ -374,7 +377,7 @@ function expandItem(change: Revision, event: MouseEvent): void {
 }
 
 function collapseItem(id: number): void {
-	expandedItemIds.value.delete(id)	
+	expandedItemIds.value.delete(id)
 	expandedDiffIds.value.delete(id)
 	expandedHistoryIds.value.delete(id)
 	expandedTalkIds.value.delete(id)
@@ -844,7 +847,9 @@ function handleAddTopic(change: Revision): void {
 										type="button"
 										class="history-action-button history-action-button-left"
 										:class="{
-											'history-action-button-active': expandedTalkIds.has(change.id),
+											'history-action-button-active': expandedTalkIds.has(
+												change.id
+											),
 										}"
 										@click.stop="toggleTalk(change)"
 									>
@@ -855,7 +860,9 @@ function handleAddTopic(change: Revision): void {
 											type="button"
 											class="history-action-button"
 											:class="{
-												'history-action-button-active': expandedDiffIds.has(change.id),
+												'history-action-button-active': expandedDiffIds.has(
+													change.id
+												),
 											}"
 											@click.stop="toggleDiff(change)"
 										>
@@ -865,7 +872,8 @@ function handleAddTopic(change: Revision): void {
 											type="button"
 											class="history-action-button"
 											:class="{
-												'history-action-button-active': expandedHistoryIds.has(change.id),
+												'history-action-button-active':
+													expandedHistoryIds.has(change.id),
 											}"
 											@click.stop="toggleHistory(change)"
 										>
@@ -875,12 +883,17 @@ function handleAddTopic(change: Revision): void {
 											type="button"
 											class="history-action-button"
 											:class="{
-												'history-action-button-thanked': thankedRevisionIds.has(change.id),
+												'history-action-button-thanked':
+													thankedRevisionIds.has(change.id),
 											}"
 											:disabled="thankedRevisionIds.has(change.id)"
 											@click.stop="onThankClick(change, $event)"
 										>
-											{{ thankedRevisionIds.has(change.id) ? "(thanked)" : "(thanks)" }}
+											{{
+												thankedRevisionIds.has(change.id)
+													? "(thanked)"
+													: "(thanks)"
+											}}
 										</button>
 									</div>
 								</footer>
@@ -984,7 +997,14 @@ function handleAddTopic(change: Revision): void {
 										'history-item',
 										{ 'history-item-current': rev.id === change.id },
 									]"
-									@click="handleHistoryItemClick(change.id, rev, change.pageName!, $event)"
+									@click="
+										handleHistoryItemClick(
+											change.id,
+											rev,
+											change.pageName!,
+											$event
+										)
+									"
 								>
 									<div class="history-row">
 										<span class="history-time">{{
@@ -1114,7 +1134,7 @@ function handleAddTopic(change: Revision): void {
 				:class="['thank-heart', heart.type === 'unthank' ? 'thank-heart-broken' : '']"
 				:style="{ left: heart.x + 'px', top: heart.y + 'px' }"
 			>
-				{{ heart.type === "unthank" ? "</3" : "<3" }}
+				{{ heart.type === "unthank" ? "\</3" : "\<3" }}
 			</div>
 		</div>
 	</main>
