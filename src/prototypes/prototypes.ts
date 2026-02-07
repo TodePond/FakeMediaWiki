@@ -115,6 +115,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		title: "Page links",
 		status: "new",
 	},
+	// {
+	// 	type: "prototype",
+	// 	id: "PageSharedLinks",
+	// 	name: "Shared page links",
+	// 	description: "How to get outgoing links from multiple pages.",
+	// 	category: "recommendations",
+	// 	wrapper: "Component",
+	// 	title: "Page shared links",
+	// 	status: "wip",
+	// },
 	{
 		type: "variants",
 		id: "StyledWatchlist",

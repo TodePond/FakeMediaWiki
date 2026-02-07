@@ -5,7 +5,10 @@ import { WikiApi } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const pageNamesInput = ref(localStorage.getItem("pageLinksQuery") || "Wikipedia, MediaWiki")
+const pageNamesInput = ref(
+	localStorage.getItem("pageLinksQuery") ||
+		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress"
+)
 const linksMap = ref<Map<string, string[]>>(new Map())
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -110,7 +113,7 @@ onMounted(loadLinks)
 								:href="wiki.getPageUrl(page)"
 								target="_blank"
 								class="page-link"
-							>, </a
+								>, </a
 							><a :href="wiki.getPageUrl(page)" target="_blank" class="page-link">{{
 								page
 							}}</a>
