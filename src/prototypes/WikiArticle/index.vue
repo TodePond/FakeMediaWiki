@@ -36,6 +36,7 @@ function stripExtra(html: string): string {
 	}
 }
 
+const pageName = ref("Wet Leg")
 const activeTab = ref("overview")
 const summary = ref<PageSummary | null>(null)
 const heroUrl = ref<string | null>(null)
@@ -71,7 +72,49 @@ function getMediaUrl(item: MediaItem): string | null {
 	return item.srcset?.[0]?.src ?? item.original?.source ?? null
 }
 
-async function loadPage(): Promise<void> {
+/** Parse a wiki page title from an internal link href. Handles app routes like /Mobile/Indie_rock and wiki paths like /wiki/Indie_rock. */
+function parsePageTitleFromWikiUrl(href: string): string | null {
+	try {
+		const url = new URL(href, window.location.origin)
+		const pathname = url.pathname
+		// App route: /Mobile/Page_Title or /Component/Page_Title etc.
+		const appMatch = pathname.match(
+			/^\/(?:Mobile|Component|Fullscreen|Special)\/([^/]+)(?:\/|$)/
+		)
+		if (appMatch) {
+			const encoded = appMatch[1]
+			const decoded = decodeURIComponent(encoded.replace(/\+/g, " "))
+			return decoded.replace(/_/g, " ").trim() || null
+		}
+		// Wikipedia-style: same origin /wiki/Page_Title
+		const baseUrl = new URL(wiki.getPageUrl(""))
+		if (url.origin === baseUrl.origin) {
+			const wikiMatch = pathname.match(/^\/wiki\/(.+)$/)
+			if (wikiMatch) {
+				const encoded = wikiMatch[1]
+				const decoded = decodeURIComponent(encoded.replace(/\+/g, " "))
+				return decoded.replace(/_/g, " ").trim() || null
+			}
+		}
+		return null
+	} catch {
+		return null
+	}
+}
+
+function onContentClick(event: MouseEvent): void {
+	const a = (event.target as Element).closest("a[href]")
+	if (!a || !(a instanceof HTMLAnchorElement) || !a.href) return
+	const title = parsePageTitleFromWikiUrl(a.href)
+	if (title) {
+		event.preventDefault()
+		pageName.value = title
+		loadPage(title)
+	}
+}
+
+async function loadPage(name?: string): Promise<void> {
+	const targetPage = name ?? pageName.value
 	isLoading.value = true
 	error.value = null
 	summary.value = null
@@ -79,12 +122,11 @@ async function loadPage(): Promise<void> {
 	tabContent.value = { overview: "", members: "", discography: "" }
 	pageMedia.value = []
 	try {
-		const pageName = "Wet Leg"
 		const [summaryData, hero, source, mediaResponse] = await Promise.all([
-			wiki.getPageSummary(pageName),
-			wiki.getPageHero(pageName),
-			wiki.getPageSource(pageName),
-			wiki.getPageMedia(pageName),
+			wiki.getPageSummary(targetPage),
+			wiki.getPageHero(targetPage),
+			wiki.getPageSource(targetPage),
+			wiki.getPageMedia(targetPage),
 		])
 		summary.value = summaryData
 		heroUrl.value = hero
@@ -99,10 +141,22 @@ async function loadPage(): Promise<void> {
 		for (const key of keys) {
 			const section = sections.find(s => sectionMatches(s.title, key))
 			if (section?.wikitext) {
-				const html = await wiki.transformWikitextToHtml(section.wikitext, pageName)
+				const html = await wiki.transformWikitextToHtml(section.wikitext, targetPage)
 				tabContent.value[key] = stripExtra(html)
 			}
 		}
+		pageName.value = targetPage
+		// Activate first tab that has content
+		const tabOrder = ["overview", "media", "members", "discography"] as const
+		const hasContent = (t: (typeof tabOrder)[number]) =>
+			t === "overview"
+				? !!tabContent.value.overview
+				: t === "media"
+					? pageMedia.value.length > 0
+					: t === "members"
+						? !!tabContent.value.members
+						: !!tabContent.value.discography
+		activeTab.value = tabOrder.find(hasContent) ?? "overview"
 	} catch (err) {
 		error.value = (err as Error).message
 	} finally {
@@ -110,7 +164,7 @@ async function loadPage(): Promise<void> {
 	}
 }
 
-onMounted(loadPage)
+onMounted(() => loadPage())
 </script>
 
 <template>
@@ -121,7 +175,7 @@ onMounted(loadPage)
 				<img class="wiki-article__hero" :src="heroUrl" :alt="summary.title ?? ''" />
 				<div class="wiki-article__hero-gradient" aria-hidden="true" />
 			</div>
-			<div class="wiki-article__content">
+			<div class="wiki-article__content" @click="onContentClick">
 				<h1>{{ summary.title }}</h1>
 				<div
 					v-if="summary.extract_html"
@@ -133,15 +187,10 @@ onMounted(loadPage)
 				</p>
 				<div class="wiki-article__tabs">
 					<CdxTabs v-model:active="activeTab" :framed="false">
-						<CdxTab name="overview" label="Overview">
-							<div
-								v-if="tabContent.overview"
-								class="wiki-article__tab-body"
-								v-html="tabContent.overview"
-							/>
-							<p v-else class="wiki-article__tab-placeholder">Overview content.</p>
+						<CdxTab v-if="tabContent.overview" name="overview" label="Overview">
+							<div class="wiki-article__tab-body" v-html="tabContent.overview" />
 						</CdxTab>
-						<CdxTab name="media" label="Media">
+						<CdxTab v-if="pageMedia.length > 0" name="media" label="Media">
 							<div class="wiki-article__tab-body wiki-article__media-feed">
 								<a
 									v-for="(item, i) in pageMedia"
@@ -165,35 +214,22 @@ onMounted(loadPage)
 										{{ item.caption.text }}
 									</p>
 								</a>
-								<p
-									v-if="pageMedia.length === 0"
-									class="wiki-article__tab-placeholder"
-								>
-									No media for this page.
-								</p>
 							</div>
 						</CdxTab>
-						<CdxTab name="members" label="Members">
-							<div
-								v-if="tabContent.members"
-								class="wiki-article__tab-body"
-								v-html="tabContent.members"
-							/>
-							<p v-else class="wiki-article__tab-placeholder">Members content.</p>
+						<CdxTab v-if="tabContent.members" name="members" label="Members">
+							<div class="wiki-article__tab-body" v-html="tabContent.members" />
 						</CdxTab>
-						<CdxTab name="discography" label="Discography">
-							<div
-								v-if="tabContent.discography"
-								class="wiki-article__tab-body"
-								v-html="tabContent.discography"
-							/>
-							<p v-else class="wiki-article__tab-placeholder">Discography content.</p>
+						<CdxTab
+							v-if="tabContent.discography"
+							name="discography"
+							label="Discography"
+						>
+							<div class="wiki-article__tab-body" v-html="tabContent.discography" />
 						</CdxTab>
 					</CdxTabs>
 				</div>
 			</div>
 		</template>
-		<div v-else-if="isLoading" class="wiki-article__content">Loading…</div>
 	</article>
 </template>
 
@@ -323,8 +359,8 @@ h1 {
 </style>
 
 <style>
-.wiki-article__summary :deep(a),
-.wiki-article__tab-body :deep(a) {
-	color: var(--color-progressive);
+.wiki-article__summary a,
+.wiki-article__tab-body a {
+	color: var(--color-progressive) !important;
 }
 </style>

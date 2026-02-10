@@ -471,7 +471,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "article",
 		wrapper: "Mobile",
 		title: "Tabbed article",
-		status: "new",
+		status: "wip",
 	},
 	{
 		type: "prototype",
