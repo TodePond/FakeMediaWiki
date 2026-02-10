@@ -72,6 +72,11 @@ export const wrappers: WrapperDefinition[] = [
 // Define categories with their descriptions in display order
 export const categories: CategoryDefinition[] = [
 	{
+		id: "article",
+		name: "Article",
+		description: "Prototypes that display articles in different ways.",
+	},
+	{
 		id: "recommendations",
 		name: "Recommendations",
 		description: "Experiments in how to source personalized recommendations.",
@@ -143,7 +148,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Flagged watchlist",
 				description: "A feed with flagged items.",
 				wrapper: "Special",
-				status: "new",
 			},
 			{
 				type: "variant",
@@ -152,7 +156,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Expanding watchlist",
 				description: "A feed with expandable items.",
 				wrapper: "Special",
-				status: "new",
 			},
 			{
 				type: "variant",
@@ -274,7 +277,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				description:
 					"A stripped-back combined feed with no avatar or thumbnail.<br />Updated to test out an improved combined feed endpoint.",
 				wrapper: "Special",
-				status: "updated",
 			},
 			{
 				type: "variant",
@@ -460,6 +462,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "page",
 		wrapper: "Component",
 		title: "Page summary",
+	},
+	{
+		type: "prototype",
+		id: "WikiArticle",
+		name: "Tabbed article",
+		description: "Display an article in a tabbed layout.",
+		category: "article",
+		wrapper: "Mobile",
+		title: "Tabbed article",
+		status: "new",
 	},
 	{
 		type: "prototype",

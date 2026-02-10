@@ -1338,6 +1338,34 @@ export class WikiApi {
 	}
 
 	/**
+	 * Get page hero image: thumbnail if present, otherwise the first media image.
+	 * @param pageName - Page title
+	 * @returns Hero image URL or null
+	 */
+	async getPageHero(pageName: string): Promise<string | null> {
+		try {
+			const summary = await this.getPageSummary(pageName)
+			if (summary.thumbnail?.source) {
+				return summary.thumbnail.source
+			}
+			const media = await this.getPageMedia(pageName)
+			const firstImage = media.items?.find(
+				item => !item.type || item.type === "image"
+			)
+			if (firstImage) {
+				return (
+					firstImage.srcset?.[0]?.src ??
+					firstImage.original?.source ??
+					null
+				)
+			}
+			return null
+		} catch {
+			return null
+		}
+	}
+
+	/**
 	 * Transform wikitext to HTML
 	 * @param wikitext - Wikitext content
 	 * @param pageTitle - Page title for context (optional)
