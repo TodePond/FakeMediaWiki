@@ -19,6 +19,11 @@ const router = createRouter({
 			component: () => import("./views/Fullscreen.vue"),
 		},
 		{
+			path: "/Mobile/:name",
+			name: "Mobile",
+			component: () => import("./views/Mobile.vue"),
+		},
+		{
 			path: "/Component/:name",
 			name: "Component",
 			component: () => import("./views/ComponentView.vue"),

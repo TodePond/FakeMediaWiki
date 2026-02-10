@@ -63,6 +63,10 @@ export const wrappers: WrapperDefinition[] = [
 		id: "Fullscreen",
 		name: "Fullscreen",
 	},
+	{
+		id: "Mobile",
+		name: "Mobile",
+	},
 ]
 
 // Define categories with their descriptions in display order
@@ -517,11 +521,21 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	{
 		type: "prototype",
 		id: "WrapperDemo-Fullscreen",
-		component: "WrapperDemo",
+		component: "WrapperPaddingDemo",
 		title: "Fullscreen wrapper",
 		name: "Fullscreen wrapper",
 		description: "View this prototype in the Fullscreen layout.",
 		wrapper: "Fullscreen",
+		category: "wrappers",
+	},
+	{
+		type: "prototype",
+		id: "WrapperDemo-Mobile",
+		component: "WrapperPaddingDemo",
+		title: "Mobile wrapper",
+		name: "Mobile wrapper",
+		description: "View this prototype in the Mobile layout (phone frame on large screens).",
+		wrapper: "Mobile",
 		category: "wrappers",
 	},
 ]
