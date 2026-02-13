@@ -71,7 +71,7 @@ const pageSearchQueries = ref<string[]>([
 ])
 const userSearchQueries = ref<string[]>([
 	"Samwalton9",
-	"Satayboi",
+	"Todepond",
 	"Todepond",
 	// "SNUGGUMS",
 ])

@@ -30,11 +30,11 @@ const pageSearchQueries = ref<string[]>([
 ])
 const userSearchQueries = ref<string[]>([
 	"Samwalton9",
-	"Satayboi",
+	"Todepond",
 	// "SNUGGUMS",
 	// localStorage.getItem(userStorageKeys[0]!) ?? "Samwalton9",
 	// localStorage.getItem(userStorageKeys[1]!) ?? "SNUGGUMS",
-	// localStorage.getItem(userStorageKeys[2]!) ?? "Satayboi",
+	// localStorage.getItem(userStorageKeys[2]!) ?? "Todepond",
 ])
 
 // Combined feed results
