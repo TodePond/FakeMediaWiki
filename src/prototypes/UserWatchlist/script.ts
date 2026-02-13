@@ -35,7 +35,7 @@ export function useActionWatchlist() {
 	])
 	const userSearchQueries = ref<string[]>([
 		localStorage.getItem(userStorageKeys[0]!) ?? "Samwalton9",
-		localStorage.getItem(userStorageKeys[1]!) ?? "SNUGGUMS",
+		localStorage.getItem(userStorageKeys[1]!) ?? "Humbugtheman",
 		localStorage.getItem(userStorageKeys[2]!) ?? "Todepond",
 	])
 

@@ -69,7 +69,7 @@ const pageSearchQueries = ref<string[]>([
 	"Confidence Man (band)",
 	"Algorave",
 ])
-const userSearchQueries = ref<string[]>(["Samwalton9", "Todepond", "SNUGGUMS"])
+const userSearchQueries = ref<string[]>(["Samwalton9", "Todepond", "Humbugtheman"])
 
 // Combined feed results
 const allRevisionsData = ref<Revision[]>([])
