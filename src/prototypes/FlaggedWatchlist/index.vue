@@ -73,7 +73,7 @@ const userSearchQueries = ref<string[]>([
 	"Samwalton9",
 	"Satayboi",
 	"Todepond",
-	// "GearsDatapack",
+	// "SNUGGUMS",
 ])
 
 // Combined feed results
