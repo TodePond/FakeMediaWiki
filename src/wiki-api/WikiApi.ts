@@ -685,8 +685,9 @@ export class WikiApi {
 					fetchFrom = String(oldestCached.id)
 				}
 			} else {
-				// No cache older than startDate, fetch from startDate
-				fetchFrom = startDate
+				// No cache older than startDate - cannot pass timestamp to API (older_than requires revision ID).
+				// Fetch latest to populate cache; filtering will return empty if no revisions match.
+				fetchFrom = undefined
 			}
 		} else {
 			// No startDate: if we have cache, fetch from oldest cached revision to get more
@@ -998,15 +999,19 @@ export class WikiApi {
 		const allRevisions: CachedRevision[] = []
 		const seenIds = new Set<number>()
 
-		// Convert 'after' revision ID to a timestamp for startDate
+		// Convert 'after' revision ID to a timestamp for startDate (user history) and to find page-specific older_than
 		let startDate: string | undefined = undefined
+		let afterTimestamp: number | undefined = undefined
+		let afterPageName: string | undefined = undefined
 		if (after) {
 			const afterId = parseInt(after, 10)
-			// Try to find the timestamp in caches
-			for (const [, cached] of this.pageHistoryCache) {
+			// Try to find the timestamp and page in caches
+			for (const [pageName, cached] of this.pageHistoryCache) {
 				const rev = cached.find(r => r.id === afterId)
 				if (rev) {
 					startDate = rev.timestamp
+					afterTimestamp = new Date(rev.timestamp).getTime()
+					afterPageName = pageName
 					break
 				}
 			}
@@ -1040,11 +1045,30 @@ export class WikiApi {
 			}
 		}
 
-		// Fetch page histories - caching handled internally
+		// Fetch page histories - use older_than (revision ID) when available; API rejects timestamps
 		if (pageNames.length > 0) {
 			const pagePromises = pageNames.map(async pageName => {
 				try {
-					const history = await this.getPageHistory(pageName, { startDate })
+					let options: { startDate?: string; older_than?: string } = {}
+					if (after && afterTimestamp !== undefined) {
+						if (pageName === afterPageName) {
+							options = { older_than: after }
+						} else {
+							// Find a revision ID from this page that's older than after
+							const pageCached = this.pageHistoryCache.get(pageName) || []
+							const olderRev = pageCached
+								.filter(r => new Date(r.timestamp).getTime() < afterTimestamp!)
+								.sort((a, b) => a.id - b.id)[0]
+							if (olderRev) {
+								options = { older_than: String(olderRev.id) }
+							} else {
+								options = { startDate: startDate }
+							}
+						}
+					} else if (startDate) {
+						options = { startDate }
+					}
+					const history = await this.getPageHistory(pageName, options)
 					return { pageName, revisions: history.revisions || [] }
 				} catch (e) {
 					return { pageName, revisions: [] }
@@ -1066,6 +1090,18 @@ export class WikiApi {
 		return allRevisions
 			.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 			.slice(0, totalLimit)
+	}
+
+	/**
+	 * Clear the page history cache for a page (or all pages if no name given).
+	 * Use when you need fresh data, e.g. when opening the inline history view.
+	 */
+	clearPageHistoryCache(pageName?: string): void {
+		if (pageName) {
+			this.pageHistoryCache.delete(pageName)
+		} else {
+			this.pageHistoryCache.clear()
+		}
 	}
 
 	/**
@@ -1285,10 +1321,10 @@ export class WikiApi {
 				for (const page of Object.values(pages)) {
 					if (page.title && page.links) {
 						const existingLinks = result.get(page.title) || []
-						result.set(
-							page.title,
-							[...existingLinks, ...page.links.map(link => link.title)]
-						)
+						result.set(page.title, [
+							...existingLinks,
+							...page.links.map(link => link.title),
+						])
 					}
 				}
 			}
@@ -1349,15 +1385,9 @@ export class WikiApi {
 				return summary.thumbnail.source
 			}
 			const media = await this.getPageMedia(pageName)
-			const firstImage = media.items?.find(
-				item => !item.type || item.type === "image"
-			)
+			const firstImage = media.items?.find(item => !item.type || item.type === "image")
 			if (firstImage) {
-				return (
-					firstImage.srcset?.[0]?.src ??
-					firstImage.original?.source ??
-					null
-				)
+				return firstImage.srcset?.[0]?.src ?? firstImage.original?.source ?? null
 			}
 			return null
 		} catch {

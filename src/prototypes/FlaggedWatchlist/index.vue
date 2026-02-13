@@ -735,6 +735,8 @@ function toggleHistory(change: Revision): void {
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
+	// Clear cache so we get fresh data; cache may be stale or from getCombinedFeed pagination
+	wiki.clearPageHistoryCache(pageName)
 	wiki.getPageHistory(pageName)
 		.then(async response => {
 			const revisions = await Promise.all(

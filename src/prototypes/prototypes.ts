@@ -72,9 +72,9 @@ export const wrappers: WrapperDefinition[] = [
 // Define categories with their descriptions in display order
 export const categories: CategoryDefinition[] = [
 	{
-		id: "article",
-		name: "Article",
-		description: "Prototypes that display articles in different ways.",
+		id: "feed",
+		name: "",
+		description: "Early experiments for feeds of information.",
 	},
 	{
 		id: "recommendations",
@@ -82,9 +82,9 @@ export const categories: CategoryDefinition[] = [
 		description: "Experiments in how to source personalized recommendations.",
 	},
 	{
-		id: "feed",
-		name: "Feed",
-		description: 'Early dashboard explorations based on the "feed" metaphor.',
+		id: "article",
+		name: "Article",
+		description: "Prototypes that display articles in different ways.",
 	},
 	{
 		id: "wrappers",
