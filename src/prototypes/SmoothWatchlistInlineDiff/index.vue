@@ -413,7 +413,7 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref, type Ref } from "vue"
-import { FakeWiki } from "../../fakewiki/FakeWiki"
+import { FakeWiki } from "fakewiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
@@ -421,7 +421,7 @@ import type {
 	FWPageHistoryRevision,
 	FWResult,
 	FWRevision,
-} from "../../fakewiki/types"
+} from "fakewiki/types"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends FWPageHistoryRevision {

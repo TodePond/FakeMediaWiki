@@ -1,0 +1,26 @@
+{
+	"name": "fakewiki",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"description": "Helpers for making MediaWiki prototypes",
+	"exports": {
+		".": {
+			"types": "./FakeWiki.ts",
+			"import": "./FakeWiki.ts",
+			"default": "./FakeWiki.ts"
+		},
+		"./types": {
+			"types": "./types.ts",
+			"import": "./types.ts",
+			"default": "./types.ts"
+		},
+		"./style/delta.css": "./style/delta.css"
+	},
+	"files": [
+		"FakeWiki.ts",
+		"types.ts",
+		"style",
+		"schema"
+	]
+}

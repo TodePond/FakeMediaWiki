@@ -421,14 +421,14 @@
 <script setup lang="ts">
 import { CdxButton, CdxProgressBar } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
-import { FakeWiki } from "../../fakewiki/FakeWiki"
+import { FakeWiki } from "fakewiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
 	FWRevision,
-} from "../../fakewiki/types"
+} from "fakewiki/types"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
@@ -659,8 +659,6 @@ const revisionsByDate = computed(() => {
 			revisions: data.revisions,
 		}))
 })
-
-const isAnyLoading = computed(() => isLoading.value)
 
 /** Format date as "DD Month YYYY" (e.g. "28 January 2026") */
 function formatDate(timestamp: string): string {
@@ -1060,10 +1058,6 @@ function toggleTalk(change: FWRevision): void {
 	if (!editorMode.value.has(id)) {
 		editorMode.value = new Map(editorMode.value).set(id, "source")
 	}
-}
-
-function setEditorMode(id: number, mode: "visual" | "source"): void {
-	editorMode.value = new Map(editorMode.value).set(id, mode)
 }
 
 function updateTalkText(id: number, text: string): void {

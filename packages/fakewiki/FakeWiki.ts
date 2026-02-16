@@ -24,11 +24,11 @@ import type {
 	FWUserContrib,
 	FWUserInfo,
 	FWUserSearchResult,
-	PWActionApiOptions,
-	PWApiOptions,
-	PWHistoryOptions,
-	PWRestApiOptions,
-	PWToolbarComment,
+	FWActionApiOptions,
+	FWApiOptions,
+	FWHistoryOptions,
+	FWRestApiOptions,
+	FWToolbarComment,
 } from "./types"
 
 /** MediaWiki REST API page history returns this many revisions per request; used as default and max for getPageHistory and getCombinedFeed. */
@@ -285,13 +285,13 @@ export class FakeWiki {
 	 * @param options - Request options
 	 * @returns JSON or text response
 	 */
-	async request(options: PWApiOptions): Promise<unknown> {
+	async request(options: FWApiOptions): Promise<unknown> {
 		const { api } = options
 
 		if (api === "action") {
-			return this._handleActionApiRequest(options as PWActionApiOptions)
+			return this._handleActionApiRequest(options as FWActionApiOptions)
 		} else if (api === "wikimedia" || api === "mediawiki") {
-			return this._handleRestApiRequest(options as PWRestApiOptions)
+			return this._handleRestApiRequest(options as FWRestApiOptions)
 		} else {
 			throw new Error('API type must be "wikimedia", "mediawiki", or "action"')
 		}
@@ -308,7 +308,7 @@ export class FakeWiki {
 		path,
 		body = null,
 		type = "json",
-	}: PWRestApiOptions): Promise<unknown> {
+	}: FWRestApiOptions): Promise<unknown> {
 		const base = api === "wikimedia" ? this.getWikimediaBase() : this.getMediawikiBase()
 		const containsQuery = path.includes("?")
 		const separator = containsQuery ? "&" : "?"
@@ -350,7 +350,7 @@ export class FakeWiki {
 	 * @returns JSON response from Action API
 	 * @private
 	 */
-	async _handleActionApiRequest({ params }: PWActionApiOptions): Promise<unknown> {
+	async _handleActionApiRequest({ params }: FWActionApiOptions): Promise<unknown> {
 		const searchParams = new URLSearchParams()
 
 		// Add all parameters to the URL
@@ -576,7 +576,7 @@ export class FakeWiki {
 	 */
 	async getPageHistory(
 		pageName: string,
-		options: PWHistoryOptions = {}
+		options: FWHistoryOptions = {}
 	): Promise<FWPageHistoryResponse> {
 		const cached = this.pageHistoryCache.get(pageName) || []
 		const older_than = options.older_than
@@ -648,7 +648,7 @@ export class FakeWiki {
 	 */
 	async getUserHistory(
 		userName: string,
-		options: PWHistoryOptions = {}
+		options: FWHistoryOptions = {}
 	): Promise<FWPageHistoryResponse> {
 		const cached = this.userHistoryCache.get(userName) || []
 		const older_than = options.older_than
@@ -711,7 +711,7 @@ export class FakeWiki {
 	 */
 	async _getUserHistory(
 		userName: string,
-		options: PWHistoryOptions = {}
+		options: FWHistoryOptions = {}
 	): Promise<FWPageHistoryResponse> {
 		const limit = options.limit || DEFAULT_USER_CONTRIBS_LIMIT
 		const ucstart = options.older_than || undefined
@@ -772,7 +772,7 @@ export class FakeWiki {
 	 */
 	async getUsersHistory(
 		userNames: string[],
-		options: PWHistoryOptions = {}
+		options: FWHistoryOptions = {}
 	): Promise<Map<string, FWPageHistoryResponse>> {
 		if (userNames.length === 0) {
 			return new Map()
@@ -857,7 +857,7 @@ export class FakeWiki {
 
 		// Fetch user contributions - caching handled internally
 		if (userNames.length > 0) {
-			const userOptions: PWHistoryOptions = {
+			const userOptions: FWHistoryOptions = {
 				limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
 			}
 			if (afterTimestampIso) {
@@ -881,7 +881,7 @@ export class FakeWiki {
 		if (pageNames.length > 0) {
 			const pagePromises = pageNames.map(async pageName => {
 				try {
-					let options: PWHistoryOptions = {}
+					let options: FWHistoryOptions = {}
 					if (after && afterTimestamp !== undefined) {
 						if (pageName === afterPageName) {
 							options = { older_than: after }
@@ -1502,7 +1502,7 @@ export class FakeWiki {
 	 * @param editSummary - Edit summary to parse
 	 * @returns Parsed toolbar comment or null if not a toolbar comment
 	 */
-	parseToolbarEditSummary(editSummary: string): PWToolbarComment | null {
+	parseToolbarEditSummary(editSummary: string): FWToolbarComment | null {
 		let parts = editSummary.split(" | ")
 		parts = parts.filter(part => part.trim().length > 0)
 		if (parts.length <= 1) {

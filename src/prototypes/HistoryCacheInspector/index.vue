@@ -97,12 +97,12 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
-import { FakeWiki } from "../../fakewiki/FakeWiki"
+import { FakeWiki } from "fakewiki"
 import type {
 	FWHistoryCacheSnapshot,
 	FWPageHistoryRevision,
-	PWHistoryOptions,
-} from "../../fakewiki/types"
+	FWHistoryOptions,
+} from "fakewiki/types"
 
 const wiki = new FakeWiki()
 
@@ -122,8 +122,8 @@ const lastUserResults = ref<DisplayRevision[]>([])
 
 const snapshotText = computed(() => JSON.stringify(snapshot.value, null, 2))
 
-function buildOptions(): PWHistoryOptions {
-	const options: PWHistoryOptions = {}
+function buildOptions(): FWHistoryOptions {
+	const options: FWHistoryOptions = {}
 	const parsedLimit = parseInt(limit.value, 10)
 	if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
 		options.limit = parsedLimit

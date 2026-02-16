@@ -522,7 +522,7 @@ import {
 	cdxIconUnStar,
 } from "@wikimedia/codex-icons"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
-import { FakeWiki } from "../../fakewiki/FakeWiki"
+import { FakeWiki } from "fakewiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
@@ -531,7 +531,7 @@ import type {
 	FWPageHistoryRevision,
 	FWRevision,
 	FWUserInfo,
-} from "../../fakewiki/types"
+} from "fakewiki/types"
 
 /** Configuration for user type icons and colors */
 interface UserTypeConfig {
@@ -991,8 +991,6 @@ const revisionsByDate = computed(() => {
 		}))
 })
 
-const isAnyLoading = computed(() => isLoading.value)
-
 /** Format date as "DD Month YYYY" (e.g. "28 January 2026") */
 function formatDate(timestamp: string): string {
 	const d = new Date(timestamp)
@@ -1438,10 +1436,6 @@ function toggleTalk(change: FWRevision): void {
 	if (!editorMode.value.has(id)) {
 		editorMode.value = new Map(editorMode.value).set(id, "source")
 	}
-}
-
-function setEditorMode(id: number, mode: "visual" | "source"): void {
-	editorMode.value = new Map(editorMode.value).set(id, mode)
 }
 
 function updateTalkText(id: number, text: string): void {

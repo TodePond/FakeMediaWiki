@@ -35,8 +35,8 @@
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { FakeWiki } from "../../fakewiki/FakeWiki"
-import type { FWPageSearchResult } from "../../fakewiki/types"
+import { FakeWiki } from "fakewiki"
+import type { FWPageSearchResult } from "fakewiki/types"
 
 const wiki = new FakeWiki()
 

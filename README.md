@@ -5,7 +5,7 @@ This project is a system for building lightweight MediaWiki prototypes. I should
 Try it at [todepond.github.io/FakeMediaWiki](https://todepond.github.io/FakeMediaWiki/)
 
 - It comes with Codex and a bunch of CSS variables for making wiki-like UIs.
-- It comes with a little library for using MediaWiki's APIs. See `FakeWiki.ts` for more info.
+- It comes with a little library for using MediaWiki's APIs. See the `fakewiki` package in `packages/fakewiki` for more info.
 
 ## Stack
 
