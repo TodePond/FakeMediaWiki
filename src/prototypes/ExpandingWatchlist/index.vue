@@ -421,14 +421,14 @@
 <script setup lang="ts">
 import { CdxButton, CdxProgressBar } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
-import {
-	WikiApi,
-	type CompareResponse,
-	type DiffLine,
-	type PageHistoryResponse,
-	type PageHistoryRevision,
-	type Revision,
-} from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type {
+	CompareResponse,
+	DiffLine,
+	PageHistoryResponse,
+	PageHistoryRevision,
+	Revision,
+} from "../../wiki-api/types"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends PageHistoryRevision {

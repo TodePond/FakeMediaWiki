@@ -21,7 +21,8 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi, type PageMetadata } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { PageMetadata } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 

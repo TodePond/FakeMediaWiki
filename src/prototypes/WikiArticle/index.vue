@@ -67,7 +67,8 @@
 <script setup lang="ts">
 import { CdxTab, CdxTabs } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi, type MediaItem, type PageSummary } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { MediaItem, PageSummary } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 

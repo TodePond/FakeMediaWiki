@@ -32,7 +32,8 @@ import {
 	CdxTextInput,
 } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi, type OnThisDayItem } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { OnThisDayItem } from "../../wiki-api/types"
 import OnThisDayCard from "./OnThisDayCard.vue"
 
 const wiki = new WikiApi()

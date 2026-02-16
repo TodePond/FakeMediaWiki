@@ -133,7 +133,8 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
-import { WikiApi, type Result, type Revision } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { Result, Revision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "CustomPageFeed"

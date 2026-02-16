@@ -522,16 +522,16 @@ import {
 	cdxIconUnStar,
 } from "@wikimedia/codex-icons"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
-import {
-	WikiApi,
-	type CompareResponse,
-	type DiffLine,
-	type LiftWingPrediction,
-	type PageHistoryResponse,
-	type PageHistoryRevision,
-	type Revision,
-	type UserInfo,
-} from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type {
+	CompareResponse,
+	DiffLine,
+	LiftWingPrediction,
+	PageHistoryResponse,
+	PageHistoryRevision,
+	Revision,
+	UserInfo,
+} from "../../wiki-api/types"
 
 /** Configuration for user type icons and colors */
 interface UserTypeConfig {

@@ -22,7 +22,8 @@
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxProgressIndicator } from "@wikimedia/codex"
 import { ref } from "vue"
-import { WikiApi, type RandomPageResult } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { RandomPageResult } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 

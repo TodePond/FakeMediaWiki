@@ -1,13 +1,13 @@
 import { computed, onMounted, ref, type Ref } from "vue"
-import {
-	WikiApi,
-	type CompareResponse,
-	type DiffLine,
-	type PageHistoryResponse,
-	type PageHistoryRevision,
-	type Result,
-	type Revision,
-} from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type {
+	CompareResponse,
+	DiffLine,
+	PageHistoryResponse,
+	PageHistoryRevision,
+	Result,
+	Revision,
+} from "../../wiki-api/types"
 
 /** History revision with edit summary rendered as HTML */
 export interface HistoryRevisionWithHtml extends PageHistoryRevision {

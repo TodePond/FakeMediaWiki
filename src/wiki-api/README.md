@@ -91,7 +91,8 @@ const keys = wiki.getStorageKeys("CustomPageFeed", "pageQuery", 3)
 ### Using result types
 
 ```typescript
-import { WikiApi, type Result, type Revision } from "./wiki-api/WikiApi"
+import { WikiApi } from "./wiki-api/WikiApi"
+import type { Result, Revision } from "./wiki-api/types"
 
 const wiki = new WikiApi()
 

@@ -43,7 +43,8 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi, type PageHistoryResponse, type PageHistoryRevision } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { PageHistoryResponse, PageHistoryRevision } from "../../wiki-api/types"
 import "../../wiki-api/style/delta.css"
 
 const wiki = new WikiApi()

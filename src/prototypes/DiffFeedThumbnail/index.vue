@@ -172,7 +172,8 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconArticle, cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
-import { WikiApi, type DiffLine, type Result, type Revision } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { DiffLine, Result, Revision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "DiffFeedThumbnail"

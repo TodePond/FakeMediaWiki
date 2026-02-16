@@ -8,7 +8,8 @@
 <script setup lang="ts">
 import { CdxCard } from "@wikimedia/codex"
 import { computed } from "vue"
-import { WikiApi, type OnThisDayItem } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { OnThisDayItem } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 

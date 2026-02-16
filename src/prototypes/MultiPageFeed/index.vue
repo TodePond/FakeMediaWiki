@@ -106,7 +106,8 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { onMounted, ref } from "vue"
-import { WikiApi, type Revision } from "../../wiki-api/WikiApi"
+import { WikiApi } from "../../wiki-api/WikiApi"
+import type { Revision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
