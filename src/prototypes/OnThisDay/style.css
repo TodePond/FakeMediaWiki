@@ -1,7 +1,13 @@
 section {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin: 1rem 0;
 }
 
 .cdx-text-input {
@@ -25,12 +31,6 @@ form span {
 
 .section h3 {
 	margin: 0 0 1rem 0;
-}
-
-.items {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
 }
 
 .error {

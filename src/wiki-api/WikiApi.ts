@@ -192,21 +192,18 @@ export interface PageHistoryResponse {
 
 export interface OnThisDayEvent {
 	text: string
+	type: "event"
 	year?: number
 	pages?: Array<{ title: string }>
 }
 
 export interface OnThisDayHoliday {
 	text: string
+	type: "holiday"
 	pages?: Array<{ title: string }>
 }
 
-export interface OnThisDayResponse {
-	events?: OnThisDayEvent[]
-	births?: OnThisDayEvent[]
-	deaths?: OnThisDayEvent[]
-	holidays?: OnThisDayHoliday[]
-}
+export type OnThisDayItem = OnThisDayEvent | OnThisDayHoliday
 
 /** Lift Wing API prediction score */
 export interface LiftWingPrediction {
@@ -794,7 +791,7 @@ export class WikiApi {
 			}
 
 			// Need to fetch from API
-			const fetched = await this.getUserHistoryViaActionApi(userName, {
+			const fetched = await this._getUserHistory(userName, {
 				limit: limitNum,
 				older_than,
 				newer_than,
@@ -846,7 +843,7 @@ export class WikiApi {
 		}
 
 		// Fetch from API
-		const fetched = await this.getUserHistoryViaActionApi(userName, {
+		const fetched = await this._getUserHistory(userName, {
 			limit: limitNum,
 			older_than: fetchFrom,
 		})
@@ -870,12 +867,12 @@ export class WikiApi {
 	}
 
 	/**
-	 * Get user contributions using the Action API (fallback)
+	 * Get user contributions using the Action API
 	 * @param userName - Username
 	 * @param options - Options (limit, etc.)
 	 * @returns User revision history
 	 */
-	async getUserHistoryViaActionApi(
+	async _getUserHistory(
 		userName: string,
 		options: HistoryOptions = {}
 	): Promise<PageHistoryResponse> {
@@ -1211,23 +1208,24 @@ export class WikiApi {
 	}
 
 	/**
-	 * Get "On This Day" content
+	 * Get "On This Day" content for a given type
 	 * @param type - Type: 'events', 'births', 'deaths', 'holidays', 'selected'
 	 * @param date - Date object or MM/DD string
-	 * @returns On this day content
+	 * @returns Array of on-this-day items for the requested type
 	 */
 	async getOnThisDay(
 		type: "events" | "births" | "deaths" | "holidays" | "selected" = "events",
 		date: Date | string = new Date()
-	): Promise<OnThisDayResponse> {
+	): Promise<OnThisDayItem[]> {
 		const dateStr =
 			date instanceof Date
 				? `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`
 				: date
-		return (await this.request({
+		const response = (await this.request({
 			api: "wikimedia",
 			path: `feed/onthisday/${type}/${dateStr}`,
-		})) as OnThisDayResponse
+		})) as Record<string, OnThisDayItem[] | undefined>
+		return response[type] ?? []
 	}
 
 	/**

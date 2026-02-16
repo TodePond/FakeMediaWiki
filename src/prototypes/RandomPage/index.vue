@@ -1,7 +1,7 @@
 <template>
 	<section>
 		<div class="controls">
-			<CdxButton @click="getRandom">Load random page</CdxButton>
+			<CdxButton @click="loadRandomPage">Load random page</CdxButton>
 			<CdxProgressIndicator v-if="isLoading" aria-label="Loading random page" />
 		</div>
 		<div v-if="error" class="error">{{ error }}</div>
@@ -26,16 +26,15 @@ import { WikiApi, type RandomPageResult } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const format = ref<"summary" | "html" | "title">("summary")
 const randomPage = ref<RandomPageResult | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
-const getRandom = async (): Promise<void> => {
+const loadRandomPage = async (): Promise<void> => {
 	isLoading.value = true
 	error.value = null
 	try {
-		const data = await wiki.getRandomPage(format.value)
+		const data = await wiki.getRandomPage("summary")
 		randomPage.value = data
 	} catch (err) {
 		const errorObj = err as Error

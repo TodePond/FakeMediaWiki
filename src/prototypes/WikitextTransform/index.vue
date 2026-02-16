@@ -25,7 +25,7 @@ import { WikiApi } from "../../wiki-api/WikiApi"
 
 const wiki = new WikiApi()
 
-const wikitext = ref("== Hello World ==\n\nThis is a test of ''wikitext'' transformation.")
+const wikitext = ref("== Hello World ==\n\nThis is a '''test''' of [[Wikitext]] transformation.")
 const htmlResult = ref("")
 const isLoading = ref(false)
 const error = ref<string | null>(null)
