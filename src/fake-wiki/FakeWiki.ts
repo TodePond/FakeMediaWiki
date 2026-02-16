@@ -1,6 +1,4 @@
 import type {
-	FWActionApiOptions,
-	FWApiOptions,
 	FWCachedRevision,
 	FWCompareResponse,
 	FWDiffLine,
@@ -8,7 +6,6 @@ import type {
 	FWHistoryCacheEntitySnapshot,
 	FWHistoryCacheSnapshot,
 	FWHistoryCoverageEntry,
-	FWHistoryOptions,
 	FWLiftWingPrediction,
 	FWLiftWingResponse,
 	FWOnThisDayItem,
@@ -21,14 +18,17 @@ import type {
 	FWRandomPageResult,
 	FWRandomPageSummary,
 	FWRelativeTimestampOptions,
-	FWRestApiOptions,
 	FWResult,
 	FWRevision,
 	FWRevisionPredictions,
-	FWToolbarComment,
 	FWUserContrib,
 	FWUserInfo,
 	FWUserSearchResult,
+	PWActionApiOptions,
+	PWApiOptions,
+	PWHistoryOptions,
+	PWRestApiOptions,
+	PWToolbarComment,
 } from "./types"
 
 /** MediaWiki REST API page history returns this many revisions per request; used as default and max for getPageHistory and getCombinedFeed. */
@@ -46,7 +46,7 @@ const USER_CONTRIBS_MAX_LIMIT = 500
 /**
  * Helper for interacting with Wikimedia and MediaWiki REST APIs.
  */
-export class WikiApi {
+export class FakeWiki {
 	/**
 	 * Base URL for the API
 	 */
@@ -72,7 +72,7 @@ export class WikiApi {
 	private userHistoryCoverage = new Map<string, FWHistoryCoverageEntry[]>()
 
 	/**
-	 * Create a new WikiApi instance
+	 * Create a new FakeWiki instance
 	 * @param base - Base URL for the API
 	 */
 	constructor(base = "https://en.wikipedia.org/") {
@@ -285,13 +285,13 @@ export class WikiApi {
 	 * @param options - Request options
 	 * @returns JSON or text response
 	 */
-	async request(options: FWApiOptions): Promise<unknown> {
+	async request(options: PWApiOptions): Promise<unknown> {
 		const { api } = options
 
 		if (api === "action") {
-			return this._handleActionApiRequest(options as FWActionApiOptions)
+			return this._handleActionApiRequest(options as PWActionApiOptions)
 		} else if (api === "wikimedia" || api === "mediawiki") {
-			return this._handleRestApiRequest(options as FWRestApiOptions)
+			return this._handleRestApiRequest(options as PWRestApiOptions)
 		} else {
 			throw new Error('API type must be "wikimedia", "mediawiki", or "action"')
 		}
@@ -308,7 +308,7 @@ export class WikiApi {
 		path,
 		body = null,
 		type = "json",
-	}: FWRestApiOptions): Promise<unknown> {
+	}: PWRestApiOptions): Promise<unknown> {
 		const base = api === "wikimedia" ? this.getWikimediaBase() : this.getMediawikiBase()
 		const containsQuery = path.includes("?")
 		const separator = containsQuery ? "&" : "?"
@@ -350,7 +350,7 @@ export class WikiApi {
 	 * @returns JSON response from Action API
 	 * @private
 	 */
-	async _handleActionApiRequest({ params }: FWActionApiOptions): Promise<unknown> {
+	async _handleActionApiRequest({ params }: PWActionApiOptions): Promise<unknown> {
 		const searchParams = new URLSearchParams()
 
 		// Add all parameters to the URL
@@ -576,7 +576,7 @@ export class WikiApi {
 	 */
 	async getPageHistory(
 		pageName: string,
-		options: FWHistoryOptions = {}
+		options: PWHistoryOptions = {}
 	): Promise<FWPageHistoryResponse> {
 		const cached = this.pageHistoryCache.get(pageName) || []
 		const older_than = options.older_than
@@ -648,7 +648,7 @@ export class WikiApi {
 	 */
 	async getUserHistory(
 		userName: string,
-		options: FWHistoryOptions = {}
+		options: PWHistoryOptions = {}
 	): Promise<FWPageHistoryResponse> {
 		const cached = this.userHistoryCache.get(userName) || []
 		const older_than = options.older_than
@@ -711,7 +711,7 @@ export class WikiApi {
 	 */
 	async _getUserHistory(
 		userName: string,
-		options: FWHistoryOptions = {}
+		options: PWHistoryOptions = {}
 	): Promise<FWPageHistoryResponse> {
 		const limit = options.limit || DEFAULT_USER_CONTRIBS_LIMIT
 		const ucstart = options.older_than || undefined
@@ -772,7 +772,7 @@ export class WikiApi {
 	 */
 	async getUsersHistory(
 		userNames: string[],
-		options: FWHistoryOptions = {}
+		options: PWHistoryOptions = {}
 	): Promise<Map<string, FWPageHistoryResponse>> {
 		if (userNames.length === 0) {
 			return new Map()
@@ -857,7 +857,7 @@ export class WikiApi {
 
 		// Fetch user contributions - caching handled internally
 		if (userNames.length > 0) {
-			const userOptions: FWHistoryOptions = {
+			const userOptions: PWHistoryOptions = {
 				limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
 			}
 			if (afterTimestampIso) {
@@ -881,7 +881,7 @@ export class WikiApi {
 		if (pageNames.length > 0) {
 			const pagePromises = pageNames.map(async pageName => {
 				try {
-					let options: FWHistoryOptions = {}
+					let options: PWHistoryOptions = {}
 					if (after && afterTimestamp !== undefined) {
 						if (pageName === afterPageName) {
 							options = { older_than: after }
@@ -1502,7 +1502,7 @@ export class WikiApi {
 	 * @param editSummary - Edit summary to parse
 	 * @returns Parsed toolbar comment or null if not a toolbar comment
 	 */
-	parseToolbarEditSummary(editSummary: string): FWToolbarComment | null {
+	parseToolbarEditSummary(editSummary: string): PWToolbarComment | null {
 		let parts = editSummary.split(" | ")
 		parts = parts.filter(part => part.trim().length > 0)
 		if (parts.length <= 1) {

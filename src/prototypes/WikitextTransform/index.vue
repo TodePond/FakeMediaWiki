@@ -21,9 +21,9 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextArea } from "@wikimedia/codex"
 import { ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const wikitext = ref("== Hello World ==\n\nThis is a '''test''' of [[Wikitext]] transformation.")
 const htmlResult = ref("")

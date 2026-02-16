@@ -133,10 +133,10 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FWResult, FWRevision } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import type { FWResult, FWRevision } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "CustomPageFeed"
 
 const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)

@@ -8,10 +8,10 @@
 <script setup lang="ts">
 import { CdxCard } from "@wikimedia/codex"
 import { computed } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FWOnThisDayItem } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import type { FWOnThisDayItem } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const props = defineProps<{
 	item: FWOnThisDayItem

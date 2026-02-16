@@ -522,7 +522,7 @@ import {
 	cdxIconUnStar,
 } from "@wikimedia/codex-icons"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
@@ -531,7 +531,7 @@ import type {
 	FWPageHistoryRevision,
 	FWRevision,
 	FWUserInfo,
-} from "../../wiki-api/types"
+} from "../../fake-wiki/types"
 
 /** Configuration for user type icons and colors */
 interface UserTypeConfig {
@@ -567,7 +567,7 @@ interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
 	commentHtml: string
 }
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "FlaggedWatchlist"
 
 const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)

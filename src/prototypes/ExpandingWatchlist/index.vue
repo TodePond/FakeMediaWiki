@@ -421,21 +421,21 @@
 <script setup lang="ts">
 import { CdxButton, CdxProgressBar } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
 	FWRevision,
-} from "../../wiki-api/types"
+} from "../../fake-wiki/types"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
 	commentHtml: string
 }
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "SmoothWatchlistStyledVariant"
 
 const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)

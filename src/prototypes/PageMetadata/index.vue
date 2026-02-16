@@ -21,10 +21,10 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FWPageMetadata } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import type { FWPageMetadata } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const pageName = ref(localStorage.getItem("pageMetadataQuery") || "Wet Leg")
 const metadata = ref<FWPageMetadata | null>(null)

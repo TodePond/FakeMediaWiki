@@ -36,10 +36,10 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FWMediaItem } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import type { FWMediaItem } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const pageName = ref(localStorage.getItem("pageMediaQuery") || "Wet Leg")
 const mediaItems = ref<FWMediaItem[]>([])

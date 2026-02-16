@@ -4,13 +4,13 @@ This directory contains API schemas and utilities for interacting with Wikimedia
 
 ## Files
 
-- `WikiApi.ts` - Main API client class with methods for interacting with Wikimedia REST API, MediaWiki REST API, and MediaWiki Action API
+- `FakeWiki.ts` - Main API client class with methods for interacting with Wikimedia REST API, MediaWiki REST API, and MediaWiki Action API
 - `schema/mediawiki-schema.json` - OpenAPI 3.0 schema for MediaWiki REST API
 - `schema/wikimedia-schema.json` - OpenAPI 3.0 schema for Wikimedia REST API
 
 ## Utility methods
 
-The WikiApi class provides several utility methods for prototypes:
+The FakeWiki class provides several utility methods for prototypes:
 
 ### Storage keys
 
@@ -58,9 +58,9 @@ The traditional MediaWiki API using query parameters.
 ### Basic API usage
 
 ```typescript
-import { WikiApi } from "./wiki-api/WikiApi"
+import { FakeWiki } from "./fake-wiki/FakeWiki"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 // Get page summary
 const summary = await wiki.getPageSummary("Wikipedia")
@@ -75,9 +75,9 @@ const results = await wiki.searchPages("query", 20)
 ### Using storage keys
 
 ```typescript
-import { WikiApi } from "./wiki-api/WikiApi"
+import { FakeWiki } from "./fake-wiki/FakeWiki"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 // Single key
 const key = wiki.getStorageKey("PageFeed", "searchQuery")
@@ -91,10 +91,10 @@ const keys = wiki.getStorageKeys("CustomPageFeed", "pageQuery", 3)
 ### Using result types
 
 ```typescript
-import { WikiApi } from "./wiki-api/WikiApi"
-import type { Result, Revision } from "./wiki-api/types"
+import { FakeWiki } from "./fake-wiki/FakeWiki"
+import type { Result, Revision } from "./fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 // Single result
 const result = wiki.createResult<Revision>()
@@ -106,10 +106,10 @@ const results = wiki.createResults<Revision>(3)
 ### Using delta utilities
 
 ```typescript
-import { WikiApi } from "./wiki-api/WikiApi"
-import "./wiki-api/style/delta.css"
+import { FakeWiki } from "./fake-wiki/FakeWiki"
+import "./fake-wiki/style/delta.css"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const className = wiki.getDeltaClass(150) // Returns "positive"
 const className2 = wiki.getDeltaClass(-50) // Returns "negative"

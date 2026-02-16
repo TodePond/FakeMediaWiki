@@ -413,7 +413,7 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref, type Ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
@@ -421,14 +421,14 @@ import type {
 	FWPageHistoryRevision,
 	FWResult,
 	FWRevision,
-} from "../../wiki-api/types"
+} from "../../fake-wiki/types"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
 	commentHtml: string
 }
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "SmoothWatchlistInlineDiff"
 
 const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)

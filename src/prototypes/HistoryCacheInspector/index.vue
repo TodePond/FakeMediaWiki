@@ -97,14 +97,14 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
 import type {
 	FWHistoryCacheSnapshot,
-	FWHistoryOptions,
 	FWPageHistoryRevision,
-} from "../../wiki-api/types"
+	PWHistoryOptions,
+} from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const pageName = ref("Rogue (Marvel Comics)")
 const userName = ref("Todepond")
@@ -122,8 +122,8 @@ const lastUserResults = ref<DisplayRevision[]>([])
 
 const snapshotText = computed(() => JSON.stringify(snapshot.value, null, 2))
 
-function buildOptions(): FWHistoryOptions {
-	const options: FWHistoryOptions = {}
+function buildOptions(): PWHistoryOptions {
+	const options: PWHistoryOptions = {}
 	const parsedLimit = parseInt(limit.value, 10)
 	if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
 		options.limit = parsedLimit

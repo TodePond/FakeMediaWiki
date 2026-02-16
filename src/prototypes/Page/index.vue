@@ -25,9 +25,9 @@
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const url = ref("")
 const title = ref("")

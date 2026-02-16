@@ -32,11 +32,11 @@ import {
 	CdxTextInput,
 } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FWOnThisDayItem } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import type { FWOnThisDayItem } from "../../fake-wiki/types"
 import OnThisDayCard from "./OnThisDayCard.vue"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const type = ref<"events" | "births" | "deaths" | "holidays">("events")
 const dateInput = ref("")

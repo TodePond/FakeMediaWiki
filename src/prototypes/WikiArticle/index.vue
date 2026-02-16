@@ -67,10 +67,10 @@
 <script setup lang="ts">
 import { CdxTab, CdxTabs } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FWMediaItem, FWPageSummary } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import type { FWMediaItem, FWPageSummary } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 /** Split wikitext into sections by level-2 headers (== Title ==). */
 function parseSections(wikitext: string): { title: string; wikitext: string }[] {

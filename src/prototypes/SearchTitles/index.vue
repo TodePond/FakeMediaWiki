@@ -36,10 +36,10 @@
 <script setup lang="ts">
 import { CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FWPageSearchResult } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import type { FWPageSearchResult } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const searchQuery = ref(localStorage.getItem("searchTitlesQuery") || "")
 const results = ref<FWPageSearchResult[]>([])

@@ -54,9 +54,9 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const pageNamesInput = ref(
 	localStorage.getItem("pageLinksQuery") ||

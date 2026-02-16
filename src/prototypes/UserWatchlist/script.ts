@@ -1,5 +1,5 @@
 import { computed, onMounted, ref, type Ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
@@ -7,7 +7,7 @@ import type {
 	FWPageHistoryRevision,
 	FWResult,
 	FWRevision,
-} from "../../wiki-api/types"
+} from "../../fake-wiki/types"
 
 /** History revision with edit summary rendered as HTML */
 export interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
@@ -23,7 +23,7 @@ export interface DiffSegment {
 const PROTOTYPE_NAME = "UserWatchlist"
 
 export function useActionWatchlist() {
-	const wiki = new WikiApi()
+	const wiki = new FakeWiki()
 
 	const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)
 	const userStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "userQuery", 3)

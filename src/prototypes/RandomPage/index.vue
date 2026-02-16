@@ -22,10 +22,10 @@
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxProgressIndicator } from "@wikimedia/codex"
 import { ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FWRandomPageResult } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import type { FWRandomPageResult } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 
 const randomPage = ref<FWRandomPageResult | null>(null)
 const isLoading = ref(false)

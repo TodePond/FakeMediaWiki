@@ -43,11 +43,11 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import "../../wiki-api/style/delta.css"
-import type { FWPageHistoryResponse, FWPageHistoryRevision } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import "../../fake-wiki/style/delta.css"
+import type { FWPageHistoryResponse, FWPageHistoryRevision } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "PageChanges"
 
 const searchQuery = ref(

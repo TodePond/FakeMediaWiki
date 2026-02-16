@@ -68,11 +68,11 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { onMounted, ref } from "vue"
-import { WikiApi } from "../../wiki-api/WikiApi"
-import "../../wiki-api/style/delta.css"
-import type { FWPageHistoryResponse, FWRevision } from "../../wiki-api/types"
+import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import "../../fake-wiki/style/delta.css"
+import type { FWPageHistoryResponse, FWRevision } from "../../fake-wiki/types"
 
-const wiki = new WikiApi()
+const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "PageFeedLined"
 
 const storageKey = wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")
