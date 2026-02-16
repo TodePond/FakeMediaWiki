@@ -68,14 +68,13 @@
 						>
 							<div class="prototype-header">
 								<span class="prototype-header-item">
-									<span class="prototype-name">{{ group.name }}</span>
 									<CdxIcon
 										v-if="group.featured"
-										:icon="cdxIconStar"
+										:icon="cdxIconBookmark"
 										size="small"
 										class="prototype-featured-icon"
 										aria-label="Featured"
-									/>
+									/><span class="prototype-name">{{ group.name }}</span>
 									<span
 										v-if="group.status"
 										:class="['badge', `badge-${group.status}`]"
@@ -114,16 +113,15 @@
 									>
 										<div class="prototype-header">
 											<span class="prototype-header-item">
-												<span class="prototype-name">{{
-													variant.name
-												}}</span>
 												<CdxIcon
 													v-if="variant.featured"
-													:icon="cdxIconStar"
+													:icon="cdxIconBookmark"
 													size="small"
 													class="prototype-featured-icon"
 													aria-label="Featured"
-												/>
+												/><span class="prototype-name">{{
+													variant.name
+												}}</span>
 												<span
 													v-if="variant.status"
 													:class="['badge', `badge-${variant.status}`]"
@@ -148,14 +146,21 @@
 				</li>
 			</ul>
 		</div>
+
+		<p v-if="hasFilters" class="filter-footer">
+			There are more prototypes.
+			<button type="button" class="filter-footer-link" @click="removeFilters">
+				Remove filters?
+			</button>
+		</p>
 	</main>
 </template>
 
 <script setup lang="ts">
 import type { ChipInputItem } from "@wikimedia/codex"
 import { CdxChipInput, CdxField, CdxIcon, CdxSelect } from "@wikimedia/codex"
-import { cdxIconAdd, cdxIconStar } from "@wikimedia/codex-icons"
-import { computed, ref, watch } from "vue"
+import { cdxIconAdd, cdxIconBookmark } from "@wikimedia/codex-icons"
+import { computed, onMounted, ref, watch } from "vue"
 import { RouterLink } from "vue-router"
 import type { PrototypeDefinition, PrototypeStatus } from "../prototypes/prototypes"
 import {
@@ -184,6 +189,38 @@ const featuredFilterOptions: { value: FeaturedFilterValue; label: string }[] = [
 	{ value: "featured", label: "Featured" },
 	{ value: "unfeatured", label: "Unfeatured" },
 ]
+
+const FILTER_STORAGE_KEY = "fakemediawiki-home-filters"
+
+const defaultChips: ChipInputItem[] = [
+	{ value: "featured:yes", label: "featured:yes", className: "chip-filter-featured" },
+]
+
+function loadFiltersFromStorage(): ChipInputItem[] {
+	try {
+		const raw = localStorage.getItem(FILTER_STORAGE_KEY)
+		// Only default to featured when nothing is stored at all (first visit)
+		if (raw == null) return defaultChips
+		const parsed = JSON.parse(raw) as ChipInputItem[]
+		if (!Array.isArray(parsed)) return defaultChips
+		return parsed
+	} catch {
+		return defaultChips
+	}
+}
+
+function saveFiltersToStorage() {
+	try {
+		localStorage.setItem(
+			FILTER_STORAGE_KEY,
+			JSON.stringify(
+				chips.value.map(c => ({ value: c.value, label: c.label, className: c.className }))
+			)
+		)
+	} catch {
+		// ignore storage errors
+	}
+}
 
 const chips = ref<ChipInputItem[]>([])
 const filterInputValue = ref<string>("")
@@ -272,6 +309,19 @@ function normalizeChips(list: ChipInputItem[]): ChipInputItem[] {
 function onChipsUpdate(newChips: ChipInputItem[]) {
 	chips.value = normalizeChips(newChips)
 }
+
+const hasFilters = computed(() => chips.value.length > 0)
+
+function removeFilters() {
+	chips.value = []
+	window.scrollTo({ top: 0 })
+}
+
+onMounted(() => {
+	chips.value = normalizeChips(loadFiltersFromStorage())
+})
+
+watch(chips, () => saveFiltersToStorage(), { deep: true })
 
 // Derive active filters from chips (status:*, wrapper:*, category:*)
 const selectedStatuses = computed<Set<string>>(() => {
@@ -599,6 +649,29 @@ main {
 	font-size: 0.9em;
 }
 
+.filter-footer {
+	margin-top: 2rem;
+	margin-bottom: 0;
+	padding-bottom: 2rem;
+	text-align: center;
+	color: var(--color-base--subtle, #54595d);
+	font-size: 0.9em;
+}
+
+.filter-footer-link {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: var(--color-progressive);
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.filter-footer-link:hover {
+	text-decoration: none;
+}
+
 /* This should be a more specific to avoid affecting other links */
 a.prototype-card {
 	display: block;
@@ -613,6 +686,8 @@ a.prototype-card {
 	text-decoration: none;
 	color: inherit;
 	background-color: var(--background-color-base);
+
+	position: relative;
 }
 
 a.prototype-card:hover {
@@ -698,12 +773,15 @@ h1 {
 }
 
 .prototype-featured-icon {
-	color: var(--border-color-base);
+	color: var(--color-progressive);
 	flex-shrink: 0;
 	height: 1.2rem;
 	padding: 0.05rem !important;
 	display: inline-flex;
 	align-items: baseline;
+	position: absolute;
+	top: -6px;
+	left: 0px;
 	justify-content: center;
 }
 
