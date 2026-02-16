@@ -524,13 +524,13 @@ import {
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
 import type {
-	CompareResponse,
-	DiffLine,
-	LiftWingPrediction,
-	PageHistoryResponse,
-	PageHistoryRevision,
-	Revision,
-	UserInfo,
+	FWCompareResponse,
+	FWDiffLine,
+	FWLiftWingPrediction,
+	FWPageHistoryResponse,
+	FWPageHistoryRevision,
+	FWRevision,
+	FWUserInfo,
 } from "../../wiki-api/types"
 
 /** Configuration for user type icons and colors */
@@ -563,7 +563,7 @@ const userTypeConfig: Record<
 }
 
 /** History revision with edit summary rendered as HTML */
-interface HistoryRevisionWithHtml extends PageHistoryRevision {
+interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
 	commentHtml: string
 }
 
@@ -583,7 +583,7 @@ const pageSearchQueries = ref<string[]>([
 const userSearchQueries = ref<string[]>(["Samwalton9", "Todepond", "Humbugtheman"])
 
 // Combined feed results
-const allRevisionsData = ref<Revision[]>([])
+const allRevisionsData = ref<FWRevision[]>([])
 const isLoading = ref(false)
 const isLoadingMore = ref(false)
 const errors = ref<string[]>([])
@@ -592,7 +592,7 @@ const hasMore = ref(true) // Whether there are more revisions to load
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
 /** Loaded diff data keyed by revision id */
-const loadedDiffs = ref<Map<number, CompareResponse>>(new Map())
+const loadedDiffs = ref<Map<number, FWCompareResponse>>(new Map())
 /** Revision ids currently loading their diff */
 const loadingDiffIds = ref<Set<number>>(new Set())
 
@@ -602,7 +602,10 @@ const expandedHistoryIds = ref<Set<number>>(new Set())
 const expandedHistoryDiffIds = ref<Map<number, Set<number>>>(new Map())
 /** Loaded history data keyed by page name (revisions include commentHtml) */
 const loadedHistories = ref<
-	Map<string, Omit<PageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }>
+	Map<
+		string,
+		Omit<FWPageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }
+	>
 >(new Map())
 /** Page names currently loading history */
 const loadingHistoryPageNames = ref<Set<string>>(new Set())
@@ -618,7 +621,7 @@ let nextHeartId = 0
 const HEART_RISE_DURATION_MS = 2500
 
 /** Cache of user info by username */
-const userInfoCache = ref<Map<string, UserInfo | null>>(new Map())
+const userInfoCache = ref<Map<string, FWUserInfo | null>>(new Map())
 /** Cache of user categories by username */
 const userCategoriesCache = ref<Map<string, string>>(new Map())
 
@@ -631,7 +634,7 @@ const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
 /** Cache of revision predictions (damaging and goodfaith) */
 const revisionPredictions = ref<
-	Map<number, { damaging?: LiftWingPrediction; goodfaith?: LiftWingPrediction }>
+	Map<number, { damaging?: FWLiftWingPrediction; goodfaith?: FWLiftWingPrediction }>
 >(new Map())
 /** Revision IDs currently loading predictions */
 const loadingPredictions = ref<Set<number>>(new Set())
@@ -855,7 +858,7 @@ async function loadFeed(after?: string, append = false): Promise<void> {
 		const processedRevisions = await Promise.all(
 			revisions.map(async revision => {
 				const pageName =
-					(revision as PageHistoryRevision & { pageName?: string }).pageName || ""
+					(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
 				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
 				const toolbar = wiki.parseToolbarEditSummary(_summary)
 				const summary = toolbar
@@ -884,7 +887,7 @@ async function loadFeed(after?: string, append = false): Promise<void> {
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					comment: revision.comment || "",
 					summary,
@@ -958,7 +961,7 @@ const allRevisions = computed(() => allRevisionsData.value)
 
 /** Get all revisions in order (flattened from revisionsByDate) */
 const allRevisionsInOrder = computed(() => {
-	const result: Revision[] = []
+	const result: FWRevision[] = []
 	for (const group of revisionsByDate.value) {
 		result.push(...group.revisions)
 	}
@@ -966,7 +969,7 @@ const allRevisionsInOrder = computed(() => {
 })
 
 const revisionsByDate = computed(() => {
-	const grouped = new Map<string, { dateLabel: string; revisions: Revision[] }>()
+	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
 
 	allRevisions.value.forEach(revision => {
 		const dateKey = getDateKey(revision.timestamp)
@@ -1088,7 +1091,7 @@ function formatDelta(delta: number | null): string {
 	return `(${sign}${n})`
 }
 
-function expandItem(change: Revision, event: MouseEvent): void {
+function expandItem(change: FWRevision, event: MouseEvent): void {
 	// Don't expand if clicking on links or buttons
 	const target = event.target as HTMLElement
 	if (
@@ -1134,14 +1137,14 @@ function collapseItem(id: number): void {
 	expandedTalkIds.value.delete(id)
 }
 
-function handleItemClick(change: Revision, event: MouseEvent): void {
+function handleItemClick(change: FWRevision, event: MouseEvent): void {
 	// Only expand if not already expanded
 	if (!expandedItemIds.value.has(change.id)) {
 		expandItem(change, event)
 	}
 }
 
-function toggleDiff(change: Revision): void {
+function toggleDiff(change: FWRevision): void {
 	const id = change.id
 	const expanded = expandedDiffIds.value.has(id)
 	if (expanded) {
@@ -1222,7 +1225,7 @@ function handleHistoryItemClick(
 	toggleHistoryDiff(changeId, rev, pageName)
 }
 
-function toggleHistory(change: Revision): void {
+function toggleHistory(change: FWRevision): void {
 	const id = change.id
 	const pageName = change.pageName
 	if (!pageName) return
@@ -1292,7 +1295,7 @@ function byteOffsetToCharIndex(str: string, byteOffset: number): number {
 }
 
 /** Split a change line into segments for add/remove/change character-level styling */
-function getDiffLineSegments(line: DiffLine): DiffSegment[] {
+function getDiffLineSegments(line: FWDiffLine): DiffSegment[] {
 	const text = line.text ?? ""
 	const ranges = line.highlightRanges ?? []
 	if (ranges.length === 0) {
@@ -1337,7 +1340,7 @@ function getDiffLineClass(type: number): string {
 	}
 }
 
-function onThankClick(change: Revision, e: MouseEvent): void {
+function onThankClick(change: FWRevision, e: MouseEvent): void {
 	e.preventDefault()
 	const id = change.id
 	const x = e.clientX
@@ -1414,7 +1417,7 @@ function getUserTypeConfig(userName: string): UserTypeConfig | null {
 	return category ? userTypeConfig[category] : null
 }
 
-function toggleTalk(change: Revision): void {
+function toggleTalk(change: FWRevision): void {
 	const id = change.id
 	const expanded = expandedTalkIds.value.has(id)
 	if (expanded) {
@@ -1445,7 +1448,7 @@ function updateTalkText(id: number, text: string): void {
 	talkPageText.value = new Map(talkPageText.value).set(id, text)
 }
 
-function handleAddTopic(change: Revision): void {
+function handleAddTopic(change: FWRevision): void {
 	// TODO: Implement add topic functionality
 	const text = talkPageText.value.get(change.id) || ""
 	console.log("Add topic:", text)

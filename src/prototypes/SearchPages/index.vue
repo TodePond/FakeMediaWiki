@@ -36,12 +36,12 @@
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { PageSearchResult } from "../../wiki-api/types"
+import type { FWPageSearchResult } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
 const searchQuery = ref(localStorage.getItem("searchPagesQuery") || "")
-const results = ref<PageSearchResult[]>([])
+const results = ref<FWPageSearchResult[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 const hasSearched = ref(false)

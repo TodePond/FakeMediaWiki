@@ -23,11 +23,11 @@
 import { CdxButton, CdxCard, CdxProgressIndicator } from "@wikimedia/codex"
 import { ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { RandomPageResult } from "../../wiki-api/types"
+import type { FWRandomPageResult } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
-const randomPage = ref<RandomPageResult | null>(null)
+const randomPage = ref<FWRandomPageResult | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 

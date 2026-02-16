@@ -144,7 +144,7 @@ import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconArticle, cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { PageHistoryRevision, Revision } from "../../wiki-api/types"
+import type { FWPageHistoryRevision, FWRevision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
@@ -170,8 +170,16 @@ const userSearchQueries = ref<string[]>([
 ])
 
 // Store results separately for each page
-const pageResults: [Ref<Revision[]>, Ref<Revision[]>, Ref<Revision[]>] = [ref([]), ref([]), ref([])]
-const userResults: [Ref<Revision[]>, Ref<Revision[]>, Ref<Revision[]>] = [ref([]), ref([]), ref([])]
+const pageResults: [Ref<FWRevision[]>, Ref<FWRevision[]>, Ref<FWRevision[]>] = [
+	ref([]),
+	ref([]),
+	ref([]),
+]
+const userResults: [Ref<FWRevision[]>, Ref<FWRevision[]>, Ref<FWRevision[]>] = [
+	ref([]),
+	ref([]),
+	ref([]),
+]
 const pageLoading: [Ref<boolean>, Ref<boolean>, Ref<boolean>] = [ref(false), ref(false), ref(false)]
 const userLoading: [Ref<boolean>, Ref<boolean>, Ref<boolean>] = [ref(false), ref(false), ref(false)]
 const pageError: [Ref<string | null>, Ref<string | null>, Ref<string | null>] = [
@@ -250,7 +258,7 @@ async function search(): Promise<void> {
 async function loadUser(
 	userNum: number,
 	userName: string,
-	resultsRef: Ref<Revision[]>,
+	resultsRef: Ref<FWRevision[]>,
 	loadingRef: Ref<boolean>,
 	errorRef: Ref<string | null>
 ): Promise<void> {
@@ -272,13 +280,13 @@ async function loadUser(
 				// getUserHistory may include pageName from Action API transformation
 				const pageName =
 					(
-						revision as PageHistoryRevision & {
+						revision as FWPageHistoryRevision & {
 							pageName?: string
 							title?: string
 						}
 					).pageName ||
 					(
-						revision as PageHistoryRevision & {
+						revision as FWPageHistoryRevision & {
 							pageName?: string
 							title?: string
 						}
@@ -302,7 +310,7 @@ async function loadUser(
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					delta: revision.delta ?? 0,
 					comment: revision.comment || "",
@@ -343,7 +351,7 @@ async function loadUser(
 async function loadPage(
 	pageNum: number,
 	pageName: string,
-	resultsRef: Ref<Revision[]>,
+	resultsRef: Ref<FWRevision[]>,
 	loadingRef: Ref<boolean>,
 	errorRef: Ref<string | null>
 ): Promise<void> {
@@ -380,7 +388,7 @@ async function loadPage(
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					delta: revision.delta ?? 0,
 					summary: {
@@ -420,8 +428,8 @@ async function loadPage(
 // Load thumbnail asynchronously and update the revision
 async function loadThumbnailForRevision(
 	_pageNum: number,
-	revision: Revision,
-	resultsRef: Ref<Revision[]>
+	revision: FWRevision,
+	resultsRef: Ref<FWRevision[]>
 ): Promise<void> {
 	try {
 		if (!revision.pageName) return
@@ -441,7 +449,7 @@ async function loadThumbnailForRevision(
 
 // Combined view of all revisions from all pages and users, sorted by timestamp
 const allRevisions = computed(() => {
-	const revisions: Revision[] = []
+	const revisions: FWRevision[] = []
 	const seenIds = new Set<number>()
 
 	pageResults.forEach(result => {

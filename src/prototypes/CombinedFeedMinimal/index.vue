@@ -133,7 +133,7 @@ import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { PageHistoryRevision, Revision } from "../../wiki-api/types"
+import type { FWPageHistoryRevision, FWRevision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
@@ -159,7 +159,7 @@ const userSearchQueries = ref<string[]>([
 ])
 
 // Combined feed results
-const allRevisions = ref<Revision[]>([])
+const allRevisions = ref<FWRevision[]>([])
 const isLoading = ref(false)
 const errors = ref<string[]>([])
 
@@ -198,7 +198,7 @@ async function search(): Promise<void> {
 		const processedRevisions = await Promise.all(
 			revisions.map(async revision => {
 				const pageName =
-					(revision as PageHistoryRevision & { pageName?: string }).pageName || ""
+					(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
 				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
 				const toolbar = wiki.parseToolbarEditSummary(_summary)
 				const summary = toolbar
@@ -217,7 +217,7 @@ async function search(): Promise<void> {
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					delta: revision.delta ?? 0,
 					comment: revision.comment || "",

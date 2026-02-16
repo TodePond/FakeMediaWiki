@@ -98,7 +98,11 @@
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { HistoryCacheSnapshot, HistoryOptions, PageHistoryRevision } from "../../wiki-api/types"
+import type {
+	FWHistoryCacheSnapshot,
+	FWHistoryOptions,
+	FWPageHistoryRevision,
+} from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
@@ -109,17 +113,17 @@ const newerThan = ref("")
 const limit = ref("20")
 const isLoading = ref(false)
 const error = ref<string | null>(null)
-const snapshot = ref<HistoryCacheSnapshot>({ pages: {}, users: {} })
+const snapshot = ref<FWHistoryCacheSnapshot>({ pages: {}, users: {} })
 const lastPageHistoryCount = ref<number | null>(null)
 const lastUserHistoryCount = ref<number | null>(null)
-type DisplayRevision = PageHistoryRevision & { pageName?: string }
+type DisplayRevision = FWPageHistoryRevision & { pageName?: string }
 const lastPageResults = ref<DisplayRevision[]>([])
 const lastUserResults = ref<DisplayRevision[]>([])
 
 const snapshotText = computed(() => JSON.stringify(snapshot.value, null, 2))
 
-function buildOptions(): HistoryOptions {
-	const options: HistoryOptions = {}
+function buildOptions(): FWHistoryOptions {
+	const options: FWHistoryOptions = {}
 	const parsedLimit = parseInt(limit.value, 10)
 	if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
 		options.limit = parsedLimit

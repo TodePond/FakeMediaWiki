@@ -32,12 +32,12 @@
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { FeaturedPage } from "../../wiki-api/types"
+import type { FWFeaturedPage } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
 const dateInput = ref("")
-const featuredPage = ref<FeaturedPage | null>(null)
+const featuredPage = ref<FWFeaturedPage | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 

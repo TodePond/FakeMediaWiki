@@ -22,12 +22,12 @@
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { PageMetadata } from "../../wiki-api/types"
+import type { FWPageMetadata } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
 const pageName = ref(localStorage.getItem("pageMetadataQuery") || "Wet Leg")
-const metadata = ref<PageMetadata | null>(null)
+const metadata = ref<FWPageMetadata | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 

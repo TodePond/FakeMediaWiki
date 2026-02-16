@@ -107,7 +107,7 @@ import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { Revision } from "../../wiki-api/types"
+import type { FWRevision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
@@ -117,7 +117,7 @@ const storageKey3 = "searchQueryFeed3"
 const searchQuery1 = ref(localStorage.getItem(storageKey1) || "Wikipedia")
 const searchQuery2 = ref(localStorage.getItem(storageKey2) || "Wet Leg")
 const searchQuery3 = ref(localStorage.getItem(storageKey3) || "Water")
-const history = ref<{ revisions?: Revision[] }>({})
+const history = ref<{ revisions?: FWRevision[] }>({})
 const isLoading = ref(false)
 const errors = ref<string[]>([])
 
@@ -142,7 +142,7 @@ async function search(): Promise<void> {
 		return
 	}
 
-	const allRevisions: Revision[] = []
+	const allRevisions: FWRevision[] = []
 
 	await Promise.all(
 		pageNames.map(async pageName => {
@@ -150,7 +150,7 @@ async function search(): Promise<void> {
 				const _history = await wiki.getPageHistory(pageName, { limit: 10 })
 
 				if (_history.revisions) {
-					const processedRevisions: Revision[] = await Promise.all(
+					const processedRevisions: FWRevision[] = await Promise.all(
 						_history.revisions.map(async revision => {
 							const _summary = wiki.preprocessEditSummary(revision.comment, pageName)
 							const toolbar = wiki.parseToolbarEditSummary(_summary)
@@ -183,7 +183,7 @@ async function search(): Promise<void> {
 								},
 								avatarUrl,
 								pageName, // Store page name for URL generation
-							} as Revision
+							} as FWRevision
 						})
 					)
 					allRevisions.push(...processedRevisions)

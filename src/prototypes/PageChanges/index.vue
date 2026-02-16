@@ -44,8 +44,8 @@
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { PageHistoryResponse, PageHistoryRevision } from "../../wiki-api/types"
 import "../../wiki-api/style/delta.css"
+import type { FWPageHistoryResponse, FWPageHistoryRevision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "PageChanges"
@@ -54,7 +54,7 @@ const searchQuery = ref(
 	localStorage.getItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")) || "Wet Leg"
 )
 const history = ref<{
-	revisions?: Array<PageHistoryRevision & { html?: string }>
+	revisions?: Array<FWPageHistoryRevision & { html?: string }>
 }>({})
 const isLoading = ref(false)
 const error = ref<string | null>(null)
@@ -77,7 +77,7 @@ function linkUpComment(comment: string, pageName: string): string {
 async function search(): Promise<void> {
 	isLoading.value = true
 	const pageName = searchQuery.value
-	let _history: PageHistoryResponse
+	let _history: FWPageHistoryResponse
 	try {
 		_history = await wiki.getPageHistory(pageName)
 	} catch (e) {

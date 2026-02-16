@@ -65,8 +65,8 @@ function createEntryPointFiles(): void {
 			const routePath = `${baseUrl.replace(/\/$/, "")}/${wrapper}/${id}`
 
 			const htmlContent = indexHtmlTemplate.replace(
-				"<title>Fake MediaWiki</title>",
-				`<title>${id} - Fake MediaWiki</title>`
+				"<title>FakeWiki</title>",
+				`<title>${id} - FakeWiki</title>`
 			)
 			// Add a script to set the initial route
 			const routeScript = `

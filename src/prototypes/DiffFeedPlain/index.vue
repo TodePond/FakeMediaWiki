@@ -159,7 +159,7 @@ import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { DiffLine, Result, Revision } from "../../wiki-api/types"
+import type { FWDiffLine, FWResult, FWRevision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "DiffFeedThumbnailDiffFeed"
@@ -179,8 +179,8 @@ const userSearchQueries = ref<string[]>([
 ])
 
 // Store results using Result type (revisions may have diff attached)
-const pageResults = wiki.createResults<Revision>(3).map(r => ref(r))
-const userResults = wiki.createResults<Revision>(3).map(r => ref(r))
+const pageResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
+const userResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
 
 onMounted(search)
 
@@ -224,7 +224,7 @@ async function search(): Promise<void> {
 	saveSearchQueries()
 }
 
-async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
+async function loadUser(userName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
 	resultRef.value.loading = true
 	resultRef.value.error = null
 
@@ -270,7 +270,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					comment: revision.comment || "",
 					summary,
@@ -300,7 +300,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 	}
 }
 
-async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
+async function loadPage(pageName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
 	resultRef.value.loading = true
 	resultRef.value.error = null
 
@@ -343,7 +343,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					summary,
 					pageName,
@@ -373,8 +373,8 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 }
 
 async function loadThumbnailForRevision(
-	revision: Revision,
-	resultRef: Ref<Result<Revision>>
+	revision: FWRevision,
+	resultRef: Ref<FWResult<FWRevision>>
 ): Promise<void> {
 	try {
 		if (!revision.pageName) return
@@ -390,8 +390,8 @@ async function loadThumbnailForRevision(
 }
 
 async function loadDiffForRevision(
-	revision: Revision,
-	resultRef: Ref<Result<Revision>>
+	revision: FWRevision,
+	resultRef: Ref<FWResult<FWRevision>>
 ): Promise<void> {
 	if (!revision.pageName) return
 	try {
@@ -429,7 +429,7 @@ function byteOffsetToCharIndex(str: string, byteOffset: number): number {
 }
 
 /** Split a change line into segments for add/remove character-level styling */
-function getDiffLineSegments(line: DiffLine): DiffSegment[] {
+function getDiffLineSegments(line: FWDiffLine): DiffSegment[] {
 	const text = line.text ?? ""
 	const ranges = line.highlightRanges ?? []
 	if (ranges.length === 0) {
@@ -474,8 +474,8 @@ function getDiffLineClass(type: number): string {
 	}
 }
 
-const allRevisions = computed<Revision[]>(() => {
-	const revisions: Revision[] = []
+const allRevisions = computed<FWRevision[]>(() => {
+	const revisions: FWRevision[] = []
 	const seenIds = new Set<number>()
 
 	pageResults.forEach(result => {

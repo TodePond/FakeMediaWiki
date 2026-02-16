@@ -306,16 +306,16 @@ import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/co
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
 import type {
-	CompareResponse,
-	DiffLine,
-	PageHistoryResponse,
-	PageHistoryRevision,
-	Result,
-	Revision,
+	FWCompareResponse,
+	FWDiffLine,
+	FWPageHistoryResponse,
+	FWPageHistoryRevision,
+	FWResult,
+	FWRevision,
 } from "../../wiki-api/types"
 
 /** History revision with edit summary rendered as HTML */
-interface HistoryRevisionWithHtml extends PageHistoryRevision {
+interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
 	commentHtml: string
 }
 
@@ -336,13 +336,13 @@ const userSearchQueries = ref<string[]>([
 	localStorage.getItem(userStorageKeys[2]!) ?? "Todepond",
 ])
 
-const pageResults = wiki.createResults<Revision>(3).map(r => ref(r))
-const userResults = wiki.createResults<Revision>(3).map(r => ref(r))
+const pageResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
+const userResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
 
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
 /** Loaded diff data keyed by revision id */
-const loadedDiffs = ref<Map<number, CompareResponse>>(new Map())
+const loadedDiffs = ref<Map<number, FWCompareResponse>>(new Map())
 /** Revision ids currently loading their diff */
 const loadingDiffIds = ref<Set<number>>(new Set())
 
@@ -352,7 +352,10 @@ const expandedHistoryIds = ref<Set<number>>(new Set())
 const expandedHistoryDiffIds = ref<Map<number, Set<number>>>(new Map())
 /** Loaded history data keyed by page name (revisions include commentHtml) */
 const loadedHistories = ref<
-	Map<string, Omit<PageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }>
+	Map<
+		string,
+		Omit<FWPageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }
+	>
 >(new Map())
 /** Page names currently loading history */
 const loadingHistoryPageNames = ref<Set<string>>(new Set())
@@ -407,7 +410,7 @@ async function search(): Promise<void> {
 	loadingHistoryPageNames.value = new Set()
 }
 
-async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
+async function loadUser(userName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
 	resultRef.value.loading = true
 	resultRef.value.error = null
 
@@ -460,7 +463,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					comment: revision.comment || "",
 					summary,
@@ -481,7 +484,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 	}
 }
 
-async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
+async function loadPage(pageName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
 	resultRef.value.loading = true
 	resultRef.value.error = null
 
@@ -531,7 +534,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					summary,
 					pageName,
@@ -552,7 +555,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 }
 
 const allRevisions = computed(() => {
-	const revisions: Revision[] = []
+	const revisions: FWRevision[] = []
 	const seenIds = new Set<number>()
 
 	pageResults.forEach(result => {
@@ -577,7 +580,7 @@ const allRevisions = computed(() => {
 })
 
 const revisionsByDate = computed(() => {
-	const grouped = new Map<string, { dateLabel: string; revisions: Revision[] }>()
+	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
 
 	allRevisions.value.forEach(revision => {
 		const dateKey = getDateKey(revision.timestamp)
@@ -662,7 +665,7 @@ function formatDelta(delta: number | null): string {
 	return `(${sign}${n})`
 }
 
-function toggleDiff(change: Revision): void {
+function toggleDiff(change: FWRevision): void {
 	const id = change.id
 	const expanded = expandedDiffIds.value.has(id)
 	if (expanded) {
@@ -721,7 +724,7 @@ function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: stri
 		})
 }
 
-function toggleHistory(change: Revision): void {
+function toggleHistory(change: FWRevision): void {
 	const id = change.id
 	const pageName = change.pageName
 	if (!pageName) return
@@ -783,7 +786,7 @@ function byteOffsetToCharIndex(str: string, byteOffset: number): number {
 }
 
 /** Split a change line into segments for add/remove/change character-level styling */
-function getDiffLineSegments(line: DiffLine): DiffSegment[] {
+function getDiffLineSegments(line: FWDiffLine): DiffSegment[] {
 	const text = line.text ?? ""
 	const ranges = line.highlightRanges ?? []
 	if (ranges.length === 0) {

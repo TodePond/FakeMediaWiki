@@ -70,14 +70,14 @@ import { cdxIconHeart, cdxIconLinkExternal, cdxIconRobot } from "@wikimedia/code
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
 import "../../wiki-api/style/delta.css"
-import type { PageHistoryResponse, Revision } from "../../wiki-api/types"
+import type { FWPageHistoryResponse, FWRevision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "PageFeed"
 
 const storageKey = wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")
 const searchQuery = ref(localStorage.getItem(storageKey) || "Wikipedia")
-const history = ref<{ revisions?: Revision[] }>({})
+const history = ref<{ revisions?: FWRevision[] }>({})
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
@@ -90,7 +90,7 @@ function saveSearchQuery(query: string): void {
 async function search(): Promise<void> {
 	isLoading.value = true
 	const pageName = searchQuery.value
-	let _history: PageHistoryResponse
+	let _history: FWPageHistoryResponse
 	try {
 		_history = await wiki.getPageHistory(pageName, { limit: 10 })
 	} catch (e) {
@@ -106,7 +106,7 @@ async function search(): Promise<void> {
 	}
 
 	if (_history.revisions) {
-		const processedRevisions: Revision[] = await Promise.all(
+		const processedRevisions: FWRevision[] = await Promise.all(
 			_history.revisions.map(async revision => {
 				const _summary = wiki.preprocessEditSummary(revision.comment, searchQuery.value)
 				const toolbar = wiki.parseToolbarEditSummary(_summary)
@@ -138,7 +138,7 @@ async function search(): Promise<void> {
 						reportBugs: summary.reportBugs ?? null,
 					},
 					avatarUrl,
-				} as Revision
+				} as FWRevision
 			})
 		)
 		history.value = { revisions: processedRevisions }

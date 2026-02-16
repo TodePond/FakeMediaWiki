@@ -153,7 +153,7 @@
 import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { Result, Revision } from "../../wiki-api/types"
+import type { FWResult, FWRevision } from "../../wiki-api/types"
 
 defineProps<{
 	indentCommentAndLinks?: boolean
@@ -176,8 +176,8 @@ const userSearchQueries = ref<string[]>([
 	localStorage.getItem(userStorageKeys[2]!) ?? "Todepond",
 ])
 
-const pageResults = wiki.createResults<Revision>(3).map(r => ref(r))
-const userResults = wiki.createResults<Revision>(3).map(r => ref(r))
+const pageResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
+const userResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
 
 onMounted(search)
 
@@ -221,7 +221,7 @@ async function search(): Promise<void> {
 	saveSearchQueries()
 }
 
-async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
+async function loadUser(userName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
 	resultRef.value.loading = true
 	resultRef.value.error = null
 
@@ -264,7 +264,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					comment: revision.comment || "",
 					summary,
@@ -285,7 +285,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 	}
 }
 
-async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
+async function loadPage(pageName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
 	resultRef.value.loading = true
 	resultRef.value.error = null
 
@@ -325,7 +325,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const processedRevision: Revision = {
+				const processedRevision: FWRevision = {
 					...revision,
 					summary,
 					pageName,
@@ -346,7 +346,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 }
 
 const allRevisions = computed(() => {
-	const revisions: Revision[] = []
+	const revisions: FWRevision[] = []
 	const seenIds = new Set<number>()
 
 	pageResults.forEach(result => {
@@ -371,7 +371,7 @@ const allRevisions = computed(() => {
 })
 
 const revisionsByDate = computed(() => {
-	const grouped = new Map<string, { dateLabel: string; revisions: Revision[] }>()
+	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
 
 	allRevisions.value.forEach(revision => {
 		const dateKey = getDateKey(revision.timestamp)

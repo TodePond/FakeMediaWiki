@@ -33,14 +33,14 @@ import {
 } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { OnThisDayItem } from "../../wiki-api/types"
+import type { FWOnThisDayItem } from "../../wiki-api/types"
 import OnThisDayCard from "./OnThisDayCard.vue"
 
 const wiki = new WikiApi()
 
 const type = ref<"events" | "births" | "deaths" | "holidays">("events")
 const dateInput = ref("")
-const content = ref<OnThisDayItem[] | null>(null)
+const content = ref<FWOnThisDayItem[] | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 

@@ -68,7 +68,7 @@
 import { CdxTab, CdxTabs } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { MediaItem, PageSummary } from "../../wiki-api/types"
+import type { FWMediaItem, FWPageSummary } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
@@ -105,14 +105,14 @@ function stripExtra(html: string): string {
 
 const pageName = ref("Wet Leg")
 const activeTab = ref("overview")
-const summary = ref<PageSummary | null>(null)
+const summary = ref<FWPageSummary | null>(null)
 const heroUrl = ref<string | null>(null)
 const tabContent = ref<Record<string, string>>({
 	overview: "",
 	members: "",
 	discography: "",
 })
-const pageMedia = ref<MediaItem[]>([])
+const pageMedia = ref<FWMediaItem[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
@@ -135,7 +135,7 @@ function sectionMatches(sectionTitle: string, tabKey: string): boolean {
 	}
 }
 
-function getMediaUrl(item: MediaItem): string | null {
+function getMediaUrl(item: FWMediaItem): string | null {
 	return item.srcset?.[0]?.src ?? item.original?.source ?? null
 }
 

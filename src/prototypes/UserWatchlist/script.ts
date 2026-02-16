@@ -1,16 +1,16 @@
 import { computed, onMounted, ref, type Ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
 import type {
-	CompareResponse,
-	DiffLine,
-	PageHistoryResponse,
-	PageHistoryRevision,
-	Result,
-	Revision,
+	FWCompareResponse,
+	FWDiffLine,
+	FWPageHistoryResponse,
+	FWPageHistoryRevision,
+	FWResult,
+	FWRevision,
 } from "../../wiki-api/types"
 
 /** History revision with edit summary rendered as HTML */
-export interface HistoryRevisionWithHtml extends PageHistoryRevision {
+export interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
 	commentHtml: string
 }
 
@@ -39,13 +39,13 @@ export function useActionWatchlist() {
 		localStorage.getItem(userStorageKeys[2]!) ?? "Todepond",
 	])
 
-	const pageResults = wiki.createResults<Revision>(3).map(r => ref(r))
-	const userResults = wiki.createResults<Revision>(3).map(r => ref(r))
+	const pageResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
+	const userResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
 
 	/** Which revision ids have the inline diff expanded */
 	const expandedDiffIds = ref<Set<number>>(new Set())
 	/** Loaded diff data keyed by revision id */
-	const loadedDiffs = ref<Map<number, CompareResponse>>(new Map())
+	const loadedDiffs = ref<Map<number, FWCompareResponse>>(new Map())
 	/** Revision ids currently loading their diff */
 	const loadingDiffIds = ref<Set<number>>(new Set())
 
@@ -57,7 +57,7 @@ export function useActionWatchlist() {
 	const loadedHistories = ref<
 		Map<
 			string,
-			Omit<PageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }
+			Omit<FWPageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }
 		>
 	>(new Map())
 	/** Page names currently loading history */
@@ -74,7 +74,7 @@ export function useActionWatchlist() {
 		})
 	}
 
-	async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
+	async function loadUser(userName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
 		resultRef.value.loading = true
 		resultRef.value.error = null
 
@@ -127,7 +127,7 @@ export function useActionWatchlist() {
 					summary.hashtags = Array.isArray(summary.hashtags)
 						? summary.hashtags.join(" ")
 						: summary.hashtags
-					const processedRevision: Revision = {
+					const processedRevision: FWRevision = {
 						...revision,
 						comment: revision.comment || "",
 						summary,
@@ -148,7 +148,7 @@ export function useActionWatchlist() {
 		}
 	}
 
-	async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Promise<void> {
+	async function loadPage(pageName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
 		resultRef.value.loading = true
 		resultRef.value.error = null
 
@@ -198,7 +198,7 @@ export function useActionWatchlist() {
 					summary.hashtags = Array.isArray(summary.hashtags)
 						? summary.hashtags.join(" ")
 						: summary.hashtags
-					const processedRevision: Revision = {
+					const processedRevision: FWRevision = {
 						...revision,
 						summary,
 						pageName,
@@ -258,7 +258,7 @@ export function useActionWatchlist() {
 	onMounted(search)
 
 	const allRevisions = computed(() => {
-		const revisions: Revision[] = []
+		const revisions: FWRevision[] = []
 		const seenIds = new Set<number>()
 
 		pageResults.forEach(result => {
@@ -315,7 +315,7 @@ export function useActionWatchlist() {
 	}
 
 	const revisionsByDate = computed(() => {
-		const grouped = new Map<string, { dateLabel: string; revisions: Revision[] }>()
+		const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
 
 		allRevisions.value.forEach(revision => {
 			const dateKey = getDateKey(revision.timestamp)
@@ -376,7 +376,7 @@ export function useActionWatchlist() {
 		return `(${sign}${n})`
 	}
 
-	function toggleDiff(change: Revision): void {
+	function toggleDiff(change: FWRevision): void {
 		const id = change.id
 		const expanded = expandedDiffIds.value.has(id)
 		if (expanded) {
@@ -435,7 +435,7 @@ export function useActionWatchlist() {
 			})
 	}
 
-	function toggleHistory(change: Revision): void {
+	function toggleHistory(change: FWRevision): void {
 		const id = change.id
 		const pageName = change.pageName
 		if (!pageName) return
@@ -491,7 +491,7 @@ export function useActionWatchlist() {
 	}
 
 	/** Split a change line into segments for add/remove/change character-level styling */
-	function getDiffLineSegments(line: DiffLine): DiffSegment[] {
+	function getDiffLineSegments(line: FWDiffLine): DiffSegment[] {
 		const text = line.text ?? ""
 		const ranges = line.highlightRanges ?? []
 		if (ranges.length === 0) {

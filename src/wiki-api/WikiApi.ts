@@ -1,34 +1,34 @@
 import type {
-	ActionApiOptions,
-	ApiOptions,
-	CachedRevision,
-	CompareResponse,
-	DiffLine,
-	FeaturedPage,
-	HistoryCacheEntitySnapshot,
-	HistoryCacheSnapshot,
-	HistoryCoverageEntry,
-	HistoryOptions,
-	LiftWingPrediction,
-	LiftWingResponse,
-	OnThisDayItem,
-	PageHistoryResponse,
-	PageHistoryRevision,
-	PageMediaResponse,
-	PageMetadata,
-	PageSearchResult,
-	PageSummary,
-	RandomPageResult,
-	RandomPageSummary,
-	RelativeTimestampOptions,
-	RestApiOptions,
-	Result,
-	Revision,
-	RevisionPredictions,
-	ToolbarComment,
-	UserContrib,
-	UserInfo,
-	UserSearchResult,
+	FWActionApiOptions,
+	FWApiOptions,
+	FWCachedRevision,
+	FWCompareResponse,
+	FWDiffLine,
+	FWFeaturedPage,
+	FWHistoryCacheEntitySnapshot,
+	FWHistoryCacheSnapshot,
+	FWHistoryCoverageEntry,
+	FWHistoryOptions,
+	FWLiftWingPrediction,
+	FWLiftWingResponse,
+	FWOnThisDayItem,
+	FWPageHistoryResponse,
+	FWPageHistoryRevision,
+	FWPageMediaResponse,
+	FWPageMetadata,
+	FWPageSearchResult,
+	FWPageSummary,
+	FWRandomPageResult,
+	FWRandomPageSummary,
+	FWRelativeTimestampOptions,
+	FWRestApiOptions,
+	FWResult,
+	FWRevision,
+	FWRevisionPredictions,
+	FWToolbarComment,
+	FWUserContrib,
+	FWUserInfo,
+	FWUserSearchResult,
 } from "./types"
 
 /** MediaWiki REST API page history returns this many revisions per request; used as default and max for getPageHistory and getCombinedFeed. */
@@ -55,21 +55,21 @@ export class WikiApi {
 	/**
 	 * Cache for user information
 	 */
-	private userInfoCache: Map<string, UserInfo | null>
+	private userInfoCache: Map<string, FWUserInfo | null>
 
 	/**
 	 * Cache for page histories
 	 * key = pageName, value = sorted array of revisions (newest first)
 	 */
-	private pageHistoryCache = new Map<string, PageHistoryRevision[]>()
-	private pageHistoryCoverage = new Map<string, HistoryCoverageEntry[]>()
+	private pageHistoryCache = new Map<string, FWPageHistoryRevision[]>()
+	private pageHistoryCoverage = new Map<string, FWHistoryCoverageEntry[]>()
 
 	/**
 	 * Cache for user histories
 	 * key = userName, value = sorted array of revisions (newest first)
 	 */
-	private userHistoryCache = new Map<string, (PageHistoryRevision & { pageName: string })[]>()
-	private userHistoryCoverage = new Map<string, HistoryCoverageEntry[]>()
+	private userHistoryCache = new Map<string, (FWPageHistoryRevision & { pageName: string })[]>()
+	private userHistoryCoverage = new Map<string, FWHistoryCoverageEntry[]>()
 
 	/**
 	 * Create a new WikiApi instance
@@ -160,9 +160,9 @@ export class WikiApi {
 	 * @param entry - New coverage entry from the last fetch
 	 */
 	private recordCoverage(
-		coverageMap: Map<string, HistoryCoverageEntry[]>,
+		coverageMap: Map<string, FWHistoryCoverageEntry[]>,
 		key: string,
-		entry: HistoryCoverageEntry
+		entry: FWHistoryCoverageEntry
 	): void {
 		const entries = coverageMap.get(key) || []
 		const existingIndex = entries.findIndex(
@@ -199,7 +199,7 @@ export class WikiApi {
 	 * @returns true if cache is sufficient to return without an API call
 	 */
 	private hasSufficientCacheCoverage(
-		coverageMap: Map<string, HistoryCoverageEntry[]>,
+		coverageMap: Map<string, FWHistoryCoverageEntry[]>,
 		key: string,
 		older_than: string | undefined,
 		newer_than: string | undefined,
@@ -224,8 +224,8 @@ export class WikiApi {
 	 */
 	private buildHistoryCacheEntitySnapshot<T extends { timestamp: string }>(
 		cached: T[],
-		coverage: HistoryCoverageEntry[]
-	): HistoryCacheEntitySnapshot {
+		coverage: FWHistoryCoverageEntry[]
+	): FWHistoryCacheEntitySnapshot {
 		return {
 			cachedCount: cached.length,
 			newestTimestamp: cached[0]?.timestamp,
@@ -243,9 +243,9 @@ export class WikiApi {
 	inspectHistoryCache(options?: {
 		pageNames?: string[]
 		userNames?: string[]
-	}): HistoryCacheSnapshot {
-		const pages: Record<string, HistoryCacheEntitySnapshot> = {}
-		const users: Record<string, HistoryCacheEntitySnapshot> = {}
+	}): FWHistoryCacheSnapshot {
+		const pages: Record<string, FWHistoryCacheEntitySnapshot> = {}
+		const users: Record<string, FWHistoryCacheEntitySnapshot> = {}
 
 		const pageKeys = options?.pageNames ?? Array.from(this.pageHistoryCache.keys())
 		for (const pageName of pageKeys) {
@@ -285,13 +285,13 @@ export class WikiApi {
 	 * @param options - Request options
 	 * @returns JSON or text response
 	 */
-	async request(options: ApiOptions): Promise<unknown> {
+	async request(options: FWApiOptions): Promise<unknown> {
 		const { api } = options
 
 		if (api === "action") {
-			return this._handleActionApiRequest(options as ActionApiOptions)
+			return this._handleActionApiRequest(options as FWActionApiOptions)
 		} else if (api === "wikimedia" || api === "mediawiki") {
-			return this._handleRestApiRequest(options as RestApiOptions)
+			return this._handleRestApiRequest(options as FWRestApiOptions)
 		} else {
 			throw new Error('API type must be "wikimedia", "mediawiki", or "action"')
 		}
@@ -308,7 +308,7 @@ export class WikiApi {
 		path,
 		body = null,
 		type = "json",
-	}: RestApiOptions): Promise<unknown> {
+	}: FWRestApiOptions): Promise<unknown> {
 		const base = api === "wikimedia" ? this.getWikimediaBase() : this.getMediawikiBase()
 		const containsQuery = path.includes("?")
 		const separator = containsQuery ? "&" : "?"
@@ -350,7 +350,7 @@ export class WikiApi {
 	 * @returns JSON response from Action API
 	 * @private
 	 */
-	async _handleActionApiRequest({ params }: ActionApiOptions): Promise<unknown> {
+	async _handleActionApiRequest({ params }: FWActionApiOptions): Promise<unknown> {
 		const searchParams = new URLSearchParams()
 
 		// Add all parameters to the URL
@@ -430,11 +430,11 @@ export class WikiApi {
 	 * @param pageName - Page title
 	 * @returns Page summary
 	 */
-	async getPageSummary(pageName: string): Promise<PageSummary> {
+	async getPageSummary(pageName: string): Promise<FWPageSummary> {
 		return (await this.request({
 			api: "wikimedia",
 			path: `page/summary/${this.encode(pageName)}`,
-		})) as PageSummary
+		})) as FWPageSummary
 	}
 
 	/**
@@ -468,11 +468,11 @@ export class WikiApi {
 	 * @param pageName - Page title
 	 * @returns Page metadata with source content
 	 */
-	async getPage(pageName: string): Promise<PageMetadata> {
+	async getPage(pageName: string): Promise<FWPageMetadata> {
 		return (await this.request({
 			api: "mediawiki",
 			path: `page/${this.encode(pageName)}`,
-		})) as PageMetadata
+		})) as FWPageMetadata
 	}
 
 	/**
@@ -484,11 +484,11 @@ export class WikiApi {
 	async searchTitles(
 		query: string,
 		limit = DEFAULT_SEARCH_LIMIT
-	): Promise<{ pages?: PageSearchResult[] }> {
+	): Promise<{ pages?: FWPageSearchResult[] }> {
 		return (await this.request({
 			api: "mediawiki",
 			path: `search/title?q=${encodeURIComponent(query)}&limit=${limit}`,
-		})) as { pages?: PageSearchResult[] }
+		})) as { pages?: FWPageSearchResult[] }
 	}
 
 	/**
@@ -500,11 +500,11 @@ export class WikiApi {
 	async searchPages(
 		query: string,
 		limit = DEFAULT_SEARCH_LIMIT
-	): Promise<{ pages?: PageSearchResult[] }> {
+	): Promise<{ pages?: FWPageSearchResult[] }> {
 		return (await this.request({
 			api: "mediawiki",
 			path: `search/page?q=${encodeURIComponent(query)}&limit=${limit}`,
-		})) as { pages?: PageSearchResult[] }
+		})) as { pages?: FWPageSearchResult[] }
 	}
 
 	/**
@@ -513,7 +513,7 @@ export class WikiApi {
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Array of user objects with username and page metadata (no avatar)
 	 */
-	async searchUsers(query: string, limit = DEFAULT_SEARCH_LIMIT): Promise<UserSearchResult[]> {
+	async searchUsers(query: string, limit = DEFAULT_SEARCH_LIMIT): Promise<FWUserSearchResult[]> {
 		// Search for users by prefixing with "User:" if not already present
 		const cleanQuery = query.trim()
 		const searchQuery = cleanQuery.startsWith("User:") ? cleanQuery : `User:${cleanQuery}`
@@ -549,7 +549,7 @@ export class WikiApi {
 	async searchUsersWithAvatars(
 		query: string,
 		limit = DEFAULT_SEARCH_LIMIT
-	): Promise<UserSearchResult[]> {
+	): Promise<FWUserSearchResult[]> {
 		const users = await this.searchUsers(query, limit)
 		return Promise.all(
 			users.map(async user => {
@@ -576,8 +576,8 @@ export class WikiApi {
 	 */
 	async getPageHistory(
 		pageName: string,
-		options: HistoryOptions = {}
-	): Promise<PageHistoryResponse> {
+		options: FWHistoryOptions = {}
+	): Promise<FWPageHistoryResponse> {
 		const cached = this.pageHistoryCache.get(pageName) || []
 		const older_than = options.older_than
 		const newer_than = options.newer_than
@@ -610,7 +610,7 @@ export class WikiApi {
 		const response = (await this.request({
 			api: "mediawiki",
 			path,
-		})) as PageHistoryResponse
+		})) as FWPageHistoryResponse
 
 		const newRevisions = response.revisions || []
 		const merged = this.mergeHistoryByRevisionId(cached, newRevisions)
@@ -648,8 +648,8 @@ export class WikiApi {
 	 */
 	async getUserHistory(
 		userName: string,
-		options: HistoryOptions = {}
-	): Promise<PageHistoryResponse> {
+		options: FWHistoryOptions = {}
+	): Promise<FWPageHistoryResponse> {
 		const cached = this.userHistoryCache.get(userName) || []
 		const older_than = options.older_than
 		const newer_than = options.newer_than
@@ -679,7 +679,7 @@ export class WikiApi {
 			newer_than,
 		})
 		const newRevisions = (fetched.revisions || []).map(
-			rev => rev as PageHistoryRevision & { pageName: string }
+			rev => rev as FWPageHistoryRevision & { pageName: string }
 		)
 		const merged = this.mergeHistoryByRevisionId(cached, newRevisions)
 		this.userHistoryCache.set(userName, merged)
@@ -711,8 +711,8 @@ export class WikiApi {
 	 */
 	async _getUserHistory(
 		userName: string,
-		options: HistoryOptions = {}
-	): Promise<PageHistoryResponse> {
+		options: FWHistoryOptions = {}
+	): Promise<FWPageHistoryResponse> {
 		const limit = options.limit || DEFAULT_USER_CONTRIBS_LIMIT
 		const ucstart = options.older_than || undefined
 		const ucend = options.newer_than || undefined
@@ -733,7 +733,7 @@ export class WikiApi {
 			params,
 		})) as {
 			query?: {
-				usercontribs?: UserContrib[]
+				usercontribs?: FWUserContrib[]
 			}
 		}
 
@@ -755,7 +755,7 @@ export class WikiApi {
 		}))
 
 		return {
-			revisions: revisions as PageHistoryRevision[],
+			revisions: revisions as FWPageHistoryRevision[],
 		}
 	}
 
@@ -772,8 +772,8 @@ export class WikiApi {
 	 */
 	async getUsersHistory(
 		userNames: string[],
-		options: HistoryOptions = {}
-	): Promise<Map<string, PageHistoryResponse>> {
+		options: FWHistoryOptions = {}
+	): Promise<Map<string, FWPageHistoryResponse>> {
 		if (userNames.length === 0) {
 			return new Map()
 		}
@@ -785,12 +785,12 @@ export class WikiApi {
 				return { userName, history }
 			} catch (e) {
 				// Silently skip users that fail
-				return { userName, history: { revisions: [] } as PageHistoryResponse }
+				return { userName, history: { revisions: [] } as FWPageHistoryResponse }
 			}
 		})
 
 		const userResults = await Promise.all(userPromises)
-		const allResults = new Map<string, PageHistoryResponse>()
+		const allResults = new Map<string, FWPageHistoryResponse>()
 
 		for (const { userName, history } of userResults) {
 			allResults.set(userName, history)
@@ -815,7 +815,7 @@ export class WikiApi {
 		pageNames?: string[]
 		limit?: number
 		after?: string // Revision ID (as string) - for pagination
-	}): Promise<CachedRevision[]> {
+	}): Promise<FWCachedRevision[]> {
 		const {
 			userNames = [],
 			pageNames = [],
@@ -823,7 +823,7 @@ export class WikiApi {
 			after,
 		} = options
 		const totalLimit = Math.min(Math.max(limit, 1), PAGE_HISTORY_REVISIONS_PER_REQUEST)
-		const allRevisions: CachedRevision[] = []
+		const allRevisions: FWCachedRevision[] = []
 		const seenIds = new Set<number>()
 
 		// Convert 'after' revision ID to a timestamp for user-history cursors
@@ -857,7 +857,7 @@ export class WikiApi {
 
 		// Fetch user contributions - caching handled internally
 		if (userNames.length > 0) {
-			const userOptions: HistoryOptions = {
+			const userOptions: FWHistoryOptions = {
 				limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
 			}
 			if (afterTimestampIso) {
@@ -870,7 +870,7 @@ export class WikiApi {
 					for (const rev of history.revisions) {
 						if (rev.id && !seenIds.has(rev.id)) {
 							seenIds.add(rev.id)
-							allRevisions.push(rev as CachedRevision)
+							allRevisions.push(rev as FWCachedRevision)
 						}
 					}
 				}
@@ -881,7 +881,7 @@ export class WikiApi {
 		if (pageNames.length > 0) {
 			const pagePromises = pageNames.map(async pageName => {
 				try {
-					let options: HistoryOptions = {}
+					let options: FWHistoryOptions = {}
 					if (after && afterTimestamp !== undefined) {
 						if (pageName === afterPageName) {
 							options = { older_than: after }
@@ -908,7 +908,7 @@ export class WikiApi {
 				for (const rev of revisions) {
 					if (rev.id && !seenIds.has(rev.id)) {
 						seenIds.add(rev.id)
-						allRevisions.push({ ...rev, pageName } as CachedRevision)
+						allRevisions.push({ ...rev, pageName } as FWCachedRevision)
 					}
 				}
 			}
@@ -963,11 +963,11 @@ export class WikiApi {
 	 * @param toRevId - Target revision ID (newer)
 	 * @returns Diff between revisions
 	 */
-	async compareRevisions(fromRevId: number, toRevId: number): Promise<CompareResponse> {
+	async compareRevisions(fromRevId: number, toRevId: number): Promise<FWCompareResponse> {
 		return (await this.request({
 			api: "mediawiki",
 			path: `revision/${fromRevId}/compare/${toRevId}`,
-		})) as CompareResponse
+		})) as FWCompareResponse
 	}
 
 	/**
@@ -991,13 +991,13 @@ export class WikiApi {
 	 * @param revId - Revision ID to diff
 	 * @returns Diff from parent to this revision, or a full-content "all added" diff when there is no parent
 	 */
-	async getRevisionDiff(pageName: string, revId: number): Promise<CompareResponse> {
+	async getRevisionDiff(pageName: string, revId: number): Promise<FWCompareResponse> {
 		const parentId = await this.getParentRevisionId(pageName, revId)
 		if (parentId != null) return this.compareRevisions(parentId, revId)
 		// No parent: treat as first revision and show entire content as added.
 		const source = await this.getRevisionSource(revId)
 		const lines = source.split(/\n/)
-		const diff: DiffLine[] = lines.map((text, i) => ({
+		const diff: FWDiffLine[] = lines.map((text, i) => ({
 			type: 1, // add
 			lineNumber: i + 1,
 			text: text || "",
@@ -1016,7 +1016,7 @@ export class WikiApi {
 	 */
 	async getRandomPage(
 		format: "summary" | "html" | "title" = "summary"
-	): Promise<RandomPageResult> {
+	): Promise<FWRandomPageResult> {
 		if (format === "title") {
 			// For title-only, use MediaWiki API
 			const result = (await this.request({
@@ -1028,7 +1028,7 @@ export class WikiApi {
 		return (await this.request({
 			api: "wikimedia",
 			path: `page/random/${format}`,
-		})) as RandomPageSummary
+		})) as FWRandomPageSummary
 	}
 
 	/**
@@ -1036,7 +1036,7 @@ export class WikiApi {
 	 * @param date - Date object or YYYY/MM/DD string
 	 * @returns Featured page data
 	 */
-	async getFeaturedPage(date: Date | string = new Date()): Promise<FeaturedPage> {
+	async getFeaturedPage(date: Date | string = new Date()): Promise<FWFeaturedPage> {
 		const dateStr =
 			date instanceof Date
 				? `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`
@@ -1044,7 +1044,7 @@ export class WikiApi {
 		return (await this.request({
 			api: "wikimedia",
 			path: `feed/featured/${dateStr}`,
-		})) as FeaturedPage
+		})) as FWFeaturedPage
 	}
 
 	/**
@@ -1056,7 +1056,7 @@ export class WikiApi {
 	async getOnThisDay(
 		type: "events" | "births" | "deaths" | "holidays" | "selected" = "events",
 		date: Date | string = new Date()
-	): Promise<OnThisDayItem[]> {
+	): Promise<FWOnThisDayItem[]> {
 		const dateStr =
 			date instanceof Date
 				? `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`
@@ -1064,7 +1064,7 @@ export class WikiApi {
 		const response = (await this.request({
 			api: "wikimedia",
 			path: `feed/onthisday/${type}/${dateStr}`,
-		})) as Record<string, OnThisDayItem[] | undefined>
+		})) as Record<string, FWOnThisDayItem[] | undefined>
 		return response[type] ?? []
 	}
 
@@ -1084,11 +1084,11 @@ export class WikiApi {
 	 * @param pageName - Page title
 	 * @returns Media files associated with the page
 	 */
-	async getPageMedia(pageName: string): Promise<PageMediaResponse> {
+	async getPageMedia(pageName: string): Promise<FWPageMediaResponse> {
 		return (await this.request({
 			api: "wikimedia",
 			path: `page/media-list/${this.encode(pageName)}`,
-		})) as PageMediaResponse
+		})) as FWPageMediaResponse
 	}
 
 	/**
@@ -1308,7 +1308,7 @@ export class WikiApi {
 	 * @param userName - Username or IP address
 	 * @returns User information including edit count, registration date, and account status
 	 */
-	async getUserInfo(userName: string): Promise<UserInfo | null> {
+	async getUserInfo(userName: string): Promise<FWUserInfo | null> {
 		// Check cache first
 		if (this.userInfoCache.has(userName)) {
 			return this.userInfoCache.get(userName) ?? null
@@ -1349,7 +1349,7 @@ export class WikiApi {
 				return null
 			}
 
-			const userInfo: UserInfo = {
+			const userInfo: FWUserInfo = {
 				userid: user.userid,
 				name: user.name,
 				editcount: user.editcount,
@@ -1417,7 +1417,7 @@ export class WikiApi {
 	 * @returns User category: "unregistered", "registered", "newcomer", "learner", or "experienced"
 	 */
 	getUserCategory(
-		userInfo: UserInfo | null
+		userInfo: FWUserInfo | null
 	): "unregistered" | "newcomer" | "learner" | "experienced" {
 		if (!userInfo) {
 			return "unregistered"
@@ -1502,7 +1502,7 @@ export class WikiApi {
 	 * @param editSummary - Edit summary to parse
 	 * @returns Parsed toolbar comment or null if not a toolbar comment
 	 */
-	parseToolbarEditSummary(editSummary: string): ToolbarComment | null {
+	parseToolbarEditSummary(editSummary: string): FWToolbarComment | null {
 		let parts = editSummary.split(" | ")
 		parts = parts.filter(part => part.trim().length > 0)
 		if (parts.length <= 1) {
@@ -1583,7 +1583,10 @@ export class WikiApi {
 	 * @param options - Formatting options for different time periods
 	 * @returns Relative time string
 	 */
-	getRelativeTimestamp(timestamp: string | Date, options: RelativeTimestampOptions = {}): string {
+	getRelativeTimestamp(
+		timestamp: string | Date,
+		options: FWRelativeTimestampOptions = {}
+	): string {
 		const now = new Date()
 		const past = timestamp instanceof Date ? timestamp : new Date(timestamp)
 
@@ -1648,7 +1651,7 @@ export class WikiApi {
 
 		// Helper function to get format option for a time period
 		const getFormat = (period: string): string | undefined => {
-			return options[period as keyof RelativeTimestampOptions] as string | undefined
+			return options[period as keyof FWRelativeTimestampOptions] as string | undefined
 		}
 
 		// Determine which time period we're in and get the appropriate format
@@ -1853,7 +1856,7 @@ export class WikiApi {
 	 * Create a new Result instance with default values
 	 * @returns Result instance with empty data, loading false, and no error
 	 */
-	createResult<T = Revision>(): Result<T> {
+	createResult<T = FWRevision>(): FWResult<T> {
 		return {
 			data: [],
 			loading: false,
@@ -1866,7 +1869,7 @@ export class WikiApi {
 	 * @param count - Number of results to create
 	 * @returns Array of Result instances
 	 */
-	createResults<T = Revision>(count: number): Result<T>[] {
+	createResults<T = FWRevision>(count: number): FWResult<T>[] {
 		return Array.from({ length: count }, () => this.createResult<T>())
 	}
 
@@ -1911,7 +1914,7 @@ export class WikiApi {
 	async getDamagingPrediction(
 		revisionId: number,
 		wiki?: string
-	): Promise<LiftWingPrediction | null> {
+	): Promise<FWLiftWingPrediction | null> {
 		const wikiCode = wiki || this.getWikiCode()
 		const url = `https://api.wikimedia.org/service/lw/inference/v1/models/${wikiCode}-damaging:predict`
 
@@ -1929,7 +1932,7 @@ export class WikiApi {
 				throw new Error(`Lift Wing API error: ${response.status}`)
 			}
 
-			const data = (await response.json()) as LiftWingResponse
+			const data = (await response.json()) as FWLiftWingResponse
 			const wikiData = data[wikiCode]
 			if (!wikiData?.scores?.[String(revisionId)]?.damaging) {
 				return null
@@ -1951,7 +1954,7 @@ export class WikiApi {
 	async getGoodfaithPrediction(
 		revisionId: number,
 		wiki?: string
-	): Promise<LiftWingPrediction | null> {
+	): Promise<FWLiftWingPrediction | null> {
 		const wikiCode = wiki || this.getWikiCode()
 		const url = `https://api.wikimedia.org/service/lw/inference/v1/models/${wikiCode}-goodfaith:predict`
 
@@ -1969,7 +1972,7 @@ export class WikiApi {
 				throw new Error(`Lift Wing API error: ${response.status}`)
 			}
 
-			const data = (await response.json()) as LiftWingResponse
+			const data = (await response.json()) as FWLiftWingResponse
 			const wikiData = data[wikiCode]
 			if (!wikiData?.scores?.[String(revisionId)]?.goodfaith) {
 				return null
@@ -1991,8 +1994,8 @@ export class WikiApi {
 	async getDamagingPredictions(
 		revisionIds: number[],
 		wiki?: string
-	): Promise<Map<number, LiftWingPrediction>> {
-		const results = new Map<number, LiftWingPrediction>()
+	): Promise<Map<number, FWLiftWingPrediction>> {
+		const results = new Map<number, FWLiftWingPrediction>()
 
 		// Make requests in parallel
 		const predictions = await Promise.allSettled(
@@ -2021,8 +2024,8 @@ export class WikiApi {
 	async getGoodFaithPredictions(
 		revisionIds: number[],
 		wiki?: string
-	): Promise<Map<number, LiftWingPrediction>> {
-		const results = new Map<number, LiftWingPrediction>()
+	): Promise<Map<number, FWLiftWingPrediction>> {
+		const results = new Map<number, FWLiftWingPrediction>()
 
 		// Make requests in parallel
 		const predictions = await Promise.allSettled(
@@ -2051,7 +2054,7 @@ export class WikiApi {
 	async getRevisionPredictions(
 		revisionIds: number[],
 		wiki?: string
-	): Promise<RevisionPredictions> {
+	): Promise<FWRevisionPredictions> {
 		// Fetch both predictions in parallel
 		const [damagingResults, goodfaithResults] = await Promise.all([
 			this.getDamagingPredictions(revisionIds, wiki),
@@ -2059,7 +2062,7 @@ export class WikiApi {
 		])
 
 		// Combine results
-		const combined: RevisionPredictions = {}
+		const combined: FWRevisionPredictions = {}
 		const allIds = new Set([...damagingResults.keys(), ...goodfaithResults.keys()])
 
 		for (const revId of allIds) {

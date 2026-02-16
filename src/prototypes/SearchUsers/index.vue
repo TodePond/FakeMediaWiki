@@ -37,12 +37,12 @@
 import { CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { UserSearchResult } from "../../wiki-api/types"
+import type { FWUserSearchResult } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
 const searchQuery = ref(localStorage.getItem("searchUsersQuery") || "samwalton")
-const results = ref<UserSearchResult[]>([])
+const results = ref<FWUserSearchResult[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 const hasSearched = ref(false)

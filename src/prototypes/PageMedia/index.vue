@@ -37,12 +37,12 @@
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { MediaItem } from "../../wiki-api/types"
+import type { FWMediaItem } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
 const pageName = ref(localStorage.getItem("pageMediaQuery") || "Wet Leg")
-const mediaItems = ref<MediaItem[]>([])
+const mediaItems = ref<FWMediaItem[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 

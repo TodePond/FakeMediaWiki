@@ -9,12 +9,12 @@
 import { CdxCard } from "@wikimedia/codex"
 import { computed } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { OnThisDayItem } from "../../wiki-api/types"
+import type { FWOnThisDayItem } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 
 const props = defineProps<{
-	item: OnThisDayItem
+	item: FWOnThisDayItem
 }>()
 
 const pageUrl = computed(() => wiki.getPageUrl(props.item.pages?.[0]?.title || ""))

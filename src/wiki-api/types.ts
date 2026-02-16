@@ -1,24 +1,24 @@
-export interface RestApiOptions {
+export interface FWRestApiOptions {
 	api: "wikimedia" | "mediawiki"
 	path: string
 	body?: Record<string, unknown> | null
 	type?: "json" | "text"
 }
 
-export interface ActionApiOptions {
+export interface FWActionApiOptions {
 	api: "action"
 	params: Record<string, unknown>
 }
 
-export type ApiOptions = RestApiOptions | ActionApiOptions
+export type FWApiOptions = FWRestApiOptions | FWActionApiOptions
 
-export interface HistoryOptions {
+export interface FWHistoryOptions {
 	limit?: number | string
 	older_than?: string
 	newer_than?: string
 }
 
-export interface ToolbarComment {
+export interface FWToolbarComment {
 	comment: string | null
 	suggestedBy: string | null
 	hashtags: string[] | string
@@ -27,7 +27,7 @@ export interface ToolbarComment {
 	reportBugs: string | null
 }
 
-export type TimestampFormat =
+export type FWTimestampFormat =
 	| "words"
 	| "date"
 	| "seconds"
@@ -38,18 +38,18 @@ export type TimestampFormat =
 	| "months"
 	| "years"
 
-export interface RelativeTimestampOptions {
-	seconds?: TimestampFormat
-	minutes?: TimestampFormat
-	hours?: TimestampFormat
-	days?: TimestampFormat
-	weeks?: TimestampFormat
-	months?: TimestampFormat
-	years?: TimestampFormat
+export interface FWRelativeTimestampOptions {
+	seconds?: FWTimestampFormat
+	minutes?: FWTimestampFormat
+	hours?: FWTimestampFormat
+	days?: FWTimestampFormat
+	weeks?: FWTimestampFormat
+	months?: FWTimestampFormat
+	years?: FWTimestampFormat
 }
 
 /** Diff line from MediaWiki REST API revision compare (type: 0=context, 1=add, 2=remove, 3=change, 4|5=move) */
-export interface DiffLine {
+export interface FWDiffLine {
 	type: number
 	lineNumber?: number
 	text: string
@@ -57,13 +57,13 @@ export interface DiffLine {
 	offset?: { from: number | null; to: number | null }
 }
 
-export interface CompareResponse {
+export interface FWCompareResponse {
 	from: { id: number }
 	to: { id: number }
-	diff: DiffLine[]
+	diff: FWDiffLine[]
 }
 
-export interface Revision {
+export interface FWRevision {
 	id: number
 	timestamp: string
 	user: { name: string }
@@ -80,20 +80,20 @@ export interface Revision {
 	pageName?: string
 	title?: string
 	thumbnailUrl?: string | null
-	diff?: CompareResponse | null
+	diff?: FWCompareResponse | null
 }
 
 /**
  * Standardized result type for prototype data.
  * This provides a consistent structure for storing and managing results across prototypes.
  */
-export interface Result<T = Revision> {
+export interface FWResult<T = FWRevision> {
 	data: T[]
 	loading: boolean
 	error: string | null
 }
 
-export interface UserSearchResult {
+export interface FWUserSearchResult {
 	key?: string
 	title?: string
 	username: string
@@ -101,7 +101,7 @@ export interface UserSearchResult {
 	avatar?: { url: string } | null
 }
 
-export interface UserInfo {
+export interface FWUserInfo {
 	userid?: number
 	name: string
 	editcount?: number
@@ -112,7 +112,7 @@ export interface UserInfo {
 }
 
 /** User contribution entry from Action API list=usercontribs */
-export interface UserContrib {
+export interface FWUserContrib {
 	revid: number
 	timestamp: string
 	minor?: boolean
@@ -125,7 +125,7 @@ export interface UserContrib {
 	pageid: number
 }
 
-export interface PageSearchResult {
+export interface FWPageSearchResult {
 	key?: string
 	title: string
 	description?: string | null
@@ -133,16 +133,16 @@ export interface PageSearchResult {
 	thumbnail?: { url: string } | null
 }
 
-export interface RandomPageSummary {
+export interface FWRandomPageSummary {
 	title?: string
 	description?: string
 	extract?: string
 	thumbnail?: { source?: string }
 }
 
-export type RandomPageResult = string | RandomPageSummary
+export type FWRandomPageResult = string | FWRandomPageSummary
 
-export interface PageMetadata {
+export interface FWPageMetadata {
 	id: number
 	key: string
 	title: string
@@ -163,7 +163,7 @@ export interface PageMetadata {
 	user_id?: number
 }
 
-export interface MediaItem {
+export interface FWMediaItem {
 	title?: string
 	type?: "image" | "video" | "audio"
 	section_id?: number
@@ -179,13 +179,13 @@ export interface MediaItem {
 	}
 }
 
-export interface PageMediaResponse {
-	items?: MediaItem[]
+export interface FWPageMediaResponse {
+	items?: FWMediaItem[]
 	revision?: string
 	tid?: string
 }
 
-export interface PageHistoryRevision {
+export interface FWPageHistoryRevision {
 	id: number
 	timestamp: string
 	minor: boolean
@@ -195,16 +195,16 @@ export interface PageHistoryRevision {
 	delta: number | null
 }
 
-export type CachedRevision = PageHistoryRevision & { pageName?: string }
+export type FWCachedRevision = FWPageHistoryRevision & { pageName?: string }
 
-export interface PageHistoryResponse {
-	revisions?: PageHistoryRevision[]
+export interface FWPageHistoryResponse {
+	revisions?: FWPageHistoryRevision[]
 	latest?: string
 	older?: string
 	newer?: string
 }
 
-export interface HistoryCoverageEntry {
+export interface FWHistoryCoverageEntry {
 	older_than?: string
 	newer_than?: string
 	limit: number
@@ -214,35 +214,35 @@ export interface HistoryCoverageEntry {
 	complete: boolean
 }
 
-export interface HistoryCacheEntitySnapshot {
+export interface FWHistoryCacheEntitySnapshot {
 	cachedCount: number
 	newestTimestamp?: string
 	oldestTimestamp?: string
-	coverage: HistoryCoverageEntry[]
+	coverage: FWHistoryCoverageEntry[]
 }
 
-export interface HistoryCacheSnapshot {
-	pages: Record<string, HistoryCacheEntitySnapshot>
-	users: Record<string, HistoryCacheEntitySnapshot>
+export interface FWHistoryCacheSnapshot {
+	pages: Record<string, FWHistoryCacheEntitySnapshot>
+	users: Record<string, FWHistoryCacheEntitySnapshot>
 }
 
-export interface OnThisDayEvent {
+export interface FWOnThisDayEvent {
 	text: string
 	type: "event"
 	year?: number
 	pages?: Array<{ title: string }>
 }
 
-export interface OnThisDayHoliday {
+export interface FWOnThisDayHoliday {
 	text: string
 	type: "holiday"
 	pages?: Array<{ title: string }>
 }
 
-export type OnThisDayItem = OnThisDayEvent | OnThisDayHoliday
+export type FWOnThisDayItem = FWOnThisDayEvent | FWOnThisDayHoliday
 
 /** Lift Wing API prediction score */
-export interface LiftWingPrediction {
+export interface FWLiftWingPrediction {
 	prediction: boolean | string
 	probability: {
 		true?: number
@@ -252,7 +252,7 @@ export interface LiftWingPrediction {
 }
 
 /** Lift Wing API response structure */
-export interface LiftWingResponse {
+export interface FWLiftWingResponse {
 	[wiki: string]: {
 		models?: {
 			[modelName: string]: {
@@ -262,7 +262,7 @@ export interface LiftWingResponse {
 		scores: {
 			[revisionId: string]: {
 				[modelName: string]: {
-					score: LiftWingPrediction
+					score: FWLiftWingPrediction
 				}
 			}
 		}
@@ -270,14 +270,14 @@ export interface LiftWingResponse {
 }
 
 /** Map of revision ID to prediction score */
-export interface RevisionPredictions {
+export interface FWRevisionPredictions {
 	[revisionId: number]: {
-		damaging?: LiftWingPrediction
-		goodfaith?: LiftWingPrediction
+		damaging?: FWLiftWingPrediction
+		goodfaith?: FWLiftWingPrediction
 	}
 }
 
-export interface PageSummary {
+export interface FWPageSummary {
 	title?: string
 	description?: string
 	extract?: string
@@ -293,7 +293,7 @@ export interface PageSummary {
 	timestamp?: string
 }
 
-export interface FeaturedPage {
+export interface FWFeaturedPage {
 	tfa?: {
 		title: string
 		description?: string

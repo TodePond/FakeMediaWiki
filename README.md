@@ -1,4 +1,4 @@
-# Fake MediaWiki
+# FakeWiki
 
 This project is a system for building lightweight MediaWiki prototypes. I should probably give it a better name.
 
