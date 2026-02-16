@@ -14,7 +14,7 @@
 					<CdxChipInput
 						v-model:input-value="filterInputValue"
 						:input-chips="chips"
-						placeholder="Filter"
+						placeholder="Add a filter..."
 						@update:input-chips="onChipsUpdate"
 					/>
 					<div class="filter-dropdowns">
@@ -39,6 +39,13 @@
 							:default-icon="cdxIconAdd"
 							class="filter-dropdown"
 						/>
+						<CdxSelect
+							v-model:selected="selectedFeaturedFilter"
+							:menu-items="featuredFilterOptions"
+							default-label="featured"
+							:default-icon="cdxIconAdd"
+							class="filter-dropdown"
+						/>
 					</div>
 				</template>
 			</CdxField>
@@ -55,11 +62,20 @@
 			<ul>
 				<li v-for="group in getFilteredGroupsForCategory(category.id)" :key="group.id">
 					<template v-if="group.type === 'prototype'">
-						<RouterLink :to="`/${group.wrapper}/${group.id}`" class="prototype-card">
+						<RouterLink
+							:to="`/${group.wrapper}/${group.id}`"
+							:class="['prototype-card', { featured: group.featured }]"
+						>
 							<div class="prototype-header">
 								<span class="prototype-header-item">
 									<span class="prototype-name">{{ group.name }}</span>
-
+									<CdxIcon
+										v-if="group.featured"
+										:icon="cdxIconStar"
+										size="small"
+										class="prototype-featured-icon"
+										aria-label="Featured"
+									/>
 									<span
 										v-if="group.status"
 										:class="['badge', `badge-${group.status}`]"
@@ -94,13 +110,20 @@
 								>
 									<RouterLink
 										:to="`/${variant.wrapper}/${variant.id}`"
-										class="prototype-card"
+										:class="['prototype-card', { featured: variant.featured }]"
 									>
 										<div class="prototype-header">
 											<span class="prototype-header-item">
 												<span class="prototype-name">{{
 													variant.name
 												}}</span>
+												<CdxIcon
+													v-if="variant.featured"
+													:icon="cdxIconStar"
+													size="small"
+													class="prototype-featured-icon"
+													aria-label="Featured"
+												/>
 												<span
 													v-if="variant.status"
 													:class="['badge', `badge-${variant.status}`]"
@@ -130,8 +153,8 @@
 
 <script setup lang="ts">
 import type { ChipInputItem } from "@wikimedia/codex"
-import { CdxChipInput, CdxField, CdxSelect } from "@wikimedia/codex"
-import { cdxIconAdd } from "@wikimedia/codex-icons"
+import { CdxChipInput, CdxField, CdxIcon, CdxSelect } from "@wikimedia/codex"
+import { cdxIconAdd, cdxIconStar } from "@wikimedia/codex-icons"
 import { computed, ref, watch } from "vue"
 import { RouterLink } from "vue-router"
 import type { PrototypeDefinition, PrototypeStatus } from "../prototypes/prototypes"
@@ -156,11 +179,18 @@ const statusFilterOptions: { value: StatusFilterValue; label: string }[] = [
 const wrapperFilterOptions = wrappers.map(w => ({ value: w.id, label: w.name }))
 const categoryFilterOptions = categories.map(c => ({ value: c.id, label: c.name }))
 
+type FeaturedFilterValue = "featured" | "unfeatured"
+const featuredFilterOptions: { value: FeaturedFilterValue; label: string }[] = [
+	{ value: "featured", label: "Featured" },
+	{ value: "unfeatured", label: "Unfeatured" },
+]
+
 const chips = ref<ChipInputItem[]>([])
 const filterInputValue = ref<string>("")
 const selectedStatusFilter = ref<StatusFilterValue | null>(null)
 const selectedWrapperFilter = ref<string | null>(null)
 const selectedCategoryFilter = ref<string | null>(null)
+const selectedFeaturedFilter = ref<FeaturedFilterValue | null>(null)
 
 function wrapperChipValue(id: string): string {
 	return `wrapper:${id.toLowerCase()}`
@@ -217,6 +247,21 @@ function normalizeChip(c: ChipInputItem): ChipInputItem {
 		}
 	}
 
+	// Featured:
+	if (lower.startsWith("featured:")) {
+		const rest = raw.slice(9).trim().toLowerCase()
+		if (rest === "yes" || rest === "featured") {
+			return {
+				value: "featured:yes",
+				label: "featured:yes",
+				className: "chip-filter-featured",
+			}
+		}
+		if (rest === "no" || rest === "unfeatured") {
+			return { value: "featured:no", label: "featured:no", className: "chip-filter-featured" }
+		}
+	}
+
 	return toLowerChip(c)
 }
 
@@ -253,6 +298,15 @@ const selectedCategories = computed<Set<string>>(() => {
 	})
 	return set
 })
+const selectedFeatureds = computed<Set<string>>(() => {
+	const set = new Set<string>()
+	chips.value.forEach(c => {
+		const v = String(c.value)
+		if (v === "featured:yes") set.add("featured")
+		if (v === "featured:no") set.add("unfeatured")
+	})
+	return set
+})
 
 // Plain (manually typed) chips + current input text: filter by name/description match
 const plainChipQueries = computed<Set<string>>(() => {
@@ -263,7 +317,8 @@ const plainChipQueries = computed<Set<string>>(() => {
 			v &&
 			!v.startsWith("status:") &&
 			!v.startsWith("wrapper:") &&
-			!v.startsWith("category:")
+			!v.startsWith("category:") &&
+			!v.startsWith("featured:")
 		) {
 			set.add(v.toLowerCase())
 		}
@@ -274,7 +329,8 @@ const plainChipQueries = computed<Set<string>>(() => {
 		typed &&
 		!typed.startsWith("status:") &&
 		!typed.startsWith("wrapper:") &&
-		!typed.startsWith("category:")
+		!typed.startsWith("category:") &&
+		!typed.startsWith("featured:")
 	) {
 		set.add(typed)
 	}
@@ -318,6 +374,19 @@ watch(selectedCategoryFilter, val => {
 	}
 })
 
+watch(selectedFeaturedFilter, val => {
+	if (val !== null) {
+		const value = val === "featured" ? "featured:yes" : "featured:no"
+		if (!chips.value.some(c => c.value === value)) {
+			chips.value = [
+				...chips.value,
+				{ value, label: value, className: "chip-filter-featured" },
+			]
+		}
+		selectedFeaturedFilter.value = null
+	}
+})
+
 function statusLabel(status: PrototypeStatus): string {
 	const labels: Record<PrototypeStatus, string> = {
 		new: "New",
@@ -347,6 +416,25 @@ function groupMatchesWrapperFilter(group: PrototypeDefinition<"prototype" | "var
 		return wrappersSet.has(group.wrapper.toLowerCase())
 	}
 	return group.variants.some(v => wrappersSet.has(v.wrapper.toLowerCase()))
+}
+
+function groupMatchesFeaturedFilter(group: PrototypeDefinition<"prototype" | "variants">): boolean {
+	const featureds = selectedFeatureds.value
+	if (featureds.size === 0) return true
+	if (group.type === "prototype") {
+		const isFeatured = !!group.featured
+		return (
+			(featureds.has("featured") && isFeatured) ||
+			(featureds.has("unfeatured") && !isFeatured)
+		)
+	}
+	return group.variants.some(v => {
+		const isFeatured = !!v.featured
+		return (
+			(featureds.has("featured") && isFeatured) ||
+			(featureds.has("unfeatured") && !isFeatured)
+		)
+	})
 }
 
 function textMatchesQueries(
@@ -394,8 +482,17 @@ function groupMatchesTextFilter(group: PrototypeDefinition<"prototype" | "varian
 function variantMatchesStatusAndWrapper(variant: PrototypeDefinition<"variant">): boolean {
 	const statuses = selectedStatuses.value
 	const wrappersSet = selectedWrappers.value
+	const featureds = selectedFeatureds.value
 	if (statuses.size > 0 && !statuses.has(effectiveStatus(variant))) return false
 	if (wrappersSet.size > 0 && !wrappersSet.has(variant.wrapper.toLowerCase())) return false
+	if (featureds.size > 0) {
+		const isFeatured = !!variant.featured
+		if (
+			!(featureds.has("featured") && isFeatured) &&
+			!(featureds.has("unfeatured") && !isFeatured)
+		)
+			return false
+	}
 	return true
 }
 
@@ -439,6 +536,7 @@ function groupMatchesFilters(group: PrototypeDefinition<"prototype" | "variants"
 	return (
 		groupMatchesStatusFilter(group) &&
 		groupMatchesWrapperFilter(group) &&
+		groupMatchesFeaturedFilter(group) &&
 		groupMatchesTextFilter(group)
 	)
 }
@@ -480,8 +578,8 @@ ul {
 }
 
 main {
-	/* max-width: 800px; */
-	max-width: var(--min-width-breakpoint-tablet);
+	max-width: 700px;
+	/* max-width: var(--min-width-breakpoint-tablet); */
 	margin: 0 auto;
 	padding: var(--spacing-100);
 }
@@ -599,6 +697,16 @@ h1 {
 	/* text-transform: none; */
 }
 
+.prototype-featured-icon {
+	color: var(--border-color-base);
+	flex-shrink: 0;
+	height: 1.2rem;
+	padding: 0.05rem !important;
+	display: inline-flex;
+	align-items: baseline;
+	justify-content: center;
+}
+
 .prototype-description {
 	margin: 0;
 	color: var(--color-base--subtle, #54595d);
@@ -629,14 +737,21 @@ h1 {
 }
 
 .filter-dropdowns {
-	display: flex;
-	/* grid-template-columns: repeat(3, 1fr); */
-	/* flex-direction: column; */
-	/* flex-wrap: wrap; */
-	justify-content: stretch;
-	/* gap: 0rem; */
-	/* align-items: flex-start; */
-	/* margin-top: 0.75rem; */
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0;
+}
+
+@media (min-width: 400px) {
+	.filter-dropdowns {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (min-width: 700px) {
+	.filter-dropdowns {
+		grid-template-columns: repeat(4, 1fr);
+	}
 }
 
 /* Chip filter colors (same as Chip prototype) */
@@ -676,6 +791,12 @@ h1 {
 	border-color: var(--border-color-subtle);
 }
 
+.filter-bar :deep(.chip-filter-featured) {
+	background-color: var(--background-color-neutral-subtle);
+	color: var(--color-base--subtle, #54595d);
+	border-color: var(--border-color-subtle);
+}
+
 .filter-accordion {
 	overflow: visible;
 }
@@ -691,31 +812,74 @@ h1 {
 
 <style>
 .filter-dropdowns .cdx-select-vue {
-	/* width: 100% !important; */
-	flex-grow: 1;
+	min-width: 0;
 }
 .filter-dropdowns .cdx-select-vue__handle {
 	width: 100%;
 	min-width: 100%;
+	border-top: none;
+	border-right: none;
+	border-radius: 0;
 }
 
 .filter-bar .cdx-chip-input {
 	border-radius: 2px 2px 0px 0px;
-	/* background-color: red !important; */
 }
 
-.filter-dropdown:first-child .cdx-select-vue__handle {
-	border-radius: 0px 0px 0px 2px;
+/* At smallest breakpoint, ensure the chip input has a right border so it aligns with the dropdown block */
+@media (max-width: 302px) {
+	.filter-bar .cdx-chip-input {
+		border-right: 1px solid var(--border-color-interactive);
+	}
 }
 
-.filter-dropdown:last-child .cdx-select-vue__handle {
-	border-radius: 0px 0px 2px 0px;
+/* 1 column (4 rows): right border on every handle so the right edge is continuous; only last gets bottom corners rounded */
+.filter-dropdown .cdx-select-vue__handle {
 	border-right: 1px solid var(--border-color-interactive);
 }
+.filter-dropdown:nth-child(4) .cdx-select-vue__handle {
+	border-radius: 0 0 2px 2px;
+}
 
-.filter-dropdowns .cdx-select-vue__handle {
-	border-radius: 0px 0px 0px 0px;
-	border-right: none;
-	border-top: none;
+/* 2 columns: right border only on 2nd and 4th; no radius on 1st and 2nd to avoid internal corner bulge; bottom-left on 3rd, bottom-right on 4th */
+@media (min-width: 400px) {
+	.filter-dropdown:nth-child(1) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(2) .cdx-select-vue__handle {
+		border-radius: 0;
+	}
+	.filter-dropdown:nth-child(1) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(3) .cdx-select-vue__handle {
+		border-right: none;
+	}
+	.filter-dropdown:nth-child(2n) .cdx-select-vue__handle {
+		border-right: 1px solid var(--border-color-interactive);
+	}
+	.filter-dropdown:nth-child(3) .cdx-select-vue__handle {
+		border-radius: 0 0 0 2px;
+	}
+	.filter-dropdown:nth-child(4) .cdx-select-vue__handle {
+		border-right: 1px solid var(--border-color-interactive);
+		border-radius: 0 0 2px 0;
+	}
+}
+
+/* 4 columns (1 row): right border only on 4th; first gets bottom-left rounded, last gets bottom-right rounded */
+@media (min-width: 700px) {
+	.filter-dropdown:nth-child(1) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(2) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(3) .cdx-select-vue__handle {
+		border-right: none;
+	}
+	.filter-dropdown:nth-child(1) .cdx-select-vue__handle {
+		border-radius: 0 0 0 2px;
+	}
+	.filter-dropdown:nth-child(2) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(3) .cdx-select-vue__handle {
+		border-radius: 0;
+	}
+	.filter-dropdown:nth-child(4) .cdx-select-vue__handle {
+		border-right: 1px solid var(--border-color-interactive);
+		border-radius: 0 0 2px 0;
+	}
 }
 </style>

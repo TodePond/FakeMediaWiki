@@ -9,6 +9,7 @@ export type PrototypeDefinitionBase = {
 	name: string
 	description: string
 	status?: PrototypeStatus
+	featured?: boolean
 }
 
 export type PrototypeDefinitionPrototype = PrototypeDefinitionBase & {
@@ -148,6 +149,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Flagged watchlist",
 				description: "A feed with flagged items.",
 				wrapper: "Special",
+				featured: true,
 			},
 			{
 				type: "variant",
@@ -383,6 +385,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "api",
 		wrapper: "Component",
 		title: "On this day",
+		featured: true,
 	},
 	{
 		type: "prototype",
