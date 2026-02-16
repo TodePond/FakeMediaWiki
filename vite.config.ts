@@ -17,9 +17,11 @@ function generateEntryPoints(): Record<string, string> {
 	// Create a unique entry point for each prototype based on its wrapper and id
 	const uniquePrototypes = new Map<string, (typeof prototypeMetadata)[0]>()
 	prototypeMetadata.forEach(prototype => {
-		const key = `${prototype.wrapper}/${prototype.id}`
-		if (!uniquePrototypes.has(key)) {
-			uniquePrototypes.set(key, prototype)
+		if (prototype.type === "prototype") {
+			const key = `${prototype.wrapper}/${prototype.id}`
+			if (!uniquePrototypes.has(key)) {
+				uniquePrototypes.set(key, prototype)
+			}
 		}
 	})
 
@@ -48,9 +50,11 @@ function createEntryPointFiles(): void {
 
 	const uniquePrototypes = new Map<string, (typeof prototypeMetadata)[0]>()
 	prototypeMetadata.forEach(prototype => {
-		const key = `${prototype.wrapper}/${prototype.id}`
-		if (!uniquePrototypes.has(key)) {
-			uniquePrototypes.set(key, prototype)
+		if (prototype.type === "prototype") {
+			const key = `${prototype.wrapper}/${prototype.id}`
+			if (!uniquePrototypes.has(key)) {
+				uniquePrototypes.set(key, prototype)
+			}
 		}
 	})
 
