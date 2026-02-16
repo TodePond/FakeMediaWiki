@@ -2,24 +2,24 @@
 	<div class="wrapper-padding-demo">
 		<div class="wrapper-demo">
 			<p class="wrapper-demo-intro">
-				This is filler content to demonstrate how the same prototype appears within different
-				wrappers.
+				This is filler content to demonstrate how the same prototype appears within
+				different wrappers.
 			</p>
 			<div class="wrapper-demo-block">
 				<h2>Wrappers</h2>
 				<p>
 					It can be helpful to see a prototype within different contexts. For example, you
 					might want to see how a component looks when surrounded by all the usual
-					surrounding Wikipedia UI. On the other hand, you might want to examine or try out
-					a component in a vacuum... to really focus in on how it works / looks / feels /
-					and so on.
+					surrounding Wikipedia UI. On the other hand, you might want to examine or try
+					out a component in a vacuum... to really focus in on how it works / looks /
+					feels / and so on.
 				</p>
 			</div>
 			<div class="wrapper-demo-block">
 				<h2>Warning</h2>
 				<p>
-					Some prototypes are made with specific wrappers in mind, so they may look wrong or
-					funky when viewed in other wrappers. For example, this prototype doesn't work
+					Some prototypes are made with specific wrappers in mind, so they may look wrong
+					or funky when viewed in other wrappers. For example, this prototype doesn't work
 					well with the Fullscreen wrapper. It ends up hugging the edges of the screen too
 					much.
 				</p>
@@ -43,8 +43,8 @@
 					Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
 					deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus
 					error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque
-					ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt
-					explicabo.
+					ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta
+					sunt explicabo.
 				</p>
 				<p>
 					Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed
@@ -70,8 +70,8 @@
 					Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo
 					minus id quod maxime placeat facere possimus, omnis voluptas assumenda est,
 					omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut
-					rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae
-					non recusandae.
+					rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et
+					molestiae non recusandae.
 				</p>
 				<p>
 					Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis
@@ -81,9 +81,9 @@
 				</p>
 				<p>
 					Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac
-					turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit
-					amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi
-					vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien
+					turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor
+					sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies
+					mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien
 					ullamcorper pharetra.
 				</p>
 				<p>
@@ -103,8 +103,8 @@
 				<p>
 					Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos
 					hymenaeos. Mauris in erat justo. Nullam ac urna eu felis dapibus condimentum sit
-					amet a augue. Sed non mauris vitae erat consequat auctor eu in elit. This is
-					the end of the long placeholder content. If you can read this, the overflow and
+					amet a augue. Sed non mauris vitae erat consequat auctor eu in elit. This is the
+					end of the long placeholder content. If you can read this, the overflow and
 					scroll are working as expected.
 				</p>
 			</div>
