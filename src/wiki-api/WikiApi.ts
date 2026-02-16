@@ -98,7 +98,7 @@ export interface UserSearchResult {
 	title?: string
 	username: string
 	description?: string | null
-	avatar: { url: string } | null
+	avatar?: { url: string } | null
 }
 
 export interface UserInfo {
@@ -539,10 +539,10 @@ export class WikiApi {
 	}
 
 	/**
-	 * Search for users by username
+	 * Search for users by username (without avatars).
 	 * @param query - Search query (username or part of username)
 	 * @param limit - Maximum results (default: 20)
-	 * @returns Array of user objects with username, avatar, and page metadata
+	 * @returns Array of user objects with username and page metadata (no avatar)
 	 */
 	async searchUsers(query: string, limit = 20): Promise<UserSearchResult[]> {
 		// Search for users by prefixing with "User:" if not already present
@@ -565,20 +565,29 @@ export class WikiApi {
 		// Limit results after filtering
 		const limitedPages = userPages.slice(0, limit)
 
-		// Fetch avatars for each user
-		const usersWithAvatars = await Promise.all(
-			limitedPages.map(async page => {
-				const username = page.title.replace(/^User:/, "")
-				const avatar = await this.getUserAvatar(username)
+		return limitedPages.map(page => ({
+			...page,
+			username: page.title.replace(/^User:/, ""),
+		}))
+	}
+
+	/**
+	 * Search for users by username and fetch their avatars.
+	 * @param query - Search query (username or part of username)
+	 * @param limit - Maximum results (default: 20)
+	 * @returns Array of user objects with username, avatar, and page metadata
+	 */
+	async searchUsersWithAvatars(query: string, limit = 20): Promise<UserSearchResult[]> {
+		const users = await this.searchUsers(query, limit)
+		return Promise.all(
+			users.map(async user => {
+				const avatar = await this.getUserAvatar(user.username)
 				return {
-					...page,
-					username,
+					...user,
 					avatar: avatar ? { url: avatar } : null,
 				}
 			})
 		)
-
-		return usersWithAvatars
 	}
 
 	/**

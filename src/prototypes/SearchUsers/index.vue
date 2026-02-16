@@ -56,7 +56,7 @@ const search = async (): Promise<void> => {
 	isLoading.value = true
 	error.value = null
 	try {
-		const usersWithAvatars = await wiki.searchUsers(searchQuery.value, 20)
+		const usersWithAvatars = await wiki.searchUsersWithAvatars(searchQuery.value, 20)
 
 		if (currentSearchId === searchId) {
 			results.value = usersWithAvatars
