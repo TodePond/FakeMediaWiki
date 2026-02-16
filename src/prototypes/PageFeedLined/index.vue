@@ -1,3 +1,69 @@
+<template>
+	<main>
+		<form @submit.prevent="search">
+			<CdxLabel input-id="page-name">Page name</CdxLabel>
+			<span>
+				<CdxTextInput
+					autocomplete="off"
+					v-model="searchQuery"
+					input-type="search"
+					id="page-name"
+				/>
+				<CdxButton>Load changes</CdxButton>
+				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
+			</span>
+		</form>
+
+		<section class="changes">
+			<div v-if="error" class="error">{{ error }}</div>
+			<div class="change" v-for="change in history.revisions" :key="change.timestamp">
+				<img
+					v-if="change.avatarUrl"
+					class="change-avatar"
+					:src="change.avatarUrl || undefined"
+				/>
+				<div v-else class="change-avatar-placeholder"></div>
+				<div class="change-body">
+					<span class="change-header">
+						<a target="_blank" :href="wiki.getUserUrl(change.user.name)">
+							<strong>{{ change.user.name }}</strong>
+						</a>
+						<span class="change-timestamp"
+							>&nbsp;{{ formatTimestamp(change.timestamp) }}</span
+						>
+						<br />
+					</span>
+					<span class="change-suggested-by" v-if="change.summary?.suggestedBy">
+						Suggested by
+						<a :href="wiki.getUserUrl(change.summary.suggestedBy)">{{
+							change.summary.suggestedBy
+						}}</a>
+					</span>
+					<span :class="wiki.getDeltaClass(change.delta ?? 0)"
+						>{{ change.delta ?? 0 }}
+					</span>
+					<div v-html="change?.summary?.comment"></div>
+				</div>
+				<footer>
+					<!-- <a
+            v-if="change.summary.useThisBot"
+            target="_blank"
+            :href="getBotUrl(change.summary.useThisBot)"
+          >
+            <CdxIcon :icon="cdxIconRobot" />
+          </a> -->
+					<a target="_blank" :href="wiki.getRevisionUrl(change.id, searchQuery)"
+						><CdxIcon :icon="cdxIconLinkExternal"
+					/></a>
+					<a target="_blank" :href="wiki.getThankUrl(change.id)"
+						><CdxIcon :icon="cdxIconHeart"
+					/></a>
+				</footer>
+			</div>
+		</section>
+	</main>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
@@ -98,72 +164,6 @@ function formatTimestamp(timestamp: string): string {
 	)
 }
 </script>
-
-<template>
-	<main>
-		<form @submit.prevent="search">
-			<CdxLabel input-id="page-name">Page name</CdxLabel>
-			<span>
-				<CdxTextInput
-					autocomplete="off"
-					v-model="searchQuery"
-					input-type="search"
-					id="page-name"
-				/>
-				<CdxButton>Load changes</CdxButton>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
-			</span>
-		</form>
-
-		<section class="changes">
-			<div v-if="error" class="error">{{ error }}</div>
-			<div class="change" v-for="change in history.revisions" :key="change.timestamp">
-				<img
-					v-if="change.avatarUrl"
-					class="change-avatar"
-					:src="change.avatarUrl || undefined"
-				/>
-				<div v-else class="change-avatar-placeholder"></div>
-				<div class="change-body">
-					<span class="change-header">
-						<a target="_blank" :href="wiki.getUserUrl(change.user.name)">
-							<strong>{{ change.user.name }}</strong>
-						</a>
-						<span class="change-timestamp"
-							>&nbsp;{{ formatTimestamp(change.timestamp) }}</span
-						>
-						<br />
-					</span>
-					<span class="change-suggested-by" v-if="change.summary?.suggestedBy">
-						Suggested by
-						<a :href="wiki.getUserUrl(change.summary.suggestedBy)">{{
-							change.summary.suggestedBy
-						}}</a>
-					</span>
-					<span :class="wiki.getDeltaClass(change.delta ?? 0)"
-						>{{ change.delta ?? 0 }}
-					</span>
-					<div v-html="change?.summary?.comment"></div>
-				</div>
-				<footer>
-					<!-- <a
-            v-if="change.summary.useThisBot"
-            target="_blank"
-            :href="getBotUrl(change.summary.useThisBot)"
-          >
-            <CdxIcon :icon="cdxIconRobot" />
-          </a> -->
-					<a target="_blank" :href="wiki.getRevisionUrl(change.id, searchQuery)"
-						><CdxIcon :icon="cdxIconLinkExternal"
-					/></a>
-					<a target="_blank" :href="wiki.getThankUrl(change.id)"
-						><CdxIcon :icon="cdxIconHeart"
-					/></a>
-				</footer>
-			</div>
-		</section>
-	</main>
-</template>
 
 <style scoped>
 .changes {

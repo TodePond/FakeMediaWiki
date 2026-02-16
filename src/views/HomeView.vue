@@ -1,3 +1,133 @@
+<template>
+	<main>
+		<h1>Prototypes</h1>
+		<p class="subtle">
+			Hello, I'm <a href="https://wikimedia.enterprise.slack.com/team/U0A4XK2020H">Lu</a>, and
+			this is my work-in-progress prototyping system. The source code is
+			<a href="https://github.com/todepond/fakemediawiki">here</a>. The prototypes are below.
+		</p>
+
+		<!-- <br /> -->
+		<p class="filter-bar">
+			<CdxField>
+				<template #default>
+					<CdxChipInput
+						v-model:input-value="filterInputValue"
+						:input-chips="chips"
+						placeholder="Filter"
+						@update:input-chips="onChipsUpdate"
+					/>
+					<div class="filter-dropdowns">
+						<CdxSelect
+							v-model:selected="selectedStatusFilter"
+							:menu-items="statusFilterOptions"
+							default-label="status"
+							:default-icon="cdxIconAdd"
+							class="filter-dropdown"
+						/>
+						<CdxSelect
+							v-model:selected="selectedCategoryFilter"
+							:menu-items="categoryFilterOptions"
+							default-label="category"
+							:default-icon="cdxIconAdd"
+							class="filter-dropdown"
+						/>
+						<CdxSelect
+							v-model:selected="selectedWrapperFilter"
+							:menu-items="wrapperFilterOptions"
+							default-label="wrapper"
+							:default-icon="cdxIconAdd"
+							class="filter-dropdown"
+						/>
+					</div>
+				</template>
+			</CdxField>
+		</p>
+		<br />
+
+		<div
+			v-for="category in filteredCategoriesWithPrototypes"
+			:key="category.id"
+			class="category-section"
+		>
+			<h2>{{ category.name }}</h2>
+			<p class="category-description">{{ category.description }}</p>
+			<ul>
+				<li v-for="group in getFilteredGroupsForCategory(category.id)" :key="group.id">
+					<template v-if="group.type === 'prototype'">
+						<RouterLink :to="`/${group.wrapper}/${group.id}`" class="prototype-card">
+							<div class="prototype-header">
+								<span class="prototype-header-item">
+									<span class="prototype-name">{{ group.name }}</span>
+
+									<span
+										v-if="group.status"
+										:class="['badge', `badge-${group.status}`]"
+										>{{ statusLabel(group.status) }}</span
+									>
+								</span>
+								<span
+									v-if="group.wrapper"
+									class="prototype-header-item badge badge-wrapper"
+									>{{ getWrapperName(group.wrapper) }}</span
+								>
+							</div>
+							<p class="prototype-description" v-html="group.description"></p>
+						</RouterLink>
+					</template>
+					<template v-else>
+						<div class="prototype-group">
+							<div class="prototype-header">
+								<span class="prototype-name">{{ group.name }}</span>
+								<span
+									v-if="group.status"
+									:class="['badge', `badge-${group.status}`]"
+									>{{ statusLabel(group.status) }}</span
+								>
+							</div>
+							<p class="prototype-description" v-html="group.description"></p>
+							<ul class="variant-list">
+								<li
+									v-for="variant in getFilteredVariants(group)"
+									:key="variant.id"
+									class="variant-item"
+								>
+									<RouterLink
+										:to="`/${variant.wrapper}/${variant.id}`"
+										class="prototype-card"
+									>
+										<div class="prototype-header">
+											<span class="prototype-header-item">
+												<span class="prototype-name">{{
+													variant.name
+												}}</span>
+												<span
+													v-if="variant.status"
+													:class="['badge', `badge-${variant.status}`]"
+													>{{ statusLabel(variant.status) }}</span
+												>
+											</span>
+											<span
+												v-if="variant.wrapper"
+												class="prototype-header-item badge badge-wrapper"
+												>{{ getWrapperName(variant.wrapper) }}</span
+											>
+										</div>
+										<p
+											class="prototype-description"
+											v-html="variant.description"
+										></p>
+									</RouterLink>
+								</li>
+							</ul>
+						</div>
+					</template>
+				</li>
+			</ul>
+		</div>
+	</main>
+</template>
+
 <script setup lang="ts">
 import type { ChipInputItem } from "@wikimedia/codex"
 import { CdxChipInput, CdxField, CdxSelect } from "@wikimedia/codex"
@@ -330,136 +460,6 @@ function getFilteredGroupsForCategory(categoryId: string) {
 	return groups.filter(groupMatchesFilters)
 }
 </script>
-
-<template>
-	<main>
-		<h1>Prototypes</h1>
-		<p class="subtle">
-			Hello, I'm <a href="https://wikimedia.enterprise.slack.com/team/U0A4XK2020H">Lu</a>, and
-			this is my work-in-progress prototyping system. The source code is
-			<a href="https://github.com/todepond/fakemediawiki">here</a>. The prototypes are below.
-		</p>
-
-		<!-- <br /> -->
-		<p class="filter-bar">
-			<CdxField>
-				<template #default>
-					<CdxChipInput
-						v-model:input-value="filterInputValue"
-						:input-chips="chips"
-						placeholder="Filter"
-						@update:input-chips="onChipsUpdate"
-					/>
-					<div class="filter-dropdowns">
-						<CdxSelect
-							v-model:selected="selectedStatusFilter"
-							:menu-items="statusFilterOptions"
-							default-label="status"
-							:default-icon="cdxIconAdd"
-							class="filter-dropdown"
-						/>
-						<CdxSelect
-							v-model:selected="selectedCategoryFilter"
-							:menu-items="categoryFilterOptions"
-							default-label="category"
-							:default-icon="cdxIconAdd"
-							class="filter-dropdown"
-						/>
-						<CdxSelect
-							v-model:selected="selectedWrapperFilter"
-							:menu-items="wrapperFilterOptions"
-							default-label="wrapper"
-							:default-icon="cdxIconAdd"
-							class="filter-dropdown"
-						/>
-					</div>
-				</template>
-			</CdxField>
-		</p>
-		<br />
-
-		<div
-			v-for="category in filteredCategoriesWithPrototypes"
-			:key="category.id"
-			class="category-section"
-		>
-			<h2>{{ category.name }}</h2>
-			<p class="category-description">{{ category.description }}</p>
-			<ul>
-				<li v-for="group in getFilteredGroupsForCategory(category.id)" :key="group.id">
-					<template v-if="group.type === 'prototype'">
-						<RouterLink :to="`/${group.wrapper}/${group.id}`" class="prototype-card">
-							<div class="prototype-header">
-								<span class="prototype-header-item">
-									<span class="prototype-name">{{ group.name }}</span>
-
-									<span
-										v-if="group.status"
-										:class="['badge', `badge-${group.status}`]"
-										>{{ statusLabel(group.status) }}</span
-									>
-								</span>
-								<span
-									v-if="group.wrapper"
-									class="prototype-header-item badge badge-wrapper"
-									>{{ getWrapperName(group.wrapper) }}</span
-								>
-							</div>
-							<p class="prototype-description" v-html="group.description"></p>
-						</RouterLink>
-					</template>
-					<template v-else>
-						<div class="prototype-group">
-							<div class="prototype-header">
-								<span class="prototype-name">{{ group.name }}</span>
-								<span
-									v-if="group.status"
-									:class="['badge', `badge-${group.status}`]"
-									>{{ statusLabel(group.status) }}</span
-								>
-							</div>
-							<p class="prototype-description" v-html="group.description"></p>
-							<ul class="variant-list">
-								<li
-									v-for="variant in getFilteredVariants(group)"
-									:key="variant.id"
-									class="variant-item"
-								>
-									<RouterLink
-										:to="`/${variant.wrapper}/${variant.id}`"
-										class="prototype-card"
-									>
-										<div class="prototype-header">
-											<span class="prototype-header-item">
-												<span class="prototype-name">{{
-													variant.name
-												}}</span>
-												<span
-													v-if="variant.status"
-													:class="['badge', `badge-${variant.status}`]"
-													>{{ statusLabel(variant.status) }}</span
-												>
-											</span>
-											<span
-												v-if="variant.wrapper"
-												class="prototype-header-item badge badge-wrapper"
-												>{{ getWrapperName(variant.wrapper) }}</span
-											>
-										</div>
-										<p
-											class="prototype-description"
-											v-html="variant.description"
-										></p>
-									</RouterLink>
-								</li>
-							</ul>
-						</div>
-					</template>
-				</li>
-			</ul>
-		</div>
-	</main>
-</template>
 
 <style scoped>
 .subtle {

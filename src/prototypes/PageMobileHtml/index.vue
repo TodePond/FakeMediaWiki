@@ -1,3 +1,23 @@
+<template>
+	<form @submit.prevent="loadPage">
+		<CdxLabel input-id="page-name">Page name</CdxLabel>
+		<span>
+			<CdxTextInput
+				autocomplete="off"
+				v-model="pageName"
+				input-type="search"
+				id="page-name"
+			/>
+			<CdxButton>Load mobile HTML</CdxButton>
+			<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
+		</span>
+	</form>
+	<div v-if="error" class="error">{{ error }}</div>
+	<div v-if="htmlContent" class="mobile-preview">
+		<iframe :srcdoc="htmlContent" class="mobile-frame" />
+	</div>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
@@ -28,26 +48,6 @@ const loadPage = async (): Promise<void> => {
 
 onMounted(loadPage)
 </script>
-
-<template>
-	<form @submit.prevent="loadPage">
-		<CdxLabel input-id="page-name">Page name</CdxLabel>
-		<span>
-			<CdxTextInput
-				autocomplete="off"
-				v-model="pageName"
-				input-type="search"
-				id="page-name"
-			/>
-			<CdxButton>Load mobile HTML</CdxButton>
-			<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
-		</span>
-	</form>
-	<div v-if="error" class="error">{{ error }}</div>
-	<div v-if="htmlContent" class="mobile-preview">
-		<iframe :srcdoc="htmlContent" class="mobile-frame" />
-	</div>
-</template>
 
 <style scoped>
 .cdx-text-input {

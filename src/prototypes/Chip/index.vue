@@ -1,3 +1,23 @@
+<template>
+	<section class="chip-demo">
+		<CdxField>
+			<CdxChipInput :input-chips="chips" placeholder="" @update:input-chips="onChipsUpdate" />
+			<CdxSelect
+				v-model:selected="selectedFilter"
+				:menu-items="statusMenuItems"
+				default-label="Filter by status"
+				:default-icon="cdxIconAdd"
+			/>
+			<CdxSelect
+				v-model:selected="selectedWrapper"
+				:menu-items="wrapperMenuItems"
+				default-label="Filter by wrapper"
+				:default-icon="cdxIconAdd"
+			/>
+		</CdxField>
+	</section>
+</template>
+
 <script setup lang="ts">
 import type { ChipInputItem } from "@wikimedia/codex"
 import { CdxChipInput, CdxField, CdxSelect } from "@wikimedia/codex"
@@ -108,26 +128,6 @@ watch(selectedWrapper, val => {
 	}
 })
 </script>
-
-<template>
-	<section class="chip-demo">
-		<CdxField>
-			<CdxChipInput :input-chips="chips" placeholder="" @update:input-chips="onChipsUpdate" />
-			<CdxSelect
-				v-model:selected="selectedFilter"
-				:menu-items="statusMenuItems"
-				default-label="Filter by status"
-				:default-icon="cdxIconAdd"
-			/>
-			<CdxSelect
-				v-model:selected="selectedWrapper"
-				:menu-items="wrapperMenuItems"
-				default-label="Filter by wrapper"
-				:default-icon="cdxIconAdd"
-			/>
-		</CdxField>
-	</section>
-</template>
 
 <style scoped>
 /* Color-coded filter chips: WIP = red, New = green, Updated = blue */

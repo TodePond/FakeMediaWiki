@@ -1,3 +1,33 @@
+<template>
+	<section>
+		<form @submit.prevent="loadFeatured">
+			<CdxLabel input-id="date-input">Date</CdxLabel>
+			<span>
+				<CdxTextInput v-model="dateInput" input-type="date" id="date-input" />
+				<CdxButton>Load featured page</CdxButton>
+				<CdxProgressIndicator v-if="isLoading" aria-label="Loading featured article" />
+			</span>
+		</form>
+		<div v-if="error" class="error">{{ error }}</div>
+		<CdxCard
+			v-if="featuredPage && featuredPage.tfa"
+			:thumbnail="getThumbnailUrl() ? { url: getThumbnailUrl()! } : null"
+			:url="wiki.getPageUrl(featuredPage.tfa.title)"
+		>
+			<template #title>{{ featuredPage.tfa.title }}</template>
+			<template #description v-if="featuredPage.tfa.description">
+				{{ featuredPage.tfa.description }}
+			</template>
+			<template #supporting-text v-if="featuredPage.tfa.extract">
+				{{ featuredPage.tfa.extract }}
+			</template>
+		</CdxCard>
+		<div v-else-if="featuredPage && !featuredPage.tfa" class="no-article">
+			No featured page for this date
+		</div>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
@@ -41,36 +71,6 @@ onMounted(() => {
 	loadFeatured()
 })
 </script>
-
-<template>
-	<section>
-		<form @submit.prevent="loadFeatured">
-			<CdxLabel input-id="date-input">Date</CdxLabel>
-			<span>
-				<CdxTextInput v-model="dateInput" input-type="date" id="date-input" />
-				<CdxButton>Load featured page</CdxButton>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Loading featured article" />
-			</span>
-		</form>
-		<div v-if="error" class="error">{{ error }}</div>
-		<CdxCard
-			v-if="featuredPage && featuredPage.tfa"
-			:thumbnail="getThumbnailUrl() ? { url: getThumbnailUrl()! } : null"
-			:url="wiki.getPageUrl(featuredPage.tfa.title)"
-		>
-			<template #title>{{ featuredPage.tfa.title }}</template>
-			<template #description v-if="featuredPage.tfa.description">
-				{{ featuredPage.tfa.description }}
-			</template>
-			<template #supporting-text v-if="featuredPage.tfa.extract">
-				{{ featuredPage.tfa.extract }}
-			</template>
-		</CdxCard>
-		<div v-else-if="featuredPage && !featuredPage.tfa" class="no-article">
-			No featured page for this date
-		</div>
-	</section>
-</template>
 
 <style scoped>
 section {

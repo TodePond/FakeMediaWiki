@@ -1,3 +1,27 @@
+<template>
+	<section>
+		<form @submit.prevent="search">
+			<CdxLabel input-id="page-name">Page name</CdxLabel>
+
+			<span>
+				<CdxTextInput
+					autocomplete="off"
+					v-model="searchQuery"
+					input-type="search"
+					id="page-name"
+				/>
+				<CdxButton>Load</CdxButton>
+				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
+			</span>
+		</form>
+		<CdxCard :thumbnail="thumbnail" :url="url">
+			<template #title>{{ title }}</template>
+			<template #description>{{ description }}</template>
+			<template #supporting-text>{{ supportingText }}</template>
+		</CdxCard>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
@@ -35,30 +59,6 @@ function saveSearchQuery(query: string): void {
 
 onMounted(search)
 </script>
-
-<template>
-	<section>
-		<form @submit.prevent="search">
-			<CdxLabel input-id="page-name">Page name</CdxLabel>
-
-			<span>
-				<CdxTextInput
-					autocomplete="off"
-					v-model="searchQuery"
-					input-type="search"
-					id="page-name"
-				/>
-				<CdxButton>Load</CdxButton>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
-			</span>
-		</form>
-		<CdxCard :thumbnail="thumbnail" :url="url">
-			<template #title>{{ title }}</template>
-			<template #description>{{ description }}</template>
-			<template #supporting-text>{{ supportingText }}</template>
-		</CdxCard>
-	</section>
-</template>
 
 <style scoped>
 section {

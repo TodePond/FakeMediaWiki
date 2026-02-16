@@ -1,3 +1,23 @@
+<template>
+	<section>
+		<form @submit.prevent="loadPage">
+			<CdxLabel input-id="page-name">Page name</CdxLabel>
+			<span>
+				<CdxTextInput
+					autocomplete="off"
+					v-model="pageName"
+					input-type="search"
+					id="page-name"
+				/>
+				<CdxButton>Load Source</CdxButton>
+				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
+			</span>
+		</form>
+		<div v-if="error" class="error">{{ error }}</div>
+		<pre v-if="sourceContent" class="source-content">{{ sourceContent }}</pre>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
@@ -28,26 +48,6 @@ const loadPage = async (): Promise<void> => {
 
 onMounted(loadPage)
 </script>
-
-<template>
-	<section>
-		<form @submit.prevent="loadPage">
-			<CdxLabel input-id="page-name">Page name</CdxLabel>
-			<span>
-				<CdxTextInput
-					autocomplete="off"
-					v-model="pageName"
-					input-type="search"
-					id="page-name"
-				/>
-				<CdxButton>Load Source</CdxButton>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
-			</span>
-		</form>
-		<div v-if="error" class="error">{{ error }}</div>
-		<pre v-if="sourceContent" class="source-content">{{ sourceContent }}</pre>
-	</section>
-</template>
 
 <style scoped>
 section {

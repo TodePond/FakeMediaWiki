@@ -1,3 +1,11 @@
+<template>
+	<CdxCard :thumbnail="thumbnail" :url="url">
+		<template #title>{{ title }}</template>
+		<template #description>{{ description }}</template>
+		<template #supporting-text>{{ supportingText }}</template>
+	</CdxCard>
+</template>
+
 <script setup lang="ts">
 import { CdxCard } from "@wikimedia/codex"
 
@@ -10,11 +18,3 @@ const title = "Card title"
 const description = "Card description"
 const supportingText = "Card supporting text"
 </script>
-
-<template>
-	<CdxCard :thumbnail="thumbnail" :url="url">
-		<template #title>{{ title }}</template>
-		<template #description>{{ description }}</template>
-		<template #supporting-text>{{ supportingText }}</template>
-	</CdxCard>
-</template>

@@ -1,10 +1,10 @@
-<script setup lang="ts">
-import { RouterView } from "vue-router"
-</script>
-
 <template>
 	<RouterView />
 </template>
+
+<script setup lang="ts">
+import { RouterView } from "vue-router"
+</script>
 
 <style lang="less">
 @import (reference) "@wikimedia/codex-design-tokens/theme-wikimedia-ui.less";

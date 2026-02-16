@@ -1,3 +1,11 @@
+<template>
+	<div class="component-view">
+		<h1>{{ prototype?.title }}</h1>
+		<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+		<p v-else>Prototype "{{ prototypeName }}" not found</p>
+	</div>
+</template>
+
 <script setup lang="ts">
 import { PrototypeDefinition } from "@/prototypes/prototypes"
 import type { Component } from "vue"
@@ -19,14 +27,6 @@ watch(
 	{ immediate: true }
 )
 </script>
-
-<template>
-	<div class="component-view">
-		<h1>{{ prototype?.title }}</h1>
-		<component v-if="PrototypeComponent" :is="PrototypeComponent" />
-		<p v-else>Prototype "{{ prototypeName }}" not found</p>
-	</div>
-</template>
 
 <style scoped>
 h1 {

@@ -1,36 +1,3 @@
-<script setup lang="ts">
-import { PrototypeDefinition } from "@/prototypes/prototypes"
-import { CdxButton, CdxIcon, CdxSearchInput } from "@wikimedia/codex"
-import {
-	cdxIconAppearance,
-	cdxIconBell,
-	cdxIconHelpNotice,
-	cdxIconMenu,
-	cdxIconSearch,
-	cdxIconTray,
-	cdxIconUserAvatar,
-	cdxIconWatchlist,
-} from "@wikimedia/codex-icons"
-import type { Component } from "vue"
-import { computed, ref, shallowRef, watch } from "vue"
-import { useRoute } from "vue-router"
-import { getPrototype, getPrototypeComponent } from "../prototypes/registry"
-
-const route = useRoute()
-const prototypeName = computed(() => route.params.name as string)
-const PrototypeComponent = shallowRef<Component | undefined>(undefined)
-const prototype = ref<PrototypeDefinition<"prototype" | "variant"> | undefined>(undefined)
-
-watch(
-	prototypeName,
-	async newName => {
-		PrototypeComponent.value = getPrototypeComponent(newName)
-		prototype.value = getPrototype(newName)
-	},
-	{ immediate: true }
-)
-</script>
-
 <template>
 	<div class="special-view">
 		<nav>
@@ -99,6 +66,39 @@ watch(
 		<p v-else>Prototype "{{ prototypeName }}" not found</p>
 	</div>
 </template>
+
+<script setup lang="ts">
+import { PrototypeDefinition } from "@/prototypes/prototypes"
+import { CdxButton, CdxIcon, CdxSearchInput } from "@wikimedia/codex"
+import {
+	cdxIconAppearance,
+	cdxIconBell,
+	cdxIconHelpNotice,
+	cdxIconMenu,
+	cdxIconSearch,
+	cdxIconTray,
+	cdxIconUserAvatar,
+	cdxIconWatchlist,
+} from "@wikimedia/codex-icons"
+import type { Component } from "vue"
+import { computed, ref, shallowRef, watch } from "vue"
+import { useRoute } from "vue-router"
+import { getPrototype, getPrototypeComponent } from "../prototypes/registry"
+
+const route = useRoute()
+const prototypeName = computed(() => route.params.name as string)
+const PrototypeComponent = shallowRef<Component | undefined>(undefined)
+const prototype = ref<PrototypeDefinition<"prototype" | "variant"> | undefined>(undefined)
+
+watch(
+	prototypeName,
+	async newName => {
+		PrototypeComponent.value = getPrototypeComponent(newName)
+		prototype.value = getPrototype(newName)
+	},
+	{ immediate: true }
+)
+</script>
 
 <style scoped>
 /* Copied from Special:SpecialPages */

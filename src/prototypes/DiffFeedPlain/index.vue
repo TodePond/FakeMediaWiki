@@ -1,3 +1,159 @@
+<template>
+	<main>
+		<form @submit.prevent="search">
+			<div class="inputs-group">
+				<div class="inputs">
+					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[0]"
+							input-type="search"
+							id="page-name-1"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[1]"
+							input-type="search"
+							id="page-name-2"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[2]"
+							input-type="search"
+							id="page-name-3"
+						/>
+					</div>
+				</div>
+				<div class="inputs">
+					<CdxLabel input-id="user-1">Followed users</CdxLabel>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[0]"
+							input-type="search"
+							id="user-1"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[1]"
+							input-type="search"
+							id="user-2"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[2]"
+							input-type="search"
+							id="user-3"
+						/>
+					</div>
+				</div>
+			</div>
+			<footer>
+				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
+			</footer>
+		</form>
+
+		<section class="changes">
+			<div v-if="errors.length > 0" class="error">
+				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
+			</div>
+			<div
+				class="change"
+				v-for="change in allRevisions"
+				:key="`${change.pageName}-${change.timestamp}`"
+			>
+				<div class="change-body">
+					<span class="change-page-name-and-delta">
+						<a
+							target="_blank"
+							:href="wiki.getPageUrl(change.pageName!)"
+							class="change-page-name"
+						>
+							{{ change.pageName }} </a
+						>&nbsp;<span :class="wiki.getDeltaClass(change.delta ?? 0)">{{
+							change.delta ?? 0
+						}}</span>
+					</span>
+					<span class="change-header">
+						<a
+							class="change-user-name"
+							target="_blank"
+							:href="wiki.getUserUrl(change.user.name)"
+						>
+							<strong>{{ change.user.name }}</strong>
+						</a>
+						<span class="change-suggested-by" v-if="change.summary?.suggestedBy">
+							&nbsp;suggested by
+							<a :href="wiki.getUserUrl(change.summary?.suggestedBy)">{{
+								change.summary?.suggestedBy
+							}}</a>
+						</span>
+					</span>
+					<span class="change-timestamp">
+						<a
+							target="_blank"
+							:href="wiki.getRevisionUrl(change.id, change.pageName!)"
+							>{{ formatTimestamp(change.timestamp) }}</a
+						>
+					</span>
+					<div class="change-comment" v-html="change?.summary?.comment"></div>
+					<div v-if="change.diff?.diff?.length" class="change-diff">
+						<div
+							v-for="(line, lineIdx) in change.diff.diff"
+							:key="lineIdx"
+							:class="['diff-line', getDiffLineClass(line.type)]"
+						>
+							<span class="diff-line-prefix">{{
+								line.type === 1 ? "+" : line.type === 2 ? "-" : " "
+							}}</span>
+							<span class="diff-line-text">
+								<template
+									v-if="
+										(line.type === 3 || line.type === 4 || line.type === 5) &&
+										line.highlightRanges?.length
+									"
+								>
+									<template
+										v-for="(seg, segIdx) in getDiffLineSegments(line)"
+										:key="segIdx"
+									>
+										<span v-if="seg.type === 'add'" class="diff-char-add">{{
+											seg.text
+										}}</span>
+										<span
+											v-else-if="seg.type === 'remove'"
+											class="diff-char-remove"
+											>{{ seg.text }}</span
+										>
+										<template v-else>{{ seg.text }}</template>
+									</template>
+								</template>
+								<template v-else>{{ line.text || " " }}</template>
+							</span>
+						</div>
+					</div>
+					<footer>
+						<a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName!)">
+							<CdxIcon :icon="cdxIconLinkExternal" />View change </a
+						>&nbsp;|<a target="_blank" :href="wiki.getThankUrl(change.id)">
+							<CdxIcon :icon="cdxIconHeart" />Give thanks
+						</a>
+					</footer>
+				</div>
+			</div>
+		</section>
+	</main>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
@@ -369,162 +525,6 @@ function formatTimestamp(timestamp: string): string {
 	})
 }
 </script>
-
-<template>
-	<main>
-		<form @submit.prevent="search">
-			<div class="inputs-group">
-				<div class="inputs">
-					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[0]"
-							input-type="search"
-							id="page-name-1"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[1]"
-							input-type="search"
-							id="page-name-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[2]"
-							input-type="search"
-							id="page-name-3"
-						/>
-					</div>
-				</div>
-				<div class="inputs">
-					<CdxLabel input-id="user-1">Followed users</CdxLabel>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[0]"
-							input-type="search"
-							id="user-1"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[1]"
-							input-type="search"
-							id="user-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[2]"
-							input-type="search"
-							id="user-3"
-						/>
-					</div>
-				</div>
-			</div>
-			<footer>
-				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
-			</footer>
-		</form>
-
-		<section class="changes">
-			<div v-if="errors.length > 0" class="error">
-				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
-			</div>
-			<div
-				class="change"
-				v-for="change in allRevisions"
-				:key="`${change.pageName}-${change.timestamp}`"
-			>
-				<div class="change-body">
-					<span class="change-page-name-and-delta">
-						<a
-							target="_blank"
-							:href="wiki.getPageUrl(change.pageName!)"
-							class="change-page-name"
-						>
-							{{ change.pageName }} </a
-						>&nbsp;<span :class="wiki.getDeltaClass(change.delta ?? 0)">{{
-							change.delta ?? 0
-						}}</span>
-					</span>
-					<span class="change-header">
-						<a
-							class="change-user-name"
-							target="_blank"
-							:href="wiki.getUserUrl(change.user.name)"
-						>
-							<strong>{{ change.user.name }}</strong>
-						</a>
-						<span class="change-suggested-by" v-if="change.summary?.suggestedBy">
-							&nbsp;suggested by
-							<a :href="wiki.getUserUrl(change.summary?.suggestedBy)">{{
-								change.summary?.suggestedBy
-							}}</a>
-						</span>
-					</span>
-					<span class="change-timestamp">
-						<a
-							target="_blank"
-							:href="wiki.getRevisionUrl(change.id, change.pageName!)"
-							>{{ formatTimestamp(change.timestamp) }}</a
-						>
-					</span>
-					<div class="change-comment" v-html="change?.summary?.comment"></div>
-					<div v-if="change.diff?.diff?.length" class="change-diff">
-						<div
-							v-for="(line, lineIdx) in change.diff.diff"
-							:key="lineIdx"
-							:class="['diff-line', getDiffLineClass(line.type)]"
-						>
-							<span class="diff-line-prefix">{{
-								line.type === 1 ? "+" : line.type === 2 ? "-" : " "
-							}}</span>
-							<span class="diff-line-text">
-								<template
-									v-if="
-										(line.type === 3 || line.type === 4 || line.type === 5) &&
-										line.highlightRanges?.length
-									"
-								>
-									<template
-										v-for="(seg, segIdx) in getDiffLineSegments(line)"
-										:key="segIdx"
-									>
-										<span v-if="seg.type === 'add'" class="diff-char-add">{{
-											seg.text
-										}}</span>
-										<span
-											v-else-if="seg.type === 'remove'"
-											class="diff-char-remove"
-											>{{ seg.text }}</span
-										>
-										<template v-else>{{ seg.text }}</template>
-									</template>
-								</template>
-								<template v-else>{{ line.text || " " }}</template>
-							</span>
-						</div>
-					</div>
-					<footer>
-						<a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName!)">
-							<CdxIcon :icon="cdxIconLinkExternal" />View change </a
-						>&nbsp;|<a target="_blank" :href="wiki.getThankUrl(change.id)">
-							<CdxIcon :icon="cdxIconHeart" />Give thanks
-						</a>
-					</footer>
-				</div>
-			</div>
-		</section>
-	</main>
-</template>
 
 <style scoped>
 @import "./style.css";

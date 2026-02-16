@@ -1,3 +1,24 @@
+<template>
+	<section>
+		<div class="controls">
+			<CdxButton @click="getRandom">Load random page</CdxButton>
+			<CdxProgressIndicator v-if="isLoading" aria-label="Loading random page" />
+		</div>
+		<div v-if="error" class="error">{{ error }}</div>
+		<CdxCard
+			v-else-if="randomPage && typeof randomPage === 'object'"
+			:thumbnail="randomPage.thumbnail?.source ? { url: randomPage.thumbnail.source } : null"
+			:url="getPageUrl()"
+		>
+			<template #title>{{ randomPage.title }}</template>
+			<template #description v-if="randomPage.description">{{
+				randomPage.description
+			}}</template>
+			<template #supporting-text v-if="randomPage.extract">{{ randomPage.extract }}</template>
+		</CdxCard>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxProgressIndicator } from "@wikimedia/codex"
 import { ref } from "vue"
@@ -31,27 +52,6 @@ const getPageUrl = (): string => {
 	return wiki.getPageUrl(pageTitle)
 }
 </script>
-
-<template>
-	<section>
-		<div class="controls">
-			<CdxButton @click="getRandom">Load random page</CdxButton>
-			<CdxProgressIndicator v-if="isLoading" aria-label="Loading random page" />
-		</div>
-		<div v-if="error" class="error">{{ error }}</div>
-		<CdxCard
-			v-else-if="randomPage && typeof randomPage === 'object'"
-			:thumbnail="randomPage.thumbnail?.source ? { url: randomPage.thumbnail.source } : null"
-			:url="getPageUrl()"
-		>
-			<template #title>{{ randomPage.title }}</template>
-			<template #description v-if="randomPage.description">{{
-				randomPage.description
-			}}</template>
-			<template #supporting-text v-if="randomPage.extract">{{ randomPage.extract }}</template>
-		</CdxCard>
-	</section>
-</template>
 
 <style scoped>
 section {

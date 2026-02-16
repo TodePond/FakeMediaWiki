@@ -1,3 +1,10 @@
+<template>
+	<main>
+		<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+		<p v-else>Prototype "{{ prototypeName }}" not found</p>
+	</main>
+</template>
+
 <script setup lang="ts">
 import type { Component } from "vue"
 import { computed, shallowRef, watch } from "vue"
@@ -16,13 +23,6 @@ watch(
 	{ immediate: true }
 )
 </script>
-
-<template>
-	<main>
-		<component v-if="PrototypeComponent" :is="PrototypeComponent" />
-		<p v-else>Prototype "{{ prototypeName }}" not found</p>
-	</main>
-</template>
 
 <style scoped>
 main {

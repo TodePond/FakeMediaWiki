@@ -1,3 +1,23 @@
+<template>
+	<section>
+		<form @submit.prevent="transform">
+			<CdxLabel input-id="wikitext">Wikitext</CdxLabel>
+			<CdxTextArea
+				v-model="wikitext"
+				id="wikitext"
+				:rows="10"
+				placeholder="Enter wikitext here..."
+			/>
+			<CdxButton>Transform to HTML</CdxButton>
+			<CdxProgressIndicator v-if="isLoading" aria-label="Transforming" />
+		</form>
+		<div v-if="error" class="error">{{ error }}</div>
+		<div v-if="htmlResult" class="html-result">
+			<div class="html-content" v-html="htmlResult"></div>
+		</div>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextArea } from "@wikimedia/codex"
 import { ref } from "vue"
@@ -27,26 +47,6 @@ const transform = async (): Promise<void> => {
 	}
 }
 </script>
-
-<template>
-	<section>
-		<form @submit.prevent="transform">
-			<CdxLabel input-id="wikitext">Wikitext</CdxLabel>
-			<CdxTextArea
-				v-model="wikitext"
-				id="wikitext"
-				:rows="10"
-				placeholder="Enter wikitext here..."
-			/>
-			<CdxButton>Transform to HTML</CdxButton>
-			<CdxProgressIndicator v-if="isLoading" aria-label="Transforming" />
-		</form>
-		<div v-if="error" class="error">{{ error }}</div>
-		<div v-if="htmlResult" class="html-result">
-			<div class="html-content" v-html="htmlResult"></div>
-		</div>
-	</section>
-</template>
 
 <style scoped>
 section {

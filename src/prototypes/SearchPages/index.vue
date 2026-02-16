@@ -1,3 +1,37 @@
+<template>
+	<section>
+		<form @submit.prevent="search">
+			<CdxLabel input-id="search-query">Full-text search</CdxLabel>
+			<span>
+				<CdxTextInput
+					autocomplete="off"
+					v-model="searchQuery"
+					input-type="search"
+					id="search-query"
+					placeholder="Search titles and content..."
+					@input="saveSearchQuery(searchQuery)"
+				/>
+				<CdxButton>Search</CdxButton>
+				<CdxProgressIndicator v-if="isLoading" aria-label="Searching" />
+			</span>
+		</form>
+		<div v-if="error" class="error">{{ error }}</div>
+		<div v-if="results.length > 0" class="results">
+			<p class="results-count">{{ results.length }} results</p>
+			<div class="results-list">
+				<CdxCard v-for="page in results" :key="page.key" :url="wiki.getPageUrl(page.title)">
+					<template #title>{{ page.title }}</template>
+					<template #description v-if="page.description">{{ page.description }}</template>
+					<template #supporting-text v-if="page.excerpt">
+						<div v-html="page.excerpt"></div>
+					</template>
+				</CdxCard>
+			</div>
+		</div>
+		<div v-else-if="!isLoading && hasSearched" class="no-results">No results found</div>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
@@ -39,40 +73,6 @@ onMounted(() => {
 	}
 })
 </script>
-
-<template>
-	<section>
-		<form @submit.prevent="search">
-			<CdxLabel input-id="search-query">Full-text search</CdxLabel>
-			<span>
-				<CdxTextInput
-					autocomplete="off"
-					v-model="searchQuery"
-					input-type="search"
-					id="search-query"
-					placeholder="Search titles and content..."
-					@input="saveSearchQuery(searchQuery)"
-				/>
-				<CdxButton>Search</CdxButton>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Searching" />
-			</span>
-		</form>
-		<div v-if="error" class="error">{{ error }}</div>
-		<div v-if="results.length > 0" class="results">
-			<p class="results-count">{{ results.length }} results</p>
-			<div class="results-list">
-				<CdxCard v-for="page in results" :key="page.key" :url="wiki.getPageUrl(page.title)">
-					<template #title>{{ page.title }}</template>
-					<template #description v-if="page.description">{{ page.description }}</template>
-					<template #supporting-text v-if="page.excerpt">
-						<div v-html="page.excerpt"></div>
-					</template>
-				</CdxCard>
-			</div>
-		</div>
-		<div v-else-if="!isLoading && hasSearched" class="no-results">No results found</div>
-	</section>
-</template>
 
 <style scoped>
 section {

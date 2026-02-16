@@ -1,3 +1,155 @@
+<template>
+	<main>
+		<form @submit.prevent="search">
+			<div class="inputs-group">
+				<div class="inputs">
+					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[0]"
+							input-type="search"
+							id="page-name-1"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[1]"
+							input-type="search"
+							id="page-name-2"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[2]"
+							input-type="search"
+							id="page-name-3"
+						/>
+					</div>
+				</div>
+				<div class="inputs">
+					<CdxLabel input-id="user-1">Followed users</CdxLabel>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[0]"
+							input-type="search"
+							id="user-1"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[1]"
+							input-type="search"
+							id="user-2"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[2]"
+							input-type="search"
+							id="user-3"
+						/>
+					</div>
+				</div>
+			</div>
+			<footer>
+				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
+			</footer>
+		</form>
+
+		<div class="watchlist-container">
+			<div v-if="errors.length > 0" class="error">
+				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
+			</div>
+			<template v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
+				<h4 class="watchlist-date-header">{{ dateGroup.dateLabel }}</h4>
+				<ul class="watchlist">
+					<li
+						class="watchlist-item"
+						v-for="change in dateGroup.revisions"
+						:key="`${change.pageName}-${change.timestamp}`"
+					>
+						<div class="watchlist-line1">
+							<span class="watchlist-diff-hist">
+								(<a
+									target="_blank"
+									:href="wiki.getRevisionUrl(change.id, change.pageName!)"
+									>diff</a
+								>
+								|
+								<a target="_blank" :href="wiki.getHistoryUrl(change.pageName!)"
+									>hist</a
+								>).
+							</span>
+							<span class="watchlist-sep"> </span>
+							<a
+								target="_blank"
+								:href="wiki.getPageUrl(change.pageName!)"
+								class="watchlist-page"
+							>
+								{{ change.pageName }}</a
+							><span class="watchlist-semi">;</span>
+							<span class="watchlist-sep"> </span>
+							<span class="watchlist-time"
+								>&nbsp;{{ formatTime(change.timestamp) }}</span
+							>
+							<span class="watchlist-sep"> .. </span>
+							<span
+								:class="[
+									'watchlist-delta',
+									wiki.getDeltaClass(change.delta ?? 0, false),
+								]"
+							>
+								{{ formatDelta(change.delta) }}</span
+							><span class="watchlist-sep"> .. </span>
+							<a
+								target="_blank"
+								:href="wiki.getUserUrl(change.user.name)"
+								class="watchlist-user"
+							>
+								{{ change.user.name }}</a
+							>
+							<span class="watchlist-talk-contribs">
+								(<a target="_blank" :href="wiki.getUserTalkUrl(change.user.name)"
+									>talk</a
+								>
+								|
+								<a target="_blank" :href="wiki.getUserContribsUrl(change.user.name)"
+									>contribs</a
+								>)
+							</span>
+							<template v-if="change?.summary?.comment"
+								><span
+									class="watchlist-comment"
+									v-html="change.summary.comment ?? ''"
+								></span
+								>&nbsp;</template
+							>
+							<span v-if="change?.summary?.hashtags" class="watchlist-tags">
+								(Tags:
+								<span class="watchlist-tag-names">{{
+									change.summary.hashtags
+								}}</span
+								>)
+							</span>
+							<span class="watchlist-sep"> </span>
+							<span
+								>(<a target="_blank" :href="wiki.getThankUrl(change.id)">thank</a
+								>)</span
+							>
+						</div>
+					</li>
+				</ul>
+			</template>
+		</div>
+	</main>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref, type Ref } from "vue"
@@ -301,158 +453,6 @@ function formatDelta(delta: number | null): string {
 	return `(${sign}${n})`
 }
 </script>
-
-<template>
-	<main>
-		<form @submit.prevent="search">
-			<div class="inputs-group">
-				<div class="inputs">
-					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[0]"
-							input-type="search"
-							id="page-name-1"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[1]"
-							input-type="search"
-							id="page-name-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[2]"
-							input-type="search"
-							id="page-name-3"
-						/>
-					</div>
-				</div>
-				<div class="inputs">
-					<CdxLabel input-id="user-1">Followed users</CdxLabel>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[0]"
-							input-type="search"
-							id="user-1"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[1]"
-							input-type="search"
-							id="user-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[2]"
-							input-type="search"
-							id="user-3"
-						/>
-					</div>
-				</div>
-			</div>
-			<footer>
-				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
-			</footer>
-		</form>
-
-		<div class="watchlist-container">
-			<div v-if="errors.length > 0" class="error">
-				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
-			</div>
-			<template v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
-				<h4 class="watchlist-date-header">{{ dateGroup.dateLabel }}</h4>
-				<ul class="watchlist">
-					<li
-						class="watchlist-item"
-						v-for="change in dateGroup.revisions"
-						:key="`${change.pageName}-${change.timestamp}`"
-					>
-						<div class="watchlist-line1">
-							<span class="watchlist-diff-hist">
-								(<a
-									target="_blank"
-									:href="wiki.getRevisionUrl(change.id, change.pageName!)"
-									>diff</a
-								>
-								|
-								<a target="_blank" :href="wiki.getHistoryUrl(change.pageName!)"
-									>hist</a
-								>).
-							</span>
-							<span class="watchlist-sep"> </span>
-							<a
-								target="_blank"
-								:href="wiki.getPageUrl(change.pageName!)"
-								class="watchlist-page"
-							>
-								{{ change.pageName }}</a
-							><span class="watchlist-semi">;</span>
-							<span class="watchlist-sep"> </span>
-							<span class="watchlist-time"
-								>&nbsp;{{ formatTime(change.timestamp) }}</span
-							>
-							<span class="watchlist-sep"> .. </span>
-							<span
-								:class="[
-									'watchlist-delta',
-									wiki.getDeltaClass(change.delta ?? 0, false),
-								]"
-							>
-								{{ formatDelta(change.delta) }}</span
-							><span class="watchlist-sep"> .. </span>
-							<a
-								target="_blank"
-								:href="wiki.getUserUrl(change.user.name)"
-								class="watchlist-user"
-							>
-								{{ change.user.name }}</a
-							>
-							<span class="watchlist-talk-contribs">
-								(<a target="_blank" :href="wiki.getUserTalkUrl(change.user.name)"
-									>talk</a
-								>
-								|
-								<a target="_blank" :href="wiki.getUserContribsUrl(change.user.name)"
-									>contribs</a
-								>)
-							</span>
-							<template v-if="change?.summary?.comment"
-								><span
-									class="watchlist-comment"
-									v-html="change.summary.comment ?? ''"
-								></span
-								>&nbsp;</template
-							>
-							<span v-if="change?.summary?.hashtags" class="watchlist-tags">
-								(Tags:
-								<span class="watchlist-tag-names">{{
-									change.summary.hashtags
-								}}</span
-								>)
-							</span>
-							<span class="watchlist-sep"> </span>
-							<span
-								>(<a target="_blank" :href="wiki.getThankUrl(change.id)">thank</a
-								>)</span
-							>
-						</div>
-					</li>
-				</ul>
-			</template>
-		</div>
-	</main>
-</template>
 
 <style scoped>
 @import "./style.css";

@@ -1,62 +1,3 @@
-<script setup lang="ts">
-import {
-	CdxButton,
-	CdxCard,
-	CdxLabel,
-	CdxProgressIndicator,
-	CdxSelect,
-	CdxTextInput,
-} from "@wikimedia/codex"
-import { onMounted, ref } from "vue"
-import { WikiApi, type OnThisDayEvent, type OnThisDayResponse } from "../../wiki-api/WikiApi"
-
-const wiki = new WikiApi()
-
-const type = ref<"events" | "births" | "deaths" | "holidays" | "selected">("events")
-const dateInput = ref("")
-const content = ref<OnThisDayResponse | null>(null)
-const isLoading = ref(false)
-const error = ref<string | null>(null)
-
-const typeOptions = [
-	{ value: "events", label: "Events" },
-	{ value: "births", label: "Births" },
-	{ value: "deaths", label: "Deaths" },
-	{ value: "holidays", label: "Holidays" },
-]
-
-const loadContent = async (): Promise<void> => {
-	isLoading.value = true
-	error.value = null
-	try {
-		const date = dateInput.value ? new Date(dateInput.value) : new Date()
-		const data = await wiki.getOnThisDay(type.value, date)
-		content.value = data
-	} catch (err) {
-		const errorObj = err as Error
-		error.value = errorObj.message
-		content.value = null
-	} finally {
-		isLoading.value = false
-	}
-}
-
-const getEventPageUrl = (event: OnThisDayEvent | { pages?: Array<{ title: string }> }): string => {
-	return wiki.getPageUrl(event.pages?.[0]?.title || "")
-}
-
-const getTodayDate = (): string => {
-	const today = new Date()
-	const dateStr = today.toISOString().split("T")[0]
-	return dateStr || ""
-}
-
-onMounted(() => {
-	dateInput.value = getTodayDate()
-	loadContent()
-})
-</script>
-
 <template>
 	<section>
 		<form @submit.prevent="loadContent">
@@ -123,6 +64,65 @@ onMounted(() => {
 		</div>
 	</section>
 </template>
+
+<script setup lang="ts">
+import {
+	CdxButton,
+	CdxCard,
+	CdxLabel,
+	CdxProgressIndicator,
+	CdxSelect,
+	CdxTextInput,
+} from "@wikimedia/codex"
+import { onMounted, ref } from "vue"
+import { WikiApi, type OnThisDayEvent, type OnThisDayResponse } from "../../wiki-api/WikiApi"
+
+const wiki = new WikiApi()
+
+const type = ref<"events" | "births" | "deaths" | "holidays" | "selected">("events")
+const dateInput = ref("")
+const content = ref<OnThisDayResponse | null>(null)
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+
+const typeOptions = [
+	{ value: "events", label: "Events" },
+	{ value: "births", label: "Births" },
+	{ value: "deaths", label: "Deaths" },
+	{ value: "holidays", label: "Holidays" },
+]
+
+const loadContent = async (): Promise<void> => {
+	isLoading.value = true
+	error.value = null
+	try {
+		const date = dateInput.value ? new Date(dateInput.value) : new Date()
+		const data = await wiki.getOnThisDay(type.value, date)
+		content.value = data
+	} catch (err) {
+		const errorObj = err as Error
+		error.value = errorObj.message
+		content.value = null
+	} finally {
+		isLoading.value = false
+	}
+}
+
+const getEventPageUrl = (event: OnThisDayEvent | { pages?: Array<{ title: string }> }): string => {
+	return wiki.getPageUrl(event.pages?.[0]?.title || "")
+}
+
+const getTodayDate = (): string => {
+	const today = new Date()
+	const dateStr = today.toISOString().split("T")[0]
+	return dateStr || ""
+}
+
+onMounted(() => {
+	dateInput.value = getTodayDate()
+	loadContent()
+})
+</script>
 
 <style scoped>
 section {

@@ -1,38 +1,3 @@
-<script setup lang="ts">
-import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
-import { onMounted, ref } from "vue"
-import { WikiApi, type MediaItem } from "../../wiki-api/WikiApi"
-
-const wiki = new WikiApi()
-
-const pageName = ref(localStorage.getItem("pageMediaQuery") || "Wet Leg")
-const mediaItems = ref<MediaItem[]>([])
-const isLoading = ref(false)
-const error = ref<string | null>(null)
-
-const loadPage = async (): Promise<void> => {
-	isLoading.value = true
-	error.value = null
-	try {
-		const data = await wiki.getPageMedia(pageName.value)
-		mediaItems.value = data.items || []
-		localStorage.setItem("pageMediaQuery", pageName.value)
-	} catch (err) {
-		const errorObj = err as Error
-		if (errorObj.message.includes("404")) {
-			error.value = "Page not found"
-		} else {
-			error.value = errorObj.message
-		}
-		mediaItems.value = []
-	} finally {
-		isLoading.value = false
-	}
-}
-
-onMounted(loadPage)
-</script>
-
 <template>
 	<section>
 		<form @submit.prevent="loadPage">
@@ -67,6 +32,41 @@ onMounted(loadPage)
 		<div v-else-if="!isLoading && !error" class="no-media">No media found for this page.</div>
 	</section>
 </template>
+
+<script setup lang="ts">
+import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
+import { onMounted, ref } from "vue"
+import { WikiApi, type MediaItem } from "../../wiki-api/WikiApi"
+
+const wiki = new WikiApi()
+
+const pageName = ref(localStorage.getItem("pageMediaQuery") || "Wet Leg")
+const mediaItems = ref<MediaItem[]>([])
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+
+const loadPage = async (): Promise<void> => {
+	isLoading.value = true
+	error.value = null
+	try {
+		const data = await wiki.getPageMedia(pageName.value)
+		mediaItems.value = data.items || []
+		localStorage.setItem("pageMediaQuery", pageName.value)
+	} catch (err) {
+		const errorObj = err as Error
+		if (errorObj.message.includes("404")) {
+			error.value = "Page not found"
+		} else {
+			error.value = errorObj.message
+		}
+		mediaItems.value = []
+	} finally {
+		isLoading.value = false
+	}
+}
+
+onMounted(loadPage)
+</script>
 
 <style scoped>
 section {

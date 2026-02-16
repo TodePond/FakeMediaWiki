@@ -1,3 +1,35 @@
+<template>
+	<main class="mobile-view">
+		<!-- When viewport is small: fullscreen like FullscreenView -->
+		<div class="mobile-view__fullscreen">
+			<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+			<p v-else>Prototype "{{ prototypeName }}" not found</p>
+		</div>
+		<!-- When viewport is large: prototype inside phone outline (412×892px, 20:9 ratio) -->
+		<div class="mobile-view__frame">
+			<div class="mobile-view__scale-buttons">
+				<CdxButton @click="applyScaleToFit">Scale to fit</CdxButton>
+				<CdxButton @click="appliedScale = 1">Scale to 100%</CdxButton>
+			</div>
+			<div class="mobile-view__phone-wrapper" :style="phoneWrapperStyle">
+				<div class="mobile-view__phone" :style="phoneTransformStyle">
+					<div class="mobile-view__chrome-top" />
+					<div class="mobile-view__chrome-below-top">
+						<div class="mobile-view__address-bar">
+							<span class="mobile-view__address-bar-url"></span>
+						</div>
+					</div>
+					<div class="mobile-view__screen">
+						<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+						<p v-else>Prototype "{{ prototypeName }}" not found</p>
+					</div>
+					<div class="mobile-view__chrome-bottom" />
+				</div>
+			</div>
+		</div>
+	</main>
+</template>
+
 <script setup lang="ts">
 import { CdxButton } from "@wikimedia/codex"
 import type { Component } from "vue"
@@ -50,38 +82,6 @@ onMounted(() => {
 	applyScaleToFit()
 })
 </script>
-
-<template>
-	<main class="mobile-view">
-		<!-- When viewport is small: fullscreen like FullscreenView -->
-		<div class="mobile-view__fullscreen">
-			<component v-if="PrototypeComponent" :is="PrototypeComponent" />
-			<p v-else>Prototype "{{ prototypeName }}" not found</p>
-		</div>
-		<!-- When viewport is large: prototype inside phone outline (412×892px, 20:9 ratio) -->
-		<div class="mobile-view__frame">
-			<div class="mobile-view__scale-buttons">
-				<CdxButton @click="applyScaleToFit">Scale to fit</CdxButton>
-				<CdxButton @click="appliedScale = 1">Scale to 100%</CdxButton>
-			</div>
-			<div class="mobile-view__phone-wrapper" :style="phoneWrapperStyle">
-				<div class="mobile-view__phone" :style="phoneTransformStyle">
-					<div class="mobile-view__chrome-top" />
-					<div class="mobile-view__chrome-below-top">
-						<div class="mobile-view__address-bar">
-							<span class="mobile-view__address-bar-url"></span>
-						</div>
-					</div>
-					<div class="mobile-view__screen">
-						<component v-if="PrototypeComponent" :is="PrototypeComponent" />
-						<p v-else>Prototype "{{ prototypeName }}" not found</p>
-					</div>
-					<div class="mobile-view__chrome-bottom" />
-				</div>
-			</div>
-		</div>
-	</main>
-</template>
 
 <style scoped>
 .mobile-view {

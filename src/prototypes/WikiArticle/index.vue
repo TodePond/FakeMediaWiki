@@ -1,3 +1,69 @@
+<template>
+	<article class="wiki-article">
+		<div v-if="error" class="wiki-article__content">{{ error }}</div>
+		<template v-else-if="summary">
+			<div v-if="heroUrl" class="wiki-article__hero-wrap">
+				<img class="wiki-article__hero" :src="heroUrl" :alt="summary.title ?? ''" />
+				<div class="wiki-article__hero-gradient" aria-hidden="true" />
+			</div>
+			<div class="wiki-article__content" @click="onContentClick">
+				<h1>{{ summary.title }}</h1>
+				<div
+					v-if="summary.extract_html"
+					class="wiki-article__summary"
+					v-html="summary.extract_html"
+				/>
+				<p v-else-if="summary.extract" class="wiki-article__summary">
+					{{ summary.extract }}
+				</p>
+				<div class="wiki-article__tabs">
+					<CdxTabs v-model:active="activeTab" :framed="false">
+						<CdxTab v-if="tabContent.overview" name="overview" label="Overview">
+							<div class="wiki-article__tab-body" v-html="tabContent.overview" />
+						</CdxTab>
+						<CdxTab v-if="pageMedia.length > 0" name="media" label="Media">
+							<div class="wiki-article__tab-body wiki-article__media-feed">
+								<a
+									v-for="(item, i) in pageMedia"
+									:key="i"
+									:href="getMediaUrl(item) ?? '#'"
+									:aria-label="item.caption?.text ?? item.title ?? 'Media'"
+									target="_blank"
+									rel="noopener noreferrer"
+									class="wiki-article__media-item"
+								>
+									<img
+										v-if="getMediaUrl(item)"
+										:src="getMediaUrl(item)!"
+										:alt="item.caption?.text ?? item.title ?? ''"
+										class="wiki-article__media-img"
+									/>
+									<p
+										v-if="item.caption?.text"
+										class="wiki-article__media-caption"
+									>
+										{{ item.caption.text }}
+									</p>
+								</a>
+							</div>
+						</CdxTab>
+						<CdxTab v-if="tabContent.members" name="members" label="Members">
+							<div class="wiki-article__tab-body" v-html="tabContent.members" />
+						</CdxTab>
+						<CdxTab
+							v-if="tabContent.discography"
+							name="discography"
+							label="Discography"
+						>
+							<div class="wiki-article__tab-body" v-html="tabContent.discography" />
+						</CdxTab>
+					</CdxTabs>
+				</div>
+			</div>
+		</template>
+	</article>
+</template>
+
 <script setup lang="ts">
 import { CdxTab, CdxTabs } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
@@ -166,72 +232,6 @@ async function loadPage(name?: string): Promise<void> {
 
 onMounted(() => loadPage())
 </script>
-
-<template>
-	<article class="wiki-article">
-		<div v-if="error" class="wiki-article__content">{{ error }}</div>
-		<template v-else-if="summary">
-			<div v-if="heroUrl" class="wiki-article__hero-wrap">
-				<img class="wiki-article__hero" :src="heroUrl" :alt="summary.title ?? ''" />
-				<div class="wiki-article__hero-gradient" aria-hidden="true" />
-			</div>
-			<div class="wiki-article__content" @click="onContentClick">
-				<h1>{{ summary.title }}</h1>
-				<div
-					v-if="summary.extract_html"
-					class="wiki-article__summary"
-					v-html="summary.extract_html"
-				/>
-				<p v-else-if="summary.extract" class="wiki-article__summary">
-					{{ summary.extract }}
-				</p>
-				<div class="wiki-article__tabs">
-					<CdxTabs v-model:active="activeTab" :framed="false">
-						<CdxTab v-if="tabContent.overview" name="overview" label="Overview">
-							<div class="wiki-article__tab-body" v-html="tabContent.overview" />
-						</CdxTab>
-						<CdxTab v-if="pageMedia.length > 0" name="media" label="Media">
-							<div class="wiki-article__tab-body wiki-article__media-feed">
-								<a
-									v-for="(item, i) in pageMedia"
-									:key="i"
-									:href="getMediaUrl(item) ?? '#'"
-									:aria-label="item.caption?.text ?? item.title ?? 'Media'"
-									target="_blank"
-									rel="noopener noreferrer"
-									class="wiki-article__media-item"
-								>
-									<img
-										v-if="getMediaUrl(item)"
-										:src="getMediaUrl(item)!"
-										:alt="item.caption?.text ?? item.title ?? ''"
-										class="wiki-article__media-img"
-									/>
-									<p
-										v-if="item.caption?.text"
-										class="wiki-article__media-caption"
-									>
-										{{ item.caption.text }}
-									</p>
-								</a>
-							</div>
-						</CdxTab>
-						<CdxTab v-if="tabContent.members" name="members" label="Members">
-							<div class="wiki-article__tab-body" v-html="tabContent.members" />
-						</CdxTab>
-						<CdxTab
-							v-if="tabContent.discography"
-							name="discography"
-							label="Discography"
-						>
-							<div class="wiki-article__tab-body" v-html="tabContent.discography" />
-						</CdxTab>
-					</CdxTabs>
-				</div>
-			</div>
-		</template>
-	</article>
-</template>
 
 <style scoped>
 .wiki-article__hero-wrap {

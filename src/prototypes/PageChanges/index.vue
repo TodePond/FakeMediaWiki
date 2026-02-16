@@ -1,3 +1,45 @@
+<template>
+	<main>
+		<form @submit.prevent="search">
+			<CdxLabel input-id="page-name">Page name</CdxLabel>
+
+			<span>
+				<CdxTextInput
+					autocomplete="off"
+					v-model="searchQuery"
+					input-type="search"
+					id="page-name"
+				/>
+				<CdxButton>Load changes</CdxButton>
+				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
+			</span>
+		</form>
+		<section class="changes">
+			<div v-if="error" class="error">{{ error }}</div>
+			<div class="change" v-for="change in history.revisions" :key="change.timestamp">
+				<div v-html="change.html"></div>
+				<p>
+					<a :href="wiki.getUserUrl(change.user.name)">
+						<strong>{{ change.user.name }}</strong> </a
+					>&nbsp;<span :class="wiki.getDeltaClass(change.delta ?? 0)">{{
+						change.delta
+					}}</span>
+				</p>
+				<p>
+					<span>{{ formatTimestamp(change.timestamp) }}</span>
+				</p>
+				<footer>
+					<a target="_blank" :href="wiki.getRevisionUrl(change.id, searchQuery)"
+						>View change</a
+					>
+					<span>|</span>
+					<a target="_blank" :href="wiki.getThankUrl(change.id)">Give thanks</a>
+				</footer>
+			</div>
+		</section>
+	</main>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
@@ -83,48 +125,6 @@ function formatTimestamp(timestamp: string): string {
 	return `${timeString}, ${dateString}`
 }
 </script>
-
-<template>
-	<main>
-		<form @submit.prevent="search">
-			<CdxLabel input-id="page-name">Page name</CdxLabel>
-
-			<span>
-				<CdxTextInput
-					autocomplete="off"
-					v-model="searchQuery"
-					input-type="search"
-					id="page-name"
-				/>
-				<CdxButton>Load changes</CdxButton>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
-			</span>
-		</form>
-		<section class="changes">
-			<div v-if="error" class="error">{{ error }}</div>
-			<div class="change" v-for="change in history.revisions" :key="change.timestamp">
-				<div v-html="change.html"></div>
-				<p>
-					<a :href="wiki.getUserUrl(change.user.name)">
-						<strong>{{ change.user.name }}</strong> </a
-					>&nbsp;<span :class="wiki.getDeltaClass(change.delta ?? 0)">{{
-						change.delta
-					}}</span>
-				</p>
-				<p>
-					<span>{{ formatTimestamp(change.timestamp) }}</span>
-				</p>
-				<footer>
-					<a target="_blank" :href="wiki.getRevisionUrl(change.id, searchQuery)"
-						>View change</a
-					>
-					<span>|</span>
-					<a target="_blank" :href="wiki.getThankUrl(change.id)">Give thanks</a>
-				</footer>
-			</div>
-		</section>
-	</main>
-</template>
 
 <style scoped>
 .changes {

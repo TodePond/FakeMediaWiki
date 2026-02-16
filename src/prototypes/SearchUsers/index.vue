@@ -1,3 +1,38 @@
+<template>
+	<section>
+		<form @submit.prevent="search">
+			<CdxLabel input-id="search-query">Search users</CdxLabel>
+			<span>
+				<CdxTextInput
+					autocomplete="off"
+					v-model="searchQuery"
+					input-type="search"
+					id="search-query"
+					placeholder="Type to search..."
+					@input="search"
+				/>
+				<CdxProgressIndicator v-if="isLoading" aria-label="Searching" />
+			</span>
+		</form>
+		<div v-if="error" class="error">{{ error }}</div>
+		<div v-if="results.length > 0" class="results">
+			<p class="results-count">{{ results.length }} results</p>
+			<div class="results-list">
+				<CdxCard
+					v-for="user in results"
+					:key="user.key"
+					:url="wiki.getUserUrl(user.username)"
+					:thumbnail="user.avatar"
+				>
+					<template #title>{{ user.username }}</template>
+					<template #description v-if="user.description">{{ user.description }}</template>
+				</CdxCard>
+			</div>
+		</div>
+		<div v-else-if="!isLoading && hasSearched" class="no-results">No users found</div>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
@@ -46,41 +81,6 @@ onMounted(() => {
 	}
 })
 </script>
-
-<template>
-	<section>
-		<form @submit.prevent="search">
-			<CdxLabel input-id="search-query">Search users</CdxLabel>
-			<span>
-				<CdxTextInput
-					autocomplete="off"
-					v-model="searchQuery"
-					input-type="search"
-					id="search-query"
-					placeholder="Type to search..."
-					@input="search"
-				/>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Searching" />
-			</span>
-		</form>
-		<div v-if="error" class="error">{{ error }}</div>
-		<div v-if="results.length > 0" class="results">
-			<p class="results-count">{{ results.length }} results</p>
-			<div class="results-list">
-				<CdxCard
-					v-for="user in results"
-					:key="user.key"
-					:url="wiki.getUserUrl(user.username)"
-					:thumbnail="user.avatar"
-				>
-					<template #title>{{ user.username }}</template>
-					<template #description v-if="user.description">{{ user.description }}</template>
-				</CdxCard>
-			</div>
-		</div>
-		<div v-else-if="!isLoading && hasSearched" class="no-results">No users found</div>
-	</section>
-</template>
 
 <style scoped>
 section {

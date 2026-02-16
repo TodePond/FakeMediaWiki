@@ -1,3 +1,415 @@
+<template>
+	<main>
+		<form @submit.prevent="search">
+			<div class="inputs-group">
+				<div class="inputs">
+					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[0]"
+							input-type="search"
+							id="page-name-1"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[1]"
+							input-type="search"
+							id="page-name-2"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="pageSearchQueries[2]"
+							input-type="search"
+							id="page-name-3"
+						/>
+					</div>
+				</div>
+				<div class="inputs">
+					<CdxLabel input-id="user-1">Followed users</CdxLabel>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[0]"
+							input-type="search"
+							id="user-1"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[1]"
+							input-type="search"
+							id="user-2"
+						/>
+					</div>
+					<div class="input-group">
+						<CdxTextInput
+							autocomplete="off"
+							v-model="userSearchQueries[2]"
+							input-type="search"
+							id="user-3"
+						/>
+					</div>
+				</div>
+			</div>
+			<footer>
+				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
+			</footer>
+		</form>
+
+		<div class="watchlist-container">
+			<div v-if="errors.length > 0" class="error">
+				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
+			</div>
+			<template v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
+				<h4 class="watchlist-date-header">{{ dateGroup.dateLabel }}</h4>
+				<ul class="watchlist">
+					<li
+						class="watchlist-item"
+						v-for="change in dateGroup.revisions"
+						:key="`${change.pageName}-${change.timestamp}`"
+					>
+						<div class="watchlist-line1">
+							<span class="watchlist-sep"> </span>
+							<a
+								target="_blank"
+								:href="wiki.getPageUrl(change.pageName!)"
+								class="watchlist-page"
+							>
+								{{ change.pageName }}</a
+							><span class="watchlist-semi">;</span>
+							<span class="watchlist-sep"> </span>
+							<span class="watchlist-time"
+								>&nbsp;{{ formatTime(change.timestamp) }}</span
+							>
+							<span class="watchlist-sep"> .. </span>
+							<span
+								:class="[
+									'watchlist-delta',
+									wiki.getDeltaClass(change.delta ?? 0, false),
+								]"
+							>
+								{{ formatDelta(change.delta) }}</span
+							><span class="watchlist-sep"> .. </span>
+							<a
+								target="_blank"
+								:href="wiki.getUserUrl(change.user.name)"
+								class="watchlist-user"
+							>
+								{{ change.user.name }}</a
+							>
+							<span class="watchlist-talk-contribs">
+								(<a target="_blank" :href="wiki.getUserTalkUrl(change.user.name)"
+									>talk</a
+								>
+								|
+								<a target="_blank" :href="wiki.getUserContribsUrl(change.user.name)"
+									>contribs</a
+								>)
+							</span>
+							<br />
+							<template v-if="change?.summary?.comment"
+								><span
+									class="watchlist-comment"
+									v-html="change.summary.comment ?? ''"
+								></span
+							></template>
+							<span v-if="change?.summary?.hashtags" class="watchlist-tags">
+								(Tags:
+								<span class="watchlist-tag-names">{{
+									change.summary.hashtags
+								}}</span
+								>)
+							</span>
+							<span class="watchlist-diff-hist">
+								(<button
+									type="button"
+									class="watchlist-diff-link"
+									:class="{
+										'watchlist-diff-link-expanded': expandedDiffIds.has(
+											change.id
+										),
+									}"
+									@click="toggleDiff(change)"
+								>
+									diff
+								</button>
+								|
+								<button
+									type="button"
+									class="watchlist-hist-link"
+									:class="{
+										'watchlist-hist-link-expanded': expandedHistoryIds.has(
+											change.id
+										),
+									}"
+									@click="toggleHistory(change)"
+								>
+									hist
+								</button>
+								|
+								<span
+									v-if="thankedRevisionIds.has(change.id)"
+									class="watchlist-thank-text"
+									>thanked</span
+								><button
+									v-else
+									type="button"
+									class="watchlist-thank-link"
+									@click="onThankClick(change, $event)"
+								>
+									thank</button
+								>)
+							</span>
+						</div>
+						<div v-if="expandedDiffIds.has(change.id)" class="watchlist-inline-diff">
+							<div
+								v-if="loadingDiffIds.has(change.id)"
+								class="watchlist-diff-loading"
+							>
+								Loading diff…
+							</div>
+							<div
+								v-else-if="loadedDiffs.get(change.id)?.diff?.length"
+								class="change-diff"
+							>
+								<div
+									v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
+									:key="lineIdx"
+									:class="['diff-line', getDiffLineClass(line.type)]"
+								>
+									<span class="diff-line-text">
+										<template
+											v-if="
+												(line.type === 0 ||
+													line.type === 1 ||
+													line.type === 2 ||
+													line.type === 3 ||
+													line.type === 4 ||
+													line.type === 5) &&
+												line.highlightRanges?.length
+											"
+										>
+											<template
+												v-for="(seg, segIdx) in getDiffLineSegments(line)"
+												:key="segIdx"
+											>
+												<span
+													v-if="seg.type === 'add'"
+													class="diff-char-add"
+													>{{ seg.text }}</span
+												>
+												<span
+													v-else-if="seg.type === 'remove'"
+													class="diff-char-remove"
+													>{{ seg.text }}</span
+												>
+												<span
+													v-else-if="seg.type === 'change'"
+													class="diff-char-change"
+													>{{ seg.text }}</span
+												>
+												<template v-else>{{ seg.text }}</template>
+											</template>
+										</template>
+										<template v-else>{{ line.text || " " }}</template>
+									</span>
+								</div>
+							</div>
+							<div v-else class="watchlist-diff-loading">No diff available.</div>
+						</div>
+						<div
+							v-if="expandedHistoryIds.has(change.id)"
+							class="watchlist-inline-history"
+						>
+							<div
+								v-if="loadingHistoryPageNames.has(change.pageName!)"
+								class="watchlist-diff-loading"
+							>
+								Loading history…
+							</div>
+							<ul
+								v-else-if="loadedHistories.get(change.pageName!)?.revisions?.length"
+								class="change-history"
+							>
+								<li
+									v-for="rev in loadedHistories.get(change.pageName!)!.revisions"
+									:key="rev.id"
+									:class="[
+										'watchlist-item',
+										{ 'change-history-current': rev.id === change.id },
+									]"
+								>
+									<div class="watchlist-line1">
+										<!-- <span class="watchlist-time">
+											{{ formatTime(rev.timestamp) }}
+										</span> -->
+										<!-- <span class="watchlist-sep"> .. </span> -->
+										<span
+											:class="[
+												'watchlist-delta',
+												wiki.getDeltaClass(rev.delta ?? 0, false),
+											]"
+										>
+											{{ formatDelta(rev.delta) }}</span
+										><span class="watchlist-sep"> .. </span>
+										<a
+											target="_blank"
+											:href="wiki.getUserUrl(rev.user.name)"
+											class="watchlist-user"
+										>
+											{{ rev.user.name }}</a
+										>
+										<span class="watchlist-talk-contribs">
+											(<a
+												target="_blank"
+												:href="wiki.getUserTalkUrl(rev.user.name)"
+												>talk</a
+											>
+											|
+											<a
+												target="_blank"
+												:href="wiki.getUserContribsUrl(rev.user.name)"
+												>contribs</a
+											>)
+										</span>
+										<br />
+										<template v-if="rev.commentHtml ?? rev.comment">
+											<span
+												class="watchlist-comment"
+												v-html="rev.commentHtml ?? rev.comment ?? ''"
+											></span>
+										</template>
+										<span class="watchlist-diff-hist">
+											(<button
+												type="button"
+												class="watchlist-diff-link"
+												:class="{
+													'watchlist-diff-link-expanded':
+														expandedHistoryDiffIds
+															.get(change.id)
+															?.has(rev.id),
+												}"
+												@click="
+													toggleHistoryDiff(
+														change.id,
+														rev,
+														change.pageName!
+													)
+												"
+											>
+												diff
+											</button>
+											|
+											<span
+												v-if="thankedRevisionIds.has(rev.id)"
+												class="watchlist-thank-text"
+												>thanked</span
+											><button
+												v-else
+												type="button"
+												class="watchlist-thank-link"
+												@click="onThankClick(rev, $event)"
+											>
+												thank</button
+											>)
+										</span>
+									</div>
+									<div
+										v-if="expandedHistoryDiffIds.get(change.id)?.has(rev.id)"
+										class="watchlist-inline-diff change-history-inline-diff"
+									>
+										<div
+											v-if="loadingDiffIds.has(rev.id)"
+											class="watchlist-diff-loading"
+										>
+											Loading diff…
+										</div>
+										<div
+											v-else-if="loadedDiffs.get(rev.id)?.diff?.length"
+											class="change-diff"
+										>
+											<div
+												v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!
+													.diff"
+												:key="lineIdx"
+												:class="['diff-line', getDiffLineClass(line.type)]"
+											>
+												<span class="diff-line-text">
+													<template
+														v-if="
+															(line.type === 0 ||
+																line.type === 1 ||
+																line.type === 2 ||
+																line.type === 3 ||
+																line.type === 4 ||
+																line.type === 5) &&
+															line.highlightRanges?.length
+														"
+													>
+														<template
+															v-for="(
+																seg, segIdx
+															) in getDiffLineSegments(line)"
+															:key="segIdx"
+														>
+															<span
+																v-if="seg.type === 'add'"
+																class="diff-char-add"
+																>{{ seg.text }}</span
+															>
+															<span
+																v-else-if="seg.type === 'remove'"
+																class="diff-char-remove"
+																>{{ seg.text }}</span
+															>
+															<span
+																v-else-if="seg.type === 'change'"
+																class="diff-char-change"
+																>{{ seg.text }}</span
+															>
+															<template v-else>{{
+																seg.text
+															}}</template>
+														</template>
+													</template>
+													<template v-else>{{
+														line.text || " "
+													}}</template>
+												</span>
+											</div>
+										</div>
+										<div v-else class="watchlist-diff-loading">
+											No diff available.
+										</div>
+									</div>
+								</li>
+							</ul>
+							<div v-else class="watchlist-diff-loading">No history available.</div>
+						</div>
+					</li>
+				</ul>
+			</template>
+		</div>
+
+		<div class="thank-hearts-overlay" aria-hidden="true">
+			<div
+				v-for="heart in risingHearts"
+				:key="heart.id"
+				:class="['thank-heart', heart.type === 'unthank' ? 'thank-heart-broken' : '']"
+				:style="{ left: heart.x + 'px', top: heart.y + 'px' }"
+			>
+				{{ heart.type === "unthank" ? "\</3" : "\<3" }}
+			</div>
+		</div>
+	</main>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref, type Ref } from "vue"
@@ -534,418 +946,6 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 	}, HEART_RISE_DURATION_MS)
 }
 </script>
-
-<template>
-	<main>
-		<form @submit.prevent="search">
-			<div class="inputs-group">
-				<div class="inputs">
-					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[0]"
-							input-type="search"
-							id="page-name-1"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[1]"
-							input-type="search"
-							id="page-name-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[2]"
-							input-type="search"
-							id="page-name-3"
-						/>
-					</div>
-				</div>
-				<div class="inputs">
-					<CdxLabel input-id="user-1">Followed users</CdxLabel>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[0]"
-							input-type="search"
-							id="user-1"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[1]"
-							input-type="search"
-							id="user-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[2]"
-							input-type="search"
-							id="user-3"
-						/>
-					</div>
-				</div>
-			</div>
-			<footer>
-				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
-			</footer>
-		</form>
-
-		<div class="watchlist-container">
-			<div v-if="errors.length > 0" class="error">
-				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
-			</div>
-			<template v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
-				<h4 class="watchlist-date-header">{{ dateGroup.dateLabel }}</h4>
-				<ul class="watchlist">
-					<li
-						class="watchlist-item"
-						v-for="change in dateGroup.revisions"
-						:key="`${change.pageName}-${change.timestamp}`"
-					>
-						<div class="watchlist-line1">
-							<span class="watchlist-sep"> </span>
-							<a
-								target="_blank"
-								:href="wiki.getPageUrl(change.pageName!)"
-								class="watchlist-page"
-							>
-								{{ change.pageName }}</a
-							><span class="watchlist-semi">;</span>
-							<span class="watchlist-sep"> </span>
-							<span class="watchlist-time"
-								>&nbsp;{{ formatTime(change.timestamp) }}</span
-							>
-							<span class="watchlist-sep"> .. </span>
-							<span
-								:class="[
-									'watchlist-delta',
-									wiki.getDeltaClass(change.delta ?? 0, false),
-								]"
-							>
-								{{ formatDelta(change.delta) }}</span
-							><span class="watchlist-sep"> .. </span>
-							<a
-								target="_blank"
-								:href="wiki.getUserUrl(change.user.name)"
-								class="watchlist-user"
-							>
-								{{ change.user.name }}</a
-							>
-							<span class="watchlist-talk-contribs">
-								(<a target="_blank" :href="wiki.getUserTalkUrl(change.user.name)"
-									>talk</a
-								>
-								|
-								<a target="_blank" :href="wiki.getUserContribsUrl(change.user.name)"
-									>contribs</a
-								>)
-							</span>
-							<br />
-							<template v-if="change?.summary?.comment"
-								><span
-									class="watchlist-comment"
-									v-html="change.summary.comment ?? ''"
-								></span
-							></template>
-							<span v-if="change?.summary?.hashtags" class="watchlist-tags">
-								(Tags:
-								<span class="watchlist-tag-names">{{
-									change.summary.hashtags
-								}}</span
-								>)
-							</span>
-							<span class="watchlist-diff-hist">
-								(<button
-									type="button"
-									class="watchlist-diff-link"
-									:class="{
-										'watchlist-diff-link-expanded': expandedDiffIds.has(
-											change.id
-										),
-									}"
-									@click="toggleDiff(change)"
-								>
-									diff
-								</button>
-								|
-								<button
-									type="button"
-									class="watchlist-hist-link"
-									:class="{
-										'watchlist-hist-link-expanded': expandedHistoryIds.has(
-											change.id
-										),
-									}"
-									@click="toggleHistory(change)"
-								>
-									hist
-								</button>
-								|
-								<span
-									v-if="thankedRevisionIds.has(change.id)"
-									class="watchlist-thank-text"
-									>thanked</span
-								><button
-									v-else
-									type="button"
-									class="watchlist-thank-link"
-									@click="onThankClick(change, $event)"
-								>
-									thank</button
-								>)
-							</span>
-						</div>
-						<div v-if="expandedDiffIds.has(change.id)" class="watchlist-inline-diff">
-							<div
-								v-if="loadingDiffIds.has(change.id)"
-								class="watchlist-diff-loading"
-							>
-								Loading diff…
-							</div>
-							<div
-								v-else-if="loadedDiffs.get(change.id)?.diff?.length"
-								class="change-diff"
-							>
-								<div
-									v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
-									:key="lineIdx"
-									:class="['diff-line', getDiffLineClass(line.type)]"
-								>
-									<span class="diff-line-text">
-										<template
-											v-if="
-												(line.type === 0 ||
-													line.type === 1 ||
-													line.type === 2 ||
-													line.type === 3 ||
-													line.type === 4 ||
-													line.type === 5) &&
-												line.highlightRanges?.length
-											"
-										>
-											<template
-												v-for="(seg, segIdx) in getDiffLineSegments(line)"
-												:key="segIdx"
-											>
-												<span
-													v-if="seg.type === 'add'"
-													class="diff-char-add"
-													>{{ seg.text }}</span
-												>
-												<span
-													v-else-if="seg.type === 'remove'"
-													class="diff-char-remove"
-													>{{ seg.text }}</span
-												>
-												<span
-													v-else-if="seg.type === 'change'"
-													class="diff-char-change"
-													>{{ seg.text }}</span
-												>
-												<template v-else>{{ seg.text }}</template>
-											</template>
-										</template>
-										<template v-else>{{ line.text || " " }}</template>
-									</span>
-								</div>
-							</div>
-							<div v-else class="watchlist-diff-loading">No diff available.</div>
-						</div>
-						<div
-							v-if="expandedHistoryIds.has(change.id)"
-							class="watchlist-inline-history"
-						>
-							<div
-								v-if="loadingHistoryPageNames.has(change.pageName!)"
-								class="watchlist-diff-loading"
-							>
-								Loading history…
-							</div>
-							<ul
-								v-else-if="loadedHistories.get(change.pageName!)?.revisions?.length"
-								class="change-history"
-							>
-								<li
-									v-for="rev in loadedHistories.get(change.pageName!)!.revisions"
-									:key="rev.id"
-									:class="[
-										'watchlist-item',
-										{ 'change-history-current': rev.id === change.id },
-									]"
-								>
-									<div class="watchlist-line1">
-										<!-- <span class="watchlist-time">
-											{{ formatTime(rev.timestamp) }}
-										</span> -->
-										<!-- <span class="watchlist-sep"> .. </span> -->
-										<span
-											:class="[
-												'watchlist-delta',
-												wiki.getDeltaClass(rev.delta ?? 0, false),
-											]"
-										>
-											{{ formatDelta(rev.delta) }}</span
-										><span class="watchlist-sep"> .. </span>
-										<a
-											target="_blank"
-											:href="wiki.getUserUrl(rev.user.name)"
-											class="watchlist-user"
-										>
-											{{ rev.user.name }}</a
-										>
-										<span class="watchlist-talk-contribs">
-											(<a
-												target="_blank"
-												:href="wiki.getUserTalkUrl(rev.user.name)"
-												>talk</a
-											>
-											|
-											<a
-												target="_blank"
-												:href="wiki.getUserContribsUrl(rev.user.name)"
-												>contribs</a
-											>)
-										</span>
-										<br />
-										<template v-if="rev.commentHtml ?? rev.comment">
-											<span
-												class="watchlist-comment"
-												v-html="rev.commentHtml ?? rev.comment ?? ''"
-											></span>
-										</template>
-										<span class="watchlist-diff-hist">
-											(<button
-												type="button"
-												class="watchlist-diff-link"
-												:class="{
-													'watchlist-diff-link-expanded':
-														expandedHistoryDiffIds
-															.get(change.id)
-															?.has(rev.id),
-												}"
-												@click="
-													toggleHistoryDiff(
-														change.id,
-														rev,
-														change.pageName!
-													)
-												"
-											>
-												diff
-											</button>
-											|
-											<span
-												v-if="thankedRevisionIds.has(rev.id)"
-												class="watchlist-thank-text"
-												>thanked</span
-											><button
-												v-else
-												type="button"
-												class="watchlist-thank-link"
-												@click="onThankClick(rev, $event)"
-											>
-												thank</button
-											>)
-										</span>
-									</div>
-									<div
-										v-if="expandedHistoryDiffIds.get(change.id)?.has(rev.id)"
-										class="watchlist-inline-diff change-history-inline-diff"
-									>
-										<div
-											v-if="loadingDiffIds.has(rev.id)"
-											class="watchlist-diff-loading"
-										>
-											Loading diff…
-										</div>
-										<div
-											v-else-if="loadedDiffs.get(rev.id)?.diff?.length"
-											class="change-diff"
-										>
-											<div
-												v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!
-													.diff"
-												:key="lineIdx"
-												:class="['diff-line', getDiffLineClass(line.type)]"
-											>
-												<span class="diff-line-text">
-													<template
-														v-if="
-															(line.type === 0 ||
-																line.type === 1 ||
-																line.type === 2 ||
-																line.type === 3 ||
-																line.type === 4 ||
-																line.type === 5) &&
-															line.highlightRanges?.length
-														"
-													>
-														<template
-															v-for="(
-																seg, segIdx
-															) in getDiffLineSegments(line)"
-															:key="segIdx"
-														>
-															<span
-																v-if="seg.type === 'add'"
-																class="diff-char-add"
-																>{{ seg.text }}</span
-															>
-															<span
-																v-else-if="seg.type === 'remove'"
-																class="diff-char-remove"
-																>{{ seg.text }}</span
-															>
-															<span
-																v-else-if="seg.type === 'change'"
-																class="diff-char-change"
-																>{{ seg.text }}</span
-															>
-															<template v-else>{{
-																seg.text
-															}}</template>
-														</template>
-													</template>
-													<template v-else>{{
-														line.text || " "
-													}}</template>
-												</span>
-											</div>
-										</div>
-										<div v-else class="watchlist-diff-loading">
-											No diff available.
-										</div>
-									</div>
-								</li>
-							</ul>
-							<div v-else class="watchlist-diff-loading">No history available.</div>
-						</div>
-					</li>
-				</ul>
-			</template>
-		</div>
-
-		<div class="thank-hearts-overlay" aria-hidden="true">
-			<div
-				v-for="heart in risingHearts"
-				:key="heart.id"
-				:class="['thank-heart', heart.type === 'unthank' ? 'thank-heart-broken' : '']"
-				:style="{ left: heart.x + 'px', top: heart.y + 'px' }"
-			>
-				{{ heart.type === "unthank" ? "\</3" : "\<3" }}
-			</div>
-		</div>
-	</main>
-</template>
 
 <style scoped>
 @import "./style.css";

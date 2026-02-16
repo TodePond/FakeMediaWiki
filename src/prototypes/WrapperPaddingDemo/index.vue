@@ -1,5 +1,3 @@
-<script setup lang="ts"></script>
-
 <template>
 	<div class="wrapper-padding-demo">
 		<div class="wrapper-demo">
@@ -113,6 +111,8 @@
 		</div>
 	</div>
 </template>
+
+<script setup lang="ts"></script>
 
 <style scoped>
 .wrapper-padding-demo {

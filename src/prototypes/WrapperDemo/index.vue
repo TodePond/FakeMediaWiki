@@ -1,5 +1,3 @@
-<script setup lang="ts"></script>
-
 <template>
 	<div class="wrapper-demo">
 		<p class="wrapper-demo-intro">
@@ -106,5 +104,7 @@
 		</div>
 	</div>
 </template>
+
+<script setup lang="ts"></script>
 
 <style scoped></style>

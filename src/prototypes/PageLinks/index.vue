@@ -1,3 +1,56 @@
+<template>
+	<section>
+		<form @submit.prevent="loadLinks">
+			<CdxLabel input-id="page-names">Page names (comma-separated)</CdxLabel>
+			<span>
+				<CdxTextInput
+					autocomplete="off"
+					v-model="pageNamesInput"
+					input-type="search"
+					id="page-names"
+				/>
+				<CdxButton>Load links</CdxButton>
+				<CdxProgressIndicator v-if="isLoading" aria-label="Loading links" />
+			</span>
+		</form>
+		<div v-if="error" class="error">{{ error }}</div>
+		<div v-if="sortedLinks.length > 0" class="links-list">
+			<hr />
+			<br />
+			<template v-for="(item, index) in sortedLinks" :key="item.link">
+				<template v-if="index > 0 && sortedLinks[index - 1].count !== item.count">
+					<br />
+					<hr />
+					<br />
+				</template>
+				<div>
+					<a :href="wiki.getPageUrl(item.link)" target="_blank" class="main-link">{{
+						item.link
+					}}</a>
+					<span class="link-count"> ({{ item.count }})</span>
+					<span class="link-pages">
+						—
+						<template v-for="(page, pageIndex) in item.pages" :key="page">
+							<a
+								v-if="pageIndex > 0"
+								:href="wiki.getPageUrl(page)"
+								target="_blank"
+								class="page-link"
+								>, </a
+							><a :href="wiki.getPageUrl(page)" target="_blank" class="page-link">{{
+								page
+							}}</a>
+						</template>
+					</span>
+				</div>
+			</template>
+		</div>
+		<div v-else-if="!isLoading && !error" class="no-results">
+			Enter page names separated by commas to see their links.
+		</div>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
@@ -74,59 +127,6 @@ const loadLinks = async (): Promise<void> => {
 
 onMounted(loadLinks)
 </script>
-
-<template>
-	<section>
-		<form @submit.prevent="loadLinks">
-			<CdxLabel input-id="page-names">Page names (comma-separated)</CdxLabel>
-			<span>
-				<CdxTextInput
-					autocomplete="off"
-					v-model="pageNamesInput"
-					input-type="search"
-					id="page-names"
-				/>
-				<CdxButton>Load links</CdxButton>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Loading links" />
-			</span>
-		</form>
-		<div v-if="error" class="error">{{ error }}</div>
-		<div v-if="sortedLinks.length > 0" class="links-list">
-			<hr />
-			<br />
-			<template v-for="(item, index) in sortedLinks" :key="item.link">
-				<template v-if="index > 0 && sortedLinks[index - 1].count !== item.count">
-					<br />
-					<hr />
-					<br />
-				</template>
-				<div>
-					<a :href="wiki.getPageUrl(item.link)" target="_blank" class="main-link">{{
-						item.link
-					}}</a>
-					<span class="link-count"> ({{ item.count }})</span>
-					<span class="link-pages">
-						—
-						<template v-for="(page, pageIndex) in item.pages" :key="page">
-							<a
-								v-if="pageIndex > 0"
-								:href="wiki.getPageUrl(page)"
-								target="_blank"
-								class="page-link"
-								>, </a
-							><a :href="wiki.getPageUrl(page)" target="_blank" class="page-link">{{
-								page
-							}}</a>
-						</template>
-					</span>
-				</div>
-			</template>
-		</div>
-		<div v-else-if="!isLoading && !error" class="no-results">
-			Enter page names separated by commas to see their links.
-		</div>
-	</section>
-</template>
 
 <style scoped>
 section {

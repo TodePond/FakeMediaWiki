@@ -1,31 +1,3 @@
-<script setup lang="ts">
-import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
-import { useActionWatchlist } from "./script"
-
-const {
-	wiki,
-	pageSearchQueries,
-	userSearchQueries,
-	search,
-	isAnyLoading,
-	errors,
-	revisionsByDate,
-	expandedHistoryIds,
-	expandedDiffIds,
-	toggleHistory,
-	toggleDiff,
-	formatTime,
-	formatDelta,
-	loadedDiffs,
-	loadingDiffIds,
-	getDiffLineClass,
-	getDiffLineSegments,
-	loadedHistories,
-	expandedHistoryDiffIds,
-	toggleHistoryDiff,
-} = useActionWatchlist()
-</script>
-
 <template>
 	<main>
 		<form @submit.prevent="search">
@@ -336,6 +308,34 @@ const {
 		</div>
 	</main>
 </template>
+
+<script setup lang="ts">
+import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
+import { useActionWatchlist } from "./script"
+
+const {
+	wiki,
+	pageSearchQueries,
+	userSearchQueries,
+	search,
+	isAnyLoading,
+	errors,
+	revisionsByDate,
+	expandedHistoryIds,
+	expandedDiffIds,
+	toggleHistory,
+	toggleDiff,
+	formatTime,
+	formatDelta,
+	loadedDiffs,
+	loadingDiffIds,
+	getDiffLineClass,
+	getDiffLineSegments,
+	loadedHistories,
+	expandedHistoryDiffIds,
+	toggleHistoryDiff,
+} = useActionWatchlist()
+</script>
 
 <style scoped>
 @import "./style.css";
