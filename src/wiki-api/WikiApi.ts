@@ -2018,7 +2018,7 @@ export class WikiApi {
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Map of revision ID to prediction score
 	 */
-	async getGoodfaithPredictions(
+	async getGoodFaithPredictions(
 		revisionIds: number[],
 		wiki?: string
 	): Promise<Map<number, LiftWingPrediction>> {
@@ -2055,7 +2055,7 @@ export class WikiApi {
 		// Fetch both predictions in parallel
 		const [damagingResults, goodfaithResults] = await Promise.all([
 			this.getDamagingPredictions(revisionIds, wiki),
-			this.getGoodfaithPredictions(revisionIds, wiki),
+			this.getGoodFaithPredictions(revisionIds, wiki),
 		])
 
 		// Combine results
