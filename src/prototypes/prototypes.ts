@@ -124,6 +124,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		wrapper: "Component",
 		title: "Page links",
 		status: "new",
+		featured: true,
 	},
 	// {
 	// 	type: "prototype",
@@ -158,6 +159,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Expanding watchlist",
 				description: "A feed with expandable items.",
 				wrapper: "Special",
+				featured: true,
 			},
 			{
 				type: "variant",
@@ -193,6 +195,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				description:
 					"A watchlist where you can view a diff inline by clicking the diff button.",
 				wrapper: "Special",
+				featured: true,
 			},
 			{
 				type: "variant",
@@ -219,6 +222,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Combined watchlist",
 				description: "Presents results exactly like the Watchlist.",
 				wrapper: "Special",
+				featured: true,
 			},
 		],
 	},
@@ -279,6 +283,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				description:
 					"A stripped-back combined feed with no avatar or thumbnail.<br />Updated to test out an improved combined feed endpoint.",
 				wrapper: "Special",
+				featured: true,
 			},
 			{
 				type: "variant",
@@ -466,6 +471,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		wrapper: "Fullscreen",
 		title: "History cache inspector",
 		status: "new",
+		featured: true,
 	},
 	{
 		type: "prototype",
@@ -485,6 +491,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		wrapper: "Mobile",
 		title: "Tabbed article",
 		status: "wip",
+		featured: true,
 	},
 	{
 		type: "prototype",
@@ -494,6 +501,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "components",
 		wrapper: "Component",
 		title: "Filter",
+		featured: true,
 	},
 	{
 		type: "prototype",
@@ -562,5 +570,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		description: "View this prototype in the Mobile layout (phone frame on large screens).",
 		wrapper: "Mobile",
 		category: "wrappers",
+		featured: true,
 	},
 ]

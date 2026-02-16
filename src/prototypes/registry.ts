@@ -37,6 +37,7 @@ for (const meta of prototypeMetadata) {
 				category: meta.category,
 				wrapper: meta.wrapper,
 				status: meta.status,
+				featured: meta.featured,
 				type: "prototype",
 				title: meta.title,
 			})
@@ -52,6 +53,7 @@ for (const meta of prototypeMetadata) {
 					description: variant.description,
 					wrapper: variant.wrapper,
 					status: variant.status ?? meta.status,
+					featured: variant.featured ?? meta.featured,
 					type: "variant",
 					title: variant.title,
 				})
@@ -86,6 +88,7 @@ for (const meta of prototypeMetadata) {
 				type: "prototype",
 				wrapper: meta.wrapper,
 				status: meta.status,
+				featured: meta.featured,
 				title: meta.title,
 			})
 		}
