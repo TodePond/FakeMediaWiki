@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main class="user-watchlist">
 		<form @submit.prevent="search">
 			<div class="inputs-group">
 				<div class="inputs">
@@ -342,20 +342,5 @@ const {
 </style>
 
 <style>
-.history-comment p {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.history-comment section {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.history-comment table {
-	display: inline-block;
-	background-color: var(--background-color-base);
-	border: 1px solid var(--border-color-base);
-	border-radius: 2px;
-}
+@import "./global.css";
 </style>

@@ -61,22 +61,5 @@ onMounted(search)
 </script>
 
 <style scoped>
-section {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.cdx-text-input {
-	max-width: 100%;
-	min-width: 0;
-	width: 256px;
-}
-
-form > span {
-	display: flex;
-	gap: 0.25rem;
-	width: 100%;
-	flex-wrap: wrap;
-}
+@import "./style.css";
 </style>

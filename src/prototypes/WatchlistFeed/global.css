@@ -1,0 +1,17 @@
+/* Unscoped: v-html comment content (manually scoped to .watchlist-feed) */
+.watchlist-feed .watchlist-comment p {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.watchlist-feed .watchlist-comment section {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.watchlist-feed .watchlist-comment table {
+	display: inline-block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
+}

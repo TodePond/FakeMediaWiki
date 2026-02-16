@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main class="custom-page-feed">
 		<form @submit.prevent="search">
 			<div class="inputs-group">
 				<div class="inputs">
@@ -404,18 +404,5 @@ function formatTimestamp(timestamp: string): string {
 </style>
 
 <style>
-.change p {
-	margin: 0;
-}
-
-.change .wikitable {
-	margin: 0.5rem 0;
-	font-size: 0.8rem;
-}
-
-.change img {
-	max-width: 100%;
-	height: auto;
-	object-fit: contain;
-}
+@import "./global.css";
 </style>

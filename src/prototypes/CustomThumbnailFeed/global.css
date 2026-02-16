@@ -1,0 +1,25 @@
+/* Unscoped: v-html content and child icon (manually scoped to .custom-thumbnail-feed) */
+.custom-thumbnail-feed .change p {
+	margin: 0;
+}
+.custom-thumbnail-feed .change .wikitable {
+	margin: 0.5rem 0;
+	font-size: 0.8rem;
+}
+
+.custom-thumbnail-feed .change img {
+	width: 100%;
+	height: auto;
+	object-fit: contain;
+}
+
+.custom-thumbnail-feed .change-thumbnail-placeholder .cdx-icon {
+	width: 1.5rem !important;
+	height: 1.5rem !important;
+	display: flex;
+	padding: 0rem !important;
+}
+
+.custom-thumbnail-feed .change-thumbnail-placeholder .cdx-icon svg {
+	color: var(--color-icon-notice);
+}

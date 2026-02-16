@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main class="smooth-watchlist">
 		<form @submit.prevent="search">
 			<div class="inputs-group">
 				<div class="inputs">
@@ -462,20 +462,5 @@ function formatDelta(delta: number | null): string {
 </style>
 
 <style>
-.watchlist-comment p {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.watchlist-comment section {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.watchlist-comment table {
-	display: inline-block;
-	background-color: var(--background-color-base);
-	border: 1px solid var(--border-color-base);
-	border-radius: 2px;
-}
+@import "./global.css";
 </style>

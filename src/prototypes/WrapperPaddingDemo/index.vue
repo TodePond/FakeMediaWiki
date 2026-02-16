@@ -115,7 +115,5 @@
 <script setup lang="ts"></script>
 
 <style scoped>
-.wrapper-padding-demo {
-	padding: 0.75rem;
-}
+@import "./style.css";
 </style>

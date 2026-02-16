@@ -1,0 +1,4 @@
+/* Unscoped: API highlights in excerpt (manually scoped to .search-pages) */
+.search-pages .searchmatch {
+	font-weight: bold;
+}

@@ -49,43 +49,5 @@ const transform = async (): Promise<void> => {
 </script>
 
 <style scoped>
-section {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.cdx-text-input,
-.cdx-text-area {
-	max-width: 100%;
-	min-width: 0;
-	width: 100%;
-}
-
-.html-result {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.html-result h3 {
-	margin: 0;
-}
-
-.html-content {
-	border: 1px solid var(--border-color-base);
-	padding: 1rem;
-}
-
-.html-content :deep(img) {
-	max-width: 100%;
-	height: auto;
-}
-
-.error {
-	color: var(--color-destructive);
-	padding: 0.5rem;
-	border: 1px solid var(--color-destructive);
-	background-color: var(--background-color-destructive-subtle);
-}
+@import "./style.css";
 </style>

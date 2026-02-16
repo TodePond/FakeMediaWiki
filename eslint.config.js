@@ -96,10 +96,7 @@ export default defineConfig([
 		files: ["**/*.vue"],
 		rules: {
 			"vue/multi-word-component-names": "off",
-			"vue/block-order": [
-				"error",
-				// { order: ['template', 'script', 'style'] },
-			],
+			"vue/block-order": ["error", { order: ["template", "script", "style"] }],
 		},
 	},
 ])

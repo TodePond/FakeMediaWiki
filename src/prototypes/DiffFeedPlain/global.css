@@ -1,0 +1,26 @@
+/* Unscoped: v-html content and child icon (manually scoped to .diff-feed-plain) */
+.diff-feed-plain .change p {
+	margin: 0;
+}
+
+.diff-feed-plain .change .wikitable {
+	margin: 0.5rem 0;
+	font-size: 0.8rem;
+}
+
+.diff-feed-plain .change img {
+	max-width: 100%;
+	height: auto;
+	object-fit: contain;
+}
+
+.diff-feed-plain .change-thumbnail-placeholder .cdx-icon {
+	width: 1.5rem !important;
+	height: 1.5rem !important;
+	display: flex;
+	padding: 0rem !important;
+}
+
+.diff-feed-plain .change-thumbnail-placeholder .cdx-icon svg {
+	color: var(--color-icon-notice);
+}

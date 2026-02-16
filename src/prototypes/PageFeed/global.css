@@ -1,0 +1,8 @@
+/* Unscoped: v-html content (manually scoped to .page-feed) */
+.page-feed .change p {
+	margin: 0;
+}
+.page-feed .change .wikitable {
+	margin: 0.5rem 0;
+	font-size: 0.8rem;
+}

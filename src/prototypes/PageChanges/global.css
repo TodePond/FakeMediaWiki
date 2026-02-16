@@ -1,0 +1,4 @@
+/* Unscoped: v-html content (manually scoped to .page-changes) */
+.page-changes .change p {
+	margin: 0 !important;
+}

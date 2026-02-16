@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main class="smooth-watchlist-inline-diff">
 		<form @submit.prevent="search">
 			<div class="inputs-group">
 				<div class="inputs">
@@ -593,7 +593,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 	resultRef.value.error = null
 
 	try {
-		const _history = (await wiki.getPageHistory(pageName, { limit: 10 })) as {
+		const _history = (await wiki.getPageHistory(pageName)) as {
 			revisions?: Array<{
 				comment: string
 				user: { name: string }
@@ -724,7 +724,7 @@ function toggleHistory(change: Revision): void {
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
-	wiki.getPageHistory(pageName, { limit: 20 })
+	wiki.getPageHistory(pageName)
 		.then(async response => {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => ({
@@ -952,23 +952,5 @@ function onThankClick(change: Revision, e: MouseEvent): void {
 </style>
 
 <style>
-.watchlist-comment p,
-.history-comment p {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.watchlist-comment section,
-.history-comment section {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.watchlist-comment table,
-.history-comment table {
-	display: inline-block;
-	background-color: var(--background-color-base);
-	border: 1px solid var(--border-color-base);
-	border-radius: 2px;
-}
+@import "./global.css";
 </style>

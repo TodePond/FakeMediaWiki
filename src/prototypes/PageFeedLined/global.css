@@ -1,0 +1,14 @@
+/* Unscoped: v-html content (manually scoped to .page-feed-lined) */
+.page-feed-lined .change p {
+	margin: 0;
+}
+.page-feed-lined .change .wikitable {
+	margin: 0.5rem 0;
+	font-size: 0.8rem;
+}
+
+.page-feed-lined .change img {
+	width: 100%;
+	height: auto;
+	object-fit: contain;
+}

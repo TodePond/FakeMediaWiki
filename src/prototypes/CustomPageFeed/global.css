@@ -1,0 +1,15 @@
+/* Unscoped: v-html content (manually scoped to .custom-page-feed) */
+.custom-page-feed .change p {
+	margin: 0;
+}
+
+.custom-page-feed .change .wikitable {
+	margin: 0.5rem 0;
+	font-size: 0.8rem;
+}
+
+.custom-page-feed .change img {
+	max-width: 100%;
+	height: auto;
+	object-fit: contain;
+}

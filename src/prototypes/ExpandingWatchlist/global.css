@@ -1,0 +1,36 @@
+/* Unscoped: v-html comment content (manually scoped to .expanding-watchlist) */
+.expanding-watchlist .history-comment p {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.expanding-watchlist .history-comment section {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.expanding-watchlist .history-comment table {
+	display: inline-block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
+}
+
+.expanding-watchlist .history-comment-expanded p {
+	display: block;
+	line-height: var(--line-height-content);
+	margin: 0;
+}
+
+.expanding-watchlist .history-comment-expanded section {
+	display: block;
+	line-height: var(--line-height-content);
+}
+
+.expanding-watchlist .history-comment-expanded table {
+	display: block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
+	margin-top: 0.5rem;
+}

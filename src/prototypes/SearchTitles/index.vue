@@ -80,52 +80,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-section {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.cdx-text-input {
-	max-width: 100%;
-	min-width: 0;
-	width: 256px;
-}
-
-form > span {
-	display: flex;
-	gap: 0.25rem;
-	width: 100%;
-	flex-wrap: wrap;
-}
-
-.results {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.results-count {
-	margin: 0;
-	font-weight: bold;
-}
-
-.results-list {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.error {
-	color: var(--color-destructive);
-	padding: 0.5rem;
-	border: 1px solid var(--color-destructive);
-	background-color: var(--background-color-destructive-subtle);
-}
-
-.no-results {
-	padding: 1rem;
-	text-align: center;
-	color: var(--color-base--subtle);
-}
+@import "./style.css";
 </style>

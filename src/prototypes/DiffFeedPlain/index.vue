@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main class="diff-feed-plain">
 		<form @submit.prevent="search">
 			<div class="inputs-group">
 				<div class="inputs">
@@ -531,29 +531,5 @@ function formatTimestamp(timestamp: string): string {
 </style>
 
 <style>
-.change p {
-	margin: 0;
-}
-
-.change .wikitable {
-	margin: 0.5rem 0;
-	font-size: 0.8rem;
-}
-
-.change img {
-	max-width: 100%;
-	height: auto;
-	object-fit: contain;
-}
-
-.change-thumbnail-placeholder .cdx-icon {
-	width: 1.5rem !important;
-	height: 1.5rem !important;
-	display: flex;
-	padding: 0rem !important;
-}
-
-.change-thumbnail-placeholder .cdx-icon svg {
-	color: var(--color-icon-notice);
-}
+@import "./global.css";
 </style>

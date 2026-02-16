@@ -1,0 +1,5 @@
+/* Unscoped: link color in v-html content (manually scoped to .wiki-article) */
+.wiki-article .wiki-article__summary a,
+.wiki-article .wiki-article__tab-body a {
+	color: var(--color-progressive) !important;
+}

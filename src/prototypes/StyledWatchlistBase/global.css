@@ -1,0 +1,17 @@
+/* Unscoped: v-html comment content (manually scoped to .styled-watchlist-base) */
+.styled-watchlist-base .history-comment p {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.styled-watchlist-base .history-comment section {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.styled-watchlist-base .history-comment table {
+	display: inline-block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
+}

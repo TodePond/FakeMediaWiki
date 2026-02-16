@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main class="page-feed">
 		<form @submit.prevent="search">
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
 			<span>
@@ -181,107 +181,9 @@ function getBotUrl(useThisBot: string | null | undefined): string {
 </script>
 
 <style scoped>
-.changes {
-	margin: 0.5rem 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.changes p {
-	margin: 0;
-}
-
-.change {
-	border: 1px solid var(--border-color-base);
-	padding: 0.25rem 0.6rem;
-	display: flex;
-}
-
-.change-body {
-	flex: 1;
-}
-
-.cdx-text-input {
-	max-width: 100%;
-	min-width: 0;
-	width: 256px;
-}
-
-form > span {
-	display: flex;
-	gap: 0.25rem;
-	width: 100%;
-	flex-wrap: wrap;
-}
-
-.change-header {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-}
-
-.change-suggested-by {
-	color: var(--color-subtle);
-	font-size: 0.8rem;
-	display: block;
-}
-
-.change-timestamp {
-	color: var(--color-subtle);
-}
-
-.change-avatar {
-	width: 3rem;
-	height: 3rem;
-	border-radius: 50%;
-	object-fit: cover;
-	margin-right: 0.5rem;
-}
-
-.change-avatar-placeholder {
-	width: 3rem;
-	height: 3rem;
-	border-radius: 50%;
-	background-color: var(--background-color-interactive-subtle);
-	margin-right: 0.5rem;
-}
-
-.change footer {
-	display: flex;
-	flex-wrap: wrap;
-	row-gap: 0px;
-	margin-right: -0.25rem;
-}
-
-.change footer a {
-	flex-shrink: 0;
-}
-
-.change footer .cdx-icon {
-	width: 2rem;
-	height: 2rem;
-	padding: 0.5rem;
-	color: var(--color-progressive);
-}
-
-.change footer .cdx-icon:hover {
-	color: var(--color-progressive--hover);
-}
-
-.error {
-	color: var(--color-destructive);
-	padding: 0.5rem;
-	border: 1px solid var(--color-destructive);
-	background-color: var(--background-color-destructive-subtle);
-}
+@import "./style.css";
 </style>
+
 <style>
-.change p {
-	margin: 0;
-}
-.change .wikitable {
-	margin: 0.5rem 0;
-	font-size: 0.8rem;
-}
+@import "./global.css";
 </style>

@@ -1,67 +1,5 @@
 <template>
-	<main>
-		<!-- <form @submit.prevent="search">
-			<div class="inputs-group">
-				<div class="inputs">
-					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[0]"
-							input-type="search"
-							id="page-name-1"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[1]"
-							input-type="search"
-							id="page-name-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[2]"
-							input-type="search"
-							id="page-name-3"
-						/>
-					</div>
-				</div>
-				<div class="inputs">
-					<CdxLabel input-id="user-1">Followed users</CdxLabel>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[0]"
-							input-type="search"
-							id="user-1"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[1]"
-							input-type="search"
-							id="user-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[2]"
-							input-type="search"
-							id="user-3"
-						/>
-					</div>
-				</div>
-			</div>
-			<footer>
-				<CdxButton :disabled="isAnyLoading">Refresh feed</CdxButton>
-			</footer>
-		</form> -->
-
+	<main class="expanding-watchlist">
 		<div class="watchlist-container">
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
@@ -1145,39 +1083,5 @@ function handleAddTopic(change: Revision): void {
 </style>
 
 <style>
-.history-comment p {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.history-comment section {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.history-comment table {
-	display: inline-block;
-	background-color: var(--background-color-base);
-	border: 1px solid var(--border-color-base);
-	border-radius: 2px;
-}
-
-.history-comment-expanded p {
-	display: block;
-	line-height: var(--line-height-content);
-	margin: 0;
-}
-
-.history-comment-expanded section {
-	display: block;
-	line-height: var(--line-height-content);
-}
-
-.history-comment-expanded table {
-	display: block;
-	background-color: var(--background-color-base);
-	border: 1px solid var(--border-color-base);
-	border-radius: 2px;
-	margin-top: 0.5rem;
-}
+@import "./global.css";
 </style>

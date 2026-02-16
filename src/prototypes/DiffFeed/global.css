@@ -1,0 +1,15 @@
+/* Unscoped: v-html content (manually scoped to .diff-feed) */
+.diff-feed .change p {
+	margin: 0;
+}
+
+.diff-feed .change .wikitable {
+	margin: 0.5rem 0;
+	font-size: 0.8rem;
+}
+
+.diff-feed .change img {
+	max-width: 100%;
+	height: auto;
+	object-fit: contain;
+}

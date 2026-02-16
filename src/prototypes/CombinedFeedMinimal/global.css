@@ -1,0 +1,8 @@
+/* Unscoped: v-html content (manually scoped to .combined-feed-minimal) */
+.combined-feed-minimal .change p {
+	margin: 0;
+}
+.combined-feed-minimal .change .wikitable {
+	margin: 0.5rem 0;
+	font-size: 0.8rem;
+}

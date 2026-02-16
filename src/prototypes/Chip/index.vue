@@ -130,29 +130,5 @@ watch(selectedWrapper, val => {
 </script>
 
 <style scoped>
-/* Color-coded filter chips: WIP = red, New = green, Updated = blue */
-.chip-demo :deep(.chip-filter-wip) {
-	background-color: var(--background-color-destructive-subtle);
-	color: var(--color-destructive);
-	border-color: var(--border-color-destructive);
-}
-
-.chip-demo :deep(.chip-filter-new) {
-	background-color: var(--background-color-success-subtle, #d5fdf4);
-	color: var(--color-success, #00af89);
-	border-color: var(--color-success, #00af89);
-}
-
-.chip-demo :deep(.chip-filter-updated) {
-	background-color: var(--background-color-progressive-subtle);
-	color: var(--color-progressive);
-	border-color: var(--border-color-progressive);
-}
-
-/* Wrapper chips: neutral/muted */
-.chip-demo :deep(.chip-filter-wrapper) {
-	background-color: var(--background-color-neutral-subtle);
-	color: var(--color-base--subtle, #54595d);
-	border-color: var(--border-color-subtle);
-}
+@import "./style.css";
 </style>

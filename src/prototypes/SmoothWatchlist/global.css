@@ -1,0 +1,17 @@
+/* Unscoped: v-html comment content (manually scoped to .smooth-watchlist) */
+.smooth-watchlist .watchlist-comment p {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.smooth-watchlist .watchlist-comment section {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.smooth-watchlist .watchlist-comment table {
+	display: inline-block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
+}

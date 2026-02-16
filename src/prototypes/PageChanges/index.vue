@@ -1,5 +1,5 @@
 <template>
-	<main>
+	<main class="page-changes">
 		<form @submit.prevent="search">
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
 
@@ -127,52 +127,9 @@ function formatTimestamp(timestamp: string): string {
 </script>
 
 <style scoped>
-.changes {
-	margin: 0.5rem 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.changes p {
-	margin: 0;
-}
-
-.change {
-	border: 1px solid var(--border-color-base);
-	padding: 0.25rem 0.6rem;
-}
-
-.cdx-text-input {
-	max-width: 100%;
-	min-width: 0;
-	width: 256px;
-}
-
-form > span {
-	display: flex;
-	gap: 0.25rem;
-	width: 100%;
-	flex-wrap: wrap;
-}
-
-.change footer {
-	display: flex;
-	gap: 0.5rem;
-	justify-content: flex-end;
-	flex-wrap: wrap;
-	row-gap: 0px;
-}
-
-.error {
-	color: var(--color-destructive);
-	padding: 0.5rem;
-	border: 1px solid var(--color-destructive);
-	background-color: var(--background-color-destructive-subtle);
-}
+@import "./style.css";
 </style>
+
 <style>
-.change p {
-	margin: 0 !important;
-}
+@import "./global.css";
 </style>

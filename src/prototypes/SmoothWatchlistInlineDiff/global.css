@@ -1,0 +1,20 @@
+/* Unscoped: v-html comment content (manually scoped to .smooth-watchlist-inline-diff) */
+.smooth-watchlist-inline-diff .watchlist-comment p,
+.smooth-watchlist-inline-diff .history-comment p {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.smooth-watchlist-inline-diff .watchlist-comment section,
+.smooth-watchlist-inline-diff .history-comment section {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.smooth-watchlist-inline-diff .watchlist-comment table,
+.smooth-watchlist-inline-diff .history-comment table {
+	display: inline-block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
+}
