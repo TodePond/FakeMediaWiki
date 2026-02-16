@@ -69,8 +69,8 @@ import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from
 import { cdxIconHeart, cdxIconLinkExternal, cdxIconRobot } from "@wikimedia/codex-icons"
 import { onMounted, ref } from "vue"
 import { WikiApi } from "../../wiki-api/WikiApi"
-import type { PageHistoryResponse, Revision } from "../../wiki-api/types"
 import "../../wiki-api/style/delta.css"
+import type { PageHistoryResponse, Revision } from "../../wiki-api/types"
 
 const wiki = new WikiApi()
 const PROTOTYPE_NAME = "PageFeed"
@@ -109,7 +109,7 @@ async function search(): Promise<void> {
 		const processedRevisions: Revision[] = await Promise.all(
 			_history.revisions.map(async revision => {
 				const _summary = wiki.preprocessEditSummary(revision.comment, searchQuery.value)
-				const toolbar = wiki.parseToolbarComment(_summary)
+				const toolbar = wiki.parseToolbarEditSummary(_summary)
 				const summary = toolbar
 					? toolbar
 					: {

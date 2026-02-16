@@ -73,7 +73,7 @@ export const wrappers: WrapperDefinition[] = [
 export const categories: CategoryDefinition[] = [
 	{
 		id: "feed",
-		name: "",
+		name: "Feeds",
 		description: "Early experiments for feeds of information.",
 	},
 	{
@@ -453,6 +453,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "api",
 		wrapper: "Component",
 		title: "Random page",
+	},
+	{
+		type: "prototype",
+		id: "HistoryCacheInspector",
+		name: "History cache inspector",
+		description: "Inspect page/user history caches and coverage metadata.",
+		category: "api",
+		wrapper: "Fullscreen",
+		title: "History cache inspector",
+		status: "new",
 	},
 	{
 		type: "prototype",

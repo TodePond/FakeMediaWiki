@@ -100,7 +100,7 @@ export function useActionWatchlist() {
 				_history.revisions.map(async revision => {
 					const pageName = revision.pageName || revision.title || ""
 					const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-					const toolbar = wiki.parseToolbarComment(_summary)
+					const toolbar = wiki.parseToolbarEditSummary(_summary)
 					const summary = toolbar
 						? toolbar
 						: {
@@ -171,7 +171,7 @@ export function useActionWatchlist() {
 			const processedRevisions = await Promise.all(
 				_history.revisions.map(async revision => {
 					const _summary = wiki.preprocessEditSummary(revision.comment, pageName)
-					const toolbar = wiki.parseToolbarComment(_summary)
+					const toolbar = wiki.parseToolbarEditSummary(_summary)
 					const summary = toolbar
 						? toolbar
 						: {

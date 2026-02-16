@@ -857,7 +857,7 @@ async function loadFeed(after?: string, append = false): Promise<void> {
 				const pageName =
 					(revision as PageHistoryRevision & { pageName?: string }).pageName || ""
 				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-				const toolbar = wiki.parseToolbarComment(_summary)
+				const toolbar = wiki.parseToolbarEditSummary(_summary)
 				const summary = toolbar
 					? toolbar
 					: {

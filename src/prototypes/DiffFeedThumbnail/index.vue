@@ -267,7 +267,7 @@ async function loadUser(userName: string, resultRef: Ref<Result<Revision>>): Pro
 			limitedRevisions.map(async revision => {
 				const pageName = revision.pageName || revision.title || ""
 				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-				const toolbar = wiki.parseToolbarComment(_summary)
+				const toolbar = wiki.parseToolbarEditSummary(_summary)
 				const summary = toolbar
 					? toolbar
 					: {
@@ -340,7 +340,7 @@ async function loadPage(pageName: string, resultRef: Ref<Result<Revision>>): Pro
 		const processedRevisions = await Promise.all(
 			limitedRevisions.map(async revision => {
 				const _summary = wiki.preprocessEditSummary(revision.comment, pageName)
-				const toolbar = wiki.parseToolbarComment(_summary)
+				const toolbar = wiki.parseToolbarEditSummary(_summary)
 				const summary = toolbar
 					? toolbar
 					: {

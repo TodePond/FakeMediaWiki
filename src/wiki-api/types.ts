@@ -111,6 +111,20 @@ export interface UserInfo {
 	missing?: boolean
 }
 
+/** User contribution entry from Action API list=usercontribs */
+export interface UserContrib {
+	revid: number
+	timestamp: string
+	minor?: boolean
+	size?: number
+	comment?: string
+	userid?: number
+	user?: string
+	sizediff?: number
+	title: string
+	pageid: number
+}
+
 export interface PageSearchResult {
 	key?: string
 	title: string
@@ -188,6 +202,28 @@ export interface PageHistoryResponse {
 	latest?: string
 	older?: string
 	newer?: string
+}
+
+export interface HistoryCoverageEntry {
+	older_than?: string
+	newer_than?: string
+	limit: number
+	resultCount: number
+	earliestTimestamp?: string
+	latestTimestamp?: string
+	complete: boolean
+}
+
+export interface HistoryCacheEntitySnapshot {
+	cachedCount: number
+	newestTimestamp?: string
+	oldestTimestamp?: string
+	coverage: HistoryCoverageEntry[]
+}
+
+export interface HistoryCacheSnapshot {
+	pages: Record<string, HistoryCacheEntitySnapshot>
+	users: Record<string, HistoryCacheEntitySnapshot>
 }
 
 export interface OnThisDayEvent {
