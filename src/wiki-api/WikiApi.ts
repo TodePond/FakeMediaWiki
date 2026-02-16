@@ -270,11 +270,26 @@ export interface FeaturedPage {
  * Helper for interacting with Wikimedia and MediaWiki REST APIs.
  */
 export class WikiApi {
+	/**
+	 * Base URL for the API
+	 */
 	base: string
+
+	/**
+	 * Cache for user information
+	 */
 	private userInfoCache: Map<string, UserInfo | null>
-	// Cache for page histories: key = pageName, value = sorted array of revisions (newest first)
+
+	/**
+	 * Cache for page histories
+	 * key = pageName, value = sorted array of revisions (newest first)
+	 */
 	private pageHistoryCache = new Map<string, PageHistoryRevision[]>()
-	// Cache for user histories: key = userName, value = sorted array of revisions (newest first)
+
+	/**
+	 * Cache for user histories
+	 * key = userName, value = sorted array of revisions (newest first)
+	 */
 	private userHistoryCache = new Map<string, (PageHistoryRevision & { pageName: string })[]>()
 
 	/**
@@ -290,7 +305,7 @@ export class WikiApi {
 	 * Get the base URL for the Wikimedia REST API
 	 * @returns Wikimedia base URL
 	 */
-	get wikimediaBase(): string {
+	getWikimediaBase(): string {
 		return `${this.base}api/rest_v1/`
 	}
 
@@ -298,7 +313,7 @@ export class WikiApi {
 	 * Get the base URL for the MediaWiki REST API
 	 * @returns MediaWiki base URL
 	 */
-	get mediawikiBase(): string {
+	getMediawikiBase(): string {
 		return `${this.base}w/rest.php/v1/`
 	}
 
@@ -331,7 +346,7 @@ export class WikiApi {
 		body = null,
 		type = "json",
 	}: RestApiOptions): Promise<unknown> {
-		const base = api === "wikimedia" ? this.wikimediaBase : this.mediawikiBase
+		const base = api === "wikimedia" ? this.getWikimediaBase() : this.getMediawikiBase()
 		const containsQuery = path.includes("?")
 		const separator = containsQuery ? "&" : "?"
 
