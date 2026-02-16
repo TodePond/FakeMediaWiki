@@ -421,14 +421,14 @@
 <script setup lang="ts">
 import { CdxButton, CdxProgressBar } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
 	FWRevision,
-} from "../../fake-wiki/types"
+} from "../../fakewiki/types"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends FWPageHistoryRevision {

@@ -58,7 +58,7 @@ The traditional MediaWiki API using query parameters.
 ### Basic API usage
 
 ```typescript
-import { FakeWiki } from "./fake-wiki/FakeWiki"
+import { FakeWiki } from "./fakewiki/FakeWiki"
 
 const wiki = new FakeWiki()
 
@@ -75,7 +75,7 @@ const results = await wiki.searchPages("query", 20)
 ### Using storage keys
 
 ```typescript
-import { FakeWiki } from "./fake-wiki/FakeWiki"
+import { FakeWiki } from "./fakewiki/FakeWiki"
 
 const wiki = new FakeWiki()
 
@@ -91,8 +91,8 @@ const keys = wiki.getStorageKeys("CustomPageFeed", "pageQuery", 3)
 ### Using result types
 
 ```typescript
-import { FakeWiki } from "./fake-wiki/FakeWiki"
-import type { Result, Revision } from "./fake-wiki/types"
+import { FakeWiki } from "./fakewiki/FakeWiki"
+import type { Result, Revision } from "./fakewiki/types"
 
 const wiki = new FakeWiki()
 
@@ -106,8 +106,8 @@ const results = wiki.createResults<Revision>(3)
 ### Using delta utilities
 
 ```typescript
-import { FakeWiki } from "./fake-wiki/FakeWiki"
-import "./fake-wiki/style/delta.css"
+import { FakeWiki } from "./fakewiki/FakeWiki"
+import "./fakewiki/style/delta.css"
 
 const wiki = new FakeWiki()
 

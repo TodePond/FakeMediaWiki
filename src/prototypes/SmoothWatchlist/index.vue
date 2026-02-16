@@ -152,8 +152,8 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref, type Ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
-import type { FWResult, FWRevision } from "../../fake-wiki/types"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
+import type { FWResult, FWRevision } from "../../fakewiki/types"
 
 defineProps<{
 	indentCommentAndLinks?: boolean

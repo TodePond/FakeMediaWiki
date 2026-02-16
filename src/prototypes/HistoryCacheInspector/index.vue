@@ -97,12 +97,12 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { computed, onMounted, ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
 import type {
 	FWHistoryCacheSnapshot,
 	FWPageHistoryRevision,
 	PWHistoryOptions,
-} from "../../fake-wiki/types"
+} from "../../fakewiki/types"
 
 const wiki = new FakeWiki()
 

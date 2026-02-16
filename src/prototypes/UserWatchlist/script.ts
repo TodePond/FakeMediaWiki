@@ -1,5 +1,5 @@
 import { computed, onMounted, ref, type Ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
 import type {
 	FWCompareResponse,
 	FWDiffLine,
@@ -7,7 +7,7 @@ import type {
 	FWPageHistoryRevision,
 	FWResult,
 	FWRevision,
-} from "../../fake-wiki/types"
+} from "../../fakewiki/types"
 
 /** History revision with edit summary rendered as HTML */
 export interface HistoryRevisionWithHtml extends FWPageHistoryRevision {

@@ -132,8 +132,8 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 import { onMounted, ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
-import type { FWPageHistoryRevision, FWRevision } from "../../fake-wiki/types"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
+import type { FWPageHistoryRevision, FWRevision } from "../../fakewiki/types"
 
 const wiki = new FakeWiki()
 

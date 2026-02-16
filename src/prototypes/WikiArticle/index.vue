@@ -67,8 +67,8 @@
 <script setup lang="ts">
 import { CdxTab, CdxTabs } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
-import type { FWMediaItem, FWPageSummary } from "../../fake-wiki/types"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
+import type { FWMediaItem, FWPageSummary } from "../../fakewiki/types"
 
 const wiki = new FakeWiki()
 

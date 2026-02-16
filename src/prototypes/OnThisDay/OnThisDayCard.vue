@@ -8,8 +8,8 @@
 <script setup lang="ts">
 import { CdxCard } from "@wikimedia/codex"
 import { computed } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
-import type { FWOnThisDayItem } from "../../fake-wiki/types"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
+import type { FWOnThisDayItem } from "../../fakewiki/types"
 
 const wiki = new FakeWiki()
 

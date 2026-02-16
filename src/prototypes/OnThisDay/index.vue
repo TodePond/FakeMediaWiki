@@ -32,8 +32,8 @@ import {
 	CdxTextInput,
 } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
-import type { FWOnThisDayItem } from "../../fake-wiki/types"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
+import type { FWOnThisDayItem } from "../../fakewiki/types"
 import OnThisDayCard from "./OnThisDayCard.vue"
 
 const wiki = new FakeWiki()

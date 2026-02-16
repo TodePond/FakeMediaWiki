@@ -43,9 +43,9 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { onMounted, ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
-import "../../fake-wiki/style/delta.css"
-import type { FWPageHistoryResponse, FWPageHistoryRevision } from "../../fake-wiki/types"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
+import "../../fakewiki/style/delta.css"
+import type { FWPageHistoryResponse, FWPageHistoryRevision } from "../../fakewiki/types"
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "PageChanges"

@@ -22,8 +22,8 @@
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxProgressIndicator } from "@wikimedia/codex"
 import { ref } from "vue"
-import { FakeWiki } from "../../fake-wiki/FakeWiki"
-import type { FWRandomPageResult } from "../../fake-wiki/types"
+import { FakeWiki } from "../../fakewiki/FakeWiki"
+import type { FWRandomPageResult } from "../../fakewiki/types"
 
 const wiki = new FakeWiki()
 

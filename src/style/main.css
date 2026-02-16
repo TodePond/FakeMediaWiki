@@ -2,7 +2,7 @@
 @import "@wikimedia/codex-design-tokens/theme-wikimedia-ui.css";
 @import "./tokens.css";
 @import "./colors.css";
-@import "../fake-wiki/style/delta.css";
+@import "../fakewiki/style/delta.css";
 
 * {
 	box-sizing: border-box;
