@@ -67,10 +67,10 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
-import { onMounted, ref } from "vue"
 import { FakeWiki } from "fakewiki"
 import "fakewiki/style/delta.css"
 import type { FWPageHistoryResponse, FWRevision } from "fakewiki/types"
+import { onMounted, ref } from "vue"
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "PageFeedLined"
@@ -153,7 +153,7 @@ async function search(): Promise<void> {
 function formatTimestamp(timestamp: string): string {
 	return (
 		"• " +
-		wiki.getRelativeTimestamp(timestamp, {
+		wiki.formatRelativeTimestamp(timestamp, {
 			seconds: "words",
 			minutes: "minutes",
 			hours: "hours",

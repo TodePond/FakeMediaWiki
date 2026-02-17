@@ -95,7 +95,7 @@ wiki.getUserUrl("Example")
 **Timestamps:**
 
 ```typescript
-wiki.getRelativeTimestamp("2024-01-15T12:00:00Z", {
+wiki.formatRelativeTime("2024-01-15T12:00:00Z", {
 	seconds: "words",
 	minutes: "minutes",
 	hours: "hours",

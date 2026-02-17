@@ -1689,24 +1689,89 @@ export class FakeWiki {
 		return await this.transformWikitextToHtml(wrapped)
 	}
 
-	/**
-	 * Get a relative timestamp string (e.g., "2 minutes ago", "3 days ago")
-	 * @param timestamp - ISO timestamp string or Date object
-	 * @param options - Formatting options for different time periods
-	 * @returns Relative time string
-	 */
-	getRelativeTimestamp(timestamp: string | Date, options: FWRelativeTimestampOptions): string {
-		const now = new Date()
-		const past = timestamp instanceof Date ? timestamp : new Date(timestamp)
+	private toValidDate(input: string | number | Date): Date | null {
+		const date = input instanceof Date ? input : new Date(input)
+		return Number.isNaN(date.getTime()) ? null : date
+	}
 
-		// Handle invalid dates
-		if (isNaN(past.getTime())) {
+	/** Format date as "DD Month YYYY" or "DD.MM.YY". */
+	formatDate(timestamp: string | number | Date, style: "long" | "short" = "long"): string {
+		const d = this.toValidDate(timestamp)
+		if (!d) return "Invalid date"
+		if (style === "short") {
+			const day = d.getDate().toString().padStart(2, "0")
+			const month = (d.getMonth() + 1).toString().padStart(2, "0")
+			const year = d.getFullYear().toString().slice(-2)
+			return `${day}.${month}.${year}`
+		}
+		const day = d.getDate()
+		const monthNames = [
+			"January",
+			"February",
+			"March",
+			"April",
+			"May",
+			"June",
+			"July",
+			"August",
+			"September",
+			"October",
+			"November",
+			"December",
+		]
+		const month = monthNames[d.getMonth()]
+		const year = d.getFullYear()
+		return `${day} ${month} ${year}`
+	}
+
+	/** Convert timestamp to YYYY-MM-DD key for grouping. */
+	toDateKey(timestamp: string | number | Date): string {
+		const d = this.toValidDate(timestamp)
+		if (!d) return "Invalid date"
+		const year = d.getFullYear()
+		const month = (d.getMonth() + 1).toString().padStart(2, "0")
+		const day = d.getDate().toString().padStart(2, "0")
+		return `${year}-${month}-${day}`
+	}
+
+	/** Format time as HH:MM. */
+	formatTime(timestamp: string | number | Date): string {
+		const d = this.toValidDate(timestamp)
+		if (!d) return "Invalid date"
+		const hours = d.getHours()
+		const minutes = d.getMinutes()
+		return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
+	}
+
+	/** Check whether a timestamp falls on today in local time. */
+	isToday(timestamp: string | number | Date): boolean {
+		const d = this.toValidDate(timestamp)
+		if (!d) return false
+		const today = new Date()
+		return (
+			d.getDate() === today.getDate() &&
+			d.getMonth() === today.getMonth() &&
+			d.getFullYear() === today.getFullYear()
+		)
+	}
+
+	/**
+	 * Format relative time (e.g. "2 minutes ago", "3 days ago").
+	 * @param timestamp - ISO timestamp string, Date, or epoch
+	 * @param options - Formatting options for different time periods
+	 */
+	formatRelativeTimestamp(
+		timestamp: string | number | Date,
+		options: FWRelativeTimestampOptions
+	): string {
+		const now = new Date()
+		const past = this.toValidDate(timestamp)
+
+		if (!past) {
 			return "Invalid date"
 		}
 
 		const diffMs = now.getTime() - past.getTime()
-
-		// Handle future dates
 		if (diffMs < 0) {
 			return "Just now"
 		}
@@ -1715,8 +1780,6 @@ export class FakeWiki {
 		const diffMinutes = Math.floor(diffMs / (1000 * 60))
 		const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
 
-		// Calculate calendar days (timezone-aware)
-		// Create dates at midnight in local timezone to compare calendar days
 		const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 		const pastDate = new Date(past.getFullYear(), past.getMonth(), past.getDate())
 		const diffDays = Math.floor(
@@ -1727,12 +1790,10 @@ export class FakeWiki {
 		const diffMonths = Math.floor(diffDays / 30)
 		const diffYears = Math.floor(diffDays / 365)
 
-		// Helper function to format date as "DD Month YYYY" (or "DD Month" if same year)
-		const formatDate = (date: Date): string => {
+		const formatDateWithoutCurrentYear = (date: Date): string => {
 			const currentYear = now.getFullYear()
 			const dateYear = date.getFullYear()
 			const includeYear = dateYear !== currentYear
-
 			return date.toLocaleDateString("en-GB", {
 				year: includeYear ? "numeric" : undefined,
 				month: "long",
@@ -1740,7 +1801,6 @@ export class FakeWiki {
 			})
 		}
 
-		// Helper function to format a specific unit
 		const formatUnit = (value: number, unit: string): string => {
 			const unitNames: Record<string, { singular: string; plural: string }> = {
 				seconds: { singular: "second", plural: "seconds" },
@@ -1752,21 +1812,16 @@ export class FakeWiki {
 				years: { singular: "year", plural: "years" },
 			}
 			const names = unitNames[unit]
-			if (!names) {
-				return `${value} ${unit} ago`
-			}
+			if (!names) return `${value} ${unit} ago`
 			return `${value} ${value === 1 ? names.singular : names.plural} ago`
 		}
 
-		// Helper function to get format option for a time period
 		const getFormat = (period: string): string | undefined => {
 			return options[period as keyof FWRelativeTimestampOptions] as string | undefined
 		}
 
-		// Determine which time period we're in and get the appropriate format
 		let currentPeriod: string
 		let currentValue: number
-
 		if (diffSeconds < 60) {
 			currentPeriod = "seconds"
 			currentValue = diffSeconds
@@ -1790,39 +1845,24 @@ export class FakeWiki {
 			currentValue = diffYears
 		}
 
-		// Check if there's a format option for this period
 		const format = getFormat(currentPeriod)
-
-		// Handle "date" format
 		if (format === "date") {
-			return formatDate(past)
+			return formatDateWithoutCurrentYear(past)
 		}
-
-		// Handle "words" format
 		if (format === "words") {
-			if (currentPeriod === "seconds") {
-				return "Just now"
-			} else if (currentPeriod === "minutes") {
-				return "Minutes ago"
-			} else if (currentPeriod === "hours") {
-				return "Hours ago"
-			} else if (currentPeriod === "days") {
-				return "Days ago"
-			} else if (currentPeriod === "weeks") {
-				return "Weeks ago"
-			} else if (currentPeriod === "months") {
-				return "Months ago"
-			} else if (currentPeriod === "years") {
-				return "A long time ago"
-			}
+			if (currentPeriod === "seconds") return "Just now"
+			if (currentPeriod === "minutes") return "Minutes ago"
+			if (currentPeriod === "hours") return "Hours ago"
+			if (currentPeriod === "days") return "Days ago"
+			if (currentPeriod === "weeks") return "Weeks ago"
+			if (currentPeriod === "months") return "Months ago"
+			if (currentPeriod === "years") return "A long time ago"
 		}
 
-		// Handle forced unit format (e.g., "days", "hours", etc.)
 		if (
 			format &&
 			["seconds", "minutes", "hours", "days", "weeks", "months", "years"].includes(format)
 		) {
-			// Calculate the value for the forced unit
 			let forcedValue: number
 			if (format === "seconds") {
 				forcedValue = diffSeconds
@@ -1844,12 +1884,50 @@ export class FakeWiki {
 			return formatUnit(forcedValue, format)
 		}
 
-		// Default behavior: return relative timestamp for current period
-		if (currentPeriod === "seconds") {
-			return "Just now"
-		} else {
-			return formatUnit(currentValue, currentPeriod)
-		}
+		return currentPeriod === "seconds" ? "Just now" : formatUnit(currentValue, currentPeriod)
+	}
+
+	/** Watchlist-focused relative timestamp preset. */
+	formatWatchlistRelativeTime(timestamp: string | number | Date): string {
+		return this.formatRelativeTimestamp(timestamp, {
+			seconds: "words",
+			minutes: "minutes",
+			hours: "hours",
+			days: "days",
+			weeks: "weeks",
+			months: "months",
+			years: "years",
+		})
+	}
+
+	/** Group revisions by day with human-readable date labels. */
+	groupRevisionsByDate(
+		revisions: FWRevision[]
+	): Array<{ dateKey: string; dateLabel: string; revisions: FWRevision[] }> {
+		const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
+		revisions.forEach(revision => {
+			const dateKey = this.toDateKey(revision.timestamp)
+			const dateLabel = this.formatDate(revision.timestamp, "long")
+			if (!grouped.has(dateKey)) {
+				grouped.set(dateKey, { dateLabel, revisions: [] })
+			}
+			grouped.get(dateKey)!.revisions.push(revision)
+		})
+		return Array.from(grouped.entries())
+			.sort((a, b) => b[0].localeCompare(a[0]))
+			.map(([dateKey, data]) => ({
+				dateKey,
+				dateLabel: data.dateLabel,
+				revisions: data.revisions,
+			}))
+	}
+
+	/** Signed delta for watchlist, e.g. (+120) or (-412). */
+	formatDelta(delta: number | null): string {
+		const n = delta != null ? Number(delta) : 0
+		if (Number.isNaN(n)) return "(0)"
+		const sign = n >= 0 ? "+" : ""
+		return `(${sign}${n})`
 	}
 
 	/**

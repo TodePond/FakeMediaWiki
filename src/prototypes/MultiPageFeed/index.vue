@@ -3,7 +3,11 @@
 		<form @submit.prevent="search">
 			<div class="inputs">
 				<CdxLabel :input-id="getPageInputId(0)">Followed pages</CdxLabel>
-				<div class="input-group" v-for="(_, index) in pageSearchQueries" :key="`page-${index}`">
+				<div
+					class="input-group"
+					v-for="(_, index) in pageSearchQueries"
+					:key="`page-${index}`"
+				>
 					<CdxTextInput
 						autocomplete="off"
 						v-model="pageSearchQueries[index]"
@@ -13,7 +17,11 @@
 				</div>
 				<div class="input-list-actions">
 					<CdxButton type="button" @click="addPage">Add page</CdxButton>
-					<CdxButton type="button" @click="removePage" :disabled="pageSearchQueries.length === 0">
+					<CdxButton
+						type="button"
+						@click="removePage"
+						:disabled="pageSearchQueries.length === 0"
+					>
 						Remove page
 					</CdxButton>
 				</div>
@@ -93,9 +101,9 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
-import { onMounted, ref } from "vue"
 import { FakeWiki } from "fakewiki"
 import type { FWRevision } from "fakewiki/types"
+import { onMounted, ref } from "vue"
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "MultiPageFeed"
@@ -223,7 +231,7 @@ async function search(): Promise<void> {
 }
 
 function formatTimestamp(timestamp: string): string {
-	return wiki.getRelativeTimestamp(timestamp, {
+	return wiki.formatRelativeTimestamp(timestamp, {
 		seconds: "words",
 		minutes: "minutes",
 		hours: "hours",

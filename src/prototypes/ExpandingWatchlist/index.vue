@@ -730,7 +730,7 @@ function formatDateShort(timestamp: string): string {
 
 /** Format relative date (e.g. "10 hours ago", "2 days ago") */
 function formatRelativeDate(timestamp: string): string {
-	return wiki.getRelativeTimestamp(timestamp, {
+	return wiki.formatRelativeTimestamp(timestamp, {
 		seconds: "words",
 		minutes: "minutes",
 		hours: "hours",

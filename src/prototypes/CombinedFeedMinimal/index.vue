@@ -272,7 +272,7 @@ async function search(): Promise<void> {
 }
 
 function formatTimestamp(timestamp: string): string {
-	return wiki.getRelativeTimestamp(timestamp, {
+	return wiki.formatRelativeTimestamp(timestamp, {
 		seconds: "words",
 		minutes: "minutes",
 		hours: "hours",

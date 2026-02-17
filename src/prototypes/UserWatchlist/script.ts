@@ -406,7 +406,7 @@ export function useActionWatchlist() {
 	})
 
 	function formatTime(timestamp: string): string {
-		// return wiki.getRelativeTimestamp(timestamp, {
+		// return wiki.formatRelativeTime(timestamp, {
 		// 	seconds: "words",
 		// 	minutes: "minutes",
 		// 	hours: "hours",

@@ -52,7 +52,7 @@
 										},
 									]"
 								>
-									{{ formatTime(change.timestamp) }}</span
+									{{ wiki.formatTime(change.timestamp) }}</span
 								><span
 									:class="[
 										'history-delta',
@@ -64,7 +64,7 @@
 										},
 									]"
 								>
-									{{ formatDelta(change.delta) }}</span
+									{{ wiki.formatDelta(change.delta) }}</span
 								>
 								<span class="user-name-container"
 									><a
@@ -133,7 +133,7 @@
 										]"
 										@click.stop="toggleDiff(change)"
 									>
-										{{ formatDelta(change.delta) }}
+										{{ wiki.formatDelta(change.delta) }}
 									</button>
 									<button
 										type="button"
@@ -174,7 +174,7 @@
 									]"
 									@click.stop="toggleHistory(change)"
 								>
-									{{ formatRelativeDate(change.timestamp) }}
+									{{ wiki.formatWatchlistRelativeTime(change.timestamp) }}
 								</button>
 								<div
 									v-if="change?.summary?.comment"
@@ -368,9 +368,9 @@
 								>
 									<div class="history-row">
 										<span class="history-time">{{
-											isToday(rev.timestamp)
-												? formatTime(rev.timestamp)
-												: formatDateShort(rev.timestamp)
+											wiki.isToday(rev.timestamp)
+												? wiki.formatTime(rev.timestamp)
+												: wiki.formatDate(rev.timestamp, "short")
 										}}</span
 										><span
 											:class="[
@@ -389,7 +389,7 @@
 											]"
 										>
 											{{
-												formatDelta(
+												wiki.formatDelta(
 													rev.id === change.id
 														? (change.delta ?? rev.delta)
 														: rev.delta
@@ -516,82 +516,30 @@
 
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxProgressBar } from "@wikimedia/codex"
-import type { Icon } from "@wikimedia/codex-icons"
-import {
-	cdxIconAlert,
-	cdxIconArrowNext,
-	cdxIconArrowPrevious,
-	cdxIconEllipsis,
-	cdxIconHeart,
-	cdxIconSuccess,
-	cdxIconUnStar,
-} from "@wikimedia/codex-icons"
+import { cdxIconArrowNext, cdxIconArrowPrevious } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
-import type {
-	FWCompareResponse,
-	FWLiftWingPrediction,
-	FWPageHistoryResponse,
-	FWPageHistoryRevision,
-	FWRevision,
-} from "fakewiki/types"
+import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
-
-/** Configuration for user type icons and colors */
-interface UserTypeConfig {
-	icon: Icon | null
-	color: string
-}
-
-/** User type display configuration */
-const userTypeConfig: Record<
-	"unregistered" | "newcomer" | "learner" | "experienced",
-	UserTypeConfig
-> = {
-	unregistered: {
-		icon: null, // No icon for unregistered users
-		color: "var(--color-subtle)",
-	},
-	newcomer: {
-		icon: cdxIconHeart,
-		color: "var(--green400)",
-	},
-	learner: {
-		icon: null,
-		color: "var(--yellow400)",
-	},
-	experienced: {
-		icon: cdxIconUnStar,
-		color: "var(--yellow400)",
-	},
-}
-
-/** History revision with edit summary rendered as HTML */
-interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
-	commentHtml: string
-}
+import { isInteractiveClickTarget } from "./clickTargets"
+import {
+	defaultPageSearchQueries,
+	defaultUserSearchQueries,
+	HEART_RISE_DURATION_MS,
+	PROTOTYPE_NAME,
+} from "./config"
+import { loadQueries } from "./queries"
+import type { HistoryRevisionWithHtml, RisingHeart } from "./types"
+import { useFeed } from "./useFeed"
+import { usePredictions } from "./usePredictions"
+import { useUser } from "./useUser"
+import { getRevisionItemZIndex } from "./zIndex"
 
 const wiki = new FakeWiki()
-const PROTOTYPE_NAME = "FlaggedWatchlist"
 
 const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
 const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
-const defaultPageSearchQueries = [
-	"Wikipedia",
-	"Wet Leg",
-	"Water",
-	"Confidence Man (band)",
-	"Algorave",
-]
-const defaultUserSearchQueries = ["Samwalton9", "Todepond", "Humbugtheman"]
-const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
-const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
-
-// Combined feed results
-const allRevisionsData = ref<FWRevision[]>([])
-const isLoading = ref(false)
-const isLoadingMore = ref(false)
-const errors = ref<string[]>([])
-const hasMore = ref(true) // Whether there are more revisions to load
+const pageSearchQueries = ref<string[]>(loadQueries(pageStorageKey, defaultPageSearchQueries))
+const userSearchQueries = ref<string[]>(loadQueries(userStorageKey, defaultUserSearchQueries))
 
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
@@ -620,13 +568,17 @@ const expandedItemIds = ref<Set<number>>(new Set())
 /** Revision ids that have been "thanked" (mock) */
 const thankedRevisionIds = ref<Set<number>>(new Set())
 /** Rising heart particles: id, viewport position, and thank vs unthank */
-const risingHearts = ref<Array<{ id: number; x: number; y: number; type: "thank" | "unthank" }>>([])
+const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
-const HEART_RISE_DURATION_MS = 2500
 
-/** Cache of user categories by username for reactive UI reads */
-const userCategories = ref<Map<string, "unregistered" | "newcomer" | "learner" | "experienced">>(
-	new Map()
+const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
+const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } = useFeed(
+	{
+		wiki,
+		pageSearchQueries,
+		userSearchQueries,
+		onUserCategory: cacheUserCategory,
+	}
 )
 
 /** Which revision ids have the talk page expanded */
@@ -636,12 +588,7 @@ const talkPageText = ref<Map<number, string>>(new Map())
 /** Current editor mode: 'visual' or 'source' */
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
-/** Cache of revision predictions (damaging and goodfaith) */
-const revisionPredictions = ref<
-	Map<number, { damaging?: FWLiftWingPrediction; goodfaith?: FWLiftWingPrediction }>
->(new Map())
-/** Revision IDs currently loading predictions */
-const loadingPredictions = ref<Set<number>>(new Set())
+const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
 
 onMounted(() => {
 	search()
@@ -705,134 +652,6 @@ function saveSearchQueries(): void {
 	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
 }
 
-function cacheUserCategory(
-	userName: string,
-	category: "unregistered" | "newcomer" | "learner" | "experienced"
-): void {
-	userCategories.value = new Map(userCategories.value).set(userName, category)
-}
-
-function getCachedUserCategory(
-	userName: string
-): "unregistered" | "newcomer" | "learner" | "experienced" | null {
-	return userCategories.value.get(userName) ?? null
-}
-
-function loadSearchQueries(key: string, defaultValues: string[]): string[] {
-	const savedSearchQueries = localStorage.getItem(key)
-	if (!savedSearchQueries) {
-		return defaultValues
-	}
-	try {
-		const parsed = JSON.parse(savedSearchQueries)
-		if (Array.isArray(parsed) && parsed.every(value => typeof value === "string")) {
-			return parsed
-		}
-	} catch {
-		// Ignore invalid stored values and fallback.
-	}
-	return defaultValues
-}
-
-async function loadFeed(after?: string, append = false): Promise<void> {
-	if (!append) {
-		isLoading.value = true
-		errors.value = []
-	} else {
-		isLoadingMore.value = true
-	}
-
-	// Collect non-empty page and user names
-	const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
-	const userNames = userSearchQueries.value.filter(name => name.trim() !== "")
-
-	try {
-		// Fetch combined feed
-		const revisions = await wiki.getCombinedFeed({
-			pageNames,
-			userNames,
-			limit: 20,
-			after,
-		})
-
-		// Process revisions (transform comments, fetch user categories, etc.)
-		const processedRevisions = await Promise.all(
-			revisions.map(async revision => {
-				const pageName =
-					(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
-				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-				const toolbar = wiki.parseToolbarEditSummary(_summary)
-				const summary = toolbar
-					? toolbar
-					: {
-							comment: _summary,
-							hashtags: [],
-							other: [],
-							suggestedBy: null,
-							useThisBot: null,
-							reportBugs: null,
-						}
-				const commentText = summary.comment
-					? summary.comment +
-						(summary.suggestedBy
-							? " Suggested by [[User:" +
-								summary.suggestedBy +
-								"|" +
-								summary.suggestedBy +
-								"]]"
-							: "")
-					: ""
-				summary.comment = commentText
-					? await wiki.transformWikitextToHtml(commentText, pageName)
-					: ""
-				summary.hashtags = Array.isArray(summary.hashtags)
-					? summary.hashtags.join(" ")
-					: summary.hashtags
-				const processedRevision: FWRevision = {
-					...revision,
-					comment: revision.comment || "",
-					summary,
-					pageName,
-					avatarUrl: null,
-				}
-				// Fetch user info for categorization
-				const userCategory = await wiki.getUserCategory(revision.user.name)
-				cacheUserCategory(revision.user.name, userCategory)
-				return processedRevision
-			})
-		)
-
-		// Don't fetch predictions here - they'll be loaded lazily
-
-		if (append) {
-			// Append new revisions, deduplicating by ID
-			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
-			const newRevisions = processedRevisions.filter(r => !existingIds.has(r.id))
-			// Merge and sort by timestamp (newest first)
-			const merged = [...allRevisionsData.value, ...newRevisions].sort(
-				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-			)
-			allRevisionsData.value = merged
-			hasMore.value = newRevisions.length > 0
-		} else {
-			allRevisionsData.value = processedRevisions
-			hasMore.value = processedRevisions.length === 20
-		}
-
-		isLoading.value = false
-		isLoadingMore.value = false
-	} catch (e) {
-		isLoading.value = false
-		isLoadingMore.value = false
-		const errorObj = e as Error
-		if (!append) {
-			errors.value = [errorObj.message]
-			allRevisionsData.value = []
-		}
-		hasMore.value = false
-	}
-}
-
 async function search(): Promise<void> {
 	await loadFeed(undefined, false)
 	saveSearchQueries()
@@ -850,15 +669,6 @@ async function search(): Promise<void> {
 	// Keep talk page text cached
 }
 
-async function loadMore(): Promise<void> {
-	if (allRevisionsData.value.length === 0) return
-	// Get the oldest revision from current results (they're sorted newest first)
-	const oldestRevision = allRevisionsData.value[allRevisionsData.value.length - 1]
-	if (!oldestRevision) return
-	// Pass the revision ID instead of timestamp for better pagination
-	await loadFeed(String(oldestRevision.id), true)
-}
-
 const allRevisions = computed(() => allRevisionsData.value)
 
 /** Get all revisions in order (flattened from revisionsByDate) */
@@ -871,118 +681,13 @@ const allRevisionsInOrder = computed(() => {
 })
 
 const revisionsByDate = computed(() => {
-	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
-
-	allRevisions.value.forEach(revision => {
-		const dateKey = getDateKey(revision.timestamp)
-		const dateLabel = formatDate(revision.timestamp)
-
-		if (!grouped.has(dateKey)) {
-			grouped.set(dateKey, { dateLabel, revisions: [] })
-		}
-
-		grouped.get(dateKey)!.revisions.push(revision)
-	})
-
-	return Array.from(grouped.entries())
-		.sort((a, b) => b[0].localeCompare(a[0]))
-		.map(([dateKey, data]) => ({
-			dateKey,
-			dateLabel: data.dateLabel,
-			revisions: data.revisions,
-		}))
+	return wiki.groupRevisionsByDate(allRevisions.value)
 })
-
-/** Format date as "DD Month YYYY" (e.g. "28 January 2026") */
-function formatDate(timestamp: string): string {
-	const d = new Date(timestamp)
-	const day = d.getDate()
-	const monthNames = [
-		"January",
-		"February",
-		"March",
-		"April",
-		"May",
-		"June",
-		"July",
-		"August",
-		"September",
-		"October",
-		"November",
-		"December",
-	]
-	const month = monthNames[d.getMonth()]
-	const year = d.getFullYear()
-	return `${day} ${month} ${year}`
-}
-
-/** Get date key for grouping (YYYY-MM-DD format) */
-function getDateKey(timestamp: string): string {
-	const d = new Date(timestamp)
-	const year = d.getFullYear()
-	const month = (d.getMonth() + 1).toString().padStart(2, "0")
-	const day = d.getDate().toString().padStart(2, "0")
-	return `${year}-${month}-${day}`
-}
-
-/** Watchlist-style time only (e.g. 17:29) */
-function formatTime(timestamp: string): string {
-	const d = new Date(timestamp)
-	const hours = d.getHours()
-	const minutes = d.getMinutes()
-	return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
-}
-
-/** Check if timestamp is from today */
-function isToday(timestamp: string): boolean {
-	const d = new Date(timestamp)
-	const today = new Date()
-	return (
-		d.getDate() === today.getDate() &&
-		d.getMonth() === today.getMonth() &&
-		d.getFullYear() === today.getFullYear()
-	)
-}
-
-/** Format date as DD.MM.YY (e.g. 04.02.26) */
-function formatDateShort(timestamp: string): string {
-	const d = new Date(timestamp)
-	const day = d.getDate().toString().padStart(2, "0")
-	const month = (d.getMonth() + 1).toString().padStart(2, "0")
-	const year = d.getFullYear().toString().slice(-2)
-	return `${day}.${month}.${year}`
-}
-
-/** Format relative date (e.g. "10 hours ago", "2 days ago") */
-function formatRelativeDate(timestamp: string): string {
-	return wiki.getRelativeTimestamp(timestamp, {
-		seconds: "words",
-		minutes: "minutes",
-		hours: "hours",
-		days: "days",
-		weeks: "weeks",
-		months: "months",
-		years: "years",
-	})
-}
-
-/** Signed delta for watchlist, e.g. (+120) or (-412). */
-function formatDelta(delta: number | null): string {
-	const n = delta != null ? Number(delta) : 0
-	if (Number.isNaN(n)) return "(0)"
-	const sign = n >= 0 ? "+" : ""
-	return `(${sign}${n})`
-}
 
 function expandItem(change: FWRevision, event: MouseEvent): void {
 	// Don't expand if clicking on links or buttons
 	const target = event.target as HTMLElement
-	if (
-		target.tagName === "A" ||
-		target.tagName === "BUTTON" ||
-		target.closest("a") ||
-		target.closest("button")
-	) {
+	if (isInteractiveClickTarget(target)) {
 		return
 	}
 	const id = change.id
@@ -1051,12 +756,7 @@ function handleHistoryItemClick(
 ): void {
 	// Don't toggle if clicking on links or buttons
 	const target = event.target as HTMLElement
-	if (
-		target.tagName === "A" ||
-		target.tagName === "BUTTON" ||
-		target.closest("a") ||
-		target.closest("button")
-	) {
+	if (isInteractiveClickTarget(target)) {
 		return
 	}
 	// Toggle the diff for this history item
@@ -1133,24 +833,7 @@ function onThankClick(change: FWRevision, e: MouseEvent): void {
 }
 
 function getItemZIndex(dateKey: string, changeIndex: number): number {
-	// Calculate cumulative index across all date groups
-	// Items lower down the page get higher z-index values
-	let cumulativeIndex = 0
-	for (const group of revisionsByDate.value) {
-		if (group.dateKey === dateKey) {
-			// Return a higher z-index for items further down
-			// Start from 10 to ensure it's above other elements
-			return 10 + cumulativeIndex + changeIndex
-		}
-		cumulativeIndex += group.revisions.length
-	}
-	return 10 + cumulativeIndex + changeIndex
-}
-
-/** Get user type config for a username */
-function getUserTypeConfig(userName: string): UserTypeConfig | null {
-	const category = getCachedUserCategory(userName)
-	return category ? userTypeConfig[category] : null
+	return getRevisionItemZIndex(revisionsByDate.value, dateKey, changeIndex)
 }
 
 function toggleTalk(change: FWRevision): void {
@@ -1290,149 +973,6 @@ function hasNext(currentId: number): boolean {
 	const revisions = allRevisionsInOrder.value
 	const currentIndex = revisions.findIndex(r => r.id === currentId)
 	return currentIndex >= 0 && currentIndex < revisions.length - 1
-}
-
-/** Lazily load predictions for a revision */
-async function loadPrediction(revisionId: number): Promise<void> {
-	// Skip if already loaded or currently loading
-	if (revisionPredictions.value.has(revisionId) || loadingPredictions.value.has(revisionId)) {
-		return
-	}
-
-	loadingPredictions.value.add(revisionId)
-
-	try {
-		const predictions = await wiki.getRevisionPredictions([revisionId])
-		const pred = predictions[revisionId]
-		if (pred) {
-			revisionPredictions.value.set(revisionId, pred)
-		}
-	} catch (error) {
-		console.error(`Failed to load prediction for revision ${revisionId}:`, error)
-	} finally {
-		loadingPredictions.value.delete(revisionId)
-	}
-}
-
-/** Get prediction icon and color for a revision */
-function getPredictionIcon(revisionId: number): {
-	icon: Icon | null
-	color: string
-	isLoading: boolean
-} {
-	// Check if loading
-	if (loadingPredictions.value.has(revisionId)) {
-		return {
-			icon: cdxIconEllipsis,
-			color: "var(--color-subtle)",
-			isLoading: true,
-		}
-	}
-
-	const predictions = revisionPredictions.value.get(revisionId)
-	if (!predictions) {
-		// No predictions available yet - trigger lazy load and show ellipsis
-		loadPrediction(revisionId)
-		return {
-			icon: cdxIconEllipsis,
-			color: "var(--color-subtle)",
-			isLoading: true,
-		}
-	}
-
-	const damaging = predictions.damaging
-	const goodfaith = predictions.goodfaith
-
-	// Check for biggest risks (very likely have problems OR very likely bad faith)
-	const damagingProb = damaging?.probability?.true ?? 0
-	const goodfaithProb = goodfaith?.probability?.false ?? 0 // false = bad faith
-
-	if (damagingProb > 0.9 || goodfaithProb > 0.9) {
-		// Red exclamation mark for biggest risks
-		return {
-			icon: cdxIconAlert,
-			color: "var(--color-destructive)",
-			isLoading: false,
-		}
-	}
-
-	// Check for slight risks (may have problems OR may be bad faith)
-	if (damagingProb > 0.3 || goodfaithProb > 0.3) {
-		// Yellow exclamation mark for slight risks
-		return {
-			icon: cdxIconAlert,
-			color: "var(--color-warning)",
-			isLoading: false,
-		}
-	}
-
-	// Check if fairly sure it's good (very likely good AND very likely good faith)
-	const notDamagingProb = damaging?.probability?.false ?? 0
-	const isGoodfaithProb = goodfaith?.probability?.true ?? 0
-
-	if (notDamagingProb > 0.99 && isGoodfaithProb > 0.99) {
-		// Green tick for very likely good
-		return {
-			icon: cdxIconSuccess,
-			color: "var(--color-success)",
-			isLoading: false,
-		}
-	}
-
-	// Default: blue tick
-	return {
-		icon: cdxIconSuccess,
-		color: "var(--color-progressive)",
-		isLoading: false,
-	}
-}
-
-/** Get prediction text description for a revision */
-function getPredictionText(revisionId: number): string | null {
-	const predictions = revisionPredictions.value.get(revisionId)
-	if (!predictions) {
-		// No predictions available yet
-		return null
-	}
-
-	const damaging = predictions.damaging
-	const goodfaith = predictions.goodfaith
-
-	// Check for biggest risks (very likely have problems OR very likely bad faith)
-	const damagingProb = damaging?.probability?.true ?? 0
-	const goodfaithProb = goodfaith?.probability?.false ?? 0 // false = bad faith
-
-	if (damagingProb > 0.9 || goodfaithProb > 0.9) {
-		if (damagingProb > 0.9 && goodfaithProb > 0.9) {
-			return "It's very likely that this edit is damaging and made in bad faith"
-		} else if (damagingProb > 0.9) {
-			return "It's very likely that this edit is damaging"
-		} else {
-			return "It's very likely that this edit was made in bad faith"
-		}
-	}
-
-	// Check for slight risks (may have problems OR may be bad faith)
-	if (damagingProb > 0.3 || goodfaithProb > 0.3) {
-		if (damagingProb > 0.3 && goodfaithProb > 0.3) {
-			return "It's possible that this edit has a problem or made in bad faith"
-		} else if (damagingProb > 0.3) {
-			return "It's possible that this edit has a problem"
-		} else {
-			return "It's possible that this edit was made in bad faith"
-		}
-	}
-
-	// Check if fairly sure it's good (very likely good AND very likely good faith)
-	const notDamagingProb = damaging?.probability?.false ?? 0
-	const isGoodfaithProb = goodfaith?.probability?.true ?? 0
-
-	if (notDamagingProb > 0.99 && isGoodfaithProb > 0.99) {
-		return "It's very likely that this edit is good and made in good faith"
-	}
-
-	// Default: neutral
-	return "It's possible that this edit is okay"
 }
 </script>
 

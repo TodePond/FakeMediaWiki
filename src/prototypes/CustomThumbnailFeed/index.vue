@@ -4,7 +4,11 @@
 			<div class="inputs-group">
 				<div class="inputs">
 					<CdxLabel :input-id="getPageInputId(0)">Followed pages</CdxLabel>
-					<div class="input-group" v-for="(_, index) in pageSearchQueries" :key="`page-${index}`">
+					<div
+						class="input-group"
+						v-for="(_, index) in pageSearchQueries"
+						:key="`page-${index}`"
+					>
 						<CdxTextInput
 							autocomplete="off"
 							v-model="pageSearchQueries[index]"
@@ -14,14 +18,22 @@
 					</div>
 					<div class="input-list-actions">
 						<CdxButton type="button" @click="addPage">Add page</CdxButton>
-						<CdxButton type="button" @click="removePage" :disabled="pageSearchQueries.length === 0">
+						<CdxButton
+							type="button"
+							@click="removePage"
+							:disabled="pageSearchQueries.length === 0"
+						>
 							Remove page
 						</CdxButton>
 					</div>
 				</div>
 				<div class="inputs">
 					<CdxLabel :input-id="getUserInputId(0)">Followed users</CdxLabel>
-					<div class="input-group" v-for="(_, index) in userSearchQueries" :key="`user-${index}`">
+					<div
+						class="input-group"
+						v-for="(_, index) in userSearchQueries"
+						:key="`user-${index}`"
+					>
 						<CdxTextInput
 							autocomplete="off"
 							v-model="userSearchQueries[index]"
@@ -31,7 +43,11 @@
 					</div>
 					<div class="input-list-actions">
 						<CdxButton type="button" @click="addUser">Add user</CdxButton>
-						<CdxButton type="button" @click="removeUser" :disabled="userSearchQueries.length === 0">
+						<CdxButton
+							type="button"
+							@click="removeUser"
+							:disabled="userSearchQueries.length === 0"
+						>
 							Remove user
 						</CdxButton>
 					</div>
@@ -122,9 +138,9 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconArticle, cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
-import { computed, onMounted, ref, type Ref } from "vue"
 import { FakeWiki } from "fakewiki"
 import type { FWPageHistoryRevision, FWRevision } from "fakewiki/types"
+import { computed, onMounted, ref, type Ref } from "vue"
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "CustomThumbnailFeed"
@@ -494,7 +510,7 @@ const errors = computed(() => {
 })
 
 function formatTimestamp(timestamp: string): string {
-	return wiki.getRelativeTimestamp(timestamp, {
+	return wiki.formatRelativeTimestamp(timestamp, {
 		seconds: "words",
 		minutes: "minutes",
 		hours: "hours",
