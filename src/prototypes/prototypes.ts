@@ -441,7 +441,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		name: "Page source",
 		description: "How to get a page's source.",
 		category: "page",
-		wrapper: "Component",
+		wrapper: "Fullscreen",
 		title: "Page source",
 	},
 	{

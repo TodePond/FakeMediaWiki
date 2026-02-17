@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<form @submit.prevent="loadPage">
+		<form @submit.prevent="loadPage" class="input-container">
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
 			<span>
 				<CdxTextInput
@@ -20,8 +20,8 @@
 
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
-import { onMounted, ref } from "vue"
 import { FakeWiki } from "fakewiki"
+import { onMounted, ref } from "vue"
 
 const wiki = new FakeWiki()
 
