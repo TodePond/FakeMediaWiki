@@ -14,42 +14,34 @@
 				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
 			</span>
 		</form>
-		<CdxCard :thumbnail="thumbnail" :url="url">
-			<template #title>{{ title }}</template>
-			<template #description>{{ description }}</template>
-			<template #supporting-text>{{ supportingText }}</template>
+		<CdxCard
+			:thumbnail="summary?.thumbnail?.source ? { url: summary.thumbnail.source } : null"
+			:url="summary?.content_urls?.desktop?.page ?? ''"
+		>
+			<template #title>{{ summary?.title ?? '' }}</template>
+			<template #description>{{ summary?.description ?? '' }}</template>
+			<template #supporting-text>{{ summary?.extract ?? '' }}</template>
 		</CdxCard>
 	</section>
 </template>
 
 <script setup lang="ts">
 import { CdxButton, CdxCard, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
-import { onMounted, ref } from "vue"
 import { FakeWiki } from "fakewiki"
+import type { FWPageSummary } from "fakewiki/types"
+import { onMounted, ref } from "vue"
 
 const wiki = new FakeWiki()
 
-const url = ref("")
-const title = ref("")
-const description = ref("")
-const supportingText = ref("")
-const thumbnail = ref<{ url: string } | null>(null)
+const summary = ref<FWPageSummary | null>(null)
 const searchQuery = ref(localStorage.getItem("pageSearchQuery") || "Wet Leg")
 const isLoading = ref(false)
+
 const search = async (): Promise<void> => {
 	isLoading.value = true
-	const summary = await wiki.getPageSummary(searchQuery.value)
+	summary.value = await wiki.getPageSummary(searchQuery.value)
 	isLoading.value = false
 
-	url.value = summary.content_urls?.desktop?.page || ""
-	title.value = summary.title || ""
-	description.value = summary.description || ""
-	supportingText.value = summary.extract || ""
-	thumbnail.value = summary.thumbnail?.source
-		? {
-				url: summary.thumbnail.source,
-			}
-		: null
 	saveSearchQuery(searchQuery.value)
 }
 
