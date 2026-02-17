@@ -51,20 +51,29 @@
 			</CdxField>
 			<p class="filter-actions">
 				<button
-					v-if="isFeaturedYesFilter"
 					type="button"
-					class="filter-footer-link"
+					:class="['filter-footer-link', { 'filter-footer-link--disabled': isFeaturedYesFilter }]"
+					:disabled="isFeaturedYesFilter"
+					@click="resetFilters"
+				>
+					(reset)
+				</button>
+				<button
+					type="button"
+					:class="['filter-footer-link', { 'filter-footer-link--disabled': !chips.length }]"
+					:disabled="!chips.length"
 					@click="clearFilters"
 				>
 					(clear)
 				</button>
 				<button
-					v-if="!isFeaturedYesFilter"
+					ref="shareButtonRef"
 					type="button"
-					class="filter-footer-link"
-					@click="resetFilters"
+					:class="['filter-footer-link', { 'filter-footer-link--disabled': isShareDisabled }]"
+					:disabled="isShareDisabled"
+					@click="shareFilters"
 				>
-					(reset)
+					(share)
 				</button>
 			</p>
 		</p>
@@ -170,6 +179,17 @@
 				Remove filters?
 			</button>
 		</p>
+
+		<div class="share-copied-overlay" aria-hidden="true">
+			<div
+				v-for="copied in risingCopied"
+				:key="copied.id"
+				class="share-copied-rise"
+				:style="{ left: copied.x + 'px', top: copied.y + 'px' }"
+			>
+				(copied)
+			</div>
+		</div>
 	</main>
 </template>
 
@@ -178,7 +198,7 @@ import type { ChipInputItem } from "@wikimedia/codex"
 import { CdxChipInput, CdxField, CdxIcon, CdxSelect } from "@wikimedia/codex"
 import { cdxIconAdd, cdxIconBookmark } from "@wikimedia/codex-icons"
 import { computed, onMounted, ref, watch } from "vue"
-import { RouterLink } from "vue-router"
+import { RouterLink, useRoute } from "vue-router"
 import type { PrototypeDefinition, PrototypeStatus } from "../../prototypes/prototypes"
 import {
 	categories,
@@ -188,6 +208,7 @@ import {
 } from "../../prototypes/registry"
 
 const prototypeGroupsByCategory = getPrototypeGroupsByCategory()
+const route = useRoute()
 
 type StatusFilterValue = PrototypeStatus | "none"
 
@@ -212,6 +233,18 @@ const FILTER_STORAGE_KEY = "fakemediawiki-home-filters"
 const defaultChips: ChipInputItem[] = [
 	{ value: "featured:yes", label: "featured:yes", className: "chip-filter-featured" },
 ]
+
+const FILTER_QUERY_PARAM = "filter"
+
+function loadFiltersFromUrl(): ChipInputItem[] | null {
+	const raw = route.query[FILTER_QUERY_PARAM]
+	if (raw == null) return null
+	const values = Array.isArray(raw) ? raw : [raw]
+	if (values.length === 0) return null
+	return normalizeChips(
+		values.map(v => ({ value: String(v), label: String(v), className: "" }))
+	)
+}
 
 function loadFiltersFromStorage(): ChipInputItem[] {
 	try {
@@ -241,6 +274,12 @@ function saveFiltersToStorage() {
 
 const chips = ref<ChipInputItem[]>([])
 const filterInputValue = ref<string>("")
+const shareButtonRef = ref<HTMLButtonElement | null>(null)
+const isShareDisabled = ref(false)
+const risingCopied = ref<Array<{ id: number; x: number; y: number }>>([])
+let nextCopiedId = 0
+const COPIED_RISE_DURATION_MS = 2500
+const SHARE_DISABLED_DURATION_MS = 1000
 const selectedStatusFilter = ref<StatusFilterValue | null>(null)
 const selectedWrapperFilter = ref<string | null>(null)
 const selectedCategoryFilter = ref<string | null>(null)
@@ -350,8 +389,41 @@ function resetFilters() {
 	window.scrollTo({ top: 0 })
 }
 
+function shareFilters() {
+	const btn = shareButtonRef.value
+	if (!btn) return
+	const rect = btn.getBoundingClientRect()
+	const x = rect.left + rect.width / 2
+	const y = rect.top + rect.height / 2 - 15
+	const copiedId = ++nextCopiedId
+
+	const params = new URLSearchParams()
+	chips.value.forEach(c => params.append(FILTER_QUERY_PARAM, String(c.value)))
+	const fullUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`
+	isShareDisabled.value = true
+	navigator.clipboard.writeText(fullUrl).then(
+		() => {
+			risingCopied.value = [...risingCopied.value, { id: copiedId, x, y }]
+			setTimeout(() => {
+				risingCopied.value = risingCopied.value.filter(c => c.id !== copiedId)
+			}, COPIED_RISE_DURATION_MS)
+			setTimeout(() => {
+				isShareDisabled.value = false
+			}, SHARE_DISABLED_DURATION_MS)
+		},
+		() => {
+			isShareDisabled.value = false
+		}
+	)
+}
+
 onMounted(() => {
-	chips.value = normalizeChips(loadFiltersFromStorage())
+	const fromUrl = loadFiltersFromUrl()
+	if (fromUrl != null) {
+		chips.value = fromUrl
+	} else {
+		chips.value = normalizeChips(loadFiltersFromStorage())
+	}
 })
 
 watch(chips, () => saveFiltersToStorage(), { deep: true })

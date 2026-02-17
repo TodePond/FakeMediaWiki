@@ -81,6 +81,45 @@ main {
 	text-decoration: underline;
 }
 
+.filter-footer-link--disabled,
+.filter-footer-link:disabled {
+	color: var(--color-base--subtle);
+	cursor: default;
+}
+
+.filter-footer-link--disabled:hover,
+.filter-footer-link:disabled:hover {
+	text-decoration: none;
+}
+
+/* Rising "(copied)" overlay (like thank-heart in FlaggedWatchlist) */
+.share-copied-overlay {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 100;
+}
+
+.share-copied-rise {
+	position: fixed;
+	transform: translate(-50%, 0);
+	font-size: 0.9rem;
+	font-family: inherit;
+	color: var(--color-progressive);
+	animation: share-copied-rise 2.5s ease-out forwards;
+}
+
+@keyframes share-copied-rise {
+	0% {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+	100% {
+		opacity: 0;
+		transform: translate(-50%, -120px);
+	}
+}
+
 /* This should be a more specific to avoid affecting other links */
 a.prototype-card {
 	display: block;
