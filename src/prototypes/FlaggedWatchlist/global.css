@@ -37,12 +37,14 @@
 
 @container view (max-width: 640px) {
 	/* Cover unscoped/v-html content inside collapsed results. */
-	.flagged-watchlist .history-item:not(.history-item-expanded) a,
-	.flagged-watchlist .history-item:not(.history-item-expanded) button,
-	.flagged-watchlist .history-item:not(.history-item-expanded) [role="button"],
-	.flagged-watchlist .history-item:not(.history-item-expanded) input,
-	.flagged-watchlist .history-item:not(.history-item-expanded) select,
-	.flagged-watchlist .history-item:not(.history-item-expanded) textarea {
-		pointer-events: none;
+	@media (pointer: coarse) {
+		.flagged-watchlist .history-item:not(.history-item-expanded) a,
+		.flagged-watchlist .history-item:not(.history-item-expanded) button,
+		.flagged-watchlist .history-item:not(.history-item-expanded) [role="button"],
+		.flagged-watchlist .history-item:not(.history-item-expanded) input,
+		.flagged-watchlist .history-item:not(.history-item-expanded) select,
+		.flagged-watchlist .history-item:not(.history-item-expanded) textarea {
+			pointer-events: none;
+		}
 	}
 }

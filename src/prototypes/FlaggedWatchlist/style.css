@@ -878,12 +878,14 @@ form footer {
 	}
 
 	/* Prevent accidental taps on controls before a result is expanded. */
-	.history-item:not(.history-item-expanded) a,
-	.history-item:not(.history-item-expanded) button,
-	.history-item:not(.history-item-expanded) [role="button"],
-	.history-item:not(.history-item-expanded) input,
-	.history-item:not(.history-item-expanded) select,
-	.history-item:not(.history-item-expanded) textarea {
-		pointer-events: none;
+	@media (pointer: coarse) {
+		.history-item:not(.history-item-expanded) a,
+		.history-item:not(.history-item-expanded) button,
+		.history-item:not(.history-item-expanded) [role="button"],
+		.history-item:not(.history-item-expanded) input,
+		.history-item:not(.history-item-expanded) select,
+		.history-item:not(.history-item-expanded) textarea {
+			pointer-events: none;
+		}
 	}
 }
