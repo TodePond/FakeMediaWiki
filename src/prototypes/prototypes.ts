@@ -407,7 +407,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		name: "Page metadata",
 		description: "How to get a page's metadata from the API.",
 		category: "page",
-		wrapper: "Component",
+		wrapper: "Fullscreen",
 		title: "Page metadata",
 	},
 	{
