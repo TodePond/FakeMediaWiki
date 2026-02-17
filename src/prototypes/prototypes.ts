@@ -465,8 +465,8 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	{
 		type: "prototype",
 		id: "HistoryCacheInspector",
-		name: "History cache inspector",
-		description: "Inspect page/user history caches and coverage metadata.",
+		name: "History cache",
+		description: "Debug the history cache for combined feeds.",
 		category: "api",
 		wrapper: "Fullscreen",
 		title: "History cache inspector",

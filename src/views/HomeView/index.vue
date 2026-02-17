@@ -197,8 +197,8 @@
 import type { ChipInputItem } from "@wikimedia/codex"
 import { CdxChipInput, CdxField, CdxIcon, CdxSelect } from "@wikimedia/codex"
 import { cdxIconAdd, cdxIconBookmark } from "@wikimedia/codex-icons"
-import { computed, onMounted, ref, watch } from "vue"
-import { RouterLink, useRoute } from "vue-router"
+import { computed, nextTick, onMounted, ref, watch } from "vue"
+import { RouterLink, useRoute, useRouter } from "vue-router"
 import type { PrototypeDefinition, PrototypeStatus } from "../../prototypes/prototypes"
 import {
 	categories,
@@ -209,6 +209,7 @@ import {
 
 const prototypeGroupsByCategory = getPrototypeGroupsByCategory()
 const route = useRoute()
+const router = useRouter()
 
 type StatusFilterValue = PrototypeStatus | "none"
 
@@ -417,6 +418,8 @@ function shareFilters() {
 	)
 }
 
+const hasCompletedInitialLoad = ref(false)
+
 onMounted(() => {
 	const fromUrl = loadFiltersFromUrl()
 	if (fromUrl != null) {
@@ -424,9 +427,24 @@ onMounted(() => {
 	} else {
 		chips.value = normalizeChips(loadFiltersFromStorage())
 	}
+	nextTick(() => {
+		hasCompletedInitialLoad.value = true
+	})
 })
 
-watch(chips, () => saveFiltersToStorage(), { deep: true })
+function clearFilterFromUrl() {
+	if (FILTER_QUERY_PARAM in route.query) {
+		const { [FILTER_QUERY_PARAM]: _, ...rest } = route.query
+		router.replace({ query: Object.keys(rest).length > 0 ? rest : {} })
+	}
+}
+
+watch(chips, () => {
+	saveFiltersToStorage()
+	if (hasCompletedInitialLoad.value) {
+		clearFilterFromUrl()
+	}
+}, { deep: true })
 
 // Derive active filters from chips (status:*, wrapper:*, category:*)
 const selectedStatuses = computed<Set<string>>(() => {
