@@ -1,5 +1,27 @@
-.subtle {
+.intro {
 	margin-top: -10px;
+	background-color: var(--green50);
+	padding: 0.5rem;
+	border: 1px solid var(--border-color-subtle);
+	border-color: var(--green100);
+	color: var(--green800);
+	/* font-size: 1rem; */
+}
+
+.intro a {
+	/* color: var(--gray900); */
+	color: var(--color-progressive);
+	font-weight: 600;
+	/* text-decoration: underline; */
+}
+
+.filter-actions {
+	font-size: 0.9rem;
+	display: flex;
+	width: 100%;
+	margin-top: -0.2rem;
+	justify-content: flex-end;
+	gap: 0.5rem;
 }
 
 h1 {
@@ -53,11 +75,10 @@ main {
 	font: inherit;
 	color: var(--color-progressive);
 	cursor: pointer;
-	text-decoration: underline;
 }
 
 .filter-footer-link:hover {
-	text-decoration: none;
+	text-decoration: underline;
 }
 
 /* This should be a more specific to avoid affecting other links */

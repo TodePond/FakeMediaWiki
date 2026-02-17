@@ -1,9 +1,9 @@
 <template>
 	<main>
 		<h1>Prototypes</h1>
-		<p class="subtle">
+		<p class=" intro">
 			Hello, I'm <a href="https://wikimedia.enterprise.slack.com/team/U0A4XK2020H">Lu</a>, and
-			this is my work-in-progress prototyping system. The source code is
+			this is my prototyping system called FakeWiki (name pending). The source code is
 			<a href="https://github.com/todepond/fakemediawiki">here</a>. The prototypes are below.
 		</p>
 
@@ -49,8 +49,25 @@
 					</div>
 				</template>
 			</CdxField>
+			<p class="filter-actions">
+				<button
+					v-if="isFeaturedYesFilter"
+					type="button"
+					class="filter-footer-link"
+					@click="clearFilters"
+				>
+					(clear)
+				</button>
+				<button
+					v-if="!isFeaturedYesFilter"
+					type="button"
+					class="filter-footer-link"
+					@click="resetFilters"
+				>
+					(reset)
+				</button>
+			</p>
 		</p>
-		<br />
 
 		<div
 			v-for="category in filteredCategoriesWithPrototypes"
@@ -312,8 +329,24 @@ function onChipsUpdate(newChips: ChipInputItem[]) {
 
 const hasFilters = computed(() => chips.value.length > 0)
 
+const isFeaturedYesFilter = computed(
+	() =>
+		chips.value.length === 1 &&
+		chips.value[0].value === "featured:yes"
+)
+
 function removeFilters() {
 	chips.value = []
+	window.scrollTo({ top: 0 })
+}
+
+function clearFilters() {
+	chips.value = []
+	window.scrollTo({ top: 0 })
+}
+
+function resetFilters() {
+	chips.value = normalizeChips([...defaultChips])
 	window.scrollTo({ top: 0 })
 }
 
