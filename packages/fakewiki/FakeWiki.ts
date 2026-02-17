@@ -1,4 +1,6 @@
 import type {
+	FWActionApiOptions,
+	FWApiOptions,
 	FWCachedRevision,
 	FWCompareResponse,
 	FWDiffLine,
@@ -6,6 +8,7 @@ import type {
 	FWHistoryCacheEntitySnapshot,
 	FWHistoryCacheSnapshot,
 	FWHistoryCoverageEntry,
+	FWHistoryOptions,
 	FWLiftWingPrediction,
 	FWLiftWingResponse,
 	FWOnThisDayItem,
@@ -18,17 +21,14 @@ import type {
 	FWRandomPageResult,
 	FWRandomPageSummary,
 	FWRelativeTimestampOptions,
+	FWRestApiOptions,
 	FWResult,
 	FWRevision,
 	FWRevisionPredictions,
+	FWToolbarComment,
 	FWUserContrib,
 	FWUserInfo,
 	FWUserSearchResult,
-	FWActionApiOptions,
-	FWApiOptions,
-	FWHistoryOptions,
-	FWRestApiOptions,
-	FWToolbarComment,
 } from "./types"
 
 /** MediaWiki REST API page history returns this many revisions per request; used as default and max for getPageHistory and getCombinedFeed. */

@@ -27,7 +27,8 @@ function generateEntryPoints(): Record<string, string> {
 
 	uniquePrototypes.forEach((_prototype, key) => {
 		const [wrapper, id] = key.split("/")
-		if (wrapper && id) {
+		// Skip when wrapper is missing or the literal string "undefined" (e.g. variant groups have no wrapper)
+		if (wrapper && id && wrapper !== "undefined") {
 			const entryName = `${wrapper.toLowerCase()}-${id.toLowerCase()}`
 			const entryPath = fileURLToPath(
 				new URL(`./entry-points/${wrapper}/${id}.html`, import.meta.url)
@@ -60,7 +61,8 @@ function createEntryPointFiles(): void {
 
 	uniquePrototypes.forEach((_prototype, key) => {
 		const [wrapper, id] = key.split("/")
-		if (wrapper && id) {
+		// Skip when wrapper is missing or the literal string "undefined" (e.g. variant groups have no wrapper)
+		if (wrapper && id && wrapper !== "undefined") {
 			// Build route path with base URL
 			const routePath = `${baseUrl.replace(/\/$/, "")}/${wrapper}/${id}`
 
