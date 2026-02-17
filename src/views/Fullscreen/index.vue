@@ -1,8 +1,10 @@
 <template>
-	<main>
-		<component v-if="PrototypeComponent" :is="PrototypeComponent" />
-		<p v-else>Prototype "{{ prototypeName }}" not found</p>
-	</main>
+	<div class="view">
+		<main>
+			<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+			<p v-else>Prototype "{{ prototypeName }}" not found</p>
+		</main>
+	</div>
 </template>
 
 <script setup lang="ts">

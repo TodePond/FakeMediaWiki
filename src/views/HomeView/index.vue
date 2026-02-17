@@ -1,6 +1,7 @@
 <template>
-	<main>
-		<h1>Prototypes</h1>
+	<div class="view">
+		<main>
+			<h1>Prototypes</h1>
 		<p class=" intro">
 			Hello, I'm <a href="https://wikimedia.enterprise.slack.com/team/U0A4XK2020H">Lu</a>, and
 			this is my prototyping system called FakeWiki (name pending). The source code is
@@ -190,7 +191,8 @@
 				(copied)
 			</div>
 		</div>
-	</main>
+		</main>
+	</div>
 </template>
 
 <script setup lang="ts">

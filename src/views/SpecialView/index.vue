@@ -1,7 +1,8 @@
 <template>
-	<div class="special-view">
-		<nav>
-			<div class="nav-item">
+	<div class="view">
+		<div class="special-view">
+			<nav>
+				<div class="nav-item">
 				<CdxIcon :icon="cdxIconMenu" />
 				<a class="nav-wordmark">
 					<img
@@ -61,9 +62,10 @@
 					<span>Help</span>
 				</a>
 			</span>
-		</header>
-		<component v-if="PrototypeComponent" :is="PrototypeComponent" />
-		<p v-else>Prototype "{{ prototypeName }}" not found</p>
+			</header>
+			<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+			<p v-else>Prototype "{{ prototypeName }}" not found</p>
+		</div>
 	</div>
 </template>
 

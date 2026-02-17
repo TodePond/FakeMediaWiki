@@ -1,7 +1,7 @@
 <template>
 	<main class="mobile-view">
 		<!-- When viewport is small: fullscreen like FullscreenView -->
-		<div class="mobile-view__fullscreen">
+		<div class="mobile-view__fullscreen view">
 			<component v-if="PrototypeComponent" :is="PrototypeComponent" />
 			<p v-else>Prototype "{{ prototypeName }}" not found</p>
 		</div>
@@ -19,7 +19,7 @@
 							<span class="mobile-view__address-bar-url"></span>
 						</div>
 					</div>
-					<div class="mobile-view__screen">
+					<div class="mobile-view__screen view">
 						<component v-if="PrototypeComponent" :is="PrototypeComponent" />
 						<p v-else>Prototype "{{ prototypeName }}" not found</p>
 					</div>

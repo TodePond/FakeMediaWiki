@@ -145,6 +145,17 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		variants: [
 			{
 				type: "variant",
+				id: "MobileFlaggedWatchlist",
+				component: "FlaggedWatchlist",
+				title: "Mobile flagged watchlist",
+				name: "Mobile flagged watchlist",
+				description: "A feed with flagged items.",
+				wrapper: "Mobile",
+				status: "new",
+				featured: true,
+			},
+			{
+				type: "variant",
 				id: "FlaggedWatchlist",
 				title: "Flagged watchlist",
 				name: "Flagged watchlist",

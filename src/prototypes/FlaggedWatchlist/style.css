@@ -15,13 +15,23 @@
 	align-items: center;
 }
 
+.flagged-watchlist {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	width: 100%;
+	padding: 0 0.7rem;
+}
+
 .watchlist-container {
 	display: flex;
 	flex-direction: column;
 	padding-bottom: 5rem;
 	max-width: 800px;
-	margin: 0 auto;
+	margin: 0 10px;
 	padding-left: 2.7rem;
+	padding-right: 2.7rem;
 	position: relative;
 	isolation: isolate;
 	width: 100%;
@@ -160,6 +170,12 @@
 	z-index: 1;
 }
 
+@container view (max-width: 640px) {
+	.history-navigation-buttons {
+		display: none;
+	}
+}
+
 .history-nav-button {
 	background: none;
 	border: 1px solid var(--border-color-subtle);
@@ -199,10 +215,11 @@
 .history-title-row {
 	display: flex;
 	align-items: flex-start;
-	gap: 0.25rem;
+	gap: 0rem 0.25rem;
 	flex-wrap: wrap;
 	position: relative;
 	width: 100%;
+	padding-right: 2rem;
 }
 
 .history-collapse-button {
@@ -231,7 +248,7 @@
 }
 
 .history-expanded .history-delta {
-	/* font-size: 1.25rem !important; */
+	font-size: 1.25rem !important;
 }
 
 .history-item:has(.history-expanded) {
@@ -841,23 +858,32 @@ form footer {
 	justify-content: flex-end;
 }
 
-@media (max-width: 900px) {
-	main {
-		flex-direction: column;
+@container view (max-width: 640px) {
+	.watchlist-container {
+		padding-left: 0;
+		padding-right: 0;
+	}
+	.flagged-watchlist {
+		padding-left: 0;
+		padding-right: 0;
+	}
+	.watchlist-date-header {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
 	}
 
-	form {
-		order: 0;
+	.history-item:has(.history-expanded) {
+		border-left: none;
+		border-right: none;
 	}
 
-	.inputs-group {
-		flex-direction: row;
-		flex-wrap: wrap;
-		justify-content: flex-start;
-		align-items: center;
-	}
-
-	form footer {
-		justify-content: flex-start;
+	/* Prevent accidental taps on controls before a result is expanded. */
+	.history-item:not(.history-item-expanded) a,
+	.history-item:not(.history-item-expanded) button,
+	.history-item:not(.history-item-expanded) [role="button"],
+	.history-item:not(.history-item-expanded) input,
+	.history-item:not(.history-item-expanded) select,
+	.history-item:not(.history-item-expanded) textarea {
+		pointer-events: none;
 	}
 }

@@ -30,6 +30,11 @@ body {
 	font-synthesis: style;
 }
 
+.view {
+	container-type: inline-size;
+	container-name: view;
+}
+
 h1,
 h2 {
 	font-family: var(--font-family-heading-main);
