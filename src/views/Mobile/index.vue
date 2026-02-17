@@ -35,7 +35,7 @@ import { CdxButton } from "@wikimedia/codex"
 import type { Component } from "vue"
 import { computed, onMounted, ref, shallowRef, watch } from "vue"
 import { useRoute } from "vue-router"
-import { getPrototypeComponent } from "../prototypes/registry"
+import { getPrototypeComponent } from "../../prototypes/registry"
 
 const PHONE_WIDTH = 412
 const PHONE_HEIGHT = 892

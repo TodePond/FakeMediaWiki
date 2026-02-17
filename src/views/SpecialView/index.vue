@@ -83,7 +83,7 @@ import {
 import type { Component } from "vue"
 import { computed, ref, shallowRef, watch } from "vue"
 import { useRoute } from "vue-router"
-import { getPrototype, getPrototypeComponent } from "../prototypes/registry"
+import { getPrototype, getPrototypeComponent } from "../../prototypes/registry"
 
 const route = useRoute()
 const prototypeName = computed(() => route.params.name as string)

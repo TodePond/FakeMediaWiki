@@ -6,27 +6,27 @@ const router = createRouter({
 		{
 			path: "/",
 			name: "Home",
-			component: () => import("./views/HomeView.vue"),
+			component: () => import("./views/HomeView/index.vue"),
 		},
 		{
 			path: "/Special/:name",
 			name: "Special",
-			component: () => import("./views/SpecialView.vue"),
+			component: () => import("./views/SpecialView/index.vue"),
 		},
 		{
 			path: "/Fullscreen/:name",
 			name: "Fullscreen",
-			component: () => import("./views/Fullscreen.vue"),
+			component: () => import("./views/Fullscreen/index.vue"),
 		},
 		{
 			path: "/Mobile/:name",
 			name: "Mobile",
-			component: () => import("./views/Mobile.vue"),
+			component: () => import("./views/Mobile/index.vue"),
 		},
 		{
 			path: "/Component/:name",
 			name: "Component",
-			component: () => import("./views/ComponentView.vue"),
+			component: () => import("./views/ComponentView/index.vue"),
 		},
 	],
 })
