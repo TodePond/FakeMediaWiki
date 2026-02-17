@@ -2,32 +2,20 @@
 	<main class="multi-page-feed">
 		<form @submit.prevent="search">
 			<div class="inputs">
-				<div class="input-group">
-					<CdxLabel input-id="page-name-1">Page name 1</CdxLabel>
+				<CdxLabel :input-id="getPageInputId(0)">Followed pages</CdxLabel>
+				<div class="input-group" v-for="(_, index) in pageSearchQueries" :key="`page-${index}`">
 					<CdxTextInput
 						autocomplete="off"
-						v-model="searchQuery1"
+						v-model="pageSearchQueries[index]"
 						input-type="search"
-						id="page-name-1"
+						:id="getPageInputId(index)"
 					/>
 				</div>
-				<div class="input-group">
-					<CdxLabel input-id="page-name-2">Page name 2</CdxLabel>
-					<CdxTextInput
-						autocomplete="off"
-						v-model="searchQuery2"
-						input-type="search"
-						id="page-name-2"
-					/>
-				</div>
-				<div class="input-group">
-					<CdxLabel input-id="page-name-3">Page name 3</CdxLabel>
-					<CdxTextInput
-						autocomplete="off"
-						v-model="searchQuery3"
-						input-type="search"
-						id="page-name-3"
-					/>
+				<div class="input-list-actions">
+					<CdxButton type="button" @click="addPage">Add page</CdxButton>
+					<CdxButton type="button" @click="removePage" :disabled="pageSearchQueries.length === 0">
+						Remove page
+					</CdxButton>
 				</div>
 			</div>
 			<span>
@@ -110,13 +98,10 @@ import { FakeWiki } from "fakewiki"
 import type { FWRevision } from "fakewiki/types"
 
 const wiki = new FakeWiki()
-
-const storageKey1 = "searchQueryFeed1"
-const storageKey2 = "searchQueryFeed2"
-const storageKey3 = "searchQueryFeed3"
-const searchQuery1 = ref(localStorage.getItem(storageKey1) || "Wikipedia")
-const searchQuery2 = ref(localStorage.getItem(storageKey2) || "Wet Leg")
-const searchQuery3 = ref(localStorage.getItem(storageKey3) || "Water")
+const PROTOTYPE_NAME = "MultiPageFeed"
+const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
+const defaultPageSearchQueries = ["Wikipedia", "Wet Leg", "Water"]
+const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
 const history = ref<{ revisions?: FWRevision[] }>({})
 const isLoading = ref(false)
 const errors = ref<string[]>([])
@@ -124,17 +109,46 @@ const errors = ref<string[]>([])
 onMounted(search)
 
 function saveSearchQueries(): void {
-	localStorage.setItem(storageKey1, searchQuery1.value)
-	localStorage.setItem(storageKey2, searchQuery2.value)
-	localStorage.setItem(storageKey3, searchQuery3.value)
+	localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
+}
+
+function loadSearchQueries(key: string, defaultValues: string[]): string[] {
+	const savedSearchQueries = localStorage.getItem(key)
+	if (!savedSearchQueries) {
+		return defaultValues
+	}
+	try {
+		const parsed = JSON.parse(savedSearchQueries)
+		if (Array.isArray(parsed) && parsed.every(value => typeof value === "string")) {
+			return parsed
+		}
+	} catch {
+		// Ignore invalid stored values and fallback.
+	}
+	return defaultValues
+}
+
+function addPage(): void {
+	pageSearchQueries.value.push("")
+	saveSearchQueries()
+}
+
+function removePage(): void {
+	if (pageSearchQueries.value.length === 0) {
+		return
+	}
+	pageSearchQueries.value.pop()
+	saveSearchQueries()
+}
+
+function getPageInputId(index: number): string {
+	return `page-name-${index + 1}`
 }
 
 async function search(): Promise<void> {
 	isLoading.value = true
 	errors.value = []
-	const pageNames = [searchQuery1.value, searchQuery2.value, searchQuery3.value].filter(
-		name => name.trim() !== ""
-	)
+	const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
 
 	if (pageNames.length === 0) {
 		history.value = { revisions: [] }

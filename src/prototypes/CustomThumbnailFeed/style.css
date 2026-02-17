@@ -87,6 +87,14 @@ form {
 	gap: 0.25rem;
 }
 
+.input-list-actions {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	width: 100%;
+	justify-content: flex-end;
+}
+
 .input-controls {
 	display: flex;
 	gap: 0.25rem;
@@ -243,6 +251,10 @@ form footer {
 		flex-wrap: wrap;
 		justify-content: flex-start;
 		align-items: center;
+	}
+
+	.input-list-actions {
+		justify-content: flex-start;
 	}
 
 	.change {

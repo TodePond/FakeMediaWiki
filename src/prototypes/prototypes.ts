@@ -100,17 +100,17 @@ export const categories: CategoryDefinition[] = [
 	{
 		id: "search",
 		name: "Search",
-		description: "Basic demonstrations of using search features.",
+		description: "Basic demonstrations of search features.",
 	},
 	{
 		id: "api",
 		name: "API",
-		description: "Basic demonstrations of API endpoints.",
+		description: "Demonstrations of available API.",
 	},
 	{
 		id: "components",
 		name: "Components",
-		description: "Basic examples of different Codex components.",
+		description: "Examples of different Codex components.",
 	},
 ]
 
@@ -280,8 +280,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				id: "CombinedFeedMinimal",
 				title: "Combined feed",
 				name: "Combined feed",
-				description:
-					"A stripped-back combined feed with no avatar or thumbnail.<br />Updated to test out an improved combined feed endpoint.",
+				description: "A stripped-back combined feed with no avatar or thumbnail.",
 				wrapper: "Special",
 				featured: true,
 			},
@@ -390,7 +389,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "api",
 		wrapper: "Component",
 		title: "On this day",
-		featured: true,
 	},
 	{
 		type: "prototype",
@@ -501,7 +499,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "components",
 		wrapper: "Component",
 		title: "Filter",
-		featured: true,
 	},
 	{
 		type: "prototype",

@@ -438,24 +438,21 @@ interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "SmoothWatchlistStyledVariant"
 
-const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)
-const userStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "userQuery", 3)
-
-const pageSearchQueries = ref<string[]>([
+const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
+const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
+const defaultPageSearchQueries = [
 	"Wikipedia",
 	"Wet Leg",
 	"Water",
 	"Confidence Man (band)",
 	"Algorave",
-])
-const userSearchQueries = ref<string[]>([
+]
+const defaultUserSearchQueries = [
 	"Samwalton9",
 	"Todepond",
-	// "Humbugtheman",
-	// localStorage.getItem(userStorageKeys[0]!) ?? "Samwalton9",
-	// localStorage.getItem(userStorageKeys[1]!) ?? "Humbugtheman",
-	// localStorage.getItem(userStorageKeys[2]!) ?? "Todepond",
-])
+]
+const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
+const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
 
 // Combined feed results
 const allRevisionsData = ref<FWRevision[]>([])
@@ -505,14 +502,24 @@ const HEART_RISE_DURATION_MS = 2500
 onMounted(search)
 
 function saveSearchQueries(): void {
-	pageSearchQueries.value.forEach((query, index) => {
-		const key = pageStorageKeys[index]
-		if (key) localStorage.setItem(key, query)
-	})
-	userSearchQueries.value.forEach((query, index) => {
-		const key = userStorageKeys[index]
-		if (key) localStorage.setItem(key, query)
-	})
+	localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
+	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
+}
+
+function loadSearchQueries(key: string, defaultValues: string[]): string[] {
+	const savedSearchQueries = localStorage.getItem(key)
+	if (!savedSearchQueries) {
+		return defaultValues
+	}
+	try {
+		const parsed = JSON.parse(savedSearchQueries)
+		if (Array.isArray(parsed) && parsed.every(value => typeof value === "string")) {
+			return parsed
+		}
+	} catch {
+		// Ignore invalid stored values and fallback.
+	}
+	return defaultValues
 }
 
 async function loadFeed(after?: string, append = false): Promise<void> {

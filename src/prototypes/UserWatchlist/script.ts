@@ -25,22 +25,23 @@ const PROTOTYPE_NAME = "UserWatchlist"
 export function useActionWatchlist() {
 	const wiki = new FakeWiki()
 
-	const pageStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "pageQuery", 3)
-	const userStorageKeys = wiki.getStorageKeys(PROTOTYPE_NAME, "userQuery", 3)
+	const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
+	const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
+	const defaultPageSearchQueries = ["Wikipedia", "Wet Leg", "Water"]
+	const defaultUserSearchQueries = ["Samwalton9", "Humbugtheman", "Todepond"]
+	const pageSearchQueries = ref<string[]>(
+		loadSearchQueries(pageStorageKey, defaultPageSearchQueries)
+	)
+	const userSearchQueries = ref<string[]>(
+		loadSearchQueries(userStorageKey, defaultUserSearchQueries)
+	)
 
-	const pageSearchQueries = ref<string[]>([
-		localStorage.getItem(pageStorageKeys[0]!) ?? "Wikipedia",
-		localStorage.getItem(pageStorageKeys[1]!) ?? "Wet Leg",
-		localStorage.getItem(pageStorageKeys[2]!) ?? "Water",
-	])
-	const userSearchQueries = ref<string[]>([
-		localStorage.getItem(userStorageKeys[0]!) ?? "Samwalton9",
-		localStorage.getItem(userStorageKeys[1]!) ?? "Humbugtheman",
-		localStorage.getItem(userStorageKeys[2]!) ?? "Todepond",
-	])
-
-	const pageResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
-	const userResults = wiki.createResults<FWRevision>(3).map(r => ref(r))
+	const pageResults = wiki
+		.createResults<FWRevision>(pageSearchQueries.value.length)
+		.map(result => ref(result))
+	const userResults = wiki
+		.createResults<FWRevision>(userSearchQueries.value.length)
+		.map(result => ref(result))
 
 	/** Which revision ids have the inline diff expanded */
 	const expandedDiffIds = ref<Set<number>>(new Set())
@@ -64,14 +65,66 @@ export function useActionWatchlist() {
 	const loadingHistoryPageNames = ref<Set<string>>(new Set())
 
 	function saveSearchQueries(): void {
-		pageSearchQueries.value.forEach((query, index) => {
-			const key = pageStorageKeys[index]
-			if (key) localStorage.setItem(key, query)
-		})
-		userSearchQueries.value.forEach((query, index) => {
-			const key = userStorageKeys[index]
-			if (key) localStorage.setItem(key, query)
-		})
+		localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
+		localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
+	}
+
+	function loadSearchQueries(key: string, defaultValues: string[]): string[] {
+		const savedSearchQueries = localStorage.getItem(key)
+		if (!savedSearchQueries) {
+			return defaultValues
+		}
+		try {
+			const parsed = JSON.parse(savedSearchQueries)
+			if (Array.isArray(parsed) && parsed.every(value => typeof value === "string")) {
+				return parsed
+			}
+		} catch {
+			// Ignore invalid stored values and fallback.
+		}
+		return defaultValues
+	}
+
+	function createEmptyResult(): FWResult<FWRevision> {
+		return { data: [], loading: false, error: null }
+	}
+
+	function addPage(): void {
+		pageSearchQueries.value.push("")
+		pageResults.push(ref(createEmptyResult()))
+		saveSearchQueries()
+	}
+
+	function removePage(): void {
+		if (pageSearchQueries.value.length === 0) {
+			return
+		}
+		pageSearchQueries.value.pop()
+		pageResults.pop()
+		saveSearchQueries()
+	}
+
+	function addUser(): void {
+		userSearchQueries.value.push("")
+		userResults.push(ref(createEmptyResult()))
+		saveSearchQueries()
+	}
+
+	function removeUser(): void {
+		if (userSearchQueries.value.length === 0) {
+			return
+		}
+		userSearchQueries.value.pop()
+		userResults.pop()
+		saveSearchQueries()
+	}
+
+	function getPageInputId(index: number): string {
+		return `page-name-${index + 1}`
+	}
+
+	function getUserInputId(index: number): string {
+		return `user-${index + 1}`
 	}
 
 	async function loadUser(userName: string, resultRef: Ref<FWResult<FWRevision>>): Promise<void> {
@@ -540,6 +593,12 @@ export function useActionWatchlist() {
 		wiki,
 		pageSearchQueries,
 		userSearchQueries,
+		addPage,
+		removePage,
+		addUser,
+		removeUser,
+		getPageInputId,
+		getUserInputId,
 		search,
 		isAnyLoading,
 		errors,

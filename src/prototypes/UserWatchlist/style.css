@@ -305,6 +305,14 @@ form {
 	gap: 0.25rem;
 }
 
+.input-list-actions {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	width: 100%;
+	justify-content: flex-end;
+}
+
 .cdx-text-input {
 	max-width: 100%;
 	min-width: 0;
@@ -338,6 +346,10 @@ form footer {
 		flex-wrap: wrap;
 		justify-content: flex-start;
 		align-items: center;
+	}
+
+	.input-list-actions {
+		justify-content: flex-start;
 	}
 
 	form footer {

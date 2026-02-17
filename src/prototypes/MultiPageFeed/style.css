@@ -72,6 +72,14 @@
 	gap: 0.25rem;
 }
 
+.input-list-actions {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	width: 100%;
+	justify-content: flex-end;
+}
+
 form {
 	padding-bottom: 1rem;
 }

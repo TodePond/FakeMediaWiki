@@ -65,7 +65,6 @@ form {
 .cdx-text-input {
 	max-width: 100%;
 	min-width: 0;
-	width: 256px;
 }
 
 .inputs-group {
@@ -80,6 +79,7 @@ form {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+	width: 256px;
 	margin-bottom: 0.5rem;
 }
 
@@ -87,6 +87,14 @@ form {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
+}
+
+.input-list-actions {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	width: 100%;
+	justify-content: flex-end;
 }
 
 form footer {
@@ -194,7 +202,11 @@ form footer {
 		flex-direction: row;
 		flex-wrap: wrap;
 		justify-content: flex-start;
-		align-items: center;
+		align-items: flex-start;
+	}
+
+	.input-list-actions {
+		justify-content: flex-start;
 	}
 
 	.change {
@@ -206,4 +218,3 @@ form footer {
 		justify-content: flex-start;
 	}
 }
-

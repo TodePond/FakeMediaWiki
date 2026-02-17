@@ -3,57 +3,37 @@
 		<form @submit.prevent="search">
 			<div class="inputs-group">
 				<div class="inputs">
-					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
-					<div class="input-group">
+					<CdxLabel :input-id="getPageInputId(0)">Followed pages</CdxLabel>
+					<div class="input-group" v-for="(_, index) in pageSearchQueries" :key="`page-${index}`">
 						<CdxTextInput
 							autocomplete="off"
-							v-model="pageSearchQueries[0]"
+							v-model="pageSearchQueries[index]"
 							input-type="search"
-							id="page-name-1"
+							:id="getPageInputId(index)"
 						/>
 					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[1]"
-							input-type="search"
-							id="page-name-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[2]"
-							input-type="search"
-							id="page-name-3"
-						/>
+					<div class="input-list-actions">
+						<CdxButton type="button" @click="addPage">Add page</CdxButton>
+						<CdxButton type="button" @click="removePage" :disabled="pageSearchQueries.length === 0">
+							Remove page
+						</CdxButton>
 					</div>
 				</div>
 				<div class="inputs">
-					<CdxLabel input-id="user-1">Followed users</CdxLabel>
-					<div class="input-group">
+					<CdxLabel :input-id="getUserInputId(0)">Followed users</CdxLabel>
+					<div class="input-group" v-for="(_, index) in userSearchQueries" :key="`user-${index}`">
 						<CdxTextInput
 							autocomplete="off"
-							v-model="userSearchQueries[0]"
+							v-model="userSearchQueries[index]"
 							input-type="search"
-							id="user-1"
+							:id="getUserInputId(index)"
 						/>
 					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[1]"
-							input-type="search"
-							id="user-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[2]"
-							input-type="search"
-							id="user-3"
-						/>
+					<div class="input-list-actions">
+						<CdxButton type="button" @click="addUser">Add user</CdxButton>
+						<CdxButton type="button" @click="removeUser" :disabled="userSearchQueries.length === 0">
+							Remove user
+						</CdxButton>
 					</div>
 				</div>
 			</div>
@@ -147,64 +127,88 @@ import { FakeWiki } from "fakewiki"
 import type { FWPageHistoryRevision, FWRevision } from "fakewiki/types"
 
 const wiki = new FakeWiki()
-
-const pageStorageKeys: [string, string, string] = [
-	"searchQueryFeed1",
-	"searchQueryFeed2",
-	"searchQueryFeed3",
-]
-const userStorageKeys: [string, string, string] = [
-	"searchQueryFeed4",
-	"searchQueryFeed5",
-	"searchQueryFeed6",
-]
-const pageSearchQueries = ref<string[]>([
-	localStorage.getItem(pageStorageKeys[0]) ?? "Wikipedia",
-	localStorage.getItem(pageStorageKeys[1]) ?? "Wet Leg",
-	localStorage.getItem(pageStorageKeys[2]) ?? "Water",
-])
-const userSearchQueries = ref<string[]>([
-	localStorage.getItem(userStorageKeys[0]) ?? "Samwalton9",
-	localStorage.getItem(userStorageKeys[1]) ?? "Humbugtheman",
-	localStorage.getItem(userStorageKeys[2]) ?? "Todepond",
-])
+const PROTOTYPE_NAME = "CustomThumbnailFeed"
+const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
+const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
+const defaultPageSearchQueries = ["Wikipedia", "Wet Leg", "Water"]
+const defaultUserSearchQueries = ["Samwalton9", "Humbugtheman", "Todepond"]
+const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
+const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
 
 // Store results separately for each page
-const pageResults: [Ref<FWRevision[]>, Ref<FWRevision[]>, Ref<FWRevision[]>] = [
-	ref([]),
-	ref([]),
-	ref([]),
-]
-const userResults: [Ref<FWRevision[]>, Ref<FWRevision[]>, Ref<FWRevision[]>] = [
-	ref([]),
-	ref([]),
-	ref([]),
-]
-const pageLoading: [Ref<boolean>, Ref<boolean>, Ref<boolean>] = [ref(false), ref(false), ref(false)]
-const userLoading: [Ref<boolean>, Ref<boolean>, Ref<boolean>] = [ref(false), ref(false), ref(false)]
-const pageError: [Ref<string | null>, Ref<string | null>, Ref<string | null>] = [
-	ref(null),
-	ref(null),
-	ref(null),
-]
-const userError: [Ref<string | null>, Ref<string | null>, Ref<string | null>] = [
-	ref(null),
-	ref(null),
-	ref(null),
-]
+const pageResults: Ref<FWRevision[]>[] = pageSearchQueries.value.map(() => ref([]))
+const userResults: Ref<FWRevision[]>[] = userSearchQueries.value.map(() => ref([]))
+const pageLoading: Ref<boolean>[] = pageSearchQueries.value.map(() => ref(false))
+const userLoading: Ref<boolean>[] = userSearchQueries.value.map(() => ref(false))
+const pageError: Ref<string | null>[] = pageSearchQueries.value.map(() => ref(null))
+const userError: Ref<string | null>[] = userSearchQueries.value.map(() => ref(null))
 onMounted(search)
 
 function saveSearchQueries(): void {
-	pageSearchQueries.value.forEach((query, index) => {
-		if (pageStorageKeys[index]) {
-			localStorage.setItem(pageStorageKeys[index], query)
+	localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
+	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
+}
+
+function loadSearchQueries(key: string, defaultValues: string[]): string[] {
+	const savedSearchQueries = localStorage.getItem(key)
+	if (!savedSearchQueries) {
+		return defaultValues
+	}
+	try {
+		const parsed = JSON.parse(savedSearchQueries)
+		if (Array.isArray(parsed) && parsed.every(value => typeof value === "string")) {
+			return parsed
 		}
-	})
-	userSearchQueries.value.forEach((query, index) => {
-		if (userStorageKeys[index]) {
-			localStorage.setItem(userStorageKeys[index], query)
-		}
-	})
+	} catch {
+		// Ignore invalid stored values and fallback.
+	}
+	return defaultValues
+}
+
+function addPage(): void {
+	pageSearchQueries.value.push("")
+	pageResults.push(ref([]))
+	pageLoading.push(ref(false))
+	pageError.push(ref(null))
+	saveSearchQueries()
+}
+
+function removePage(): void {
+	if (pageSearchQueries.value.length === 0) {
+		return
+	}
+	pageSearchQueries.value.pop()
+	pageResults.pop()
+	pageLoading.pop()
+	pageError.pop()
+	saveSearchQueries()
+}
+
+function addUser(): void {
+	userSearchQueries.value.push("")
+	userResults.push(ref([]))
+	userLoading.push(ref(false))
+	userError.push(ref(null))
+	saveSearchQueries()
+}
+
+function removeUser(): void {
+	if (userSearchQueries.value.length === 0) {
+		return
+	}
+	userSearchQueries.value.pop()
+	userResults.pop()
+	userLoading.pop()
+	userError.pop()
+	saveSearchQueries()
+}
+
+function getPageInputId(index: number): string {
+	return `page-name-${index + 1}`
+}
+
+function getUserInputId(index: number): string {
+	return `user-${index + 1}`
 }
 
 async function search(): Promise<void> {

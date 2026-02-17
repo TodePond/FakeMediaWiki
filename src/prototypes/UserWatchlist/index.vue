@@ -3,57 +3,37 @@
 		<form @submit.prevent="search">
 			<div class="inputs-group">
 				<div class="inputs">
-					<CdxLabel input-id="page-name-1">Followed pages</CdxLabel>
-					<div class="input-group">
+					<CdxLabel :input-id="getPageInputId(0)">Followed pages</CdxLabel>
+					<div class="input-group" v-for="(_, index) in pageSearchQueries" :key="`page-${index}`">
 						<CdxTextInput
 							autocomplete="off"
-							v-model="pageSearchQueries[0]"
+							v-model="pageSearchQueries[index]"
 							input-type="search"
-							id="page-name-1"
+							:id="getPageInputId(index)"
 						/>
 					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[1]"
-							input-type="search"
-							id="page-name-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="pageSearchQueries[2]"
-							input-type="search"
-							id="page-name-3"
-						/>
+					<div class="input-list-actions">
+						<CdxButton type="button" @click="addPage">Add page</CdxButton>
+						<CdxButton type="button" @click="removePage" :disabled="pageSearchQueries.length === 0">
+							Remove page
+						</CdxButton>
 					</div>
 				</div>
 				<div class="inputs">
-					<CdxLabel input-id="user-1">Followed users</CdxLabel>
-					<div class="input-group">
+					<CdxLabel :input-id="getUserInputId(0)">Followed users</CdxLabel>
+					<div class="input-group" v-for="(_, index) in userSearchQueries" :key="`user-${index}`">
 						<CdxTextInput
 							autocomplete="off"
-							v-model="userSearchQueries[0]"
+							v-model="userSearchQueries[index]"
 							input-type="search"
-							id="user-1"
+							:id="getUserInputId(index)"
 						/>
 					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[1]"
-							input-type="search"
-							id="user-2"
-						/>
-					</div>
-					<div class="input-group">
-						<CdxTextInput
-							autocomplete="off"
-							v-model="userSearchQueries[2]"
-							input-type="search"
-							id="user-3"
-						/>
+					<div class="input-list-actions">
+						<CdxButton type="button" @click="addUser">Add user</CdxButton>
+						<CdxButton type="button" @click="removeUser" :disabled="userSearchQueries.length === 0">
+							Remove user
+						</CdxButton>
 					</div>
 				</div>
 			</div>
@@ -317,6 +297,12 @@ const {
 	wiki,
 	pageSearchQueries,
 	userSearchQueries,
+	addPage,
+	removePage,
+	addUser,
+	removeUser,
+	getPageInputId,
+	getUserInputId,
 	search,
 	isAnyLoading,
 	errors,
