@@ -1583,10 +1583,7 @@ export class FakeWiki {
 	 * @param options - Formatting options for different time periods
 	 * @returns Relative time string
 	 */
-	getRelativeTimestamp(
-		timestamp: string | Date,
-		options: FWRelativeTimestampOptions = {}
-	): string {
+	getRelativeTimestamp(timestamp: string | Date, options: FWRelativeTimestampOptions): string {
 		const now = new Date()
 		const past = timestamp instanceof Date ? timestamp : new Date(timestamp)
 

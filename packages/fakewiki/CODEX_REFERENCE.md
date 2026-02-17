@@ -1,19 +1,19 @@
 # Codex design system reference
 
-This project uses [Codex](https://doc.wikimedia.org/codex/), the design system for Wikimedia.
+This project uses [Codex](https://doc.wikimedia.org/codex/), the Wikimedia design system. This file is a short reference for components and tokens; for full API and usage, see the official docs linked below.
 
 ## Components
 
-### Commonly used components
+Commonly used Codex components:
 
-- `CdxButton` - Button component
-- `CdxTextInput` - Text input field
-- `CdxLabel` - Form label
-- `CdxProgressIndicator` - Loading indicator
-- `CdxIcon` - Icon component
-- `CdxCard` - Card component
+- **CdxButton** – Buttons
+- **CdxTextInput** – Text inputs
+- **CdxLabel** – Form labels
+- **CdxProgressIndicator** – Loading state
+- **CdxIcon** – Icons (icons come from `@wikimedia/codex-icons`)
+- **CdxCard** – Cards
 
-### Usage
+Example:
 
 ```vue
 <script setup>
@@ -29,41 +29,22 @@ import { CdxButton, CdxTextInput, CdxLabel } from "@wikimedia/codex"
 
 ## Icons
 
-Icons are imported from `@wikimedia/codex-icons`:
-
-```vue
-<script setup>
-import { CdxIcon } from "@wikimedia/codex"
-import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
-</script>
-
-<template>
-	<CdxIcon :icon="cdxIconHeart" />
-</template>
-```
-
-### Common icons used in this project
-
-- `cdxIconHeart` - Heart icon (for "thank" actions)
-- `cdxIconLinkExternal` - External link icon
-- `cdxIconArticle` - Article/document icon
-- `cdxIconRobot` - Bot icon
-- `cdxIconPushPin` - Pin icon
+Icons are provided by `@wikimedia/codex-icons` and rendered with `CdxIcon`. For which icons this project uses and how to add more, see **ICON_REFERENCE.md** in this package.
 
 ## Design tokens
 
-Design tokens are available as CSS variables. See `src/style/tokens.css` for the full list.
+Codex exposes design tokens as CSS variables (e.g. in your app’s `tokens.css` or equivalent). Typical names:
 
-### Common tokens
+- **Colors** – `--color-base`, `--color-progressive`, `--color-destructive`, `--color-subtle`
+- **Spacing** – `--spacing-50`, `--spacing-100`, …
+- **Border** – `--border-color-base`, `--border-color-subtle`
+- **Background** – `--background-color-base`, `--background-color-interactive`
 
-- Colors: `--color-base`, `--color-progressive`, `--color-destructive`, `--color-subtle`
-- Spacing: `--spacing-50`, `--spacing-100`, etc.
-- Border: `--border-color-base`, `--border-color-subtle`
-- Background: `--background-color-base`, `--background-color-interactive`
+The delta styles in `fakewiki/style/delta.css` use `--color-content-added` and `--color-content-removed`.
 
 ## Documentation
 
-- [Codex Documentation](https://doc.wikimedia.org/codex/)
-- [Component Library](https://doc.wikimedia.org/codex/latest/components/overview.html)
-- [Design Tokens](https://doc.wikimedia.org/codex/latest/design-tokens/overview.html)
+- [Codex](https://doc.wikimedia.org/codex/)
+- [Components](https://doc.wikimedia.org/codex/latest/components/overview.html)
+- [Design tokens](https://doc.wikimedia.org/codex/latest/design-tokens/overview.html)
 - [Icons](https://doc.wikimedia.org/codex/latest/icons/all-icons.html)

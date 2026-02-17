@@ -1,55 +1,35 @@
-# Codex icons reference
+# Icons reference
 
-This document lists icons from `@wikimedia/codex-icons` used in this project.
+Quick reference for **Codex icons** (`@wikimedia/codex-icons`) used in this project. For the full icon set and component usage, see the [Codex Icons documentation](https://doc.wikimedia.org/codex/latest/icons/all-icons.html).
 
-## Importing icons
+## Import and use
 
-```typescript
-import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
-```
-
-## Using icons
+Icons are imported from `@wikimedia/codex-icons` and rendered with Codex’s `CdxIcon`:
 
 ```vue
+<script setup>
+import { CdxIcon } from "@wikimedia/codex"
+import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
+</script>
+
 <template>
-	<CdxIcon :icon="cdxIconHeart" />
+  <CdxIcon :icon="cdxIconHeart" />
 </template>
 ```
 
 ## Icons used in this project
 
-### Navigation & links
+| Icon | Usage |
+|------|--------|
+| `cdxIconLinkExternal` | External link (e.g. feed items → revisions) |
+| `cdxIconHeart` | “Thank” actions on revisions |
+| `cdxIconRobot` | Bot edits |
+| `cdxIconArticle` | Article/document (e.g. placeholder for page thumbnails) |
+| `cdxIconPushPin` | Pinned prototypes (e.g. home view) |
 
-- `cdxIconLinkExternal` - External link icon (used in feed items to link to revisions)
+## Adding a new icon
 
-### Actions
-
-- `cdxIconHeart` - Heart icon (used for "thank" actions on revisions)
-- `cdxIconRobot` - Bot icon (used to indicate bot edits)
-
-### Content
-
-- `cdxIconArticle` - Article/document icon (used as placeholder for page thumbnails)
-- `cdxIconPushPin` - Pin icon (used in home view for pinned prototypes)
-
-## Finding more icons
-
-All available icons can be found in the [Codex Icons Documentation](https://doc.wikimedia.org/codex/latest/icons/all-icons.html).
-
-To use a new icon:
-
-1. Import it from `@wikimedia/codex-icons`
-2. Pass it to the `CdxIcon` component via the `:icon` prop
-
-Example:
-
-```vue
-<script setup>
-import { CdxIcon } from "@wikimedia/codex"
-import { cdxIconSearch } from "@wikimedia/codex-icons"
-</script>
-
-<template>
-	<CdxIcon :icon="cdxIconSearch" />
-</template>
-```
+1. Find the icon in [Codex Icons](https://doc.wikimedia.org/codex/latest/icons/all-icons.html).
+2. Import it from `@wikimedia/codex-icons`.
+3. Pass it to `CdxIcon` via the `:icon` prop.
+4. Optionally add it to the table above for future reference.

@@ -1,132 +1,118 @@
-# Wiki API Reference
+# fakewiki
 
-This directory contains API schemas and utilities for interacting with Wikimedia and MediaWiki APIs.
+Helpers for building MediaWiki prototypes: API client, storage keys, result types, and shared styles. API details are documented via TSDoc on the source; this file covers package layout and usage at a glance.
 
-## Files
+## Package exports
 
-- `FakeWiki.ts` - Main API client class with methods for interacting with Wikimedia REST API, MediaWiki REST API, and MediaWiki Action API
-- `schema/mediawiki-schema.json` - OpenAPI 3.0 schema for MediaWiki REST API
-- `schema/wikimedia-schema.json` - OpenAPI 3.0 schema for Wikimedia REST API
+| Export                     | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| `fakewiki`                 | Main entry: `FakeWiki` class and default export |
+| `fakewiki/types`           | Shared TypeScript types and interfaces          |
+| `fakewiki/style/delta.css` | CSS for delta (change size) indicators          |
 
-## Utility methods
+## What’s in the package
 
-The FakeWiki class provides several utility methods for prototypes:
+- **FakeWiki** – Client for Wikimedia REST API, MediaWiki REST API, and MediaWiki Action API. Use it for page summaries, history, search, diffs, and related endpoints. See TSDoc on `FakeWiki` and its methods for parameters and return types.
+- **Storage keys** – Helpers to build consistent keys for prototype storage (e.g. `getStorageKey`, `getStorageKeys`).
+- **Result pattern** – `FWResult<T>` and helpers like `createResult` / `createResults` for loading/error/data state in prototypes.
+- **Delta utilities** – `getDeltaClass(delta)` for positive/negative/neutral CSS class names; use with `fakewiki/style/delta.css` for styling.
+- **Schemas** – OpenAPI 3.0 specs in `schema/`: `mediawiki-schema.json`, `wikimedia-schema.json`. Useful for docs, codegen, or validation.
 
-### Storage keys
+## API bases
 
-- `wiki.getStorageKey(prototypeName, keyName)` - Generate a single storage key
-- `wiki.getStorageKeys(prototypeName, keyName, count)` - Generate multiple storage keys
+- **Wikimedia REST API** – `https://en.wikipedia.org/api/rest_v1/` (cacheable, machine-readable content).
+- **MediaWiki REST API** – `https://en.wikipedia.org/w/rest.php/v1/`.
+- **MediaWiki Action API** – `https://en.wikipedia.org/w/api.php` (query parameters).
 
-### Result types
-
-- `Result<T>` interface - Standardized result type with `data`, `loading`, and `error` properties
-- `wiki.createResult<T>()` - Create a single Result instance with default values
-- `wiki.createResults<T>(count)` - Create multiple Result instances
-
-### Delta utilities
-
-- `wiki.getDeltaClass(delta)` - Get CSS class name for change size indicator ("positive", "negative", or "neutral")
-- `style/delta.css` - Shared CSS styles for delta indicators (import this file to use the classes)
-
-## Reference documentation
-
-- `CODEX_REFERENCE.md` - Guide to Codex components, icons, and design tokens
-- `ICON_REFERENCE.md` - Documentation of Codex icons used in the project
-
-## API types
-
-### Wikimedia REST API
-
-Base URL: `https://en.wikipedia.org/api/rest_v1/`
-
-Provides cacheable access to Wikimedia content in machine-readable formats.
-
-### MediaWiki REST API
-
-Base URL: `https://en.wikipedia.org/w/rest.php/v1/`
-
-REST endpoints for MediaWiki functionality.
-
-### MediaWiki Action API
-
-Base URL: `https://en.wikipedia.org/w/api.php`
-
-The traditional MediaWiki API using query parameters.
-
-## Usage
-
-### Basic API usage
+## Quick usage
 
 ```typescript
 import { FakeWiki } from "fakewiki"
-
-const wiki = new FakeWiki()
-
-// Get page summary
-const summary = await wiki.getPageSummary("Wikipedia")
-
-// Get page history
-const history = await wiki.getPageHistory("Wikipedia", { limit: 5 })
-
-// Search for pages
-const results = await wiki.searchPages("query", 20)
-```
-
-### Using storage keys
-
-```typescript
-import { FakeWiki } from "fakewiki"
-
-const wiki = new FakeWiki()
-
-// Single key
-const key = wiki.getStorageKey("PageFeed", "searchQuery")
-// Returns: "PageFeed_searchQuery"
-
-// Multiple keys
-const keys = wiki.getStorageKeys("CustomPageFeed", "pageQuery", 3)
-// Returns: ["CustomPageFeed_pageQuery1", "CustomPageFeed_pageQuery2", "CustomPageFeed_pageQuery3"]
-```
-
-### Using result types
-
-```typescript
-import { FakeWiki } from "fakewiki"
-import type { Result, Revision } from "fakewiki/types"
-
-const wiki = new FakeWiki()
-
-// Single result
-const result = wiki.createResult<Revision>()
-
-// Multiple results
-const results = wiki.createResults<Revision>(3)
-```
-
-### Using delta utilities
-
-```typescript
-import { FakeWiki } from "fakewiki"
+import type { FWResult, FWRevision } from "fakewiki/types"
 import "fakewiki/style/delta.css"
 
 const wiki = new FakeWiki()
 
-const className = wiki.getDeltaClass(150) // Returns "positive"
-const className2 = wiki.getDeltaClass(-50) // Returns "negative"
-const className3 = wiki.getDeltaClass(0) // Returns "neutral"
+// Page summary, history, search (see TSDoc for options and return types)
+const summary = await wiki.getPageSummary("Wikipedia")
+const history = await wiki.getPageHistory("Wikipedia", { limit: 5 })
+
+// Storage keys for your prototype
+const key = wiki.getStorageKey("PageFeed", "searchQuery")
+
+// Result state for UI
+const result = wiki.createResult<FWRevision>()
+
+// Delta styling
+const deltaClass = wiki.getDeltaClass(150) // "positive"
 ```
 
-## Schema files
+**Search:**
 
-The schema files (`mediawiki-schema.json` and `wikimedia-schema.json`) are OpenAPI 3.0 specifications that document all available endpoints, parameters, and response formats. These can be used for:
+```typescript
+const pages = await wiki.searchPages("Albert Einstein", 10)
+const users = await wiki.searchUsers("Admin", 5)
+const titles = await wiki.searchTitles("Wiki")
+```
 
-- API documentation generation
-- Type generation
-- Validation
-- Understanding available endpoints
+**User info and history:**
 
-## References
+```typescript
+const userInfo = await wiki.getUserInfo("Example")
+const avatarUrl = await wiki.getUserAvatar("Example")
+const userRevisions = await wiki.getUserHistory("Example", { limit: 20 })
+```
 
-- [Wikimedia REST API Documentation](https://www.mediawiki.org/wiki/Wikimedia_REST_API)
-- [MediaWiki REST API Documentation](https://www.mediawiki.org/wiki/API:REST_API)
-- [MediaWiki Action API Documentation](https://www.mediawiki.org/wiki/API:Main_page)
+**Feeds and discovery:**
+
+```typescript
+const feed = await wiki.getCombinedFeed({
+	pageNames: ["Wikipedia", "Wet Leg"],
+	userNames: ["Todepond", "Samwalton9"],
+	limit: 10,
+})
+const random = await wiki.getRandomPage()
+const featured = await wiki.getFeaturedPage()
+const onThisDay = await wiki.getOnThisDay(new Date())
+```
+
+**Revisions and diffs:**
+
+```typescript
+const diff = await wiki.getRevisionDiff("Wikipedia", 123456789)
+const parentId = await wiki.getParentRevisionId("Wikipedia", 123456789)
+const source = await wiki.getRevisionSource(123456789)
+```
+
+**URLs:**
+
+```typescript
+wiki.getPageUrl("Wikipedia")
+wiki.getRevisionUrl(123456789, "Wikipedia")
+wiki.getUserUrl("Example")
+```
+
+**Timestamps:**
+
+```typescript
+wiki.getRelativeTimestamp("2024-01-15T12:00:00Z", {
+	seconds: "words",
+	minutes: "minutes",
+	hours: "hours",
+	days: "days",
+	weeks: "date",
+	months: "date",
+	years: "date",
+}) // e.g. "15 January 2024", e.g. "3 minutes ago"
+```
+
+## Reference docs in this package
+
+- **CODEX_REFERENCE.md** – Codex components, design tokens, and links.
+- **ICON_REFERENCE.md** – Codex icons used in the project and how to add more.
+
+## External references
+
+- [Wikimedia REST API](https://www.mediawiki.org/wiki/Wikimedia_REST_API)
+- [MediaWiki REST API](https://www.mediawiki.org/wiki/API:REST_API)
+- [MediaWiki Action API](https://www.mediawiki.org/wiki/API:Main_page)
