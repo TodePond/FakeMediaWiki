@@ -25,15 +25,5 @@ watch(
 </script>
 
 <style scoped>
-main {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-}
-</style>
-
-<style scoped>
-body {
-	max-width: 100%;
-}
+@import "./style.css";
 </style>

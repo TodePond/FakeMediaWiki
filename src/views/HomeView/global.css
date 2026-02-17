@@ -1,0 +1,71 @@
+.filter-dropdowns .cdx-select-vue {
+	min-width: 0;
+}
+.filter-dropdowns .cdx-select-vue__handle {
+	width: 100%;
+	min-width: 100%;
+	border-top: none;
+	border-right: none;
+	border-radius: 0;
+}
+
+.filter-bar .cdx-chip-input {
+	border-radius: 2px 2px 0px 0px;
+}
+
+/* At smallest breakpoint, ensure the chip input has a right border so it aligns with the dropdown block */
+@media (max-width: 302px) {
+	.filter-bar .cdx-chip-input {
+		border-right: 1px solid var(--border-color-interactive);
+	}
+}
+
+/* 1 column (4 rows): right border on every handle so the right edge is continuous; only last gets bottom corners rounded */
+.filter-dropdown .cdx-select-vue__handle {
+	border-right: 1px solid var(--border-color-interactive);
+}
+.filter-dropdown:nth-child(4) .cdx-select-vue__handle {
+	border-radius: 0 0 2px 2px;
+}
+
+/* 2 columns: right border only on 2nd and 4th; no radius on 1st and 2nd to avoid internal corner bulge; bottom-left on 3rd, bottom-right on 4th */
+@media (min-width: 400px) {
+	.filter-dropdown:nth-child(1) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(2) .cdx-select-vue__handle {
+		border-radius: 0;
+	}
+	.filter-dropdown:nth-child(1) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(3) .cdx-select-vue__handle {
+		border-right: none;
+	}
+	.filter-dropdown:nth-child(2n) .cdx-select-vue__handle {
+		border-right: 1px solid var(--border-color-interactive);
+	}
+	.filter-dropdown:nth-child(3) .cdx-select-vue__handle {
+		border-radius: 0 0 0 2px;
+	}
+	.filter-dropdown:nth-child(4) .cdx-select-vue__handle {
+		border-right: 1px solid var(--border-color-interactive);
+		border-radius: 0 0 2px 0;
+	}
+}
+
+/* 4 columns (1 row): right border only on 4th; first gets bottom-left rounded, last gets bottom-right rounded */
+@media (min-width: 700px) {
+	.filter-dropdown:nth-child(1) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(2) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(3) .cdx-select-vue__handle {
+		border-right: none;
+	}
+	.filter-dropdown:nth-child(1) .cdx-select-vue__handle {
+		border-radius: 0 0 0 2px;
+	}
+	.filter-dropdown:nth-child(2) .cdx-select-vue__handle,
+	.filter-dropdown:nth-child(3) .cdx-select-vue__handle {
+		border-radius: 0;
+	}
+	.filter-dropdown:nth-child(4) .cdx-select-vue__handle {
+		border-right: 1px solid var(--border-color-interactive);
+		border-radius: 0 0 2px 0;
+	}
+}

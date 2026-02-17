@@ -29,13 +29,5 @@ watch(
 </script>
 
 <style scoped>
-h1 {
-	padding-bottom: var(--spacing-50);
-}
-
-.component-view {
-	max-width: var(--min-width-breakpoint-tablet);
-	margin: 0 auto;
-	padding: var(--spacing-100);
-}
+@import "./style.css";
 </style>
