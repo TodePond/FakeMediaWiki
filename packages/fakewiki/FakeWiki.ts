@@ -1887,8 +1887,16 @@ export class FakeWiki {
 		return currentPeriod === "seconds" ? "Just now" : formatUnit(currentValue, currentPeriod)
 	}
 
-	/** Watchlist-focused relative timestamp preset. */
-	formatWatchlistRelativeTime(timestamp: string | number | Date): string {
+	/**
+	 * Format relative time using the standard watchlist display preset.
+	 *
+	 * This is a convenience wrapper around `formatRelativeTimestamp()` with
+	 * period-specific options tuned for watchlist UIs.
+	 *
+	 * @param timestamp - ISO timestamp, epoch milliseconds, or Date instance
+	 * @returns Human-readable relative text (e.g. "Just now", "2 hours ago")
+	 */
+	formatNiceRelativeTimestamp(timestamp: string | number | Date): string {
 		return this.formatRelativeTimestamp(timestamp, {
 			seconds: "words",
 			minutes: "minutes",
@@ -1900,7 +1908,15 @@ export class FakeWiki {
 		})
 	}
 
-	/** Group revisions by day with human-readable date labels. */
+	/**
+	 * Group revisions by calendar date for watchlist-style rendering.
+	 *
+	 * Output is sorted by date descending (newest day first), while revision
+	 * order inside each day is preserved from the input array.
+	 *
+	 * @param revisions - Revisions to group (typically already newest-first)
+	 * @returns Date groups with stable `dateKey`, human `dateLabel`, and revisions
+	 */
 	groupRevisionsByDate(
 		revisions: FWRevision[]
 	): Array<{ dateKey: string; dateLabel: string; revisions: FWRevision[] }> {
@@ -1922,7 +1938,12 @@ export class FakeWiki {
 			}))
 	}
 
-	/** Signed delta for watchlist, e.g. (+120) or (-412). */
+	/**
+	 * Format a revision size delta using watchlist notation.
+	 *
+	 * @param delta - Byte delta for a revision; null/NaN are treated as zero
+	 * @returns Signed delta wrapped in parentheses (e.g. "(+120)", "(-4)", "(0)")
+	 */
 	formatDelta(delta: number | null): string {
 		const n = delta != null ? Number(delta) : 0
 		if (Number.isNaN(n)) return "(0)"

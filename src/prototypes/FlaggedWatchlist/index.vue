@@ -174,7 +174,7 @@
 									]"
 									@click.stop="toggleHistory(change)"
 								>
-									{{ wiki.formatWatchlistRelativeTime(change.timestamp) }}
+									{{ wiki.formatNiceRelativeTimestamp(change.timestamp) }}
 								</button>
 								<div
 									v-if="change?.summary?.comment"
