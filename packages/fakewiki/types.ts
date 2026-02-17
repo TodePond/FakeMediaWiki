@@ -57,6 +57,12 @@ export interface FWDiffLine {
 	offset?: { from: number | null; to: number | null }
 }
 
+/** Character-level segment for rendering diff highlights */
+export interface FWDiffSegment {
+	text: string
+	type: "add" | "remove" | null
+}
+
 export interface FWCompareResponse {
 	from: { id: number }
 	to: { id: number }
@@ -110,6 +116,9 @@ export interface FWUserInfo {
 	invalid?: boolean
 	missing?: boolean
 }
+
+/** User experience category used by watchlist-like prototypes */
+export type FWUserCategory = "unregistered" | "newcomer" | "learner" | "experienced"
 
 /** User contribution entry from Action API list=usercontribs */
 export interface FWUserContrib {

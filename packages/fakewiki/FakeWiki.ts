@@ -4,6 +4,7 @@ import type {
 	FWCachedRevision,
 	FWCompareResponse,
 	FWDiffLine,
+	FWDiffSegment,
 	FWFeaturedPage,
 	FWHistoryCacheEntitySnapshot,
 	FWHistoryCacheSnapshot,
@@ -26,6 +27,7 @@ import type {
 	FWRevision,
 	FWRevisionPredictions,
 	FWToolbarComment,
+	FWUserCategory,
 	FWUserContrib,
 	FWUserInfo,
 	FWUserSearchResult,
@@ -58,6 +60,11 @@ export class FakeWiki {
 	private userInfoCache: Map<string, FWUserInfo | null>
 
 	/**
+	 * Cache for derived user categories
+	 */
+	private userCategoryCache: Map<string, FWUserCategory>
+
+	/**
 	 * Cache for page histories
 	 * key = pageName, value = sorted array of revisions (newest first)
 	 */
@@ -78,6 +85,7 @@ export class FakeWiki {
 	constructor(base = "https://en.wikipedia.org/") {
 		this.base = base
 		this.userInfoCache = new Map()
+		this.userCategoryCache = new Map()
 	}
 
 	/**
@@ -1010,6 +1018,84 @@ export class FakeWiki {
 	}
 
 	/**
+	 * Convert a UTF-8 byte offset to a JavaScript string character index.
+	 * Used for mapping REST API highlight byte ranges onto codepoint-safe slice indices.
+	 * @param str - Source text
+	 * @param byteOffset - UTF-8 byte offset into str
+	 * @returns Character index suitable for String.prototype.slice
+	 */
+	private byteOffsetToCharIndex(str: string, byteOffset: number): number {
+		let bytes = 0
+		let i = 0
+		while (i < str.length) {
+			const c = str.codePointAt(i) ?? 0
+			if (c <= 0x7f) bytes += 1
+			else if (c <= 0x7ff) bytes += 2
+			else if (c <= 0xffff) bytes += 3
+			else bytes += 4
+			if (bytes > byteOffset) return i
+			i += c > 0xffff ? 2 : 1
+		}
+		return str.length
+	}
+
+	/**
+	 * Split a diff line into character-level highlight segments.
+	 * Converts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.
+	 * @param line - Diff line from compare API
+	 * @returns Ordered segments covering the entire line text
+	 */
+	getDiffLineSegments(line: FWDiffLine): FWDiffSegment[] {
+		const text = line.text ?? ""
+		const ranges = line.highlightRanges ?? []
+		if (ranges.length === 0) {
+			return [{ text, type: null }]
+		}
+		const sorted = [...ranges].sort((a, b) => a.start - b.start)
+		const segments: FWDiffSegment[] = []
+		let pos = 0
+		for (const range of sorted) {
+			const { start, length, type } = range
+			const charStart = this.byteOffsetToCharIndex(text, start)
+			const charEnd = this.byteOffsetToCharIndex(text, start + length)
+			if (charStart > pos) {
+				segments.push({ text: text.slice(pos, charStart), type: null })
+			}
+			segments.push({
+				text: text.slice(charStart, charEnd),
+				type: type === 0 ? "add" : type === 1 ? "remove" : null,
+			})
+			pos = charEnd
+		}
+		if (pos < text.length) {
+			segments.push({ text: text.slice(pos), type: null })
+		}
+		return segments
+	}
+
+	/**
+	 * Map compare API diff line type to a CSS class name.
+	 * @param type - Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)
+	 * @returns CSS class for styling the line
+	 */
+	getDiffLineClass(type: number): string {
+		switch (type) {
+			case 0:
+				return "diff-line-context"
+			case 1:
+				return "diff-line-add"
+			case 2:
+				return "diff-line-remove"
+			case 3:
+			case 4:
+			case 5:
+				return "diff-line-change"
+			default:
+				return "diff-line-context"
+		}
+	}
+
+	/**
 	 * Get a random page
 	 * @param format - Format: 'summary', 'html', or 'title' (default: 'summary')
 	 * @returns Random page content - string for 'title' format, RandomPageSummary for 'summary' or 'html' format
@@ -1412,13 +1498,12 @@ export class FakeWiki {
 	}
 
 	/**
-	 * Determine user category based on edit count and days of activity
-	 * @param userInfo - User information object
-	 * @returns User category: "unregistered", "registered", "newcomer", "learner", or "experienced"
+	 * Determine user category from user info data.
+	 * Internal helper; external callers should use getUserCategory(userName).
+	 * @param userInfo - User info object (or null when unavailable)
+	 * @returns Derived user category
 	 */
-	getUserCategory(
-		userInfo: FWUserInfo | null
-	): "unregistered" | "newcomer" | "learner" | "experienced" {
+	private getUserCategoryFromInfo(userInfo: FWUserInfo | null): FWUserCategory {
 		if (!userInfo) {
 			return "unregistered"
 		}
@@ -1454,6 +1539,33 @@ export class FakeWiki {
 
 		// Learner: between newcomer and experienced thresholds
 		return "learner"
+	}
+
+	/**
+	 * Get a user's category (cache-aware main entry point).
+	 * Reads from category cache when available; otherwise fetches user info and caches the result.
+	 * @param userName - Username to classify
+	 * @returns User category
+	 */
+	async getUserCategory(userName: string): Promise<FWUserCategory> {
+		const cachedCategory = this.getUserCategoryFromCache(userName)
+		if (cachedCategory) {
+			return cachedCategory
+		}
+		const userInfo = await this.getUserInfo(userName)
+		const category = this.getUserCategoryFromInfo(userInfo)
+		this.userCategoryCache.set(userName, category)
+		return category
+	}
+
+	/**
+	 * Read a previously fetched user category from cache.
+	 * Internal helper; returns null when no cached category exists.
+	 * @param userName - Username key for cached category lookup
+	 * @returns Cached user category or null
+	 */
+	private getUserCategoryFromCache(userName: string): FWUserCategory | null {
+		return this.userCategoryCache.get(userName) ?? null
 	}
 
 	/**

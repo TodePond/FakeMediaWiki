@@ -77,7 +77,7 @@
 										v-if="getUserTypeConfig(change.user.name)?.icon"
 										:class="[
 											'user-type-icon',
-											`user-type-icon-${getUserCategory(change.user.name) || ''}`,
+											`user-type-icon-${getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
 											color: getUserTypeConfig(change.user.name)?.color,
@@ -156,7 +156,7 @@
 										:class="[
 											'user-type-icon',
 											'user-type-icon-expanded',
-											`user-type-icon-${getUserCategory(change.user.name) || ''}`,
+											`user-type-icon-${getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
 											color: getUserTypeConfig(change.user.name)?.color,
@@ -265,7 +265,7 @@
 								<div
 									v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
 									:key="lineIdx"
-									:class="['diff-line', getDiffLineClass(line.type)]"
+									:class="['diff-line', wiki.getDiffLineClass(line.type)]"
 								>
 									<span class="diff-line-text">
 										<template
@@ -280,7 +280,9 @@
 											"
 										>
 											<template
-												v-for="(seg, segIdx) in getDiffLineSegments(line)"
+												v-for="(seg, segIdx) in wiki.getDiffLineSegments(
+													line
+												)"
 												:key="segIdx"
 											>
 												<span
@@ -404,7 +406,7 @@
 											size="x-small"
 											:class="[
 												'user-type-icon',
-												`user-type-icon-${getUserCategory(rev.user.name) || ''}`,
+												`user-type-icon-${getCachedUserCategory(rev.user.name) || ''}`,
 											]"
 											:style="{
 												color: getUserTypeConfig(rev.user.name)?.color,
@@ -426,7 +428,10 @@
 												v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!
 													.diff"
 												:key="lineIdx"
-												:class="['diff-line', getDiffLineClass(line.type)]"
+												:class="[
+													'diff-line',
+													wiki.getDiffLineClass(line.type),
+												]"
 											>
 												<span class="diff-line-text">
 													<template
@@ -443,7 +448,7 @@
 														<template
 															v-for="(
 																seg, segIdx
-															) in getDiffLineSegments(line)"
+															) in wiki.getDiffLineSegments(line)"
 															:key="segIdx"
 														>
 															<span
@@ -521,17 +526,15 @@ import {
 	cdxIconSuccess,
 	cdxIconUnStar,
 } from "@wikimedia/codex-icons"
-import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import { FakeWiki } from "fakewiki"
 import type {
 	FWCompareResponse,
-	FWDiffLine,
 	FWLiftWingPrediction,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
 	FWRevision,
-	FWUserInfo,
 } from "fakewiki/types"
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 
 /** Configuration for user type icons and colors */
 interface UserTypeConfig {
@@ -621,10 +624,10 @@ const risingHearts = ref<Array<{ id: number; x: number; y: number; type: "thank"
 let nextHeartId = 0
 const HEART_RISE_DURATION_MS = 2500
 
-/** Cache of user info by username */
-const userInfoCache = ref<Map<string, FWUserInfo | null>>(new Map())
-/** Cache of user categories by username */
-const userCategoriesCache = ref<Map<string, string>>(new Map())
+/** Cache of user categories by username for reactive UI reads */
+const userCategories = ref<Map<string, "unregistered" | "newcomer" | "learner" | "experienced">>(
+	new Map()
+)
 
 /** Which revision ids have the talk page expanded */
 const expandedTalkIds = ref<Set<number>>(new Set())
@@ -662,152 +665,26 @@ function setupKeyboardNavigation(): void {
 			return
 		}
 
-		// Only handle left/right arrow keys
-		if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+		const direction = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0
+		if (direction === 0) {
 			return
 		}
 
-		// Find the currently expanded item
 		const expandedIds = Array.from(expandedItemIds.value)
 		if (expandedIds.length === 0) {
 			return
 		}
 
-		// Get the first expanded item (there should typically only be one)
 		const currentId = expandedIds[0]
-		const revisions = allRevisionsInOrder.value
-		const currentIndex = revisions.findIndex(r => r.id === currentId)
+		const buttonType = direction < 0 ? "previous" : "next"
+		const currentButton = document.querySelector(
+			`[data-navigation-button="${buttonType}"]`
+		) as HTMLElement | null
+		const buttonTopRelativeToViewport = currentButton
+			? currentButton.getBoundingClientRect().top + window.scrollY
+			: window.scrollY
 
-		// Store scroll position before navigation
-		const scrollYBefore = window.scrollY
-
-		if (event.key === "ArrowLeft") {
-			// Navigate to previous
-			if (currentIndex > 0) {
-				const previousRevision = revisions[currentIndex - 1]
-				if (previousRevision) {
-					// Find the current button to get its position
-					const currentButton = document.querySelector(
-						`[data-navigation-button="previous"]`
-					) as HTMLElement
-					const buttonTopRelativeToViewport = currentButton
-						? currentButton.getBoundingClientRect().top + window.scrollY
-						: scrollYBefore
-
-					// Close current item
-					collapseItem(currentId)
-
-					// Expand previous item
-					const id = previousRevision.id
-					expandedItemIds.value = new Set(expandedItemIds.value).add(id)
-					expandedDiffIds.value = new Set(expandedDiffIds.value)
-					expandedDiffIds.value.add(id)
-					expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-					expandedHistoryIds.value.delete(id)
-					// Load diff if not already loaded
-					if (!loadedDiffs.value.has(id)) {
-						const pageName = previousRevision.pageName
-						if (pageName) {
-							loadingDiffIds.value = new Set(loadingDiffIds.value)
-							loadingDiffIds.value.add(id)
-							wiki.getRevisionDiff(pageName, id)
-								.then(response => {
-									loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-									loadingDiffIds.value = new Set(loadingDiffIds.value)
-									loadingDiffIds.value.delete(id)
-								})
-								.catch(e => {
-									console.error("Failed to load diff", e)
-									loadingDiffIds.value = new Set(loadingDiffIds.value)
-									loadingDiffIds.value.delete(id)
-								})
-						}
-					}
-
-					// Wait for DOM update, then restore scroll position
-					nextTick(() => {
-						const allItems = document.querySelectorAll(".history-item-expanded")
-						for (const item of allItems) {
-							const navButton = item.querySelector(
-								'[data-navigation-button="previous"]'
-							) as HTMLElement
-							if (navButton) {
-								const newButtonRect = navButton.getBoundingClientRect()
-								const newButtonTopRelativeToViewport =
-									newButtonRect.top + window.scrollY
-								const scrollDelta =
-									newButtonTopRelativeToViewport - buttonTopRelativeToViewport
-								window.scrollBy(0, scrollDelta)
-								break
-							}
-						}
-					})
-				}
-			}
-		} else if (event.key === "ArrowRight") {
-			// Navigate to next
-			if (currentIndex >= 0 && currentIndex < revisions.length - 1) {
-				const nextRevision = revisions[currentIndex + 1]
-				if (nextRevision) {
-					// Find the current button to get its position
-					const currentButton = document.querySelector(
-						`[data-navigation-button="next"]`
-					) as HTMLElement
-					const buttonTopRelativeToViewport = currentButton
-						? currentButton.getBoundingClientRect().top + window.scrollY
-						: scrollYBefore
-
-					// Close current item
-					collapseItem(currentId)
-
-					// Expand next item
-					const id = nextRevision.id
-					expandedItemIds.value = new Set(expandedItemIds.value).add(id)
-					expandedDiffIds.value = new Set(expandedDiffIds.value)
-					expandedDiffIds.value.add(id)
-					expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-					expandedHistoryIds.value.delete(id)
-					// Load diff if not already loaded
-					if (!loadedDiffs.value.has(id)) {
-						const pageName = nextRevision.pageName
-						if (pageName) {
-							loadingDiffIds.value = new Set(loadingDiffIds.value)
-							loadingDiffIds.value.add(id)
-							wiki.getRevisionDiff(pageName, id)
-								.then(response => {
-									loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-									loadingDiffIds.value = new Set(loadingDiffIds.value)
-									loadingDiffIds.value.delete(id)
-								})
-								.catch(e => {
-									console.error("Failed to load diff", e)
-									loadingDiffIds.value = new Set(loadingDiffIds.value)
-									loadingDiffIds.value.delete(id)
-								})
-						}
-					}
-
-					// Wait for DOM update, then restore scroll position
-					nextTick(() => {
-						const allItems = document.querySelectorAll(".history-item-expanded")
-						for (const item of allItems) {
-							const navButton = item.querySelector(
-								'[data-navigation-button="next"]'
-							) as HTMLElement
-							if (navButton) {
-								const newButtonRect = navButton.getBoundingClientRect()
-								const newButtonTopRelativeToViewport =
-									newButtonRect.top + window.scrollY
-								const scrollDelta =
-									newButtonTopRelativeToViewport - buttonTopRelativeToViewport
-								window.scrollBy(0, scrollDelta)
-								break
-							}
-						}
-					})
-				}
-			}
-		}
+		navigateToAdjacent(currentId, direction, buttonTopRelativeToViewport)
 	}
 
 	window.addEventListener("keydown", handleKeyDown)
@@ -826,6 +703,19 @@ onUnmounted(() => {
 function saveSearchQueries(): void {
 	localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
 	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
+}
+
+function cacheUserCategory(
+	userName: string,
+	category: "unregistered" | "newcomer" | "learner" | "experienced"
+): void {
+	userCategories.value = new Map(userCategories.value).set(userName, category)
+}
+
+function getCachedUserCategory(
+	userName: string
+): "unregistered" | "newcomer" | "learner" | "experienced" | null {
+	return userCategories.value.get(userName) ?? null
 }
 
 function loadSearchQueries(key: string, defaultValues: string[]): string[] {
@@ -906,7 +796,8 @@ async function loadFeed(after?: string, append = false): Promise<void> {
 					avatarUrl: null,
 				}
 				// Fetch user info for categorization
-				await fetchUserCategory(revision.user.name)
+				const userCategory = await wiki.getUserCategory(revision.user.name)
+				cacheUserCategory(revision.user.name, userCategory)
 				return processedRevision
 			})
 		)
@@ -1064,32 +955,15 @@ function formatDateShort(timestamp: string): string {
 
 /** Format relative date (e.g. "10 hours ago", "2 days ago") */
 function formatRelativeDate(timestamp: string): string {
-	const now = new Date()
-	const then = new Date(timestamp)
-	const diffMs = now.getTime() - then.getTime()
-	const diffSeconds = Math.floor(diffMs / 1000)
-	const diffMinutes = Math.floor(diffSeconds / 60)
-	const diffHours = Math.floor(diffMinutes / 60)
-	const diffDays = Math.floor(diffHours / 24)
-	const diffWeeks = Math.floor(diffDays / 7)
-	const diffMonths = Math.floor(diffDays / 30)
-	const diffYears = Math.floor(diffDays / 365)
-
-	if (diffSeconds < 60) {
-		return "just now"
-	} else if (diffMinutes < 60) {
-		return `${diffMinutes} ${diffMinutes === 1 ? "minute" : "minutes"} ago`
-	} else if (diffHours < 24) {
-		return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`
-	} else if (diffDays < 7) {
-		return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`
-	} else if (diffWeeks < 4) {
-		return `${diffWeeks} ${diffWeeks === 1 ? "week" : "weeks"} ago`
-	} else if (diffMonths < 12) {
-		return `${diffMonths} ${diffMonths === 1 ? "month" : "months"} ago`
-	} else {
-		return `${diffYears} ${diffYears === 1 ? "year" : "years"} ago`
-	}
+	return wiki.getRelativeTimestamp(timestamp, {
+		seconds: "words",
+		minutes: "minutes",
+		hours: "hours",
+		days: "days",
+		weeks: "weeks",
+		months: "months",
+		years: "years",
+	})
 }
 
 /** Signed delta for watchlist, e.g. (+120) or (-412). */
@@ -1119,24 +993,7 @@ function expandItem(change: FWRevision, event: MouseEvent): void {
 	expandedDiffIds.value.add(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
-	// Load diff if not already loaded
-	if (!loadedDiffs.value.has(id)) {
-		const pageName = change.pageName
-		if (!pageName) return
-		loadingDiffIds.value = new Set(loadingDiffIds.value)
-		loadingDiffIds.value.add(id)
-		wiki.getRevisionDiff(pageName, id)
-			.then(response => {
-				loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-				loadingDiffIds.value = new Set(loadingDiffIds.value)
-				loadingDiffIds.value.delete(id)
-			})
-			.catch(e => {
-				console.error("Failed to load diff", e)
-				loadingDiffIds.value = new Set(loadingDiffIds.value)
-				loadingDiffIds.value.delete(id)
-			})
-	}
+	ensureDiffLoaded(change)
 }
 
 function collapseItem(id: number): void {
@@ -1167,22 +1024,7 @@ function toggleDiff(change: FWRevision): void {
 	expandedHistoryIds.value.delete(id)
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
 	expandedTalkIds.value.delete(id)
-	if (loadedDiffs.value.has(id)) return
-	const pageName = change.pageName
-	if (!pageName) return
-	loadingDiffIds.value = new Set(loadingDiffIds.value)
-	loadingDiffIds.value.add(id)
-	wiki.getRevisionDiff(pageName, id)
-		.then(response => {
-			loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-		.catch(e => {
-			console.error("Failed to load diff", e)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
+	ensureDiffLoaded(change)
 }
 
 function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: string): void {
@@ -1198,20 +1040,7 @@ function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: stri
 	}
 	expandedHistoryDiffIds.value = new Map(expandedHistoryDiffIds.value).set(changeId, newSet)
 	if (expanded) return
-	if (loadedDiffs.value.has(id)) return
-	loadingDiffIds.value = new Set(loadingDiffIds.value)
-	loadingDiffIds.value.add(id)
-	wiki.getRevisionDiff(pageName, id)
-		.then(response => {
-			loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-		.catch(e => {
-			console.error("Failed to load diff", e)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
+	ensureDiffLoaded({ id, pageName })
 }
 
 function handleHistoryItemClick(
@@ -1260,7 +1089,8 @@ function toggleHistory(change: FWRevision): void {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => {
 					// Fetch user category for history revisions
-					await fetchUserCategory(rev.user.name)
+					const userCategory = await wiki.getUserCategory(rev.user.name)
+					cacheUserCategory(rev.user.name, userCategory)
 					return {
 						...rev,
 						commentHtml: await wiki.getEditSummaryHtml(rev.comment || "", pageName),
@@ -1279,74 +1109,6 @@ function toggleHistory(change: FWRevision): void {
 			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 			loadingHistoryPageNames.value.delete(pageName)
 		})
-}
-
-/** Segment of a diff line for character-level display (API highlightRanges: type 0 = add, 1 = remove) */
-interface DiffSegment {
-	text: string
-	type: "add" | "remove" | null
-}
-
-/** UTF-8 byte offset to character index in string */
-function byteOffsetToCharIndex(str: string, byteOffset: number): number {
-	let bytes = 0
-	let i = 0
-	while (i < str.length) {
-		const c = str.codePointAt(i) ?? 0
-		if (c <= 0x7f) bytes += 1
-		else if (c <= 0x7ff) bytes += 2
-		else if (c <= 0xffff) bytes += 3
-		else bytes += 4
-		if (bytes > byteOffset) return i
-		i += c > 0xffff ? 2 : 1
-	}
-	return str.length
-}
-
-/** Split a change line into segments for add/remove/change character-level styling */
-function getDiffLineSegments(line: FWDiffLine): DiffSegment[] {
-	const text = line.text ?? ""
-	const ranges = line.highlightRanges ?? []
-	if (ranges.length === 0) {
-		return [{ text, type: null }]
-	}
-	const sorted = [...ranges].sort((a, b) => a.start - b.start)
-	const segments: DiffSegment[] = []
-	let pos = 0
-	for (const range of sorted) {
-		const { start, length, type } = range
-		const charStart = byteOffsetToCharIndex(text, start)
-		const charEnd = byteOffsetToCharIndex(text, start + length)
-		if (charStart > pos) {
-			segments.push({ text: text.slice(pos, charStart), type: null })
-		}
-		segments.push({
-			text: text.slice(charStart, charEnd),
-			type: type === 0 ? "add" : type === 1 ? "remove" : null,
-		})
-		pos = charEnd
-	}
-	if (pos < text.length) {
-		segments.push({ text: text.slice(pos), type: null })
-	}
-	return segments
-}
-
-function getDiffLineClass(type: number): string {
-	switch (type) {
-		case 0:
-			return "diff-line-context"
-		case 1:
-			return "diff-line-add"
-		case 2:
-			return "diff-line-remove"
-		case 3:
-		case 4:
-		case 5:
-			return "diff-line-change"
-		default:
-			return "diff-line-context"
-	}
 }
 
 function onThankClick(change: FWRevision, e: MouseEvent): void {
@@ -1385,44 +1147,9 @@ function getItemZIndex(dateKey: string, changeIndex: number): number {
 	return 10 + cumulativeIndex + changeIndex
 }
 
-/** Fetch and cache user category */
-async function fetchUserCategory(userName: string): Promise<void> {
-	// Skip if already cached
-	if (userCategoriesCache.value.has(userName)) {
-		return
-	}
-
-	try {
-		const userInfo = await wiki.getUserInfo(userName)
-		const category = wiki.getUserCategory(userInfo)
-		userInfoCache.value.set(userName, userInfo)
-		userCategoriesCache.value.set(userName, category)
-	} catch (error) {
-		console.error(`Failed to fetch user category for ${userName}:`, error)
-		// Cache as unregistered on error
-		userCategoriesCache.value.set(userName, "unregistered")
-	}
-}
-
-/** Get user category for a username */
-function getUserCategory(
-	userName: string
-): "unregistered" | "newcomer" | "learner" | "experienced" | null {
-	const category = userCategoriesCache.value.get(userName)
-	if (
-		category === "unregistered" ||
-		category === "newcomer" ||
-		category === "learner" ||
-		category === "experienced"
-	) {
-		return category
-	}
-	return null
-}
-
 /** Get user type config for a username */
 function getUserTypeConfig(userName: string): UserTypeConfig | null {
-	const category = getUserCategory(userName)
+	const category = getCachedUserCategory(userName)
 	return category ? userTypeConfig[category] : null
 }
 
@@ -1463,132 +1190,92 @@ function handleAddTopic(change: FWRevision): void {
 	expandedTalkIds.value.delete(change.id)
 }
 
-/** Navigate to previous item, maintaining scroll position */
-function navigateToPrevious(currentId: number, event: MouseEvent): void {
-	event.stopPropagation()
+function ensureDiffLoaded(change: Pick<FWRevision, "id" | "pageName">): void {
+	if (loadedDiffs.value.has(change.id)) {
+		return
+	}
+	const pageName = change.pageName
+	if (!pageName) {
+		return
+	}
+	loadingDiffIds.value = new Set(loadingDiffIds.value)
+	loadingDiffIds.value.add(change.id)
+	wiki.getRevisionDiff(pageName, change.id)
+		.then(response => {
+			loadedDiffs.value = new Map(loadedDiffs.value).set(change.id, response)
+			loadingDiffIds.value = new Set(loadingDiffIds.value)
+			loadingDiffIds.value.delete(change.id)
+		})
+		.catch(e => {
+			console.error("Failed to load diff", e)
+			loadingDiffIds.value = new Set(loadingDiffIds.value)
+			loadingDiffIds.value.delete(change.id)
+		})
+}
+
+function navigateToAdjacent(
+	currentId: number,
+	direction: -1 | 1,
+	buttonTopRelativeToViewport: number
+): void {
 	const revisions = allRevisionsInOrder.value
 	const currentIndex = revisions.findIndex(r => r.id === currentId)
-	if (currentIndex <= 0) return // No previous item
-
-	const previousRevision = revisions[currentIndex - 1]
-	if (!previousRevision) return
-
-	// Store the button's position relative to viewport
-	const button = event.currentTarget as HTMLElement
-	const buttonRect = button.getBoundingClientRect()
-	const buttonTopRelativeToViewport = buttonRect.top + window.scrollY
-
-	// Close current item
-	collapseItem(currentId)
-
-	// Expand previous item
-	const id = previousRevision.id
-	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value)
-	expandedDiffIds.value.add(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-	expandedHistoryIds.value.delete(id)
-	// Load diff if not already loaded
-	if (!loadedDiffs.value.has(id)) {
-		const pageName = previousRevision.pageName
-		if (pageName) {
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.add(id)
-			wiki.getRevisionDiff(pageName, id)
-				.then(response => {
-					loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-					loadingDiffIds.value = new Set(loadingDiffIds.value)
-					loadingDiffIds.value.delete(id)
-				})
-				.catch(e => {
-					console.error("Failed to load diff", e)
-					loadingDiffIds.value = new Set(loadingDiffIds.value)
-					loadingDiffIds.value.delete(id)
-				})
-		}
+	if (currentIndex < 0) {
+		return
 	}
 
-	// Wait for DOM update, then restore scroll position
+	const nextIndex = currentIndex + direction
+	if (nextIndex < 0 || nextIndex >= revisions.length) {
+		return
+	}
+
+	const targetRevision = revisions[nextIndex]
+	if (!targetRevision) {
+		return
+	}
+
+	collapseItem(currentId)
+
+	expandedItemIds.value = new Set(expandedItemIds.value).add(targetRevision.id)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.add(targetRevision.id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(targetRevision.id)
+	ensureDiffLoaded(targetRevision)
+
+	const buttonType = direction < 0 ? "previous" : "next"
 	nextTick(() => {
-		// Find the same button in the newly expanded item
-		// Look for the item that contains the expanded content and has the previous button
 		const allItems = document.querySelectorAll(".history-item-expanded")
 		for (const item of allItems) {
 			const navButton = item.querySelector(
-				'[data-navigation-button="previous"]'
-			) as HTMLElement
-			if (navButton) {
-				const newButtonRect = navButton.getBoundingClientRect()
-				const newButtonTopRelativeToViewport = newButtonRect.top + window.scrollY
-				const scrollDelta = newButtonTopRelativeToViewport - buttonTopRelativeToViewport
-				window.scrollBy(0, scrollDelta)
-				break
+				`[data-navigation-button="${buttonType}"]`
+			) as HTMLElement | null
+			if (!navButton) {
+				continue
 			}
+			const newButtonTopRelativeToViewport =
+				navButton.getBoundingClientRect().top + window.scrollY
+			const scrollDelta = newButtonTopRelativeToViewport - buttonTopRelativeToViewport
+			window.scrollBy(0, scrollDelta)
+			break
 		}
 	})
+}
+
+/** Navigate to previous item, maintaining scroll position */
+function navigateToPrevious(currentId: number, event: MouseEvent): void {
+	event.stopPropagation()
+	const button = event.currentTarget as HTMLElement
+	const buttonTopRelativeToViewport = button.getBoundingClientRect().top + window.scrollY
+	navigateToAdjacent(currentId, -1, buttonTopRelativeToViewport)
 }
 
 /** Navigate to next item, maintaining scroll position */
 function navigateToNext(currentId: number, event: MouseEvent): void {
 	event.stopPropagation()
-	const revisions = allRevisionsInOrder.value
-	const currentIndex = revisions.findIndex(r => r.id === currentId)
-	if (currentIndex < 0 || currentIndex >= revisions.length - 1) return // No next item
-
-	const nextRevision = revisions[currentIndex + 1]
-	if (!nextRevision) return
-
-	// Store the button's position relative to viewport
 	const button = event.currentTarget as HTMLElement
-	const buttonRect = button.getBoundingClientRect()
-	const buttonTopRelativeToViewport = buttonRect.top + window.scrollY
-
-	// Close current item
-	collapseItem(currentId)
-
-	// Expand next item
-	const id = nextRevision.id
-	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value)
-	expandedDiffIds.value.add(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-	expandedHistoryIds.value.delete(id)
-	// Load diff if not already loaded
-	if (!loadedDiffs.value.has(id)) {
-		const pageName = nextRevision.pageName
-		if (pageName) {
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.add(id)
-			wiki.getRevisionDiff(pageName, id)
-				.then(response => {
-					loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-					loadingDiffIds.value = new Set(loadingDiffIds.value)
-					loadingDiffIds.value.delete(id)
-				})
-				.catch(e => {
-					console.error("Failed to load diff", e)
-					loadingDiffIds.value = new Set(loadingDiffIds.value)
-					loadingDiffIds.value.delete(id)
-				})
-		}
-	}
-
-	// Wait for DOM update, then restore scroll position
-	nextTick(() => {
-		// Find the same button in the newly expanded item
-		// Look for the item that contains the expanded content and has the next button
-		const allItems = document.querySelectorAll(".history-item-expanded")
-		for (const item of allItems) {
-			const navButton = item.querySelector('[data-navigation-button="next"]') as HTMLElement
-			if (navButton) {
-				const newButtonRect = navButton.getBoundingClientRect()
-				const newButtonTopRelativeToViewport = newButtonRect.top + window.scrollY
-				const scrollDelta = newButtonTopRelativeToViewport - buttonTopRelativeToViewport
-				window.scrollBy(0, scrollDelta)
-				break
-			}
-		}
-	})
+	const buttonTopRelativeToViewport = button.getBoundingClientRect().top + window.scrollY
+	navigateToAdjacent(currentId, 1, buttonTopRelativeToViewport)
 }
 
 /** Check if there is a previous item */

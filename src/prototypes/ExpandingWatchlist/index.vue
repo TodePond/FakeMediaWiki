@@ -185,7 +185,7 @@
 								<div
 									v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
 									:key="lineIdx"
-									:class="['diff-line', getDiffLineClass(line.type)]"
+									:class="['diff-line', wiki.getDiffLineClass(line.type)]"
 								>
 									<span class="diff-line-text">
 										<template
@@ -200,7 +200,9 @@
 											"
 										>
 											<template
-												v-for="(seg, segIdx) in getDiffLineSegments(line)"
+												v-for="(seg, segIdx) in wiki.getDiffLineSegments(
+													line
+												)"
 												:key="segIdx"
 											>
 												<span
@@ -335,7 +337,10 @@
 												v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!
 													.diff"
 												:key="lineIdx"
-												:class="['diff-line', getDiffLineClass(line.type)]"
+												:class="[
+													'diff-line',
+													wiki.getDiffLineClass(line.type),
+												]"
 											>
 												<span class="diff-line-text">
 													<template
@@ -352,7 +357,7 @@
 														<template
 															v-for="(
 																seg, segIdx
-															) in getDiffLineSegments(line)"
+															) in wiki.getDiffLineSegments(line)"
 															:key="segIdx"
 														>
 															<span
@@ -420,15 +425,14 @@
 
 <script setup lang="ts">
 import { CdxButton, CdxProgressBar } from "@wikimedia/codex"
-import { computed, onMounted, ref } from "vue"
 import { FakeWiki } from "fakewiki"
 import type {
 	FWCompareResponse,
-	FWDiffLine,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
 	FWRevision,
 } from "fakewiki/types"
+import { computed, onMounted, ref } from "vue"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
@@ -447,10 +451,7 @@ const defaultPageSearchQueries = [
 	"Confidence Man (band)",
 	"Algorave",
 ]
-const defaultUserSearchQueries = [
-	"Samwalton9",
-	"Todepond",
-]
+const defaultUserSearchQueries = ["Samwalton9", "Todepond"]
 const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
 
@@ -729,32 +730,15 @@ function formatDateShort(timestamp: string): string {
 
 /** Format relative date (e.g. "10 hours ago", "2 days ago") */
 function formatRelativeDate(timestamp: string): string {
-	const now = new Date()
-	const then = new Date(timestamp)
-	const diffMs = now.getTime() - then.getTime()
-	const diffSeconds = Math.floor(diffMs / 1000)
-	const diffMinutes = Math.floor(diffSeconds / 60)
-	const diffHours = Math.floor(diffMinutes / 60)
-	const diffDays = Math.floor(diffHours / 24)
-	const diffWeeks = Math.floor(diffDays / 7)
-	const diffMonths = Math.floor(diffDays / 30)
-	const diffYears = Math.floor(diffDays / 365)
-
-	if (diffSeconds < 60) {
-		return "just now"
-	} else if (diffMinutes < 60) {
-		return `${diffMinutes} ${diffMinutes === 1 ? "minute" : "minutes"} ago`
-	} else if (diffHours < 24) {
-		return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`
-	} else if (diffDays < 7) {
-		return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`
-	} else if (diffWeeks < 4) {
-		return `${diffWeeks} ${diffWeeks === 1 ? "week" : "weeks"} ago`
-	} else if (diffMonths < 12) {
-		return `${diffMonths} ${diffMonths === 1 ? "month" : "months"} ago`
-	} else {
-		return `${diffYears} ${diffYears === 1 ? "year" : "years"} ago`
-	}
+	return wiki.getRelativeTimestamp(timestamp, {
+		seconds: "words",
+		minutes: "minutes",
+		hours: "hours",
+		days: "days",
+		weeks: "weeks",
+		months: "months",
+		years: "years",
+	})
 }
 
 /** Signed delta for watchlist, e.g. (+120) or (-412). */
@@ -938,74 +922,6 @@ function toggleHistory(change: FWRevision): void {
 			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 			loadingHistoryPageNames.value.delete(pageName)
 		})
-}
-
-/** Segment of a diff line for character-level display (API highlightRanges: type 0 = add, 1 = remove) */
-interface DiffSegment {
-	text: string
-	type: "add" | "remove" | null
-}
-
-/** UTF-8 byte offset to character index in string */
-function byteOffsetToCharIndex(str: string, byteOffset: number): number {
-	let bytes = 0
-	let i = 0
-	while (i < str.length) {
-		const c = str.codePointAt(i) ?? 0
-		if (c <= 0x7f) bytes += 1
-		else if (c <= 0x7ff) bytes += 2
-		else if (c <= 0xffff) bytes += 3
-		else bytes += 4
-		if (bytes > byteOffset) return i
-		i += c > 0xffff ? 2 : 1
-	}
-	return str.length
-}
-
-/** Split a change line into segments for add/remove/change character-level styling */
-function getDiffLineSegments(line: FWDiffLine): DiffSegment[] {
-	const text = line.text ?? ""
-	const ranges = line.highlightRanges ?? []
-	if (ranges.length === 0) {
-		return [{ text, type: null }]
-	}
-	const sorted = [...ranges].sort((a, b) => a.start - b.start)
-	const segments: DiffSegment[] = []
-	let pos = 0
-	for (const range of sorted) {
-		const { start, length, type } = range
-		const charStart = byteOffsetToCharIndex(text, start)
-		const charEnd = byteOffsetToCharIndex(text, start + length)
-		if (charStart > pos) {
-			segments.push({ text: text.slice(pos, charStart), type: null })
-		}
-		segments.push({
-			text: text.slice(charStart, charEnd),
-			type: type === 0 ? "add" : type === 1 ? "remove" : null,
-		})
-		pos = charEnd
-	}
-	if (pos < text.length) {
-		segments.push({ text: text.slice(pos), type: null })
-	}
-	return segments
-}
-
-function getDiffLineClass(type: number): string {
-	switch (type) {
-		case 0:
-			return "diff-line-context"
-		case 1:
-			return "diff-line-add"
-		case 2:
-			return "diff-line-remove"
-		case 3:
-		case 4:
-		case 5:
-			return "diff-line-change"
-		default:
-			return "diff-line-context"
-	}
 }
 
 function onThankClick(change: FWRevision, e: MouseEvent): void {
