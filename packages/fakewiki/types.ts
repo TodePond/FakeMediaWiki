@@ -89,6 +89,11 @@ export interface FWRevision {
 	diff?: FWCompareResponse | null
 }
 
+/** Revision with link direction for related-changes feeds (outgoing, incoming, or both). */
+export type FWRevisionWithLinkType = FWRevision & {
+	linkType?: "to" | "from" | "both"
+}
+
 /**
  * Standardized result type for prototype data.
  * This provides a consistent structure for storing and managing results across prototypes.

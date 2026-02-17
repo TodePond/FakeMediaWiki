@@ -124,11 +124,11 @@ export function usePredictions(wiki: FakeWiki) {
 
 		if (damagingProb > 0.9 || goodfaithProb > 0.9) {
 			if (damagingProb > 0.9 && goodfaithProb > 0.9) {
-				return "It's very likely that this edit is damaging and made in bad faith"
+				return "It's likely that this edit is damaging and made in bad faith"
 			} else if (damagingProb > 0.9) {
-				return "It's very likely that this edit is damaging"
+				return "It's likely that this edit is damaging"
 			}
-			return "It's very likely that this edit was made in bad faith"
+			return "It's likely that this edit was made in bad faith"
 		}
 
 		if (damagingProb > 0.3 || goodfaithProb > 0.3) {

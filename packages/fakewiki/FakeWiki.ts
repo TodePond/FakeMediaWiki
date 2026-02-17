@@ -26,6 +26,7 @@ import type {
 	FWResult,
 	FWRevision,
 	FWRevisionPredictions,
+	FWRevisionWithLinkType,
 	FWToolbarComment,
 	FWUserCategory,
 	FWUserContrib,
@@ -1258,6 +1259,205 @@ export class FakeWiki {
 		} while (plcontinue)
 
 		return result
+	}
+
+	/**
+	 * Get pages that link to the given page(s) (backlinks / "What links here")
+	 * Uses MediaWiki Action API prop=linkshere.
+	 * @param pageNames - Array of page titles to find backlinks for
+	 * @param options - Options
+	 * @param options.namespace - Filter by namespace (e.g., 0 for main namespace)
+	 * @param options.limit - Max backlinks per page (default 500)
+	 * @returns Map of target page title to array of page titles that link to it
+	 */
+	async getPagesBacklinks(
+		pageNames: string[],
+		options: { namespace?: number; limit?: number } = {}
+	): Promise<Map<string, string[]>> {
+		if (pageNames.length === 0) {
+			return new Map()
+		}
+
+		const { namespace, limit = 500 } = options
+		const result = new Map<string, string[]>()
+
+		for (const pageName of pageNames) {
+			result.set(pageName, [])
+		}
+
+		const titles = pageNames.join("|")
+		let lhcontinue: string | undefined = undefined
+
+		do {
+			const params: Record<string, unknown> = {
+				action: "query",
+				prop: "linkshere",
+				titles,
+				lhlimit: Math.min(limit, 500),
+			}
+
+			if (namespace !== undefined) {
+				params.lhnamespace = namespace
+			}
+
+			if (lhcontinue) {
+				params.lhcontinue = lhcontinue
+			}
+
+			const data = (await this.request({
+				api: "action",
+				params,
+			})) as {
+				query?: {
+					pages?: {
+						[pageId: string]: {
+							title: string
+							linkshere?: Array<{ title: string }>
+						}
+					}
+				}
+				continue?: {
+					lhcontinue?: string
+				}
+			}
+
+			const pages = data.query?.pages
+
+			if (pages) {
+				for (const page of Object.values(pages)) {
+					if (page.title && page.linkshere) {
+						const existing = result.get(page.title) || []
+						result.set(page.title, [...existing, ...page.linkshere.map(lh => lh.title)])
+					}
+				}
+			}
+
+			lhcontinue = data.continue?.lhcontinue
+		} while (lhcontinue)
+
+		return result
+	}
+
+	/**
+	 * Get related changes using the Action API feedrecentchanges (1–2 requests total).
+	 * Returns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).
+	 * @param targetPageName - Page title to get related changes for
+	 * @param options - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional timestamp to request changes after (for pagination)
+	 * @returns Array of revision-like items with linkType, sorted by timestamp newest first
+	 */
+	async getRelatedChanges(
+		targetPageName: string,
+		options: {
+			showOutgoing?: boolean
+			showIncoming?: boolean
+			limit?: number
+			days?: number
+			from?: string
+		} = {}
+	): Promise<FWRevisionWithLinkType[]> {
+		const {
+			showOutgoing = true,
+			showIncoming = true,
+			limit = 50,
+			days = 7,
+			from: fromParam,
+		} = options
+		const cappedLimit = Math.min(50, Math.max(1, limit))
+		const cappedDays = Math.min(30, Math.max(1, days))
+		const target = targetPageName.trim()
+		if (!target) return []
+
+		const params = (showLinkedTo: boolean) => {
+			const p: Record<string, string> = {
+				action: "feedrecentchanges",
+				feedformat: "atom",
+				target,
+				limit: String(cappedLimit),
+				days: String(cappedDays),
+			}
+			if (showLinkedTo) p.showlinkedto = "1"
+			if (fromParam) p.from = fromParam
+			return p
+		}
+
+		const fetchFeed = async (showLinkedTo: boolean): Promise<Document> => {
+			const searchParams = new URLSearchParams(params(showLinkedTo))
+			const url = `${this.base}w/api.php?${searchParams.toString()}&origin=*`
+			const response = await fetch(url, {
+				headers: { "Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)" },
+			})
+			if (!response.ok) throw new Error(`${response.status}`)
+			const text = await response.text()
+			const parser = new DOMParser()
+			const doc = parser.parseFromString(text, "application/xml")
+			const parseError = doc.querySelector("parsererror")
+			if (parseError) throw new Error("Failed to parse related changes feed")
+			return doc
+		}
+
+		const parseAtomEntries = <T extends "to" | "from">(
+			doc: Document,
+			linkType: T
+		): (FWRevision & { linkType: T })[] => {
+			const ns = "http://www.w3.org/2005/Atom"
+			const entries = doc.getElementsByTagNameNS(ns, "entry")
+			const list: (FWRevision & { linkType: T })[] = []
+			for (let i = 0; i < entries.length; i++) {
+				const entry = entries[i]
+				if (!entry) continue
+				const titleEl = entry.getElementsByTagNameNS(ns, "title").item(0)
+				const title = titleEl?.textContent?.trim() ?? ""
+				const linkEl = entry.getElementsByTagNameNS(ns, "link").item(0)
+				const href = linkEl?.getAttribute("href") ?? ""
+				const updatedEl = entry.getElementsByTagNameNS(ns, "updated").item(0)
+				const updated = updatedEl?.textContent?.trim() ?? ""
+				const authorEl = entry.getElementsByTagNameNS(ns, "author").item(0)
+				const nameEl = authorEl?.getElementsByTagNameNS(ns, "name").item(0)
+				const userName = nameEl?.textContent?.trim() ?? ""
+				let id = 0
+				if (href) {
+					const diffMatch = href.match(/[?&]diff=(\d+)/)
+					if (diffMatch) id = parseInt(diffMatch[1], 10)
+				}
+				list.push({
+					id,
+					timestamp: updated || new Date().toISOString(),
+					user: { name: userName },
+					delta: null,
+					comment: "",
+					pageName: title,
+					summary: { comment: null },
+					linkType: linkType as T,
+				})
+			}
+			return list
+		}
+
+		const promises: Promise<Document>[] = []
+		if (showOutgoing) promises.push(fetchFeed(false))
+		if (showIncoming) promises.push(fetchFeed(true))
+		const docs = await Promise.all(promises)
+
+		const outgoing = showOutgoing && docs[0] ? parseAtomEntries(docs[0], "to") : []
+		const incoming = showIncoming
+			? parseAtomEntries(docs[showOutgoing ? 1 : 0], "from")
+			: []
+
+		const byKey = new Map<string, FWRevisionWithLinkType>()
+		for (const r of outgoing) {
+			const key = `${(r.pageName ?? "").toLowerCase()}\t${r.timestamp}\t${r.user.name}`
+			byKey.set(key, { ...r })
+		}
+		for (const r of incoming) {
+			const key = `${(r.pageName ?? "").toLowerCase()}\t${r.timestamp}\t${r.user.name}`
+			const existing = byKey.get(key)
+			if (existing) existing.linkType = "both"
+			else byKey.set(key, { ...r })
+		}
+		const merged = [...byKey.values()].sort(
+			(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+		)
+		return merged
 	}
 
 	/**

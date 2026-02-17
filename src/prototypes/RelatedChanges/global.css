@@ -1,0 +1,50 @@
+/* Unscoped: v-html comment content (manually scoped to .related-changes) */
+.related-changes .history-comment p {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.related-changes .history-comment section {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.related-changes .history-comment table {
+	display: inline-block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
+}
+
+.related-changes .history-comment-expanded p {
+	display: block;
+	line-height: var(--line-height-content);
+	margin: 0;
+}
+
+.related-changes .history-comment-expanded section {
+	display: block;
+	line-height: var(--line-height-content);
+}
+
+.related-changes .history-comment-expanded table {
+	display: block;
+	background-color: var(--background-color-base);
+	border: 1px solid var(--border-color-base);
+	border-radius: 2px;
+	margin-top: 0.5rem;
+}
+
+@container view (max-width: 640px) {
+	/* Cover unscoped/v-html content inside collapsed results. */
+	@media (pointer: coarse) {
+		.related-changes .history-item:not(.history-item-expanded) a,
+		.related-changes .history-item:not(.history-item-expanded) button,
+		.related-changes .history-item:not(.history-item-expanded) [role="button"],
+		.related-changes .history-item:not(.history-item-expanded) input,
+		.related-changes .history-item:not(.history-item-expanded) select,
+		.related-changes .history-item:not(.history-item-expanded) textarea {
+			pointer-events: none;
+		}
+	}
+}

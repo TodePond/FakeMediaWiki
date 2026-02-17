@@ -117,6 +117,17 @@ export const categories: CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "prototype",
+		id: "RelatedChanges",
+		name: "Related changes",
+		description: "View recent changes for any page. Enter a page name to see its edit history.",
+		category: "recommendations",
+		wrapper: "Special",
+		title: "Related changes",
+		status: "new",
+		featured: true,
+	},
+	{
+		type: "prototype",
 		id: "PageLinks",
 		name: "Page links",
 		description: "How to get outgoing links from multiple pages.",
