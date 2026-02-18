@@ -129,12 +129,25 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	{
 		type: "prototype",
 		id: "PageLinks",
-		name: "Page links & backlinks",
-		description: "Outgoing and incoming links for multiple pages, shown side by side.",
+		name: "Page links",
+		description:
+			"Explore outgoing and incoming links for multiple pages, shown side by side and on a graph.",
 		category: "recommendations",
 		wrapper: "Fullscreen",
-		title: "Page links & backlinks",
-		status: "new",
+		title: "Page links",
+		status: "updated",
+		featured: true,
+	},
+	{
+		type: "prototype",
+		id: "PageLinkSimilarity",
+		name: "Page link similarity",
+		description:
+			"Explore how similar different pages are to each other by comparing their links.",
+		category: "recommendations",
+		wrapper: "Fullscreen",
+		title: "Page link similarity",
+		status: "wip",
 		featured: true,
 	},
 	// {

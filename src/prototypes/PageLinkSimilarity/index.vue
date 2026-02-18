@@ -1,5 +1,5 @@
 <template>
-	<section class="page-links-view">
+	<section class="page-link-similarity-view">
 		<form @submit.prevent="load">
 			<CdxLabel input-id="page-names">Page names (comma-separated)</CdxLabel>
 			<span>
@@ -171,7 +171,7 @@ import LinkGraph from "./LinkGraph.vue"
 
 const wiki = new FakeWiki()
 
-const GRAPH_VISIBLE_STORAGE_KEY = "fakewiki-page-links-show-graph"
+const GRAPH_VISIBLE_STORAGE_KEY = "fakewiki-page-link-similarity-show-graph"
 const showGraph = ref(
 	typeof localStorage !== "undefined" &&
 		localStorage.getItem(GRAPH_VISIBLE_STORAGE_KEY) !== "false"
@@ -187,7 +187,7 @@ function toggleGraphVisible(): void {
 }
 
 const pageNamesInput = ref(
-	localStorage.getItem("pageLinksQuery") ||
+	localStorage.getItem("pageLinkSimilarityQuery") ||
 		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks"
 )
 const linksMap = ref<Map<string, string[]>>(new Map())
@@ -309,7 +309,7 @@ const load = async (): Promise<void> => {
 		linksMap.value = linksResult
 		backlinksMap.value = backlinksResult
 		loadedQueryNames.value = pageNames
-		localStorage.setItem("pageLinksQuery", pageNamesInput.value)
+		localStorage.setItem("pageLinkSimilarityQuery", pageNamesInput.value)
 	} catch (err) {
 		error.value = (err as Error).message
 		linksMap.value = new Map()
