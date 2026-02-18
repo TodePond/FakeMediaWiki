@@ -1,5 +1,79 @@
 /* Watchlist presented in history-box style: one box per date with rows */
 
+.page-input-form {
+	order: -1; /* Form first (FlaggedWatchlist style.css puts form at order: 2) */
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 1.5rem;
+	max-width: 800px;
+	width: 100%;
+	padding: 0 2.7rem;
+}
+
+.page-input-row {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.page-input-row .cdx-text-input {
+	/* flex: 1; */
+}
+
+.link-type-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	padding: 0.5rem 0;
+}
+
+.filter-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	cursor: pointer;
+	font-size: 0.875rem;
+	color: var(--color-base);
+}
+
+.filter-checkbox input {
+	cursor: pointer;
+}
+
+.filter-icon {
+	opacity: 0.8;
+}
+
+.link-type-icon {
+	flex-shrink: 0;
+	margin-right: 0.5rem;
+	vertical-align: middle;
+}
+
+.link-type-card {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+	padding: 0.5rem 0.75rem;
+	background-color: var(--background-color-subtle, #f8f9fa);
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	font-size: 0.875rem;
+	line-height: 1.4;
+}
+
+.link-type-card-icon {
+	flex-shrink: 0;
+}
+
+.link-type-card-text {
+	color: var(--color-base);
+}
+
 .watchlist-loading {
 	padding: 1rem;
 	display: flex;

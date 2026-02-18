@@ -4,18 +4,21 @@
 			<h1>Prototypes</h1>
 		<p class=" intro">
 			Hello, I'm <a href="https://wikimedia.enterprise.slack.com/team/U0A4XK2020H">Lu</a>, and
-			this is my prototyping system called FakeWiki (name pending). The source code is
+			this is my prototyping system called FakeMediaWiki. The source code is
 			<a href="https://github.com/todepond/fakemediawiki">here</a>. The prototypes are below.
 		</p>
 
 		<!-- <br /> -->
 		<p class="filter-bar">
 			<CdxField>
+				<!-- <template #label>
+					<CdxLabel>Filter</CdxLabel>
+				</template> -->
 				<template #default>
 					<CdxChipInput
 						v-model:input-value="filterInputValue"
 						:input-chips="chips"
-						placeholder="Add a filter..."
+						placeholder=""
 						@update:input-chips="onChipsUpdate"
 					/>
 					<div class="filter-dropdowns">
