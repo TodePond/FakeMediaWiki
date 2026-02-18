@@ -1342,7 +1342,7 @@ export class FakeWiki {
 	 * Get related changes using the Action API feedrecentchanges (1–2 requests total).
 	 * Returns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).
 	 * @param targetPageName - Page title to get related changes for
-	 * @param options - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional timestamp to request changes after (for pagination)
+	 * @param options - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)
 	 * @returns Array of revision-like items with linkType, sorted by timestamp newest first
 	 */
 	async getRelatedChanges(
@@ -1352,31 +1352,24 @@ export class FakeWiki {
 			showIncoming?: boolean
 			limit?: number
 			days?: number
-			from?: string
 		} = {}
 	): Promise<FWRevisionWithLinkType[]> {
-		const {
-			showOutgoing = true,
-			showIncoming = true,
-			limit = 50,
-			days = 7,
-			from: fromParam,
-		} = options
-		const cappedLimit = Math.min(50, Math.max(1, limit))
-		const cappedDays = Math.min(30, Math.max(1, days))
+		const { showOutgoing = true, showIncoming = true, limit = 50, days = 7 } = options
+		// const cappedLimit = Math.min(50, Math.max(1, limit))
+		// const cappedDays = Math.min(30, Math.max(1, days))
 		const target = targetPageName.trim()
 		if (!target) return []
 
 		const params = (showLinkedTo: boolean) => {
+			// feedformat: "atom" | "rss" (API supports both; we parse Atom only below)
 			const p: Record<string, string> = {
 				action: "feedrecentchanges",
 				feedformat: "atom",
 				target,
-				limit: String(cappedLimit),
-				days: String(cappedDays),
+				limit: String(limit),
+				days: String(days),
 			}
 			if (showLinkedTo) p.showlinkedto = "1"
-			if (fromParam) p.from = fromParam
 			return p
 		}
 
@@ -1384,12 +1377,16 @@ export class FakeWiki {
 			const searchParams = new URLSearchParams(params(showLinkedTo))
 			const url = `${this.base}w/api.php?${searchParams.toString()}&origin=*`
 			const response = await fetch(url, {
-				headers: { "Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)" },
+				headers: {
+					"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+				},
 			})
 			if (!response.ok) throw new Error(`${response.status}`)
 			const text = await response.text()
+			// console.log("text", text)
 			const parser = new DOMParser()
 			const doc = parser.parseFromString(text, "application/xml")
+			console.log("DOC", doc)
 			const parseError = doc.querySelector("parsererror")
 			if (parseError) throw new Error("Failed to parse related changes feed")
 			return doc
@@ -1414,6 +1411,10 @@ export class FakeWiki {
 				const authorEl = entry.getElementsByTagNameNS(ns, "author").item(0)
 				const nameEl = authorEl?.getElementsByTagNameNS(ns, "name").item(0)
 				const userName = nameEl?.textContent?.trim() ?? ""
+				const summaryEl = entry.getElementsByTagNameNS(ns, "summary").item(0)
+				const summary = summaryEl?.textContent?.trim() ?? ""
+				// Select first <p> in summary string
+				const comment = summary.match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1]?.trim() ?? ""
 				let id = 0
 				if (href) {
 					const diffMatch = href.match(/[?&]diff=(\d+)/)
@@ -1424,9 +1425,8 @@ export class FakeWiki {
 					timestamp: updated || new Date().toISOString(),
 					user: { name: userName },
 					delta: null,
-					comment: "",
+					comment,
 					pageName: title,
-					summary: { comment: null },
 					linkType: linkType as T,
 				})
 			}
@@ -1439,9 +1439,7 @@ export class FakeWiki {
 		const docs = await Promise.all(promises)
 
 		const outgoing = showOutgoing && docs[0] ? parseAtomEntries(docs[0], "to") : []
-		const incoming = showIncoming
-			? parseAtomEntries(docs[showOutgoing ? 1 : 0], "from")
-			: []
+		const incoming = showIncoming ? parseAtomEntries(docs[showOutgoing ? 1 : 0], "from") : []
 
 		const byKey = new Map<string, FWRevisionWithLinkType>()
 		for (const r of outgoing) {

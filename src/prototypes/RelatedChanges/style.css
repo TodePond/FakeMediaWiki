@@ -4,11 +4,17 @@
 	order: -1; /* Form first (FlaggedWatchlist style.css puts form at order: 2) */
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
-	margin-bottom: 1.5rem;
+	/* gap: 0.5rem; */
+	/* margin-bottom: 1.5rem; */
 	max-width: 800px;
 	width: 100%;
-	padding: 0 2.7rem;
+	padding: 1.5rem 2.7rem;
+}
+
+@container view (max-width: 640px) {
+	.page-input-form {
+		padding: 0.5rem;
+	}
 }
 
 .page-input-row {
@@ -25,8 +31,8 @@
 .link-type-filters {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 1rem;
-	margin-bottom: 1rem;
+	gap: 0rem 1rem;
+	/* margin-bottom: 1rem; */
 	padding: 0.5rem 0;
 }
 
@@ -95,6 +101,7 @@
 	align-items: center;
 	flex-direction: column;
 	width: 100%;
+	gap: 0;
 	padding: 0 0.7rem;
 }
 
@@ -878,7 +885,6 @@ a:hover {
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
-	margin-left: -0.35rem;
 	/* wrap words mid-word */
 	word-break: break-word;
 }

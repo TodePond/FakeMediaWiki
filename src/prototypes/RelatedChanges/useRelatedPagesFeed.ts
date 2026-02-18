@@ -3,7 +3,8 @@ import type { FWRevisionWithLinkType } from "fakewiki/types"
 import type { Ref } from "vue"
 import { ref } from "vue"
 
-const RELATED_CHANGES_LIMIT = 50
+const INITIAL_LIMIT = 20
+const LIMIT_INCREMENT = 20
 
 interface UseRelatedPagesFeedArgs {
 	wiki: FakeWiki
@@ -14,18 +15,16 @@ interface UseRelatedPagesFeedArgs {
 	) => void
 }
 
-export function useRelatedPagesFeed({
-	wiki,
-	pageName,
-	onUserCategory,
-}: UseRelatedPagesFeedArgs) {
+export function useRelatedPagesFeed({ wiki, pageName, onUserCategory }: UseRelatedPagesFeedArgs) {
 	const allRevisionsData = ref<FWRevisionWithLinkType[]>([])
 	const isLoading = ref(false)
 	const isLoadingMore = ref(false)
 	const errors = ref<string[]>([])
 	const hasMore = ref(false)
+	/** Limit to request next (20, then 40, 60, …); reset to INITIAL_LIMIT on new search. */
+	const nextLimit = ref(INITIAL_LIMIT)
 
-	async function loadFeed(from?: string): Promise<void> {
+	async function loadFeed(append = false): Promise<void> {
 		const name = pageName.value.trim()
 		if (!name) {
 			allRevisionsData.value = []
@@ -34,7 +33,10 @@ export function useRelatedPagesFeed({
 			return
 		}
 
-		const append = from != null
+		if (!append) {
+			nextLimit.value = INITIAL_LIMIT
+		}
+		const limit = nextLimit.value
 		if (!append) {
 			isLoading.value = true
 			errors.value = []
@@ -46,19 +48,34 @@ export function useRelatedPagesFeed({
 			const revisions = await wiki.getRelatedChanges(name, {
 				showOutgoing: true,
 				showIncoming: true,
-				limit: RELATED_CHANGES_LIMIT,
+				limit,
 				days: 30,
-				from,
 			})
 
-			// Enrich with user category for icons (no comment/delta from feed)
+			console.log("revisions", revisions)
+
+			// Enrich with user category; comment is already raw HTML from the API, render as-is
 			const enriched = await Promise.all(
 				revisions.map(async rev => {
 					const userCategory = await wiki.getUserCategory(rev.user.name)
 					onUserCategory(rev.user.name, userCategory)
-					return rev
+					const comment = rev.comment ?? ""
+					return {
+						...rev,
+						comment,
+						summary: {
+							comment,
+							hashtags: [],
+							other: [],
+							suggestedBy: null,
+							useThisBot: null,
+							reportBugs: null,
+						},
+					}
 				})
 			)
+
+			nextLimit.value = limit + LIMIT_INCREMENT
 
 			if (append) {
 				const existingIds = new Set(allRevisionsData.value.map(r => r.id))
@@ -67,10 +84,13 @@ export function useRelatedPagesFeed({
 					(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 				)
 				allRevisionsData.value = merged
-				hasMore.value = newRevisions.length >= RELATED_CHANGES_LIMIT
+				hasMore.value = enriched.length >= limit
+				if (newRevisions.length === 0 && enriched.length >= limit) {
+					hasMore.value = false
+				}
 			} else {
 				allRevisionsData.value = enriched
-				hasMore.value = enriched.length >= RELATED_CHANGES_LIMIT
+				hasMore.value = enriched.length >= limit
 			}
 		} catch (e) {
 			const errorObj = e as Error
@@ -87,9 +107,7 @@ export function useRelatedPagesFeed({
 
 	async function loadMore(): Promise<void> {
 		if (allRevisionsData.value.length === 0 || !hasMore.value) return
-		const oldest = allRevisionsData.value[allRevisionsData.value.length - 1]
-		if (!oldest) return
-		await loadFeed(oldest.timestamp)
+		await loadFeed(true)
 	}
 
 	return {

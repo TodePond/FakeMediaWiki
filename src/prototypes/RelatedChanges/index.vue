@@ -1,6 +1,7 @@
 <template>
 	<main class="related-changes">
 		<form class="page-input-form" @submit.prevent="search">
+			<h1>Related changes</h1>
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
 			<div class="page-input-row">
 				<CdxTextInput
@@ -12,30 +13,29 @@
 				/>
 				<CdxButton type="submit">Load related changes</CdxButton>
 			</div>
+			<div
+				v-if="allRevisionsData.length > 0"
+				class="link-type-filters"
+				role="group"
+				aria-label="Filter by link type"
+			>
+				<label class="filter-checkbox">
+					<input v-model="showOutgoing" type="checkbox" />
+					<CdxIcon :icon="cdxIconArrowUp" size="x-small" class="filter-icon" />
+					<span>Outgoing</span>
+				</label>
+				<label class="filter-checkbox">
+					<input v-model="showIncoming" type="checkbox" />
+					<CdxIcon :icon="cdxIconArrowDown" size="x-small" class="filter-icon" />
+					<span>Incoming</span>
+				</label>
+				<label class="filter-checkbox">
+					<input v-model="showBidirectional" type="checkbox" />
+					<CdxIcon :icon="cdxIconLink" size="x-small" class="filter-icon" />
+					<span>Bidirectional</span>
+				</label>
+			</div>
 		</form>
-
-		<div
-			v-if="allRevisionsData.length > 0"
-			class="link-type-filters"
-			role="group"
-			aria-label="Filter by link type"
-		>
-			<label class="filter-checkbox">
-				<input v-model="showOutgoing" type="checkbox" />
-				<CdxIcon :icon="cdxIconArrowUp" size="x-small" class="filter-icon" />
-				<span>Outgoing</span>
-			</label>
-			<label class="filter-checkbox">
-				<input v-model="showIncoming" type="checkbox" />
-				<CdxIcon :icon="cdxIconArrowDown" size="x-small" class="filter-icon" />
-				<span>Incoming</span>
-			</label>
-			<label class="filter-checkbox">
-				<input v-model="showBidirectional" type="checkbox" />
-				<CdxIcon :icon="cdxIconLink" size="x-small" class="filter-icon" />
-				<span>Bidirectional</span>
-			</label>
-		</div>
 
 		<div class="watchlist-container">
 			<div v-if="errors.length > 0" class="error">
@@ -100,6 +100,7 @@
 								>
 									{{ wiki.formatTime(change.timestamp) }}</span
 								><span
+									v-if="change.delta != null"
 									:class="[
 										'history-delta',
 										change.delta != null
@@ -113,7 +114,7 @@
 									]"
 								>
 									{{
-										change.delta != null ? wiki.formatDelta(change.delta) : "—"
+										change.delta != null ? wiki.formatDelta(change.delta) : ""
 									}}</span
 								>
 								<span class="user-name-container"
@@ -455,7 +456,7 @@
 											{{
 												deltaForRev(change, rev) != null
 													? wiki.formatDelta(deltaForRev(change, rev))
-													: "—"
+													: ""
 											}}</span
 										><a
 											target="_blank"
@@ -556,10 +557,7 @@
 					</div>
 				</div>
 			</template>
-			<div
-				v-if="!isLoading && hasMore && allRevisionsData.length > 0"
-				class="load-more-container"
-			>
+			<div v-if="!isLoading && allRevisionsData.length > 0" class="load-more-container">
 				<CdxButton :disabled="isLoadingMore" @click="loadMore">
 					{{ isLoadingMore ? "Loading..." : "Load more" }}
 				</CdxButton>

@@ -121,7 +121,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		name: "Related changes",
 		description: "View recent changes for any page. Enter a page name to see its edit history.",
 		category: "recommendations",
-		wrapper: "Special",
+		wrapper: "Fullscreen",
 		title: "Related changes",
 		status: "new",
 		featured: true,
