@@ -7,6 +7,18 @@
 	padding: 1rem;
 }
 
+.content-with-graph {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	flex: 1;
+	min-height: 0;
+}
+
+.link-graph-block {
+	flex-shrink: 0;
+}
+
 .cdx-text-input {
 	max-width: 100%;
 	min-width: 0;

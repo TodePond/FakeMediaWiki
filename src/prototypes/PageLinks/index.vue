@@ -9,127 +9,144 @@
 					input-type="search"
 					id="page-names"
 				/>
-				<CdxButton>Load links & backlinks</CdxButton>
-				<CdxProgressIndicator v-if="isLoading" aria-label="Loading" />
+				<span style="display: flex; gap: 0.5rem">
+					<CdxButton>Load links & backlinks</CdxButton>
+					<CdxProgressIndicator v-if="isLoading" aria-label="Loading" />
+				</span>
 			</span>
 		</form>
 		<div v-if="error" class="error">{{ error }}</div>
-		<div v-else class="three-columns">
-			<div class="column">
-				<h3 class="column-title">Outgoing links</h3>
-				<div v-if="sortedLinks.length > 0" class="links-list">
-					<template v-for="(item, index) in sortedLinks" :key="'link-' + item.link">
-						<template v-if="index > 0 && sortedLinks[index - 1].count !== item.count">
-							<hr />
-						</template>
-						<div class="link-row">
-							<a
-								:href="wiki.getPageUrl(item.link)"
-								target="_blank"
-								class="main-link"
-								>{{ item.link }}</a
+		<div v-else class="content-with-graph">
+			<LinkGraph
+				v-if="graphData && graphData.nodes.length > 0"
+				class="link-graph-block"
+				:graph-data="graphData"
+				:query-page-names="loadedQueryNames"
+			/>
+			<div class="three-columns">
+				<div class="column">
+					<h3 class="column-title">Outgoing links</h3>
+					<div v-if="sortedLinks.length > 0" class="links-list">
+						<template v-for="(item, index) in sortedLinks" :key="'link-' + item.link">
+							<template
+								v-if="index > 0 && sortedLinks[index - 1].count !== item.count"
 							>
-							<span class="link-count"> ({{ item.count }})</span>
-							<span class="link-pages">
-								—
-								<template v-for="(page, pageIndex) in item.pages" :key="page">
-									<a
-										v-if="pageIndex > 0"
-										:href="wiki.getPageUrl(page)"
-										target="_blank"
-										class="page-link"
-										>, </a
-									><a
-										:href="wiki.getPageUrl(page)"
-										target="_blank"
-										class="page-link"
-										>{{ page }}</a
-									>
-								</template>
-							</span>
-						</div>
-					</template>
+								<hr />
+							</template>
+							<div class="link-row">
+								<a
+									:href="wiki.getPageUrl(item.link)"
+									target="_blank"
+									class="main-link"
+									>{{ item.link }}</a
+								>
+								<span class="link-count"> ({{ item.count }})</span>
+								<span class="link-pages">
+									—
+									<template v-for="(page, pageIndex) in item.pages" :key="page">
+										<a
+											v-if="pageIndex > 0"
+											:href="wiki.getPageUrl(page)"
+											target="_blank"
+											class="page-link"
+											>, </a
+										><a
+											:href="wiki.getPageUrl(page)"
+											target="_blank"
+											class="page-link"
+											>{{ page }}</a
+										>
+									</template>
+								</span>
+							</div>
+						</template>
+					</div>
+					<div v-else-if="!isLoading" class="no-results">Pages these link to.</div>
 				</div>
-				<div v-else-if="!isLoading" class="no-results">Pages these link to.</div>
-			</div>
-			<div class="column">
-				<h3 class="column-title">Backlinks</h3>
-				<div v-if="sortedBacklinks.length > 0" class="links-list">
-					<template v-for="(item, index) in sortedBacklinks" :key="'bl-' + item.link">
+				<div class="column">
+					<h3 class="column-title">Backlinks</h3>
+					<div v-if="sortedBacklinks.length > 0" class="links-list">
+						<template v-for="(item, index) in sortedBacklinks" :key="'bl-' + item.link">
+							<template
+								v-if="index > 0 && sortedBacklinks[index - 1].count !== item.count"
+							>
+								<hr />
+							</template>
+							<div class="link-row">
+								<a
+									:href="wiki.getPageUrl(item.link)"
+									target="_blank"
+									class="main-link"
+									>{{ item.link }}</a
+								>
+								<span class="link-count"> ({{ item.count }})</span>
+								<span class="link-pages">
+									—
+									<template v-for="(page, pageIndex) in item.pages" :key="page">
+										<a
+											v-if="pageIndex > 0"
+											:href="wiki.getPageUrl(page)"
+											target="_blank"
+											class="page-link"
+											>, </a
+										><a
+											:href="wiki.getPageUrl(page)"
+											target="_blank"
+											class="page-link"
+											>{{ page }}</a
+										>
+									</template>
+								</span>
+							</div>
+						</template>
+					</div>
+					<div v-else-if="!isLoading" class="no-results">Pages that link to these.</div>
+				</div>
+				<div class="column">
+					<h3 class="column-title">Bidirectional</h3>
+					<div v-if="sortedBidirectional.length > 0" class="links-list">
 						<template
-							v-if="index > 0 && sortedBacklinks[index - 1].count !== item.count"
+							v-for="(item, index) in sortedBidirectional"
+							:key="'bi-' + item.link"
 						>
-							<hr />
-						</template>
-						<div class="link-row">
-							<a
-								:href="wiki.getPageUrl(item.link)"
-								target="_blank"
-								class="main-link"
-								>{{ item.link }}</a
+							<template
+								v-if="
+									index > 0 && sortedBidirectional[index - 1].count !== item.count
+								"
 							>
-							<span class="link-count"> ({{ item.count }})</span>
-							<span class="link-pages">
-								—
-								<template v-for="(page, pageIndex) in item.pages" :key="page">
-									<a
-										v-if="pageIndex > 0"
-										:href="wiki.getPageUrl(page)"
-										target="_blank"
-										class="page-link"
-										>, </a
-									><a
-										:href="wiki.getPageUrl(page)"
-										target="_blank"
-										class="page-link"
-										>{{ page }}</a
-									>
-								</template>
-							</span>
-						</div>
-					</template>
-				</div>
-				<div v-else-if="!isLoading" class="no-results">Pages that link to these.</div>
-			</div>
-			<div class="column">
-				<h3 class="column-title">Bidirectional</h3>
-				<div v-if="sortedBidirectional.length > 0" class="links-list">
-					<template v-for="(item, index) in sortedBidirectional" :key="'bi-' + item.link">
-						<template
-							v-if="index > 0 && sortedBidirectional[index - 1].count !== item.count"
-						>
-							<hr />
+								<hr />
+							</template>
+							<div class="link-row">
+								<a
+									:href="wiki.getPageUrl(item.link)"
+									target="_blank"
+									class="main-link"
+									>{{ item.link }}</a
+								>
+								<span class="link-count"> ({{ item.count }})</span>
+								<span class="link-pages">
+									—
+									<template v-for="(page, pageIndex) in item.pages" :key="page">
+										<a
+											v-if="pageIndex > 0"
+											:href="wiki.getPageUrl(page)"
+											target="_blank"
+											class="page-link"
+											>, </a
+										><a
+											:href="wiki.getPageUrl(page)"
+											target="_blank"
+											class="page-link"
+											>{{ page }}</a
+										>
+									</template>
+								</span>
+							</div>
 						</template>
-						<div class="link-row">
-							<a
-								:href="wiki.getPageUrl(item.link)"
-								target="_blank"
-								class="main-link"
-								>{{ item.link }}</a
-							>
-							<span class="link-count"> ({{ item.count }})</span>
-							<span class="link-pages">
-								—
-								<template v-for="(page, pageIndex) in item.pages" :key="page">
-									<a
-										v-if="pageIndex > 0"
-										:href="wiki.getPageUrl(page)"
-										target="_blank"
-										class="page-link"
-										>, </a
-									><a
-										:href="wiki.getPageUrl(page)"
-										target="_blank"
-										class="page-link"
-										>{{ page }}</a
-									>
-								</template>
-							</span>
-						</div>
-					</template>
-				</div>
-				<div v-else-if="!isLoading" class="no-results">
-					Pages that link both ways with these.
+					</div>
+					<div v-else-if="!isLoading" class="no-results">
+						Pages that link both ways with these.
+					</div>
 				</div>
 			</div>
 		</div>
@@ -140,15 +157,18 @@
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
 import { computed, onMounted, ref } from "vue"
+import type { GraphData } from "./LinkGraph.vue"
+import LinkGraph from "./LinkGraph.vue"
 
 const wiki = new FakeWiki()
 
 const pageNamesInput = ref(
 	localStorage.getItem("pageLinksQuery") ||
-		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress"
+		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks"
 )
 const linksMap = ref<Map<string, string[]>>(new Map())
 const backlinksMap = ref<Map<string, string[]>>(new Map())
+const loadedQueryNames = ref<string[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
@@ -199,6 +219,29 @@ const sortedBidirectional = computed(() => {
 	)
 })
 
+const graphData = computed<GraphData | null>(() => {
+	if (linksMap.value.size === 0 && backlinksMap.value.size === 0) return null
+	const nodeIds = new Set<string>()
+	const links: { source: string; target: string }[] = []
+	for (const [source, targets] of linksMap.value.entries()) {
+		nodeIds.add(source)
+		for (const t of targets) {
+			nodeIds.add(t)
+			links.push({ source, target: t })
+		}
+	}
+	for (const [target, linkers] of backlinksMap.value.entries()) {
+		nodeIds.add(target)
+		for (const linker of linkers) {
+			nodeIds.add(linker)
+			links.push({ source: linker, target })
+		}
+	}
+	const querySet = new Set(loadedQueryNames.value)
+	const nodes = [...nodeIds].map(id => ({ id, isQuery: querySet.has(id) }))
+	return { nodes, links }
+})
+
 const load = async (): Promise<void> => {
 	isLoading.value = true
 	error.value = null
@@ -211,6 +254,7 @@ const load = async (): Promise<void> => {
 		if (pageNames.length === 0) {
 			linksMap.value = new Map()
 			backlinksMap.value = new Map()
+			loadedQueryNames.value = []
 			return
 		}
 
@@ -220,11 +264,13 @@ const load = async (): Promise<void> => {
 		])
 		linksMap.value = linksResult
 		backlinksMap.value = backlinksResult
+		loadedQueryNames.value = pageNames
 		localStorage.setItem("pageLinksQuery", pageNamesInput.value)
 	} catch (err) {
 		error.value = (err as Error).message
 		linksMap.value = new Map()
 		backlinksMap.value = new Map()
+		loadedQueryNames.value = []
 	} finally {
 		isLoading.value = false
 	}
