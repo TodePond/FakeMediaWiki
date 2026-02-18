@@ -40,13 +40,24 @@
 import * as d3 from "d3"
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 
-export type GraphNode = { id: string; isQuery?: boolean }
+export type GraphNode = {
+	id: string
+	/** Query pages (selected for comparison) – largest blue nodes in PageLinkSimilarity */
+	isQuery?: boolean
+	/** Top 20+ bidirectional pages – black nodes sized by similarity in PageLinkSimilarity */
+	isWinningBidirectional?: boolean
+	/** Link targets fetched for similarity (added later) – gray nodes sized by similarity */
+	isSimilarityLink?: boolean
+	/** 0..1 similarity score used for node sizing */
+	linkSimilarity?: number
+}
 export type GraphLink = { source: string; target: string }
 export type GraphData = { nodes: GraphNode[]; links: GraphLink[] }
 
 const props = defineProps<{
 	graphData: GraphData | null
 	queryPageNames?: string[]
+	isVisible?: boolean
 }>()
 
 const emit = defineEmits<{ addToQuery: [pageName: string]; removeFromQuery: [pageName: string] }>()
@@ -62,6 +73,9 @@ const height = ref(420)
 const isFullscreen = ref(false)
 const isPointerDown = ref(false)
 const wasDragging = ref(false)
+
+/** Persist node positions across graph updates so adding nodes doesn’t re-layout everything */
+const nodePositions = new Map<string, { x: number; y: number }>()
 
 const tooltip = ref<{
 	node: GraphNode
@@ -92,12 +106,28 @@ const incomingCount = computed(() => {
 
 let simulation: d3.Simulation<GraphNode & d3.SimulationNodeDatum, GraphLink> | null = null
 let zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null
+const MIN_NODE_RADIUS = 5
+const MAX_NODE_RADIUS = 28
+
+function getNodeRadius(node: GraphNode): number {
+	if (node.isQuery) return MAX_NODE_RADIUS
+	const s = Math.max(0, Math.min(1, node.linkSimilarity ?? 0))
+	// Non-linear scale so computed similarity changes are more visually obvious.
+	return MIN_NODE_RADIUS + (MAX_NODE_RADIUS - MIN_NODE_RADIUS) * Math.pow(s, 0.6)
+}
 
 function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: GraphLink[]) {
 	if (!svgRef.value || !linksRef.value || !nodesRef.value || !zoomGRef.value) return
 
 	const w = width.value
 	const h = height.value
+	const directedEdgeKeys = new Set(
+		links.map(l => {
+			const source = typeof l.source === "string" ? l.source : (l.source as { id: string }).id
+			const target = typeof l.target === "string" ? l.target : (l.target as { id: string }).id
+			return `${source}\0${target}`
+		})
+	)
 
 	simulation?.stop()
 	simulation = d3
@@ -109,11 +139,23 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 				.forceLink(links)
 				.id((d: GraphNode & d3.SimulationNodeDatum) => d.id)
 				.distance(100)
-				.strength(0.2)
+				.strength((link: GraphLink) => {
+					const source =
+						typeof link.source === "string"
+							? link.source
+							: (link.source as { id: string }).id
+					const target =
+						typeof link.target === "string"
+							? link.target
+							: (link.target as { id: string }).id
+					const hasReverse = directedEdgeKeys.has(`${target}\0${source}`)
+					// Bidirectional links get 2x force strength.
+					return hasReverse ? 0.5 : 0.1
+				})
 		)
-		.force("charge", d3.forceManyBody().strength(-20))
-	// .force("center", d3.forceCenter(w / 2, h / 2))
-	// .force("collision", d3.forceCollide().radius(2))
+		.force("charge", d3.forceManyBody().strength(-100))
+		.force("center", d3.forceCenter(w / 2, h / 2))
+		.force("collision", d3.forceCollide().radius(2))
 
 	const linkElements = d3
 		.select(linksRef.value)
@@ -146,13 +188,16 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 								".node"
 							)
 							if (nodeEl) {
+								const node = d as GraphNode & {
+									isQuery?: boolean
+									isWinningBidirectional?: boolean
+									linkSimilarity?: number
+								}
+								const isBig = getNodeRadius(node) > MIN_NODE_RADIUS + 0.5
 								d3.select(nodeEl as SVGGElement)
 									.select("circle")
 									.attr("stroke", "#fff")
-									.attr(
-										"stroke-width",
-										(d as GraphNode & { isQuery?: boolean }).isQuery ? 3 : 2
-									)
+									.attr("stroke-width", isBig ? 3 : 2)
 							}
 							if (!event.active) simulation?.alphaTarget(0.3).restart()
 							d.fx = d.x
@@ -258,25 +303,50 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 				.on("click", (_event, d) => {
 					if (wasDragging.value) return
 					const node = d as GraphNode & d3.SimulationNodeDatum
-					if (node.isQuery) {
+					// Only query nodes can be removed; winning/similarity can be added
+					if ((node as GraphNode).isQuery) {
 						emit("removeFromQuery", node.id)
 					} else {
 						emit("addToQuery", node.id)
 					}
 				})
 		)
-		.attr("class", (d: GraphNode & d3.SimulationNodeDatum) =>
-			"node" + ((d as GraphNode).isQuery ? " node-query" : "")
-		)
+		.attr("class", (d: GraphNode & d3.SimulationNodeDatum) => {
+			const n = d as GraphNode
+			let c = "node"
+			if (n.isQuery) c += " node-query"
+			if (n.isWinningBidirectional) c += " node-winning"
+			if (n.isSimilarityLink) c += " node-similarity"
+			return c
+		})
 		.each(function (this: SVGGElement, d) {
-			const isQuery = (d as GraphNode & { isQuery?: boolean }).isQuery
+			const node = d as GraphNode & {
+				isQuery?: boolean
+				isWinningBidirectional?: boolean
+				isSimilarityLink?: boolean
+				linkSimilarity?: number
+			}
+			const radius = getNodeRadius(node)
+			const isBig = radius > MIN_NODE_RADIUS + 0.5
+			const isGray = node.isSimilarityLink ?? false
+			const isWinning = node.isWinningBidirectional ?? false
+			const isQuery = node.isQuery ?? false
 			const g = d3.select(this)
 			g.selectAll("circle").remove()
 			g.append("circle")
-				.attr("r", isQuery ? 14 : 7)
-				.attr("fill", isQuery ? "var(--color-progressive)" : "var(--color-base)")
+				.attr("r", radius)
+				.attr(
+					"fill",
+					isQuery
+						? "var(--color-progressive)"
+						: isWinning
+							? "#000"
+							: isGray
+								? "#54595d"
+								: "#000"
+				)
 				.attr("stroke", "#fff")
-				.attr("stroke-width", isQuery ? 3 : 2)
+				.attr("stroke-width", isBig ? 3 : 2)
 		})
 
 	let tickScheduled = false
@@ -293,6 +363,41 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 			nodeElements.attr("transform", d => `translate(${d.x ?? 0},${d.y ?? 0})`)
 		})
 	})
+}
+
+function refreshSimulationForData(data: GraphData) {
+	const cx = width.value / 2
+	const cy = height.value / 2
+	// Reuse existing positions so adding nodes doesn’t explode the layout
+	if (simulation) {
+		for (const node of simulation.nodes() as (GraphNode & d3.SimulationNodeDatum)[]) {
+			if (node.x != null && node.y != null) {
+				nodePositions.set(node.id, { x: node.x, y: node.y })
+			}
+		}
+	}
+	const previousKnownCount = nodePositions.size
+	const nodes = data.nodes.map(n => {
+		const prev = nodePositions.get(n.id)
+		const x = prev ? prev.x : cx + (Math.random() - 0.5) * 60
+		const y = prev ? prev.y : cy + (Math.random() - 0.5) * 60
+		return { ...n, x, y }
+	})
+	nodes.sort((a, b) => {
+		const na = a as GraphNode
+		const nb = b as GraphNode
+		// Draw smaller nodes first so larger/higher-similarity nodes stay visible on top
+		const score = (n: GraphNode) => (n.isQuery ? MAX_NODE_RADIUS : getNodeRadius(n))
+		return score(na) - score(nb)
+	})
+	const links = data.links.map(l => ({ ...l }))
+	initSimulation(nodes, links)
+	// Gentle alpha when updating so new nodes don’t jolt the graph
+	const isIncremental = previousKnownCount > 0 && data.nodes.length > previousKnownCount
+	if (isIncremental && simulation) {
+		simulation.alpha(0.15)
+		simulation.alphaTarget(0)
+	}
 }
 
 function setupZoom() {
@@ -334,17 +439,34 @@ function onFullscreenChange() {
 watch(
 	() => props.graphData,
 	async data => {
+		if (!data || data.nodes.length === 0) {
+			simulation?.stop()
+			nodePositions.clear()
+			return
+		}
+		if (props.isVisible === false) {
+			simulation?.stop()
+			tooltip.value = null
+			return
+		}
+		await nextTick()
+		refreshSimulationForData(data)
+	},
+	{ immediate: true }
+)
+
+watch(
+	() => props.isVisible,
+	async visible => {
+		if (visible === false) {
+			simulation?.stop()
+			tooltip.value = null
+			return
+		}
+		const data = props.graphData
 		if (!data || data.nodes.length === 0) return
 		await nextTick()
-		const nodes = data.nodes
-			.map(n => ({
-				...n,
-				x: width.value / 2 + (Math.random() - 0.5) * 80,
-				y: height.value / 2 + (Math.random() - 0.5) * 80,
-			}))
-			.sort((a, b) => (a.isQuery ? 1 : 0) - (b.isQuery ? 1 : 0))
-		const links = data.links.map(l => ({ ...l }))
-		initSimulation(nodes, links)
+		refreshSimulationForData(data)
 	},
 	{ immediate: true }
 )
@@ -361,7 +483,7 @@ watch(
 				width.value = w
 				height.value = h
 				if (simulation) {
-					simulation.force("center", d3.forceCenter(width.value / 2, height.value / 2))
+					// simulation.force("center", d3.forceCenter(width.value / 2, height.value / 2))
 				}
 			}
 		})
@@ -515,11 +637,8 @@ defineExpose({ simulation })
 	stroke: var(--color-progressive);
 	stroke-width: 3;
 }
-:deep(.node.node-highlight-self.node-query circle) {
-	stroke: #000;
-}
 :deep(.node.node-highlight circle) {
-	fill: var(--color-progressive);
+	fill: var(--color-progressive--hover) !important;
 }
 :deep(line.link-highlight) {
 	stroke: var(--color-progressive);

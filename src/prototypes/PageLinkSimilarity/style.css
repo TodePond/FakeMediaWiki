@@ -32,12 +32,22 @@ form > span {
 	flex-wrap: wrap;
 }
 
-.three-columns {
-	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
+.links-section {
 	flex: 1;
 	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.links-section.two-columns {
+	flex-direction: row;
+	display: grid;
+	grid-template-columns: 1fr;
 	gap: 1rem;
+}
+
+.links-section.two-columns .column {
+	min-width: 0;
 }
 
 .column {
@@ -58,7 +68,15 @@ form > span {
 }
 
 .link-row {
-	margin-bottom: 0.25rem;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--border-color-subtle);
+}
+
+.shared-counts {
+	font-size: 0.8125rem;
+	color: var(--color-subtle);
+	margin-top: 0.2rem;
+	margin-left: 0;
 }
 
 .main-link {

@@ -112,8 +112,8 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 				.strength(0.2)
 		)
 		.force("charge", d3.forceManyBody().strength(-20))
-	// .force("center", d3.forceCenter(w / 2, h / 2))
-	// .force("collision", d3.forceCollide().radius(2))
+		.force("center", d3.forceCenter(w / 2, h / 2))
+		.force("collision", d3.forceCollide().radius(2))
 
 	const linkElements = d3
 		.select(linksRef.value)
@@ -265,8 +265,10 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 					}
 				})
 		)
-		.attr("class", (d: GraphNode & d3.SimulationNodeDatum) =>
-			"node" + ((d as GraphNode).isQuery ? " node-query" : "")
+		.attr(
+			"class",
+			(d: GraphNode & d3.SimulationNodeDatum) =>
+				"node" + ((d as GraphNode).isQuery ? " node-query" : "")
 		)
 		.each(function (this: SVGGElement, d) {
 			const isQuery = (d as GraphNode & { isQuery?: boolean }).isQuery
