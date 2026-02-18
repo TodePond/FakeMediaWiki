@@ -20,17 +20,16 @@
 			:style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
 		>
 			<div class="graph-tooltip-title">{{ tooltip.node.id }}</div>
-			<div v-if="tooltip.node.isQuery" class="graph-tooltip-badge">Query page</div>
 			<div class="graph-tooltip-stats">
 				<span>Out: {{ tooltip.outgoing }}</span>
 				<span>In: {{ tooltip.incoming }}</span>
 			</div>
 			<div v-if="tooltip.linkedFromQuery.length > 0" class="graph-tooltip-list">
-				<span class="graph-tooltip-label">Linked from (query):</span>
+				<span class="graph-tooltip-label">Linked from:</span>
 				{{ tooltip.linkedFromQuery.join(", ") }}
 			</div>
 			<div v-if="tooltip.linksToQuery.length > 0" class="graph-tooltip-list">
-				<span class="graph-tooltip-label">Links to (query):</span>
+				<span class="graph-tooltip-label">Links to:</span>
 				{{ tooltip.linksToQuery.join(", ") }}
 			</div>
 		</div>
@@ -39,8 +38,7 @@
 
 <script setup lang="ts">
 import * as d3 from "d3"
-import { computed, onMounted, onUnmounted, ref, watch } from "vue"
-import { nextTick } from "vue"
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 
 export type GraphNode = { id: string; isQuery?: boolean }
 export type GraphLink = { source: string; target: string }
@@ -51,6 +49,8 @@ const props = defineProps<{
 	queryPageNames?: string[]
 }>()
 
+const emit = defineEmits<{ addToQuery: [pageName: string]; removeFromQuery: [pageName: string] }>()
+
 const containerRef = ref<HTMLElement | null>(null)
 const svgRef = ref<SVGSVGElement | null>(null)
 const zoomGRef = ref<SVGGElement | null>(null)
@@ -58,8 +58,10 @@ const linksRef = ref<SVGGElement | null>(null)
 const nodesRef = ref<SVGGElement | null>(null)
 
 const width = ref(800)
-const height = ref(360)
+const height = ref(420)
 const isFullscreen = ref(false)
+const isPointerDown = ref(false)
+const wasDragging = ref(false)
 
 const tooltip = ref<{
 	node: GraphNode
@@ -100,23 +102,28 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 	simulation?.stop()
 	simulation = d3
 		.forceSimulation(nodes)
+		.alphaDecay(0.05)
 		.force(
 			"link",
 			d3
 				.forceLink(links)
 				.id((d: GraphNode & d3.SimulationNodeDatum) => d.id)
-				.distance(60)
-				.strength(0.5)
+				.distance(100)
+				.strength(0.2)
 		)
-		.force("charge", d3.forceManyBody().strength(-400))
-		.force("center", d3.forceCenter(w / 2, h / 2))
-		.force("collision", d3.forceCollide().radius(32))
+		.force("charge", d3.forceManyBody().strength(-20))
+	// .force("center", d3.forceCenter(w / 2, h / 2))
+	// .force("collision", d3.forceCollide().radius(2))
 
 	const linkElements = d3
 		.select(linksRef.value)
 		.selectAll<SVGLineElement, GraphLink>("line")
-		.data(links, (d: GraphLink) => `${d.source}-${d.target}`)
-	.join("line")
+		.data(links, (d: GraphLink) => {
+			const a = typeof d.source === "string" ? d.source : (d.source as { id: string }).id
+			const b = typeof d.target === "string" ? d.target : (d.target as { id: string }).id
+			return `${a}-${b}`
+		})
+		.join("line")
 		.attr("stroke", "#a2a9b1")
 		.attr("stroke-opacity", 0.6)
 		.attr("stroke-width", 1.5)
@@ -126,58 +133,108 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 		.select(nodesRef.value)
 		.selectAll<SVGGElement, GraphNode & d3.SimulationNodeDatum>("g.node")
 		.data(nodes, (d: GraphNode & d3.SimulationNodeDatum) => d.id)
-	.join(
-		enter =>
+		.join(enter =>
 			enter
 				.append("g")
-				.attr("class", "node")
 				.attr("cursor", "pointer")
 				.attr("pointer-events", "all")
 				.call(
 					d3
 						.drag<SVGGElement, GraphNode & d3.SimulationNodeDatum>()
 						.on("start", (event, d) => {
+							const nodeEl = (event.sourceEvent?.target as Element)?.closest?.(
+								".node"
+							)
+							if (nodeEl) {
+								d3.select(nodeEl as SVGGElement)
+									.select("circle")
+									.attr("stroke", "#fff")
+									.attr(
+										"stroke-width",
+										(d as GraphNode & { isQuery?: boolean }).isQuery ? 3 : 2
+									)
+							}
 							if (!event.active) simulation?.alphaTarget(0.3).restart()
 							d.fx = d.x
 							d.fy = d.y
 						})
 						.on("drag", (event, d) => {
+							wasDragging.value = true
 							d.fx = event.x
 							d.fy = event.y
 						})
 						.on("end", (event, d) => {
-							if (!event.active) simulation?.alphaTarget(0)
+							setTimeout(() => {
+								wasDragging.value = false
+							}, 0)
+							if (!event.active) simulation?.alphaTarget(0.3).restart()
 							d.fx = null
 							d.fy = null
 						})
 				)
-				.each(function (this: SVGGElement, d) {
-					const isQuery = (d as GraphNode & { isQuery?: boolean }).isQuery
-					const g = d3.select(this)
-					g.append("circle")
-						.attr("r", isQuery ? 14 : 7)
-						.attr("fill", isQuery ? "var(--color-progressive)" : "var(--color-base)")
-						.attr("stroke", "#fff")
-						.attr("stroke-width", isQuery ? 3 : 2)
-				})
 				.on("mouseover", (event, d) => {
+					if (isPointerDown.value) return
 					const node = d as GraphNode & d3.SimulationNodeDatum
 					const id = node.id
 					const g = event.currentTarget as SVGGElement
-					d3.select(g).select("circle").attr("stroke", "var(--color-progressive)").attr("stroke-width", 3)
-					d3.select(linksRef.value!).selectAll<SVGLineElement, GraphLink>("line").attr("stroke-opacity", (link: GraphLink) => {
-						const s = typeof link.source === "string" ? link.source : (link.source as { id: string }).id
-						const t = typeof link.target === "string" ? link.target : (link.target as { id: string }).id
-						return s === id || t === id ? 1 : 0.12
-					})
-					d3.select(nodesRef.value!).selectAll("g.node").attr("opacity", (n: GraphNode & d3.SimulationNodeDatum) => (n.id === id ? 1 : 0.4))
+
+					const connectedIds = new Set<string>()
+					for (const l of props.graphData?.links ?? []) {
+						const s =
+							typeof l.source === "string"
+								? l.source
+								: (l.source as { id: string }).id
+						const t =
+							typeof l.target === "string"
+								? l.target
+								: (l.target as { id: string }).id
+						if (s === id) connectedIds.add(t)
+						if (t === id) connectedIds.add(s)
+					}
+
+					d3.select(g).classed("node-highlight-self", true)
+					d3.select(nodesRef.value!)
+						.selectAll<SVGGElement, GraphNode & d3.SimulationNodeDatum>("g.node")
+						.classed("node-highlight", (n: GraphNode & d3.SimulationNodeDatum) =>
+							connectedIds.has(n.id)
+						)
+					d3.select(linksRef.value!)
+						.selectAll<SVGLineElement, GraphLink>("line")
+						.classed("link-highlight", (link: GraphLink) => {
+							const s =
+								typeof link.source === "string"
+									? link.source
+									: (link.source as { id: string }).id
+							const t =
+								typeof link.target === "string"
+									? link.target
+									: (link.target as { id: string }).id
+							return s === id || t === id
+						})
+
 					const links = props.graphData?.links ?? []
 					const querySet = new Set(props.queryPageNames ?? [])
-					const linkedFromQuery = [...querySet].filter(
-						q => links.some(l => (typeof l.source === "string" ? l.source : (l.source as { id: string }).id) === q && (typeof l.target === "string" ? l.target : (l.target as { id: string }).id) === node.id)
+					const linkedFromQuery = [...querySet].filter(q =>
+						links.some(
+							l =>
+								(typeof l.source === "string"
+									? l.source
+									: (l.source as { id: string }).id) === q &&
+								(typeof l.target === "string"
+									? l.target
+									: (l.target as { id: string }).id) === node.id
+						)
 					)
-					const linksToQuery = [...querySet].filter(
-						q => links.some(l => (typeof l.source === "string" ? l.source : (l.source as { id: string }).id) === node.id && (typeof l.target === "string" ? l.target : (l.target as { id: string }).id) === q)
+					const linksToQuery = [...querySet].filter(q =>
+						links.some(
+							l =>
+								(typeof l.source === "string"
+									? l.source
+									: (l.source as { id: string }).id) === node.id &&
+								(typeof l.target === "string"
+									? l.target
+									: (l.target as { id: string }).id) === q
+						)
 					)
 					const rect = containerRef.value?.getBoundingClientRect()
 					tooltip.value = {
@@ -190,22 +247,51 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 						linksToQuery,
 					}
 				})
-				.on("mouseout", (event) => {
-					d3.select(event.currentTarget as SVGGElement).select("circle").attr("stroke", "#fff").attr("stroke-width", 2)
-					d3.select(linksRef.value!).selectAll("line").attr("stroke-opacity", 0.6)
-					d3.select(nodesRef.value!).selectAll("g.node").attr("opacity", 1)
+				.on("mouseout", () => {
+					d3.select(nodesRef.value!)
+						.selectAll<SVGGElement, GraphNode & d3.SimulationNodeDatum>("g.node")
+						.classed("node-highlight-self", false)
+						.classed("node-highlight", false)
+					d3.select(linksRef.value!).selectAll("line").classed("link-highlight", false)
 					tooltip.value = null
 				})
-	)
+				.on("click", (_event, d) => {
+					if (wasDragging.value) return
+					const node = d as GraphNode & d3.SimulationNodeDatum
+					if (node.isQuery) {
+						emit("removeFromQuery", node.id)
+					} else {
+						emit("addToQuery", node.id)
+					}
+				})
+		)
+		.attr("class", (d: GraphNode & d3.SimulationNodeDatum) =>
+			"node" + ((d as GraphNode).isQuery ? " node-query" : "")
+		)
+		.each(function (this: SVGGElement, d) {
+			const isQuery = (d as GraphNode & { isQuery?: boolean }).isQuery
+			const g = d3.select(this)
+			g.selectAll("circle").remove()
+			g.append("circle")
+				.attr("r", isQuery ? 14 : 7)
+				.attr("fill", isQuery ? "var(--color-progressive)" : "var(--color-base)")
+				.attr("stroke", "#fff")
+				.attr("stroke-width", isQuery ? 3 : 2)
+		})
 
+	let tickScheduled = false
 	simulation.on("tick", () => {
-		linkElements
-			.attr("x1", d => (d.source as d3.SimulationNodeDatum).x ?? 0)
-			.attr("y1", d => (d.source as d3.SimulationNodeDatum).y ?? 0)
-			.attr("x2", d => (d.target as d3.SimulationNodeDatum).x ?? 0)
-			.attr("y2", d => (d.target as d3.SimulationNodeDatum).y ?? 0)
-
-		nodeElements.attr("transform", d => `translate(${d.x ?? 0},${d.y ?? 0})`)
+		if (tickScheduled) return
+		tickScheduled = true
+		requestAnimationFrame(() => {
+			tickScheduled = false
+			linkElements
+				.attr("x1", d => (d.source as d3.SimulationNodeDatum).x ?? 0)
+				.attr("y1", d => (d.source as d3.SimulationNodeDatum).y ?? 0)
+				.attr("x2", d => (d.target as d3.SimulationNodeDatum).x ?? 0)
+				.attr("y2", d => (d.target as d3.SimulationNodeDatum).y ?? 0)
+			nodeElements.attr("transform", d => `translate(${d.x ?? 0},${d.y ?? 0})`)
+		})
 	})
 }
 
@@ -217,17 +303,16 @@ function setupZoom() {
 	zoom = d3
 		.zoom<SVGSVGElement, unknown>()
 		.scaleExtent([0.06, 4])
-		.filter(function (event: { target?: EventTarget | null }) {
-			const target = event.target as Element | null
-			return !target?.closest?.(".node")
-		})
 		.on("zoom", event => {
 			d3.select(zoomGRef.value!).attr("transform", event.transform)
 		})
 	const sel = d3.select(svgRef.value).call(zoom)
 	sel.call(
 		zoom.transform,
-		d3.zoomIdentity.translate(w / 2, h / 2).scale(initialScale).translate(-w / 2, -h / 2)
+		d3.zoomIdentity
+			.translate(w / 2, h / 2)
+			.scale(initialScale)
+			.translate(-w / 2, -h / 2)
 	)
 }
 
@@ -251,11 +336,13 @@ watch(
 	async data => {
 		if (!data || data.nodes.length === 0) return
 		await nextTick()
-		const nodes = data.nodes.map(n => ({
-			...n,
-			x: width.value / 2 + (Math.random() - 0.5) * 80,
-			y: height.value / 2 + (Math.random() - 0.5) * 80,
-		}))
+		const nodes = data.nodes
+			.map(n => ({
+				...n,
+				x: width.value / 2 + (Math.random() - 0.5) * 80,
+				y: height.value / 2 + (Math.random() - 0.5) * 80,
+			}))
+			.sort((a, b) => (a.isQuery ? 1 : 0) - (b.isQuery ? 1 : 0))
 		const links = data.links.map(l => ({ ...l }))
 		initSimulation(nodes, links)
 	},
@@ -297,17 +384,31 @@ function captureWheel(e: WheelEvent) {
 }
 
 let wheelEl: HTMLElement | null = null
+function onPointerDown() {
+	isPointerDown.value = true
+	tooltip.value = null
+}
+function onPointerUp() {
+	isPointerDown.value = false
+}
+
 onMounted(() => {
 	document.addEventListener("fullscreenchange", onFullscreenChange)
+	document.addEventListener("pointerup", onPointerUp)
+	document.addEventListener("pointercancel", onPointerUp)
 	wheelEl = containerRef.value
 	if (wheelEl) {
 		wheelEl.addEventListener("wheel", captureWheel, { passive: false, capture: true })
+		wheelEl.addEventListener("pointerdown", onPointerDown, { capture: true })
 	}
 })
 onUnmounted(() => {
 	document.removeEventListener("fullscreenchange", onFullscreenChange)
+	document.removeEventListener("pointerup", onPointerUp)
+	document.removeEventListener("pointercancel", onPointerUp)
 	if (wheelEl) {
 		wheelEl.removeEventListener("wheel", captureWheel, { capture: true })
+		wheelEl.removeEventListener("pointerdown", onPointerDown, { capture: true })
 		wheelEl = null
 	}
 })
@@ -319,8 +420,8 @@ defineExpose({ simulation })
 .link-graph-wrapper {
 	position: relative;
 	width: 100%;
-	height: 360px;
-	min-height: 240px;
+	height: 420px;
+	min-height: 280px;
 	background: var(--background-color-base);
 	border: 1px solid var(--border-color-base);
 	border-radius: 2px;
@@ -407,5 +508,20 @@ defineExpose({ simulation })
 	font-weight: 600;
 	color: var(--color-base);
 	margin-bottom: 0.15rem;
+}
+
+/* Hover highlight: connected nodes and links (D3-created DOM needs :deep for scoped) */
+:deep(.node.node-highlight-self circle) {
+	stroke: var(--color-progressive);
+	stroke-width: 3;
+}
+:deep(.node.node-highlight-self.node-query circle) {
+	stroke: #000;
+}
+:deep(.node.node-highlight circle) {
+	fill: var(--color-progressive);
+}
+:deep(line.link-highlight) {
+	stroke: var(--color-progressive);
 }
 </style>

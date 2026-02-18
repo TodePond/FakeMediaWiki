@@ -9,20 +9,33 @@
 					input-type="search"
 					id="page-names"
 				/>
-				<span style="display: flex; gap: 0.5rem">
+				<span style="display: flex; gap: 0.5rem; flex-wrap: wrap">
 					<CdxButton>Load links & backlinks</CdxButton>
+					<CdxButton
+						type="button"
+						action="default"
+						@click.prevent="toggleGraphVisible"
+					>
+						{{ showGraph ? "Hide graph" : "Show graph" }}
+					</CdxButton>
 					<CdxProgressIndicator v-if="isLoading" aria-label="Loading" />
 				</span>
 			</span>
 		</form>
 		<div v-if="error" class="error">{{ error }}</div>
 		<div v-else class="content-with-graph">
-			<LinkGraph
+			<div
 				v-if="graphData && graphData.nodes.length > 0"
+				v-show="showGraph"
 				class="link-graph-block"
-				:graph-data="graphData"
-				:query-page-names="loadedQueryNames"
-			/>
+			>
+				<LinkGraph
+					:graph-data="graphData"
+					:query-page-names="loadedQueryNames"
+					@add-to-query="addPageToQuery"
+				@remove-from-query="removePageFromQuery"
+				/>
+			</div>
 			<div class="three-columns">
 				<div class="column">
 					<h3 class="column-title">Outgoing links</h3>
@@ -162,6 +175,20 @@ import LinkGraph from "./LinkGraph.vue"
 
 const wiki = new FakeWiki()
 
+const GRAPH_VISIBLE_STORAGE_KEY = "fakewiki-page-links-show-graph"
+const showGraph = ref(
+	typeof localStorage !== "undefined" && localStorage.getItem(GRAPH_VISIBLE_STORAGE_KEY) !== "false"
+)
+
+function toggleGraphVisible(): void {
+	showGraph.value = !showGraph.value
+	try {
+		localStorage.setItem(GRAPH_VISIBLE_STORAGE_KEY, String(showGraph.value))
+	} catch {
+		// ignore
+	}
+}
+
 const pageNamesInput = ref(
 	localStorage.getItem("pageLinksQuery") ||
 		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks"
@@ -241,6 +268,26 @@ const graphData = computed<GraphData | null>(() => {
 	const nodes = [...nodeIds].map(id => ({ id, isQuery: querySet.has(id) }))
 	return { nodes, links }
 })
+
+function addPageToQuery(pageName: string): void {
+	const current = pageNamesInput.value
+		.split(",")
+		.map(name => name.trim())
+		.filter(name => name.length > 0)
+	if (current.includes(pageName)) return
+	pageNamesInput.value = current.length > 0 ? `${current.join(", ")}, ${pageName}` : pageName
+	load()
+}
+
+function removePageFromQuery(pageName: string): void {
+	const current = pageNamesInput.value
+		.split(",")
+		.map(name => name.trim())
+		.filter(name => name.length > 0)
+	const next = current.filter(name => name !== pageName)
+	pageNamesInput.value = next.join(", ")
+	load()
+}
 
 const load = async (): Promise<void> => {
 	isLoading.value = true
