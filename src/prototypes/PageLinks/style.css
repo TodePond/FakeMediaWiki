@@ -1,7 +1,10 @@
-section {
+.page-links-view {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	height: 100%;
+	min-height: 0;
+	padding: 1rem;
 }
 
 .cdx-text-input {
@@ -17,8 +20,33 @@ form > span {
 	flex-wrap: wrap;
 }
 
+.three-columns {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	flex: 1;
+	min-height: 0;
+	gap: 1rem;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	border-radius: 2px;
+}
+
 .links-list {
-	padding-top: 1rem;
+	flex: 1;
+	overflow: auto;
+	padding-top: 0;
+}
+
+.links-list hr {
+	margin: 0.5rem 0;
+}
+
+.link-row {
+	margin-bottom: 0.25rem;
 }
 
 .main-link {
