@@ -137,6 +137,17 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		status: "new",
 		featured: true,
 	},
+	{
+		type: "prototype",
+		id: "PageBacklinks",
+		name: "Page backlinks",
+		description: "How to get incoming links (which pages link to the given pages).",
+		category: "recommendations",
+		wrapper: "Component",
+		title: "Page backlinks",
+		status: "new",
+		featured: true,
+	},
 	// {
 	// 	type: "prototype",
 	// 	id: "PageSharedLinks",

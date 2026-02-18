@@ -67,7 +67,12 @@
 									:style="{ color: getLinkTypeIcon(change)!.color }"
 									class="link-type-icon"
 									size="small"
-									:aria-label="getLinkTypeIcon(change)!.label"
+									:aria-label="
+										getLinkTypeIcon(change)!.label.replace(
+											'[[pageName]]',
+											pageName
+										)
+									"
 								/>
 								<CdxIcon
 									v-if="getPredictionIcon(change.id).icon"
@@ -241,7 +246,12 @@
 								<div
 									v-if="getLinkTypeIcon(change)"
 									class="link-type-card"
-									:title="getLinkTypeIcon(change)!.label"
+									:title="
+										getLinkTypeIcon(change)!.label.replace(
+											'[[pageName]]',
+											pageName
+										)
+									"
 								>
 									<CdxIcon
 										:icon="getLinkTypeIcon(change)!.icon"
@@ -250,7 +260,10 @@
 										size="small"
 									/>
 									<span class="link-type-card-text">{{
-										getLinkTypeIcon(change)!.label
+										getLinkTypeIcon(change)!.label.replace(
+											"[[pageName]]",
+											pageName
+										)
 									}}</span>
 								</div>
 								<div v-if="getPredictionText(change.id)" class="prediction-card">
@@ -663,10 +676,10 @@ let nextHeartId = 0
 const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
 const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
 const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedPagesFeed({
-		wiki,
-		pageName,
-		onUserCategory: cacheUserCategory,
-	})
+	wiki,
+	pageName,
+	onUserCategory: cacheUserCategory,
+})
 
 const expandedTalkIds = ref<Set<number>>(new Set())
 const talkPageText = ref<Map<number, string>>(new Map())
@@ -690,24 +703,22 @@ function getLinkTypeIcon(change: FWRevisionWithLinkType): {
 } | null {
 	const t = change.linkType
 	if (!t) return null
-	// "to" = outgoing (target page links TO this)
 	if (t === "to")
 		return {
 			icon: cdxIconArrowUp,
 			color: "var(--color-progressive)",
-			label: "Outgoing",
+			label: "[[pageName]] links to this page.",
 		}
-	// "from" = incoming (this page links TO target)
 	if (t === "from")
 		return {
 			icon: cdxIconArrowDown,
 			color: "var(--color-success)",
-			label: "Incoming",
+			label: "This page links to [[pageName]].",
 		}
 	return {
 		icon: cdxIconLink,
 		color: "var(--color-base)",
-		label: "Bidirectional",
+		label: "[[pageName]] links to this page and this page links back.",
 	}
 }
 
