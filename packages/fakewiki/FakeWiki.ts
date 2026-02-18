@@ -1352,11 +1352,10 @@ export class FakeWiki {
 			showIncoming?: boolean
 			limit?: number
 			days?: number
+			from?: string
 		} = {}
 	): Promise<FWRevisionWithLinkType[]> {
-		const { showOutgoing = true, showIncoming = true, limit = 50, days = 7 } = options
-		// const cappedLimit = Math.min(50, Math.max(1, limit))
-		// const cappedDays = Math.min(30, Math.max(1, days))
+		const { showOutgoing = true, showIncoming = true, limit = 50, days = 7, from } = options
 		const target = targetPageName.trim()
 		if (!target) return []
 
@@ -1370,6 +1369,7 @@ export class FakeWiki {
 				days: String(days),
 			}
 			if (showLinkedTo) p.showlinkedto = "1"
+			if (from) p.from = from
 			return p
 		}
 

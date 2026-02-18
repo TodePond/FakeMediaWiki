@@ -557,11 +557,6 @@
 					</div>
 				</div>
 			</template>
-			<div v-if="!isLoading && allRevisionsData.length > 0" class="load-more-container">
-				<CdxButton :disabled="isLoadingMore" @click="loadMore">
-					{{ isLoadingMore ? "Loading..." : "Load more" }}
-				</CdxButton>
-			</div>
 		</div>
 
 		<div class="thank-hearts-overlay" aria-hidden="true">
@@ -667,8 +662,7 @@ let nextHeartId = 0
 
 const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
 const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
-const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } =
-	useRelatedPagesFeed({
+const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedPagesFeed({
 		wiki,
 		pageName,
 		onUserCategory: cacheUserCategory,

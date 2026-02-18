@@ -3,8 +3,9 @@ import type { FWRevisionWithLinkType } from "fakewiki/types"
 import type { Ref } from "vue"
 import { ref } from "vue"
 
-const INITIAL_LIMIT = 20
-const LIMIT_INCREMENT = 20
+/** API max for feedrecentchanges */
+const LIMIT = 50
+const DAYS = 30
 
 interface UseRelatedPagesFeedArgs {
 	wiki: FakeWiki
@@ -18,43 +19,28 @@ interface UseRelatedPagesFeedArgs {
 export function useRelatedPagesFeed({ wiki, pageName, onUserCategory }: UseRelatedPagesFeedArgs) {
 	const allRevisionsData = ref<FWRevisionWithLinkType[]>([])
 	const isLoading = ref(false)
-	const isLoadingMore = ref(false)
 	const errors = ref<string[]>([])
-	const hasMore = ref(false)
-	/** Limit to request next (20, then 40, 60, …); reset to INITIAL_LIMIT on new search. */
-	const nextLimit = ref(INITIAL_LIMIT)
 
-	async function loadFeed(append = false): Promise<void> {
+	async function loadFeed(): Promise<void> {
 		const name = pageName.value.trim()
 		if (!name) {
 			allRevisionsData.value = []
 			errors.value = []
-			hasMore.value = false
 			return
 		}
-
-		if (!append) {
-			nextLimit.value = INITIAL_LIMIT
-		}
-		const limit = nextLimit.value
-		if (!append) {
-			isLoading.value = true
-			errors.value = []
-		} else {
-			isLoadingMore.value = true
-		}
-
+		isLoading.value = true
+		errors.value = []
 		try {
+			const d = new Date()
+			d.setDate(d.getDate() - DAYS)
+			const from = d.toISOString()
 			const revisions = await wiki.getRelatedChanges(name, {
 				showOutgoing: true,
 				showIncoming: true,
-				limit,
-				days: 30,
+				limit: LIMIT,
+				days: DAYS,
+				from,
 			})
-
-			console.log("revisions", revisions)
-
-			// Enrich with user category; comment is already raw HTML from the API, render as-is
 			const enriched = await Promise.all(
 				revisions.map(async rev => {
 					const userCategory = await wiki.getUserCategory(rev.user.name)
@@ -74,49 +60,20 @@ export function useRelatedPagesFeed({ wiki, pageName, onUserCategory }: UseRelat
 					}
 				})
 			)
-
-			nextLimit.value = limit + LIMIT_INCREMENT
-
-			if (append) {
-				const existingIds = new Set(allRevisionsData.value.map(r => r.id))
-				const newRevisions = enriched.filter(r => !existingIds.has(r.id))
-				const merged = [...allRevisionsData.value, ...newRevisions].sort(
-					(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-				)
-				allRevisionsData.value = merged
-				hasMore.value = enriched.length >= limit
-				if (newRevisions.length === 0 && enriched.length >= limit) {
-					hasMore.value = false
-				}
-			} else {
-				allRevisionsData.value = enriched
-				hasMore.value = enriched.length >= limit
-			}
+			allRevisionsData.value = enriched
 		} catch (e) {
 			const errorObj = e as Error
-			if (!append) {
-				errors.value = [errorObj.message]
-				allRevisionsData.value = []
-			}
-			hasMore.value = false
+			errors.value = [errorObj.message]
+			allRevisionsData.value = []
 		} finally {
 			isLoading.value = false
-			isLoadingMore.value = false
 		}
-	}
-
-	async function loadMore(): Promise<void> {
-		if (allRevisionsData.value.length === 0 || !hasMore.value) return
-		await loadFeed(true)
 	}
 
 	return {
 		allRevisionsData,
 		isLoading,
-		isLoadingMore,
 		errors,
-		hasMore,
 		loadFeed,
-		loadMore,
 	}
 }
