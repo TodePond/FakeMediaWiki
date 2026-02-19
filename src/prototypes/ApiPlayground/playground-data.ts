@@ -77,6 +77,7 @@ const METHOD_PARAM_DEFAULTS: Record<string, Record<string, string | number | boo
 	searchUsersWithAvatars: { query: "Samwalton9" },
 	compareRevisions: { fromRevId: 1336311016, toRevId: 1337619110 },
 	getRevisionDiff: { pageName: "Corsica Studios", revId: 1337619110 },
+	getParentRevisionId: { pageName: "Corsica Studios", revId: 1337619110 },
 }
 
 function inferType(key: string, override?: { inputType?: string; options?: string[] }): ParamType {

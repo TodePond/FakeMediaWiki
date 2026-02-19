@@ -536,8 +536,8 @@ import { getRevisionItemZIndex } from "./zIndex"
 
 const wiki = new FakeWiki()
 
-const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
-const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
+const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries2")
+const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries2")
 const pageSearchQueries = ref<string[]>(loadQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadQueries(userStorageKey, defaultUserSearchQueries))
 

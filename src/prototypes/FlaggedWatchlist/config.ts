@@ -7,6 +7,9 @@ export const HEART_RISE_DURATION_MS = 2500
 export const defaultPageSearchQueries = [
 	"Wikipedia",
 	"Wet Leg",
+	"Jade Thirlwall",
+	"Jools Holland",
+	"Rizzle Kicks",
 	"Water",
 	"Confidence Man (band)",
 	"Algorave",

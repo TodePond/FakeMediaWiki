@@ -83,14 +83,14 @@ export const categories: CategoryDefinition[] = [
 		description: "Early experiments for feeds of information.",
 	},
 	{
+		id: "api",
+		name: "API",
+		description: "Demonstrations of available API.",
+	},
+	{
 		id: "article",
 		name: "Article",
 		description: "Prototypes that display articles in different ways.",
-	},
-	{
-		id: "wrappers",
-		name: "Wrappers",
-		description: "Demonstrations of the various wrappers that are available for prototypes.",
 	},
 	{
 		id: "page",
@@ -103,9 +103,9 @@ export const categories: CategoryDefinition[] = [
 		description: "Basic demonstrations of search features.",
 	},
 	{
-		id: "api",
-		name: "API",
-		description: "Demonstrations of available API.",
+		id: "wrappers",
+		name: "Wrappers",
+		description: "Demonstrations of the various wrappers that are available for prototypes.",
 	},
 	{
 		id: "components",
@@ -519,17 +519,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	},
 	{
 		type: "prototype",
-		id: "HistoryCacheInspector",
-		name: "History cache",
-		description: "Debug the history cache for combined feeds.",
-		category: "api",
-		wrapper: "Fullscreen",
-		title: "History cache inspector",
-		status: "new",
-		featured: true,
-	},
-	{
-		type: "prototype",
 		id: "ApiPlayground",
 		name: "API Playground",
 		description: "Sandbox for every FakeWiki method.",
@@ -537,6 +526,17 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		wrapper: "Fullscreen",
 		title: "API Playground",
 		status: "wip",
+		featured: true,
+	},
+	{
+		type: "prototype",
+		id: "HistoryCacheInspector",
+		name: "History cache",
+		description: "Debug the history cache for combined feeds.",
+		category: "api",
+		wrapper: "Fullscreen",
+		title: "History cache inspector",
+		status: "new",
 		featured: true,
 	},
 	{
