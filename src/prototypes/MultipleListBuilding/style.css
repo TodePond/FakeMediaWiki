@@ -2,11 +2,15 @@
 @import "../ListBuilding/style.css";
 
 .multiple-list-building-view .form-row-weight {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
+	display: none;
 }
 
 .multiple-list-building-view .form-row-weight .weight-input {
 	width: 4rem;
+}
+
+.multiple-list-building-view .load-progress {
+	margin-left: 0.25rem;
+	font-size: 0.875rem;
+	color: var(--color-subtle);
 }

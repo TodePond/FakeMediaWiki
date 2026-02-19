@@ -29,17 +29,33 @@
 					class="main-link"
 					>{{ item.page_title === "-" ? "Article missing" : item.page_title }}</a
 				>
-				<span v-else>{{ item.page_title === "-" ? "Article missing" : item.page_title }}</span>
+				<span v-else>{{
+					item.page_title === "-" ? "Article missing" : item.page_title
+				}}</span>
 				<span v-if="item.qid" class="result-qid">
-					<a :href="wikidataUrl" target="_blank" rel="noopener noreferrer" class="qid-link">{{
-						item.qid
-					}}</a>
+					<a
+						:href="wikidataUrl"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="qid-link"
+						>{{ item.qid }}</a
+					>
 				</span>
-				<span v-if="listCount != null && listCount > 0" class="result-list-count"
-					>on {{ listCount }} list{{ listCount === 1 ? "" : "s" }}</span
-				>
 			</span>
 			<p v-if="item.description" class="result-description">{{ item.description }}</p>
+			<p v-if="listPageTitles && listPageTitles.length > 0" class="result-list-pages">
+				{{ listPageTitles.length }} list{{ listPageTitles.length === 1 ? "" : "s" }}:
+				<template v-for="(pageTitle, idx) in listPageTitles" :key="pageTitle">
+					<span v-if="idx > 0">, </span>
+					<a
+						:href="pageUrl(pageTitle)"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="list-page-link"
+						>{{ pageTitle }}</a
+					>
+				</template>
+			</p>
 		</div>
 	</div>
 </template>
@@ -54,8 +70,9 @@ const props = withDefaults(
 		lang: string
 		thumbnail?: string
 		listCount?: number
+		listPageTitles?: string[]
 	}>(),
-	{ thumbnail: undefined, listCount: undefined }
+	{ thumbnail: undefined, listCount: undefined, listPageTitles: undefined }
 )
 
 const articleUrl = computed(() => {
@@ -66,6 +83,10 @@ const articleUrl = computed(() => {
 const wikidataUrl = computed(() =>
 	props.item.qid ? `https://www.wikidata.org/wiki/${props.item.qid}` : ""
 )
+
+function pageUrl(title: string): string {
+	return `https://${props.lang}.wikipedia.org/wiki/${encodeURIComponent(title)}`
+}
 </script>
 
 <style scoped>

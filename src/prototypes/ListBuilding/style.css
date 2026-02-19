@@ -70,7 +70,7 @@ form {
 	flex-shrink: 0;
 	width: 80px;
 	height: 80px;
-	background-color: var(--background-color-subtle);
+	background-color: var(--background-color-neutral-subtle);
 	border-radius: 2px;
 	overflow: hidden;
 }
@@ -92,6 +92,7 @@ form {
 	display: flex;
 	justify-content: space-between;
 	width: 100%;
+	flex-wrap: wrap;
 }
 
 .main-link {
@@ -115,14 +116,24 @@ form {
 	text-decoration: underline;
 }
 
-.result-list-count {
+.result-list-pages {
+	margin: 0.25rem 0 0;
+	width: 100%;
 	font-size: 0.8125rem;
 	color: var(--color-subtle);
-	margin-left: 0.25rem;
+}
+
+.result-list-pages .list-page-link {
+	color: var(--color-progressive);
+	text-decoration: none;
+}
+
+.result-list-pages .list-page-link:hover {
+	text-decoration: underline;
 }
 
 .result-description {
-	margin: 0.25rem 0 0;
+	margin: 0rem 0 0;
 	width: 100%;
 	font-size: 0.875rem;
 	color: var(--color-subtle);

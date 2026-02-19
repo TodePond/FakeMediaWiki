@@ -42,6 +42,9 @@
 			<span class="form-actions">
 				<CdxButton>Build list</CdxButton>
 				<CdxProgressIndicator v-if="isLoading" aria-label="Loading" />
+				<span v-if="isLoading && totalToLoad > 0" class="load-progress"
+					>({{ loadedCount }}/{{ totalToLoad }})</span
+				>
 			</span>
 		</form>
 		<div v-if="error" class="error">{{ error }}</div>
@@ -68,7 +71,7 @@
 						:item="entry.item"
 						:lang="lang"
 						:thumbnail="thumbnails[entry.item.page_title]"
-						:list-count="entry.listCount"
+						:list-page-titles="entry.pageTitles"
 					/>
 				</div>
 			</div>
@@ -87,7 +90,7 @@
 						:item="entry.item"
 						:lang="lang"
 						:thumbnail="thumbnails[entry.item.page_title]"
-						:list-count="entry.listCount"
+						:list-page-titles="entry.pageTitles"
 					/>
 				</div>
 			</div>
@@ -106,7 +109,7 @@
 						:item="entry.item"
 						:lang="lang"
 						:thumbnail="thumbnails[entry.item.page_title]"
-						:list-count="entry.listCount"
+						:list-page-titles="entry.pageTitles"
 					/>
 				</div>
 			</div>
@@ -175,10 +178,13 @@ type ScoredEntry = {
 	listCount: number
 	positionScore: number
 	score: number
+	pageTitles: string[]
 }
 
 const aggregated = ref<Map<string, ScoredEntry>>(new Map())
 const isLoading = ref(false)
+const loadedCount = ref(0)
+const totalToLoad = ref(0)
 const error = ref<string | null>(null)
 const hasSearched = ref(false)
 const thumbnails = ref<Record<string, string>>({})
@@ -210,6 +216,69 @@ function itemKey(item: FWListBuildingResult): string {
 	return item.qid || item.page_title || ""
 }
 
+/** Merge one page's list-building response into the shared map and update reactive state. */
+function mergeResponseIntoMap(
+	map: Map<string, ScoredEntry>,
+	seedPageTitle: string,
+	data: { results?: FWListBuildingResult[] }
+): void {
+	const results = data.results ?? []
+	const bySource: Record<string, FWListBuildingResult[]> = {
+		links: [],
+		morelike: [],
+		reader: [],
+	}
+	for (const r of results) {
+		if (!bySource[r.source]) bySource[r.source] = []
+		bySource[r.source].push(r)
+	}
+	for (const [source, list] of Object.entries(bySource)) {
+		list.forEach((item, i) => {
+			const rank = i + 1
+			const positionContrib = 1 / rank
+			const key = `${source}:${itemKey(item)}`
+			const existing = map.get(key)
+			if (existing) {
+				existing.listCount += 1
+				existing.positionScore += positionContrib
+				existing.pageTitles.push(seedPageTitle)
+			} else {
+				map.set(key, {
+					item,
+					listCount: 1,
+					positionScore: positionContrib,
+					score: 0,
+					pageTitles: [seedPageTitle],
+				})
+			}
+		})
+	}
+}
+
+/** Run at most `concurrency` requests at a time; merge each response into `map` and update `aggregated` and `loadedCount` as each completes. */
+async function loadAndMergeProgressively(
+	pageTitles: string[],
+	concurrency: number,
+	map: Map<string, ScoredEntry>
+): Promise<void> {
+	let nextIndex = 0
+	let completedCount = 0
+	async function worker(): Promise<void> {
+		while (nextIndex < pageTitles.length) {
+			const index = nextIndex++
+			const title = pageTitles[index]
+			const data = await wiki.getListBuilding(lang.value, { pageTitle: title, k: 10 })
+			mergeResponseIntoMap(map, title, data)
+			completedCount += 1
+			loadedCount.value = completedCount
+			aggregated.value = new Map(map)
+		}
+	}
+	await Promise.all(
+		Array.from({ length: Math.min(concurrency, pageTitles.length) }, () => worker())
+	)
+}
+
 async function buildList(): Promise<void> {
 	const raw = pageTitlesInput.value
 		.trim()
@@ -233,46 +302,13 @@ async function buildList(): Promise<void> {
 		localStorage.setItem(langKey, lang.value)
 		localStorage.setItem(QUERY_STORAGE_KEY, pageTitlesInput.value)
 
-		const responses = await Promise.all(
-			pageTitles.map(title => wiki.getListBuilding(lang.value, { pageTitle: title, k: 10 }))
-		)
-
+		totalToLoad.value = pageTitles.length
+		loadedCount.value = 0
 		const map = new Map<string, ScoredEntry>()
-
-		for (const data of responses) {
-			const results = data.results ?? []
-			const bySource: Record<string, FWListBuildingResult[]> = {
-				links: [],
-				morelike: [],
-				reader: [],
-			}
-			for (const r of results) {
-				if (!bySource[r.source]) bySource[r.source] = []
-				bySource[r.source].push(r)
-			}
-
-			for (const [source, list] of Object.entries(bySource)) {
-				list.forEach((item, i) => {
-					const rank = i + 1
-					const positionContrib = 1 / rank
-					const key = `${source}:${itemKey(item)}`
-					const existing = map.get(key)
-					if (existing) {
-						existing.listCount += 1
-						existing.positionScore += positionContrib
-					} else {
-						map.set(key, {
-							item,
-							listCount: 1,
-							positionScore: positionContrib,
-							score: 0,
-						})
-					}
-				})
-			}
-		}
-
 		aggregated.value = map
+
+		// Merge each response as it arrives so the list updates progressively (concurrency 2 to avoid overwhelming the API)
+		await loadAndMergeProgressively(pageTitles, 2, map)
 
 		const titles = [
 			...new Set(
@@ -282,8 +318,7 @@ async function buildList(): Promise<void> {
 					.filter(Boolean)
 			),
 		]
-		wiki
-			.getPageThumbnails(titles, `https://${lang.value}.wikipedia.org/`)
+		wiki.getPageThumbnails(titles, `https://${lang.value}.wikipedia.org/`)
 			.then(t => {
 				thumbnails.value = t
 			})
