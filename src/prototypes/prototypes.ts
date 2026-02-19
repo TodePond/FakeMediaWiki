@@ -530,6 +530,17 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	},
 	{
 		type: "prototype",
+		id: "ApiPlayground",
+		name: "API Playground",
+		description: "Sandbox for every FakeWiki method.",
+		category: "api",
+		wrapper: "Fullscreen",
+		title: "API Playground",
+		status: "wip",
+		featured: true,
+	},
+	{
+		type: "prototype",
 		id: "Page",
 		name: "Page summary",
 		description: "How to get a page's summary.",

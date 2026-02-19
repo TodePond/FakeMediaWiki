@@ -9,6 +9,8 @@ Helpers for building MediaWiki prototypes: API client, storage keys, result type
 | `fakewiki`                 | Main entry: `FakeWiki` class and default export |
 | `fakewiki/types`           | Shared TypeScript types and interfaces          |
 | `fakewiki/style/delta.css` | CSS for delta (change size) indicators          |
+| `fakewiki/playground-schema`   | Generated method list for API Playground (from FakeWiki.ts + TSDoc) |
+| `fakewiki/playground-overrides` | UI-only overrides for the API Playground (hide, resultHint, optionsParamKeys) |
 
 ## What’s in the package
 
@@ -105,6 +107,18 @@ wiki.formatRelativeTime("2024-01-15T12:00:00Z", {
 	years: "date",
 }) // e.g. "15 January 2024", e.g. "3 minutes ago"
 ```
+
+## API Playground
+
+The Fake MediaWiki app includes an **API Playground** prototype that lists every FakeWiki async method and lets you run them with custom parameters. Method names and parameter metadata are derived from `FakeWiki.ts` and its TSDoc (single source of truth); UI hints live in `playground-overrides.ts`.
+
+**When you add a new public async method to FakeWiki:** document it with TSDoc (including `@param` for each argument), then run the schema generator so the method appears in the playground:
+
+```bash
+cd packages/fakewiki && npm run generate:playground
+```
+
+This writes `playground-schema.generated.ts`. Optionally run this in CI and fail if the generated file is out of date (e.g. source changed without regenerating).
 
 ## Reference docs in this package
 

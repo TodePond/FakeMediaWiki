@@ -67,7 +67,7 @@
 
 								<span class="link-pages">
 									<template
-										v-for="(relation, pageIndex) in item.pageRelations"
+										v-for="(relation, _pageIndex) in item.pageRelations"
 										:key="`${relation.kind}-${relation.page}`"
 									>
 										<a

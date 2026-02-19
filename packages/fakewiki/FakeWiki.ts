@@ -958,8 +958,6 @@ export class FakeWiki {
 
 	/**
 	 * Get the parent (previous) revision ID for a revision on a page.
-	 * Uses the page history endpoint with older_than so we don't rely on the
-	 * current list having the previous revision.
 	 * @param pageName - Page title
 	 * @param revId - Revision ID (we want the revision immediately older than this)
 	 * @returns Parent revision ID, or null if none (e.g. first revision)

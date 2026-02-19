@@ -15,12 +15,32 @@
 			"import": "./types.ts",
 			"default": "./types.ts"
 		},
-		"./style/delta.css": "./style/delta.css"
+		"./style/delta.css": "./style/delta.css",
+		"./playground-schema": {
+			"types": "./playground-schema.generated.ts",
+			"import": "./playground-schema.generated.ts",
+			"default": "./playground-schema.generated.ts"
+		},
+		"./playground-overrides": {
+			"types": "./playground-overrides.ts",
+			"import": "./playground-overrides.ts",
+			"default": "./playground-overrides.ts"
+		}
 	},
 	"files": [
 		"FakeWiki.ts",
 		"types.ts",
 		"style",
-		"schema"
-	]
+		"schema",
+		"playground-schema.generated.ts",
+		"playground-overrides.ts",
+		"scripts"
+	],
+	"scripts": {
+		"generate:playground": "tsx scripts/generate-playground-schema.ts"
+	},
+	"devDependencies": {
+		"tsx": "^4.19.2",
+		"typescript": "^5.7.3"
+	}
 }
