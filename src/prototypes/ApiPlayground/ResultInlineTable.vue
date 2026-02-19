@@ -10,7 +10,7 @@
 						:nested="true"
 					/>
 					<pre
-						v-else-if="cellKey === 'source' && typeof cellValue === 'string'"
+						v-else-if="cellKey === 'source' && isWikitextLike(cellValue)"
 						class="result-object__source-block"
 					>{{ cellValue }}</pre>
 					<template v-else>{{ formatCell(cellValue) }}</template>
@@ -38,6 +38,16 @@ const entries = computed(() => props.data)
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value)
+}
+
+function isWikitextLike(value: unknown): value is string {
+	if (typeof value !== "string") return false
+	const s = value
+	// Only treat as source block when it looks like wikitext (e.g. getPage.source), not URLs or short strings
+	return (
+		s.length > 80 &&
+		(s.includes("\n") || s.includes("{{") || s.includes("[["))
+	)
 }
 
 function formatCell(value: unknown): string {
