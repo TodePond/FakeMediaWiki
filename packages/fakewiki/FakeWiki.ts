@@ -1263,6 +1263,25 @@ export class FakeWiki {
 	}
 
 	/**
+	 * Get outgoing links and backlinks for the given pages in one call.
+	 * Convenience that runs getPagesLinks and getPagesBacklinks in parallel.
+	 * @param pageNames - Array of page titles
+	 * @param options - Options (namespace for both; backlinkLimit for backlinks only)
+	 * @returns Object with links and backlinks maps
+	 */
+	async getPagesLinksAndBacklinks(
+		pageNames: string[],
+		options: { namespace?: number; backlinkLimit?: number } = {}
+	): Promise<{ links: Map<string, string[]>; backlinks: Map<string, string[]> }> {
+		const { namespace, backlinkLimit } = options
+		const [links, backlinks] = await Promise.all([
+			this.getPagesLinks(pageNames, { namespace }),
+			this.getPagesBacklinks(pageNames, { namespace, limit: backlinkLimit }),
+		])
+		return { links, backlinks }
+	}
+
+	/**
 	 * Get pages that link to the given page(s) (backlinks / "What links here")
 	 * Uses MediaWiki Action API prop=linkshere.
 	 * @param pageNames - Array of page titles to find backlinks for

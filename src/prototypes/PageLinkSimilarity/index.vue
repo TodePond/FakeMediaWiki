@@ -482,10 +482,8 @@ const load = async (): Promise<void> => {
 			return
 		}
 
-		const [linksResult, backlinksResult] = await Promise.all([
-			wiki.getPagesLinks(pageNames),
-			wiki.getPagesBacklinks(pageNames),
-		])
+		const { links: linksResult, backlinks: backlinksResult } =
+			await wiki.getPagesLinksAndBacklinks(pageNames)
 		if (isStale()) return
 		linksMap.value = linksResult
 		backlinksMap.value = backlinksResult
