@@ -121,7 +121,7 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
-import type { FWListBuildingResult } from "fakewiki/types"
+import type { FWMultiPageListBuildingEntry } from "fakewiki/types"
 import { computed, onMounted, ref, watch } from "vue"
 import ResultRow from "../ListBuilding/ResultRow.vue"
 
@@ -173,15 +173,9 @@ watch([weightLists, weightPosition], () => {
 	}
 })
 
-type ScoredEntry = {
-	item: FWListBuildingResult
-	listCount: number
-	positionScore: number
-	score: number
-	pageTitles: string[]
-}
+type ScoredEntry = FWMultiPageListBuildingEntry & { score: number }
 
-const aggregated = ref<Map<string, ScoredEntry>>(new Map())
+const aggregated = ref<FWMultiPageListBuildingEntry[]>([])
 const isLoading = ref(false)
 const loadedCount = ref(0)
 const totalToLoad = ref(0)
@@ -192,7 +186,7 @@ const thumbnails = ref<Record<string, string>>({})
 const scoredBySource = computed(() => {
 	const wLists = Math.max(0, Number(weightLists.value) || 0)
 	const wPos = Math.max(0, Number(weightPosition.value) || 0)
-	const entries = Array.from(aggregated.value.values()).map(e => ({
+	const entries = aggregated.value.map(e => ({
 		...e,
 		score: wLists * e.listCount + wPos * e.positionScore,
 	}))
@@ -212,73 +206,6 @@ const scoredBySource = computed(() => {
 	return bySource
 })
 
-function itemKey(item: FWListBuildingResult): string {
-	return item.qid || item.page_title || ""
-}
-
-/** Merge one page's list-building response into the shared map and update reactive state. */
-function mergeResponseIntoMap(
-	map: Map<string, ScoredEntry>,
-	seedPageTitle: string,
-	data: { results?: FWListBuildingResult[] }
-): void {
-	const results = data.results ?? []
-	const bySource: Record<string, FWListBuildingResult[]> = {
-		links: [],
-		morelike: [],
-		reader: [],
-	}
-	for (const r of results) {
-		if (!bySource[r.source]) bySource[r.source] = []
-		bySource[r.source].push(r)
-	}
-	for (const [source, list] of Object.entries(bySource)) {
-		list.forEach((item, i) => {
-			const rank = i + 1
-			const positionContrib = 1 / rank
-			const key = `${source}:${itemKey(item)}`
-			const existing = map.get(key)
-			if (existing) {
-				existing.listCount += 1
-				existing.positionScore += positionContrib
-				existing.pageTitles.push(seedPageTitle)
-			} else {
-				map.set(key, {
-					item,
-					listCount: 1,
-					positionScore: positionContrib,
-					score: 0,
-					pageTitles: [seedPageTitle],
-				})
-			}
-		})
-	}
-}
-
-/** Run at most `concurrency` requests at a time; merge each response into `map` and update `aggregated` and `loadedCount` as each completes. */
-async function loadAndMergeProgressively(
-	pageTitles: string[],
-	concurrency: number,
-	map: Map<string, ScoredEntry>
-): Promise<void> {
-	let nextIndex = 0
-	let completedCount = 0
-	async function worker(): Promise<void> {
-		while (nextIndex < pageTitles.length) {
-			const index = nextIndex++
-			const title = pageTitles[index]
-			const data = await wiki.getListBuilding(lang.value, { pageTitle: title, k: 10 })
-			mergeResponseIntoMap(map, title, data)
-			completedCount += 1
-			loadedCount.value = completedCount
-			aggregated.value = new Map(map)
-		}
-	}
-	await Promise.all(
-		Array.from({ length: Math.min(concurrency, pageTitles.length) }, () => worker())
-	)
-}
-
 async function buildList(): Promise<void> {
 	const raw = pageTitlesInput.value
 		.trim()
@@ -289,7 +216,7 @@ async function buildList(): Promise<void> {
 
 	if (pageTitles.length === 0) {
 		error.value = "Enter at least one page title."
-		aggregated.value = new Map()
+		aggregated.value = []
 		hasSearched.value = true
 		return
 	}
@@ -304,15 +231,20 @@ async function buildList(): Promise<void> {
 
 		totalToLoad.value = pageTitles.length
 		loadedCount.value = 0
-		const map = new Map<string, ScoredEntry>()
-		aggregated.value = map
+		aggregated.value = []
 
-		// Merge each response as it arrives so the list updates progressively (concurrency 2 to avoid overwhelming the API)
-		await loadAndMergeProgressively(pageTitles, 2, map)
+		for await (const { entries, completedCount } of wiki.getMultiPageListBuilding(
+			lang.value,
+			pageTitles,
+			{ k: 10, concurrency: 2 }
+		)) {
+			aggregated.value = entries
+			loadedCount.value = completedCount
+		}
 
 		const titles = [
 			...new Set(
-				Array.from(map.values())
+				aggregated.value
 					.filter(e => !e.item.redlink && e.item.page_title !== "-")
 					.map(e => e.item.page_title.trim())
 					.filter(Boolean)
@@ -327,7 +259,7 @@ async function buildList(): Promise<void> {
 			})
 	} catch (err) {
 		error.value = (err as Error).message
-		aggregated.value = new Map()
+		aggregated.value = []
 	} finally {
 		isLoading.value = false
 	}

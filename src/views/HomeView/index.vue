@@ -53,7 +53,7 @@
 					</div>
 				</template>
 			</CdxField>
-			<p class="filter-actions">
+			<div class="filter-actions">
 				<button
 					type="button"
 					:class="['filter-footer-link', { 'filter-footer-link--disabled': isFeaturedYesFilter }]"
@@ -79,7 +79,7 @@
 				>
 					(share)
 				</button>
-			</p>
+			</div>
 		</p>
 
 		<div

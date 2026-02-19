@@ -13,6 +13,7 @@ import type {
 	FWLiftWingPrediction,
 	FWLiftWingResponse,
 	FWListBuildingResponse,
+	FWMultiPageListBuildingEntry,
 	FWOnThisDayItem,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
@@ -1711,6 +1712,123 @@ export class FakeWiki {
 		const result = { results: data.results ?? [], qid: data.qid }
 		this.listBuildingCache.set(cacheKey, result)
 		return result
+	}
+
+	/**
+	 * Merge one page's list-building response into the aggregation map.
+	 * Key is source:itemKey(item); existing entries get listCount and positionScore accumulated.
+	 */
+	private mergeListBuildingResponseIntoMap(
+		map: Map<string, FWMultiPageListBuildingEntry>,
+		seedPageTitle: string,
+		data: FWListBuildingResponse
+	): void {
+		const results = data.results ?? []
+		const bySource: Record<string, typeof results> = {
+			links: [],
+			morelike: [],
+			reader: [],
+		}
+		for (const r of results) {
+			if (!bySource[r.source]) bySource[r.source] = []
+			bySource[r.source].push(r)
+		}
+		for (const [source, list] of Object.entries(bySource)) {
+			list.forEach((item, i) => {
+				const rank = i + 1
+				const positionContrib = 1 / rank
+				const itemKey = item.qid || item.page_title || ""
+				const key = `${source}:${itemKey}`
+				const existing = map.get(key)
+				if (existing) {
+					existing.listCount += 1
+					existing.positionScore += positionContrib
+					existing.pageTitles.push(seedPageTitle)
+				} else {
+					map.set(key, {
+						item,
+						listCount: 1,
+						positionScore: positionContrib,
+						pageTitles: [seedPageTitle],
+					})
+				}
+			})
+		}
+	}
+
+	/**
+	 * Get list-building results for multiple seed pages, yielding increasingly updated
+	 * aggregated entries after each page's response is merged.
+	 * @param lang - Language code (e.g. "en")
+	 * @param pageTitles - Seed page titles (deduplicated; empty titles skipped)
+	 * @param options - Optional per-source result count (k, default 10) and concurrency (default 2)
+	 * @yields { entries, completedCount } after each page merge
+	 */
+	async *getMultiPageListBuilding(
+		lang: string,
+		pageTitles: string[],
+		options?: { k?: number; concurrency?: number }
+	): AsyncGenerator<
+		{ entries: FWMultiPageListBuildingEntry[]; completedCount: number },
+		void,
+		undefined
+	> {
+		const titles = [...new Set(pageTitles)].filter(t => t.trim().length > 0)
+		const k = Math.min(100, Math.max(1, options?.k ?? 10))
+		const concurrency = Math.max(1, options?.concurrency ?? 2)
+		const map = new Map<string, FWMultiPageListBuildingEntry>()
+		const state = { completedCount: 0 }
+
+		if (titles.length === 0) {
+			yield { entries: [], completedCount: 0 }
+			return
+		}
+
+		let nextIndex = 0
+		const yieldQueue: { entries: FWMultiPageListBuildingEntry[]; completedCount: number }[] = []
+		let resolveNext: (() => void) | null = null
+		const waitForNextYield = (): Promise<{ entries: FWMultiPageListBuildingEntry[]; completedCount: number }> =>
+			new Promise(resolve => {
+				if (yieldQueue.length > 0) {
+					resolve(yieldQueue.shift()!)
+				} else {
+					resolveNext = () => {
+						const v = yieldQueue.shift()!
+						resolve(v)
+					}
+				}
+			})
+
+		const workerCount = Math.min(concurrency, titles.length)
+		const workers = Array.from({ length: workerCount }, () =>
+			(async (): Promise<void> => {
+				while (nextIndex < titles.length) {
+					const index = nextIndex++
+					const title = titles[index]
+					const data = await this.getListBuilding(lang, { pageTitle: title, k })
+					this.mergeListBuildingResponseIntoMap(map, title, data)
+					state.completedCount += 1
+					const payload = {
+						entries: [...map.values()],
+						completedCount: state.completedCount,
+					}
+					yieldQueue.push(payload)
+					if (resolveNext) {
+						const fn = resolveNext
+						resolveNext = null
+						fn()
+					}
+				}
+			}).bind(this)
+		)
+
+		const runAll = Promise.all(workers.map(w => w()))
+
+		for (let i = 0; i < titles.length; i++) {
+			yield await waitForNextYield()
+		}
+
+		await runAll
 	}
 
 	/**

@@ -330,3 +330,11 @@ export interface FWListBuildingResponse {
 	results: FWListBuildingResult[]
 	qid?: string
 }
+
+/** Aggregated entry from multi-page list building (one item across multiple seed pages). */
+export interface FWMultiPageListBuildingEntry {
+	item: FWListBuildingResult
+	listCount: number
+	positionScore: number
+	pageTitles: string[]
+}
