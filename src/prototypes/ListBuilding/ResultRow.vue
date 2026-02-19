@@ -1,14 +1,16 @@
 <template>
 	<div class="result-row">
-		<img
-			v-if="thumbnail"
-			:src="thumbnail"
-			:alt="item.page_title !== '-' ? item.page_title : ''"
-			class="result-thumbnail"
-			loading="lazy"
-			width="80"
-			height="80"
-		/>
+		<div class="result-thumbnail-wrap">
+			<img
+				v-if="thumbnail"
+				:src="thumbnail"
+				:alt="item.page_title !== '-' ? item.page_title : ''"
+				class="result-thumbnail"
+				loading="lazy"
+				width="80"
+				height="80"
+			/>
+		</div>
 		<div class="result-body">
 			<span class="result-title">
 				<a
@@ -33,6 +35,9 @@
 						item.qid
 					}}</a>
 				</span>
+				<span v-if="listCount != null && listCount > 0" class="result-list-count"
+					>on {{ listCount }} list{{ listCount === 1 ? "" : "s" }}</span
+				>
 			</span>
 			<p v-if="item.description" class="result-description">{{ item.description }}</p>
 		</div>
@@ -48,8 +53,9 @@ const props = withDefaults(
 		item: FWListBuildingResult
 		lang: string
 		thumbnail?: string
+		listCount?: number
 	}>(),
-	{ thumbnail: undefined }
+	{ thumbnail: undefined, listCount: undefined }
 )
 
 const articleUrl = computed(() => {

@@ -132,10 +132,14 @@ async function buildList(): Promise<void> {
 					.filter(Boolean)
 			),
 		]
-		thumbnails.value = await wiki.getPageThumbnails(
-			titles,
-			`https://${lang.value}.wikipedia.org/`
-		)
+		wiki
+			.getPageThumbnails(titles, `https://${lang.value}.wikipedia.org/`)
+			.then(t => {
+				thumbnails.value = t
+			})
+			.catch(() => {
+				// Non-blocking: list already shown; thumbnails stay placeholder
+			})
 	} catch (err) {
 		error.value = (err as Error).message
 		results.value = []

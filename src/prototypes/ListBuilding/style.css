@@ -66,13 +66,20 @@ form {
 	border-bottom: none;
 }
 
-.result-thumbnail {
+.result-thumbnail-wrap {
 	flex-shrink: 0;
 	width: 80px;
 	height: 80px;
-	object-fit: cover;
 	background-color: var(--background-color-subtle);
 	border-radius: 2px;
+	overflow: hidden;
+}
+
+.result-thumbnail {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
 }
 
 .result-body {
@@ -106,6 +113,12 @@ form {
 
 .qid-link:hover {
 	text-decoration: underline;
+}
+
+.result-list-count {
+	font-size: 0.8125rem;
+	color: var(--color-subtle);
+	margin-left: 0.25rem;
 }
 
 .result-description {

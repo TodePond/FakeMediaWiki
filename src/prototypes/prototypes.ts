@@ -117,6 +117,18 @@ export const categories: CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "prototype",
+		id: "MultipleListBuilding",
+		name: "Multiple list building",
+		description:
+			"Build combined lists from multiple seed pages (comma-separated). Results are ranked by how many lists they appear on and their position.",
+		category: "recommendations",
+		wrapper: "Fullscreen",
+		title: "Multiple list building",
+		status: "new",
+		featured: true,
+	},
+	{
+		type: "prototype",
 		id: "ListBuilding",
 		name: "List building",
 		description: "Build a list of articles related to a page using the List Building tool.",

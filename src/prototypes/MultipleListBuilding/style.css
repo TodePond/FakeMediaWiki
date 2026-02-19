@@ -1,0 +1,12 @@
+/* Reuse List building layout and result row styles */
+@import "../ListBuilding/style.css";
+
+.multiple-list-building-view .form-row-weight {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.multiple-list-building-view .form-row-weight .weight-input {
+	width: 4rem;
+}
