@@ -1,5 +1,6 @@
 <template>
 	<section class="page-links-view">
+		<h1>Page links</h1>
 		<form @submit.prevent="load">
 			<CdxLabel input-id="page-names">Page names (comma-separated)</CdxLabel>
 			<span>

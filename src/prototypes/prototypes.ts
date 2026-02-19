@@ -120,7 +120,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		id: "MultipleListBuilding",
 		name: "Multiple list building",
 		description:
-			"Build combined lists from multiple seed pages (comma-separated). Results are ranked by how many lists they appear on and their position.",
+			"Build a list of articles related to multiple pages using the List Building tool.",
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Multiple list building",

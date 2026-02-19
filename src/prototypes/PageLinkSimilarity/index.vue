@@ -1,5 +1,6 @@
 <template>
 	<section class="page-link-similarity-view">
+		<h1>Page link similarity</h1>
 		<form @submit.prevent="load">
 			<CdxLabel input-id="page-names">Page names (comma-separated)</CdxLabel>
 			<span>
