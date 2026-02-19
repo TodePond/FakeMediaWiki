@@ -81,6 +81,8 @@ form > span {
 
 .main-link {
 	color: var(--color-progressive) !important;
+	font-weight: 600;
+	font-size: 1.125rem;
 }
 
 .main-link:visited {
@@ -89,11 +91,29 @@ form > span {
 
 .link-count {
 	font-weight: 600;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.link-count span {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.05rem;
 }
 
 .link-pages {
 	font-size: 0.875rem;
 	color: var(--color-subtle);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	line-height: var(--line-height-small);
+}
+
+.page-kind-icon {
+	margin-right: 0.15rem;
+	vertical-align: -0.08em;
 }
 
 .page-link {

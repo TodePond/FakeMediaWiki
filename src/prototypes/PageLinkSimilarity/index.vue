@@ -35,26 +35,11 @@
 			</div>
 			<div class="links-section two-columns">
 				<div class="column">
-					<h3 class="column-title">By link similarity</h3>
-					<div v-if="displayedBySimilarity.length > 0" class="links-list">
+					<div v-if="displayedByLinkSimilarity.length > 0" class="links-list">
 						<template
-							v-for="(item, index) in displayedBySimilarity"
-							:key="'sim-' + item.link"
+							v-for="item in displayedByLinkSimilarity"
+							:key="'bi-' + item.link"
 						>
-							<template
-								v-if="
-									index > 0 &&
-									getAverageSharedPercentage(
-										sharedCountsByPage.get(
-											displayedBySimilarity[index - 1].link
-										) ?? []
-									) !==
-										getAverageSharedPercentage(
-											sharedCountsByPage.get(item.link) ?? []
-										)
-								"
-							>
-							</template>
 							<div class="link-row">
 								<a
 									:href="wiki.getPageUrl(item.link)"
@@ -62,21 +47,37 @@
 									class="main-link"
 									>{{ item.link }}</a
 								>
-								<span class="link-count"> ({{ item.count }})</span>
+								<span class="link-count">
+									&nbsp;
+									<span
+										><CdxIcon :icon="cdxIconLink" size="x-small" />
+										{{ item.count }}</span
+									>
+									<span
+										><CdxIcon :icon="cdxIconArrowUp" size="x-small" />
+										{{ item.unidirectionalOutCount }}</span
+									>
+									<span
+										><CdxIcon :icon="cdxIconArrowDown" size="x-small" />
+										{{ item.unidirectionalBackCount }}</span
+									>
+								</span>
+								<br />
+
 								<span class="link-pages">
-									—
-									<template v-for="(page, pageIndex) in item.pages" :key="page">
+									<template
+										v-for="(relation, pageIndex) in item.pageRelations"
+										:key="`${relation.kind}-${relation.page}`"
+									>
 										<a
-											v-if="pageIndex > 0"
-											:href="wiki.getPageUrl(page)"
+											:href="wiki.getPageUrl(relation.page)"
 											target="_blank"
 											class="page-link"
-											>, </a
-										><a
-											:href="wiki.getPageUrl(page)"
-											target="_blank"
-											class="page-link"
-											>{{ page }}</a
+											><CdxIcon
+												:icon="getPageKindIcon(relation.kind)"
+												size="x-small"
+												class="page-kind-icon"
+											/>{{ relation.page }}</a
 										>
 									</template>
 								</span>
@@ -85,7 +86,9 @@
 									class="shared-counts"
 								>
 									<div>
-										<strong style="font-size: 1.25rem">
+										<strong
+											style="font-size: 1.25rem; color: var(--color-base)"
+										>
 											{{
 												formatPercentage(
 													getAverageSharedPercentage(
@@ -118,7 +121,8 @@
 </template>
 
 <script setup lang="ts">
-import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
+import { CdxButton, CdxIcon, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
+import { cdxIconArrowDown, cdxIconArrowUp, cdxIconLink } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import { computed, onMounted, ref } from "vue"
 import type { GraphData } from "./LinkGraph.vue"
@@ -134,6 +138,12 @@ const showGraph = ref(
 
 function formatPercentage(value: number): string {
 	return (value * 100).toFixed(0) + "%"
+}
+
+function getPageKindIcon(kind: "bidirectional" | "link" | "backlink") {
+	if (kind === "link") return cdxIconArrowUp
+	if (kind === "backlink") return cdxIconArrowDown
+	return cdxIconLink
 }
 
 function getAverageSharedPercentage(
@@ -162,7 +172,7 @@ function toggleGraphVisible(): void {
 
 const pageNamesInput = ref(
 	localStorage.getItem("pageLinkSimilarityQuery") ||
-		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks, Jools Holland"
+		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks"
 )
 const linksMap = ref<Map<string, string[]>>(new Map())
 const backlinksMap = ref<Map<string, string[]>>(new Map())
@@ -172,71 +182,141 @@ const bidirectionalPageLinks = ref<Map<string, string[]>>(new Map())
 const knownLinksCache = ref<Map<string, string[]>>(new Map())
 /** All fetched backlinks, keyed by target page (query + extra fetches) */
 const knownBacklinksCache = ref<Map<string, string[]>>(new Map())
+/** Winners are fixed once per load (supports random tie-pool sampling). */
+const winningBidirectionalIds = ref<Set<string>>(new Set())
 const loadedQueryNames = ref<string[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 const latestLoadRequestId = ref(0)
 
-const sortedLinks = computed(() => {
-	if (linksMap.value.size === 0) return []
-	const linkPages = new Map<string, string[]>()
-	for (const [pageName, links] of linksMap.value.entries()) {
-		for (const link of new Set(links)) {
-			if (!linkPages.has(link)) linkPages.set(link, [])
-			linkPages.get(link)!.push(pageName)
-		}
-	}
-	return Array.from(linkPages.entries())
-		.map(([link, pages]) => ({ link, count: pages.length, pages }))
-		.sort((a, b) => (b.count !== a.count ? b.count - a.count : a.link.localeCompare(b.link)))
-})
+type LinkDirectionStats = {
+	link: string
+	count: number
+	pages: string[]
+	pageRelations: { page: string; kind: "bidirectional" | "link" | "backlink" }[]
+	unidirectionalOutCount: number
+	unidirectionalBackCount: number
+	unidirectionalCount: number
+	unidirectionalPages: string[]
+}
 
-const sortedBacklinks = computed(() => {
-	if (backlinksMap.value.size === 0) return []
-	const linkerToTargets = new Map<string, string[]>()
-	for (const [targetPage, linkers] of backlinksMap.value.entries()) {
-		for (const linker of new Set(linkers)) {
-			if (!linkerToTargets.has(linker)) linkerToTargets.set(linker, [])
-			linkerToTargets.get(linker)!.push(targetPage)
+// Per-link per-query breakdown: bidirectional pages and unidirectional pages.
+const bidirectionalStats = computed(() => {
+	const result = new Map<
+		string,
+		{
+			bidirectionalPages: string[]
+			unidirectionalOutPages: string[]
+			unidirectionalBackPages: string[]
+			unidirectionalPages: string[]
 		}
-	}
-	return Array.from(linkerToTargets.entries())
-		.map(([link, pages]) => ({ link, count: pages.length, pages }))
-		.sort((a, b) => (b.count !== a.count ? b.count - a.count : a.link.localeCompare(b.link)))
-})
+	>()
+	const queryPages = loadedQueryNames.value
+	const outgoingByQuery = new Map<string, Set<string>>()
+	const incomingByQuery = new Map<string, Set<string>>()
+	const allCandidateLinks = new Set<string>()
 
-// Pages that appear in both outgoing and backlinks: at least one of our pages has a bidirectional link
-const sortedBidirectional = computed(() => {
-	const outgoing = new Map(sortedLinks.value.map(({ link, pages }) => [link, new Set(pages)]))
-	const backlink = new Map(sortedBacklinks.value.map(({ link, pages }) => [link, new Set(pages)]))
-	const result: { link: string; count: number; pages: string[] }[] = []
-	for (const link of outgoing.keys()) {
-		if (!backlink.has(link)) continue
-		const outPages = outgoing.get(link)!
-		const backPages = backlink.get(link)!
-		const bidirectionalPages = [...outPages].filter(p => backPages.has(p))
+	for (const queryPage of queryPages) {
+		const outgoing = new Set(linksMap.value.get(queryPage) ?? [])
+		const incoming = new Set(backlinksMap.value.get(queryPage) ?? [])
+		outgoingByQuery.set(queryPage, outgoing)
+		incomingByQuery.set(queryPage, incoming)
+		for (const link of outgoing) allCandidateLinks.add(link)
+		for (const link of incoming) allCandidateLinks.add(link)
+	}
+
+	for (const link of allCandidateLinks) {
+		const bidirectionalPages: string[] = []
+		const unidirectionalOutPages: string[] = []
+		const unidirectionalBackPages: string[] = []
+		const unidirectionalPages: string[] = []
+		for (const queryPage of queryPages) {
+			const out = outgoingByQuery.get(queryPage)?.has(link) ?? false
+			const back = incomingByQuery.get(queryPage)?.has(link) ?? false
+			if (out && back) bidirectionalPages.push(queryPage)
+			else if (out) {
+				unidirectionalOutPages.push(queryPage)
+				unidirectionalPages.push(queryPage)
+			} else if (back) {
+				unidirectionalBackPages.push(queryPage)
+				unidirectionalPages.push(queryPage)
+			}
+		}
 		if (bidirectionalPages.length > 0) {
-			result.push({
-				link,
-				count: bidirectionalPages.length,
-				pages: bidirectionalPages,
+			result.set(link, {
+				bidirectionalPages,
+				unidirectionalOutPages,
+				unidirectionalBackPages,
+				unidirectionalPages,
 			})
 		}
 	}
+	return result
+})
+
+const sortedBidirectional = computed<LinkDirectionStats[]>(() => {
+	const result: LinkDirectionStats[] = []
+	for (const [link, stats] of bidirectionalStats.value.entries()) {
+		const pageRelations: { page: string; kind: "bidirectional" | "link" | "backlink" }[] = []
+		for (const page of stats.bidirectionalPages) {
+			pageRelations.push({ page, kind: "bidirectional" })
+		}
+		for (const page of stats.unidirectionalOutPages) {
+			pageRelations.push({ page, kind: "link" })
+		}
+		for (const page of stats.unidirectionalBackPages) {
+			pageRelations.push({ page, kind: "backlink" })
+		}
+		result.push({
+			link,
+			count: stats.bidirectionalPages.length,
+			pages: stats.bidirectionalPages,
+			pageRelations,
+			unidirectionalOutCount: stats.unidirectionalOutPages.length,
+			unidirectionalBackCount: stats.unidirectionalBackPages.length,
+			unidirectionalCount: stats.unidirectionalPages.length,
+			unidirectionalPages: stats.unidirectionalPages,
+		})
+	}
 	return result.sort((a, b) =>
-		b.count !== a.count ? b.count - a.count : a.link.localeCompare(b.link)
+		b.count !== a.count
+			? b.count - a.count
+			: b.unidirectionalOutCount !== a.unidirectionalOutCount
+				? b.unidirectionalOutCount - a.unidirectionalOutCount
+				: b.unidirectionalBackCount !== a.unidirectionalBackCount
+					? b.unidirectionalBackCount - a.unidirectionalBackCount
+					: a.link.localeCompare(b.link)
 	)
 })
 
-const BIDIRECTIONAL_TOP = 20
+const BIDIRECTIONAL_TOP = 10
+
+function pickWinningBidirectionalIds(sorted: LinkDirectionStats[], topCap: number): Set<string> {
+	if (sorted.length === 0) return new Set()
+	if (sorted.length <= topCap) return new Set(sorted.map(item => item.link))
+
+	const cutoff = sorted[topCap - 1]
+	// Include:
+	// 1) Any higher bidirectional score
+	// 2) Same bidirectional score with higher unidirectional outgoing score
+	// 3) Same bidirectional + outgoing score with higher unidirectional backlink score
+	// 4) Exact ties on all three scores
+	const winners = sorted.filter(
+		item =>
+			item.count > cutoff.count ||
+			(item.count === cutoff.count &&
+				(item.unidirectionalOutCount > cutoff.unidirectionalOutCount ||
+					(item.unidirectionalOutCount === cutoff.unidirectionalOutCount &&
+						item.unidirectionalBackCount >= cutoff.unidirectionalBackCount)))
+	)
+	return new Set(winners.map(item => item.link))
+}
 
 // Top 20 by score, but include all pages that tie at the cutoff.
 const displayedBidirectional = computed(() => {
-	const sorted = sortedBidirectional.value
-	if (sorted.length === 0) return []
-	const top = sorted.slice(0, BIDIRECTIONAL_TOP)
-	const minCountAtCutoff = top[top.length - 1].count
-	return sorted.filter(item => item.count >= minCountAtCutoff)
+	const ids = winningBidirectionalIds.value
+	if (ids.size === 0) return []
+	return sortedBidirectional.value.filter(item => ids.has(item.link))
 })
 
 /** For each bidirectional page, shared link count with each query page */
@@ -266,24 +346,32 @@ const sharedCountsByPage = computed(() => {
 	return out
 })
 
-/** Same items as displayedBidirectional but sorted by link similarity score (highest first) */
-const displayedBySimilarity = computed(() => {
-	const items = displayedBidirectional.value
-	const shared = sharedCountsByPage.value
-	return [...items].sort((a, b) => {
-		const scoreA = shared.get(a.link) ? getAverageSharedPercentage(shared.get(a.link)!) : -1
-		const scoreB = shared.get(b.link) ? getAverageSharedPercentage(shared.get(b.link)!) : -1
-		if (scoreB !== scoreA) return scoreB - scoreA
-		return a.link.localeCompare(b.link)
-	})
-})
-
 const similarityPercentByPage = computed(() => {
 	const out = new Map<string, number>()
 	for (const [pageName, counts] of sharedCountsByPage.value.entries()) {
 		out.set(pageName, getAverageSharedPercentage(counts))
 	}
 	return out
+})
+
+// Rank only scored items by link similarity. Keep unscored items in baseline order.
+const displayedByLinkSimilarity = computed(() => {
+	const baseline = displayedBidirectional.value
+	const baselineIndex = new Map(baseline.map((item, idx) => [item.link, idx]))
+	const scored: LinkDirectionStats[] = []
+	const unscored: LinkDirectionStats[] = []
+	for (const item of baseline) {
+		const isScored = (sharedCountsByPage.value.get(item.link)?.length ?? 0) > 0
+		if (isScored) scored.push(item)
+		else unscored.push(item)
+	}
+	scored.sort((a, b) => {
+		const scoreA = similarityPercentByPage.value.get(a.link) ?? 0
+		const scoreB = similarityPercentByPage.value.get(b.link) ?? 0
+		if (scoreB !== scoreA) return scoreB - scoreA
+		return (baselineIndex.get(a.link) ?? 0) - (baselineIndex.get(b.link) ?? 0)
+	})
+	return [...scored, ...unscored]
 })
 
 const graphData = computed<GraphData | null>(() => {
@@ -389,6 +477,7 @@ const load = async (): Promise<void> => {
 			bidirectionalPageLinks.value = new Map()
 			knownLinksCache.value = new Map()
 			knownBacklinksCache.value = new Map()
+			winningBidirectionalIds.value = new Set()
 			loadedQueryNames.value = []
 			return
 		}
@@ -403,11 +492,16 @@ const load = async (): Promise<void> => {
 		knownLinksCache.value = new Map(linksResult)
 		knownBacklinksCache.value = new Map(backlinksResult)
 		loadedQueryNames.value = pageNames
+		winningBidirectionalIds.value = pickWinningBidirectionalIds(
+			sortedBidirectional.value,
+			BIDIRECTIONAL_TOP
+		)
 		localStorage.setItem("pageLinkSimilarityQuery", pageNamesInput.value)
 
 		// Fetch each winning page's links + backlinks serially; cache everything fetched
 		bidirectionalPageLinks.value = new Map()
-		const toFetch = displayedBidirectional.value.map(item => item.link)
+		// Score in list order (top-to-bottom pre-link-scoring order).
+		const toFetch = [...displayedBidirectional.value.map(item => item.link)]
 		const linksBatch = new Map(knownLinksCache.value)
 		const backlinksBatch = new Map(knownBacklinksCache.value)
 		const bidirectionalBatch = new Map<string, string[]>()
@@ -450,6 +544,7 @@ const load = async (): Promise<void> => {
 		bidirectionalPageLinks.value = new Map()
 		knownLinksCache.value = new Map()
 		knownBacklinksCache.value = new Map()
+		winningBidirectionalIds.value = new Set()
 		loadedQueryNames.value = []
 	} finally {
 		if (!isStale()) {

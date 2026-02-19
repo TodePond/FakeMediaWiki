@@ -20,17 +20,17 @@
 			:style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
 		>
 			<div class="graph-tooltip-title">{{ tooltip.node.id }}</div>
+			<div class="graph-tooltip-list">
+				<span class="graph-tooltip-label">Link similarity:</span>
+				{{ formatSimilarityPercent(tooltip.node.linkSimilarity) }}
+			</div>
 			<div class="graph-tooltip-stats">
 				<span>Out: {{ tooltip.outgoing }}</span>
 				<span>In: {{ tooltip.incoming }}</span>
 			</div>
-			<div v-if="tooltip.linkedFromQuery.length > 0" class="graph-tooltip-list">
-				<span class="graph-tooltip-label">Linked from:</span>
-				{{ tooltip.linkedFromQuery.join(", ") }}
-			</div>
-			<div v-if="tooltip.linksToQuery.length > 0" class="graph-tooltip-list">
+			<div v-if="tooltip.linkedQueryPages.length > 0" class="graph-tooltip-list">
 				<span class="graph-tooltip-label">Links to:</span>
-				{{ tooltip.linksToQuery.join(", ") }}
+				{{ tooltip.linkedQueryPages.join(", ") }}
 			</div>
 		</div>
 	</div>
@@ -83,9 +83,12 @@ const tooltip = ref<{
 	y: number
 	outgoing: number
 	incoming: number
-	linkedFromQuery: string[]
-	linksToQuery: string[]
+	linkedQueryPages: string[]
 } | null>(null)
+
+function formatSimilarityPercent(value: number | undefined): string {
+	return `${Math.round((value ?? 0) * 100)}%`
+}
 
 const outgoingCount = computed(() => {
 	const m = new Map<string, number>()
@@ -259,37 +262,35 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 
 					const links = props.graphData?.links ?? []
 					const querySet = new Set(props.queryPageNames ?? [])
-					const linkedFromQuery = [...querySet].filter(q =>
+					const linkedQueryPages = [...querySet].filter(q =>
 						links.some(
 							l =>
-								(typeof l.source === "string"
-									? l.source
-									: (l.source as { id: string }).id) === q &&
-								(typeof l.target === "string"
-									? l.target
-									: (l.target as { id: string }).id) === node.id
-						)
-					)
-					const linksToQuery = [...querySet].filter(q =>
-						links.some(
-							l =>
-								(typeof l.source === "string"
+								((typeof l.source === "string"
 									? l.source
 									: (l.source as { id: string }).id) === node.id &&
-								(typeof l.target === "string"
-									? l.target
-									: (l.target as { id: string }).id) === q
+									(typeof l.target === "string"
+										? l.target
+										: (l.target as { id: string }).id) === q) ||
+								((typeof l.source === "string"
+									? l.source
+									: (l.source as { id: string }).id) === q &&
+									(typeof l.target === "string"
+										? l.target
+										: (l.target as { id: string }).id) === node.id)
 						)
 					)
 					const rect = containerRef.value?.getBoundingClientRect()
 					tooltip.value = {
-						node: { id: node.id, isQuery: node.isQuery },
+						node: {
+							id: node.id,
+							isQuery: node.isQuery,
+							linkSimilarity: node.linkSimilarity,
+						},
 						x: rect ? event.clientX - rect.left + 12 : event.offsetX + 12,
 						y: rect ? event.clientY - rect.top + 12 : event.offsetY + 12,
 						outgoing: outgoingCount.value.get(node.id) ?? 0,
 						incoming: incomingCount.value.get(node.id) ?? 0,
-						linkedFromQuery,
-						linksToQuery,
+						linkedQueryPages,
 					}
 				})
 				.on("mouseout", () => {
@@ -342,7 +343,7 @@ function initSimulation(nodes: (GraphNode & d3.SimulationNodeDatum)[], links: Gr
 						: isWinning
 							? "#000"
 							: isGray
-								? "#54595d"
+								? "#c8ccd1"
 								: "#000"
 				)
 				.attr("stroke", "#fff")

@@ -117,12 +117,13 @@ export const categories: CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "prototype",
-		id: "RelatedChanges",
-		name: "Related changes",
-		description: "View recent changes for any page. Enter a page name to see its edit history.",
+		id: "PageLinkSimilarity",
+		name: "Page link similarity",
+		description:
+			"Explore how similar different pages are to each other by comparing their links.",
 		category: "recommendations",
 		wrapper: "Fullscreen",
-		title: "Related changes",
+		title: "Page link similarity",
 		status: "new",
 		featured: true,
 	},
@@ -140,14 +141,13 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	},
 	{
 		type: "prototype",
-		id: "PageLinkSimilarity",
-		name: "Page link similarity",
-		description:
-			"Explore how similar different pages are to each other by comparing their links.",
+		id: "RelatedChanges",
+		name: "Related changes",
+		description: "View recent changes for any page. Enter a page name to see its edit history.",
 		category: "recommendations",
 		wrapper: "Fullscreen",
-		title: "Page link similarity",
-		status: "wip",
+		title: "Related changes",
+		status: "new",
 		featured: true,
 	},
 	// {
