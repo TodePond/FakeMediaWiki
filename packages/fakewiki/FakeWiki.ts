@@ -12,6 +12,7 @@ import type {
 	FWHistoryOptions,
 	FWLiftWingPrediction,
 	FWLiftWingResponse,
+	FWListBuildingResponse,
 	FWOnThisDayItem,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
@@ -1636,6 +1637,47 @@ export class FakeWiki {
 			}
 		}
 		return out
+	}
+
+	/** Base URL for the list-building API (Toolforge). */
+	private static readonly LIST_BUILDING_API = "https://list-building.toolforge.org/api/serpentine"
+
+	/**
+	 * Get a list of articles related to a seed page from the list-building API.
+	 * Combines results from readers, content (links), and morelike models (serpentine order).
+	 * @param lang - Language code (e.g. "en")
+	 * @param options - Optional page title (seed), QID, and per-source result count (default 10)
+	 * @returns Serpentine results and optional seed QID
+	 */
+	async getListBuilding(
+		lang: string,
+		options?: { pageTitle?: string; qid?: string; k?: number }
+	): Promise<FWListBuildingResponse> {
+		const k = Math.min(100, Math.max(1, options?.k ?? 10))
+		const params = new URLSearchParams({
+			lang,
+			"k-reader": String(k),
+			"k-links": String(k),
+			"k-morelike": String(k),
+		})
+		if (options?.pageTitle?.trim()) {
+			params.set("page_title", options.pageTitle.trim())
+		}
+		if (options?.qid) {
+			params.set("qid", options.qid)
+		}
+		const url = `${FakeWiki.LIST_BUILDING_API}?${params.toString()}`
+		const res = await fetch(url, {
+			headers: {
+				Accept: "application/json",
+				"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+			},
+		})
+		if (!res.ok) {
+			throw new Error(`List-building API error: ${res.status} ${res.statusText}`)
+		}
+		const data = (await res.json()) as FWListBuildingResponse
+		return { results: data.results ?? [], qid: data.qid }
 	}
 
 	/**

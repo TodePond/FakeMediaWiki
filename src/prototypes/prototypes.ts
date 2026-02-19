@@ -130,8 +130,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		type: "prototype",
 		id: "PageLinkSimilarity",
 		name: "Page link similarity",
-		description:
-			"Explore how similar different pages are to each other by comparing their links.",
+		description: "Explore how similar different pages' links are.",
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Page link similarity",

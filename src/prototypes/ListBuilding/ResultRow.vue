@@ -40,19 +40,12 @@
 </template>
 
 <script setup lang="ts">
+import type { FWListBuildingResult } from "fakewiki/types"
 import { computed } from "vue"
-
-export interface SerpentineResult {
-	page_title: string
-	qid: string | null
-	source: string
-	redlink: boolean
-	description?: string
-}
 
 const props = withDefaults(
 	defineProps<{
-		item: SerpentineResult
+		item: FWListBuildingResult
 		lang: string
 		thumbnail?: string
 	}>(),

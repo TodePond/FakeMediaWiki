@@ -89,16 +89,9 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
+import type { FWListBuildingResult } from "fakewiki/types"
 import { computed, onMounted, ref } from "vue"
-import type { SerpentineResult } from "./ResultRow.vue"
 import ResultRow from "./ResultRow.vue"
-
-const LIST_BUILDING_API = "https://list-building.toolforge.org/api/serpentine"
-
-interface SerpentineResponse {
-	results: SerpentineResult[]
-	qid?: string
-}
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ListBuilding"
@@ -108,7 +101,7 @@ const titleKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageTitle")
 
 const lang = ref(localStorage.getItem(langKey) || "en")
 const pageTitle = ref(localStorage.getItem(titleKey) || "Wet Leg")
-const results = ref<SerpentineResult[]>([])
+const results = ref<FWListBuildingResult[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 const hasSearched = ref(false)
@@ -126,28 +119,10 @@ async function buildList(): Promise<void> {
 		localStorage.setItem(langKey, lang.value)
 		localStorage.setItem(titleKey, pageTitle.value)
 
-		const params = new URLSearchParams({
-			lang: lang.value,
-			"k-reader": "10",
-			"k-links": "10",
-			"k-morelike": "10",
+		const data = await wiki.getListBuilding(lang.value, {
+			pageTitle: pageTitle.value.trim() || undefined,
+			k: 10,
 		})
-		if (pageTitle.value.trim()) {
-			params.set("page_title", pageTitle.value.trim())
-		}
-
-		const res = await fetch(`${LIST_BUILDING_API}?${params.toString()}`, {
-			headers: {
-				Accept: "application/json",
-				"User-Agent": "FakeMediaWiki-ListBuilding/1.0",
-			},
-		})
-
-		if (!res.ok) {
-			throw new Error(`API error: ${res.status} ${res.statusText}`)
-		}
-
-		const data = (await res.json()) as SerpentineResponse
 		results.value = data.results ?? []
 		const titles = [
 			...new Set(

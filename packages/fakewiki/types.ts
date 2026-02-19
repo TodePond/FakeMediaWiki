@@ -315,3 +315,18 @@ export interface FWFeaturedPage {
 		thumbnail?: { source?: string }
 	}
 }
+
+/** Single result from the list-building (serpentine) API. */
+export interface FWListBuildingResult {
+	page_title: string
+	qid: string | null
+	source: string
+	redlink: boolean
+	description?: string
+}
+
+/** Response from the list-building API (list-building.toolforge.org/api/serpentine). */
+export interface FWListBuildingResponse {
+	results: FWListBuildingResult[]
+	qid?: string
+}
