@@ -81,6 +81,11 @@ export class FakeWiki {
 	private userHistoryCoverage = new Map<string, FWHistoryCoverageEntry[]>()
 
 	/**
+	 * Cache for list-building API results (key = lang:pageTitle:qid:k).
+	 */
+	private listBuildingCache = new Map<string, FWListBuildingResponse>()
+
+	/**
 	 * Create a new FakeWiki instance
 	 * @param base - Base URL for the API
 	 */
@@ -1673,17 +1678,26 @@ export class FakeWiki {
 		options?: { pageTitle?: string; qid?: string; k?: number }
 	): Promise<FWListBuildingResponse> {
 		const k = Math.min(100, Math.max(1, options?.k ?? 10))
+		const pageTitle = options?.pageTitle?.trim() ?? ""
+		const qid = options?.qid ?? ""
+		const cacheKey = `listBuilding:${lang}:${pageTitle}:${qid}:${k}`
+
+		const cached = this.listBuildingCache.get(cacheKey)
+		if (cached !== undefined) {
+			return cached
+		}
+
 		const params = new URLSearchParams({
 			lang,
 			"k-reader": String(k),
 			"k-links": String(k),
 			"k-morelike": String(k),
 		})
-		if (options?.pageTitle?.trim()) {
-			params.set("page_title", options.pageTitle.trim())
+		if (pageTitle) {
+			params.set("page_title", pageTitle)
 		}
-		if (options?.qid) {
-			params.set("qid", options.qid)
+		if (qid) {
+			params.set("qid", qid)
 		}
 		const url = `${FakeWiki.LIST_BUILDING_API}?${params.toString()}`
 		const res = await fetch(url, {
@@ -1696,7 +1710,9 @@ export class FakeWiki {
 			throw new Error(`List-building API error: ${res.status} ${res.statusText}`)
 		}
 		const data = (await res.json()) as FWListBuildingResponse
-		return { results: data.results ?? [], qid: data.qid }
+		const result = { results: data.results ?? [], qid: data.qid }
+		this.listBuildingCache.set(cacheKey, result)
+		return result
 	}
 
 	/**
