@@ -1459,7 +1459,9 @@ export class FakeWiki {
 	}
 
 	/**
-	 * Get thumbnail image for a page
+	 * Get thumbnail image for a page.
+	 * Uses the lead image (page summary) when available; otherwise falls back to the
+	 * first image on the page (e.g. infobox image).
 	 * @param pageName - Page title
 	 * @returns Thumbnail URL or null
 	 */
@@ -1467,14 +1469,12 @@ export class FakeWiki {
 		try {
 			// For User talk pages, get the user avatar instead
 			if (pageName.startsWith("User talk:")) {
-				const userName = pageName.substring(10) // Remove "User talk:" prefix
-				return await this.getUserAvatar(userName)
+				return null
 			}
 
 			// For User pages, get the user avatar instead
 			if (pageName.startsWith("User:")) {
-				const userName = pageName.substring(5) // Remove "User:" prefix
-				return await this.getUserAvatar(userName)
+				return null
 			}
 
 			// For Talk pages, get the thumbnail from the main page
@@ -1484,15 +1484,158 @@ export class FakeWiki {
 			}
 
 			const summary = await this.getPageSummary(targetPageName)
-			if (summary.thumbnail) {
-				const thumb = summary.thumbnail
-				return thumb.source || null
+			if (summary.thumbnail?.source) {
+				return summary.thumbnail.source
 			}
-			return null
+
+			// Fallback: first image on the page (e.g. infobox image)
+			const firstImageUrl = await this.getFirstPageImageThumbnail(targetPageName)
+			return firstImageUrl
 		} catch (error) {
 			console.error("Failed to get thumbnail:", error)
 			return null
 		}
+	}
+
+	/**
+	 * Get thumbnail URL for the first image embedded on a page (e.g. infobox).
+	 * Uses Action API prop=images then imageinfo for the thumbnail.
+	 * @param pageName - Page title
+	 * @returns Thumbnail URL or null
+	 * @private
+	 */
+	private async getFirstPageImageThumbnail(pageName: string): Promise<string | null> {
+		return this.getFirstPageImageThumbnailWithBase(pageName, this.base)
+	}
+
+	/**
+	 * Get thumbnail URL for the first image on a page, using a specific wiki base URL.
+	 * Prefers the image from the page's infobox (table.infobox); falls back to the
+	 * first image on the page if there is no infobox or no image in it.
+	 * @param pageName - Page title
+	 * @param base - Wiki base URL (e.g. https://en.wikipedia.org/)
+	 * @returns Thumbnail URL or null
+	 * @private
+	 */
+	private async getFirstPageImageThumbnailWithBase(
+		pageName: string,
+		base: string
+	): Promise<string | null> {
+		const infoboxUrl = await this.getInfoboxImageFromParsedPage(pageName, base)
+		if (infoboxUrl) return infoboxUrl
+		return null
+	}
+
+	/**
+	 * Get the first image from a page's infobox (table.infobox) by parsing the page HTML.
+	 * @param pageName - Page title
+	 * @param base - Wiki base URL
+	 * @returns Image URL or null
+	 * @private
+	 */
+	private async getInfoboxImageFromParsedPage(
+		pageName: string,
+		base: string
+	): Promise<string | null> {
+		try {
+			const parseParams = new URLSearchParams({
+				action: "parse",
+				page: pageName,
+				prop: "text",
+				format: "json",
+				formatversion: "2",
+				origin: "*",
+			})
+			const parseRes = await fetch(`${base}w/api.php?${parseParams.toString()}`, {
+				headers: {
+					"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+				},
+			})
+			if (!parseRes.ok) return null
+			const parseData = (await parseRes.json()) as {
+				parse?: { text?: string }
+			}
+			const html = parseData.parse?.text
+			if (!html || typeof html !== "string") return null
+
+			const doc = new DOMParser().parseFromString(html, "text/html")
+			// Target the main infobox (Wikipedia uses table.infobox or table.wikitable.infobox)
+			const infobox = doc.querySelector("table.infobox")
+			const img = infobox?.querySelector("img[src]")
+			const src = img?.getAttribute("src")
+			if (!src) return null
+
+			// Resolve relative or protocol-relative URLs
+			if (src.startsWith("//")) return `https:${src}`
+			if (src.startsWith("/")) {
+				const origin = base.replace(/\/$/, "")
+				return `${origin}${src}`
+			}
+			return src
+		} catch {
+			return null
+		}
+	}
+
+	/**
+	 * Get thumbnail URLs for multiple pages (lead image from each page).
+	 * Uses the Action API pageimages in batches of 50.
+	 * @param pageNames - Page titles
+	 * @param baseUrl - Wiki base URL (e.g. https://en.wikipedia.org/). Defaults to this.base
+	 * @returns Map of page title to thumbnail URL (only entries that have a thumbnail)
+	 */
+	async getPageThumbnails(
+		pageNames: string[],
+		baseUrl?: string
+	): Promise<Record<string, string>> {
+		const out: Record<string, string> = {}
+		if (pageNames.length === 0) return out
+		const base = baseUrl ?? this.base
+		const headers = {
+			"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+		}
+		const chunkSize = 50
+		for (let i = 0; i < pageNames.length; i += chunkSize) {
+			const chunk = pageNames.slice(i, i + chunkSize)
+			const params = new URLSearchParams({
+				action: "query",
+				prop: "pageimages",
+				pithumbsize: "80",
+				pilimit: String(chunkSize),
+				titles: chunk.join("|"),
+				format: "json",
+				formatversion: "2",
+				origin: "*",
+			})
+			try {
+				const res = await fetch(`${base}w/api.php?${params.toString()}`, { headers })
+				if (!res.ok) continue
+				const json = (await res.json()) as {
+					query?: { pages?: Array<{ title: string; thumbnail?: { source: string } }> }
+				}
+				for (const p of json.query?.pages ?? []) {
+					if (p.thumbnail?.source) out[p.title] = p.thumbnail.source
+				}
+			} catch {
+				// ignore per-chunk errors
+			}
+		}
+		// Fallback: for pages without a lead image, use first image on page (e.g. infobox)
+		const missing = pageNames.filter(t => !out[t])
+		if (missing.length > 0) {
+			const fallbacks = await Promise.allSettled(
+				missing.map(async title => {
+					const url = await this.getFirstPageImageThumbnailWithBase(title, base)
+					return { title, url } as const
+				})
+			)
+			for (const result of fallbacks) {
+				if (result.status === "fulfilled" && result.value.url) {
+					out[result.value.title] = result.value.url
+				}
+			}
+		}
+		return out
 	}
 
 	/**
@@ -1579,10 +1722,12 @@ export class FakeWiki {
 					)
 				}
 			}
-			return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
+			return null
+			// return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
 		} catch {
 			// If no image found, use the default
-			return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
+			return null
+			// return "https://upload.wikimedia.org/wikipedia/commons/8/89/Baby_Globe_plushie_Wikipedia_25th_birthday_mascot.jpg"
 		}
 	}
 

@@ -117,6 +117,17 @@ export const categories: CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "prototype",
+		id: "ListBuilding",
+		name: "List building",
+		description: "Build a list of articles related to a page using the List Building tool.",
+		category: "recommendations",
+		wrapper: "Fullscreen",
+		title: "List building",
+		status: "new",
+		featured: true,
+	},
+	{
+		type: "prototype",
 		id: "PageLinkSimilarity",
 		name: "Page link similarity",
 		description:
