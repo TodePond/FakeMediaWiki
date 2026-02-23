@@ -6,16 +6,18 @@
 			class="result-tables-by-key__section"
 		>
 			<h3 class="result-tables-by-key__title">{{ key }}</h3>
-			<div class="result-table-wrapper">
-				<table class="result-table">
+			<div class="api-result-table-wrap">
+				<table class="api-result-table">
 					<thead>
 						<tr>
-							<th v-for="col in entry.columns" :key="col">{{ col }}</th>
+							<th v-for="col in entry.columns" :key="col" class="api-result-table__heading">
+								{{ col }}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr v-for="(row, i) in entry.rows" :key="i">
-							<td v-for="col in entry.columns" :key="col" class="result-table__cell">
+							<td v-for="col in entry.columns" :key="col" class="api-result-table__cell">
 								{{ formatCell(row[col]) }}
 							</td>
 						</tr>

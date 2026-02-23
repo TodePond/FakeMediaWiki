@@ -34,7 +34,7 @@ export type MethodDescriptor = {
 const NUMBER_KEYS = new Set([
 	"limit", "revId", "k", "days", "fromRevId", "toRevId", "revisionId", "ucstart", "ucend",
 ])
-const STRING_ARRAY_KEYS = new Set(["userNames", "pageNames"])
+const STRING_ARRAY_KEYS = new Set(["userNames", "pageNames", "pageTitles"])
 const NUMBER_ARRAY_KEYS = new Set(["revisionIds"])
 const BOOLEAN_KEYS = new Set(["showOutgoing", "showIncoming"])
 
@@ -48,6 +48,7 @@ const SENSIBLE_DEFAULTS: Record<string, string | number | boolean> = {
 	userName: "Samwalton9",
 	userNames: "Todepond, Samwalton9",
 	pageNames: "Wet Leg, Confidence Man (band)",
+	pageTitles: "Wet Leg, Confidence Man (band)",
 	lang: "en",
 	wikitext: "Hello '''world'''",
 	summary: "Fix typo",

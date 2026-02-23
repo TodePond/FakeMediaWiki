@@ -48,7 +48,7 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getCombinedFeed", description: "Get a combined feed of revisions from multiple users and/or pages.\nReturns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.\nCaching is handled internally by getUserHistory and getPageHistory.", params: [
       { key: "options", description: "Configuration object" }
   ] },
-  { name: "getParentRevisionId", description: "Get the parent (previous) revision ID for a revision on a page.\nUses the page history endpoint with older_than so we don't rely on the\ncurrent list having the previous revision.", params: [
+  { name: "getParentRevisionId", description: "Get the parent (previous) revision ID for a revision on a page.", params: [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID (we want the revision immediately older than this)" }
   ] },
@@ -105,6 +105,11 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getListBuilding", description: "Get a list of articles related to a seed page from the list-building API.\nCombines results from readers, content (links), and morelike models (serpentine order).", params: [
       { key: "lang", description: "Language code (e.g. \"en\")" },
       { key: "options", description: "Optional page title (seed), QID, and per-source result count (default 10)" }
+  ] },
+  { name: "getMultiPageListBuilding", description: "Get list-building results for multiple seed pages. Returns the final aggregated list\ndeduped by recommended page and sorted by quality (best first). Optionally pass onLoad\nto receive progressively complete lists (each call is the full current list, same shape).", params: [
+      { key: "lang", description: "Language code (e.g. \"en\")" },
+      { key: "pageTitles", description: "Seed page titles (deduplicated; empty titles skipped)" },
+      { key: "options", description: "Optional k and onLoad callback (always processes one seed page at a time)" }
   ] },
   { name: "getPageHero", description: "Get page hero image: thumbnail if present, otherwise the first media image.", params: [
       { key: "pageName", description: "Page title" }

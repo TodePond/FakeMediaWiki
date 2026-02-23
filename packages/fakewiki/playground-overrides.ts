@@ -22,6 +22,7 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 		optionsParamKeys: ["showOutgoing", "showIncoming", "limit", "days", "from"],
 	},
 	getListBuilding: { optionsParamKeys: ["pageTitle", "qid", "k"] },
+	getMultiPageListBuilding: { optionsParamKeys: ["k"] },
 	getRandomPage: { paramOverrides: { format: { inputType: "enum", options: ["summary", "html", "title"] } } },
 	getOnThisDay: {
 		paramOverrides: {
@@ -32,6 +33,7 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 	getFeaturedPage: { paramOverrides: { date: { inputType: "date" } } },
 	getPageThumbnail: { resultHint: "image" },
 	getPageHero: { resultHint: "image" },
+	getUserAvatar: { resultHint: "image" },
 	getPageHtml: { resultHint: "code" },
 	getPageSource: { resultHint: "code" },
 	getPageMobileHtml: { resultHint: "code" },

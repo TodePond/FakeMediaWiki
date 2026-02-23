@@ -17,6 +17,7 @@
 						type="button"
 						class="method-item"
 						:class="{ 'method-item--selected': selectedMethod?.name === method.name }"
+						:ref="(el) => setMethodButtonRef(method.name, el)"
 						@click="selectMethod(method)"
 					>
 						<span class="method-item__name">{{ method.name }}</span>
@@ -83,7 +84,11 @@
 						</div>
 					</div>
 					<div v-if="error" class="result-error">{{ error }}</div>
-					<div v-else-if="result !== undefined" class="result-area">
+					<div
+						v-else-if="result !== undefined"
+						class="result-area"
+						:class="{ 'result-area--image': resultRenderer === ResultImage }"
+					>
 						<component
 							:is="resultRenderer"
 							:data="result"
@@ -99,18 +104,19 @@
 
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressIndicator, CdxSelect, CdxTextInput } from "@wikimedia/codex"
-import { computed, ref, watch } from "vue"
+import { computed, nextTick, onMounted, ref, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
 import { FakeWiki } from "fakewiki"
 import { playgroundMethods } from "./playground-data"
 import type { MethodDescriptor } from "./playground-data"
-import ResultTable from "./ResultTable.vue"
+import ResultValue from "./ResultValue.vue"
 import ResultTablesByKey from "./ResultTablesByKey.vue"
-import ResultObject from "./ResultObject.vue"
 import ResultCode from "./ResultCode.vue"
 import ResultImage from "./ResultImage.vue"
-import ResultJson from "./ResultJson.vue"
 
 const wiki = new FakeWiki()
+const route = useRoute()
+const router = useRouter()
 
 const filterQuery = ref("")
 const selectedMethod = ref<MethodDescriptor | null>(null)
@@ -131,6 +137,7 @@ const filteredMethods = computed(() => {
 
 function selectMethod(method: MethodDescriptor): void {
 	selectedMethod.value = method
+	isLoading.value = false
 	error.value = null
 	result.value = undefined
 	const defaults: Record<string, unknown> = {}
@@ -145,6 +152,7 @@ function selectMethod(method: MethodDescriptor): void {
 						: ""
 	}
 	paramValues.value = defaults
+	router.push({ path: route.path, query: { method: method.name } })
 }
 
 function parseParamValue(
@@ -227,26 +235,19 @@ const resultRenderer = computed(() => {
 	const name = selectedMethod.value?.name ?? ""
 	if (hint === "image") return ResultImage
 	if (hint === "code") return ResultCode
-	if (hint === "json") return ResultJson
-	if (hint === "table") return ResultTable
-	if (hint === "object") return ResultObject
-	if (data === undefined || data === null) return ResultJson
+	if (data === undefined || data === null) return ResultValue
 	if (typeof data === "string") {
-		if (name === "getPageThumbnail" || name === "getPageHero") return ResultImage
+		if (name === "getPageThumbnail" || name === "getPageHero" || name === "getUserAvatar") return ResultImage
 		return ResultCode
 	}
-	if (Array.isArray(data)) return ResultTable
 	if (typeof data === "object") {
-		if (data instanceof Map) return ResultJson
+		if (data instanceof Map) return ResultValue
 		const obj = data as Record<string, unknown>
-		// getUsersHistory: Map/Record<username, { revisions: [...] }> → one table per user
 		const plain = obj instanceof Map ? Object.fromEntries(obj) : obj
 		if (name === "getUsersHistory" && isRecordOfRevisions(plain)) return ResultTablesByKey
-		const arrayKey = ["pages", "revisions", "results", "items"].find((k) => Array.isArray(obj[k]))
-		if (arrayKey && Array.isArray(obj[arrayKey])) return ResultTable
-		return ResultObject
+		return ResultValue
 	}
-	return ResultJson
+	return ResultValue
 })
 
 function isRecordOfRevisions(obj: Record<string, unknown>): boolean {
@@ -255,14 +256,83 @@ function isRecordOfRevisions(obj: Record<string, unknown>): boolean {
 	)
 }
 
-watch(filteredMethods, (list) => {
-	if (list.length > 0 && !selectedMethod.value) {
-		selectMethod(list[0])
+const methodButtonRefs: Record<string, HTMLElement | null> = {}
+function setMethodButtonRef(name: string, el: unknown): void {
+	methodButtonRefs[name] = (el as HTMLElement) || null
+}
+
+function scrollSelectedMethodIntoView(): void {
+	const name = selectedMethod.value?.name
+	if (!name) return
+	// Double nextTick: refs from v-for are set after DOM update; wait so the button ref is available.
+	nextTick(() => {
+		nextTick(() => {
+			const el = methodButtonRefs[name]
+			if (el) {
+				el.scrollIntoView({ block: "start", behavior: "auto" })
+			}
+		})
+	})
+}
+
+function methodNameFromQuery(): string | undefined {
+	const name = route.query.method
+	return typeof name === "string" && playgroundMethods.some((m) => m.name === name)
+		? name
+		: undefined
+}
+
+watch(
+	filteredMethods,
+	(list) => {
+		if (list.length === 0) return
+		const nameFromQuery = methodNameFromQuery()
+		const toSelect = nameFromQuery
+			? list.find((m) => m.name === nameFromQuery)
+			: list[0]
+		if (toSelect && (!selectedMethod.value || selectedMethod.value.name !== toSelect.name)) {
+			selectedMethod.value = toSelect
+			isLoading.value = false
+			error.value = null
+			result.value = undefined
+			const defaults: Record<string, unknown> = {}
+			for (const p of toSelect.params) {
+				defaults[p.key] =
+					p.default !== undefined
+						? p.default
+						: p.type === "number"
+							? 0
+							: p.type === "boolean"
+								? false
+								: ""
+			}
+			paramValues.value = defaults
+			if (!nameFromQuery) {
+				router.replace({ path: route.path, query: { method: toSelect.name } })
+			}
+		}
+	},
+	{ immediate: true }
+)
+
+watch(
+	() => route.query,
+	(query) => {
+		const name = typeof query.method === "string" ? query.method : undefined
+		if (name && selectedMethod.value?.name !== name && playgroundMethods.some((m) => m.name === name)) {
+			const method = playgroundMethods.find((m) => m.name === name)
+			if (method) selectMethod(method)
+		}
 	}
-}, { immediate: true })
+)
+
+onMounted(() => {
+	// On load with ?method=..., selectedMethod is set by the filteredMethods watch; scroll once mounted.
+	nextTick(() => scrollSelectedMethodIntoView())
+})
 </script>
 
 <style>
-/* Unscoped so table/result-object styles apply to child components (ResultTable, ResultObject) */
+/* Unscoped so table styles apply to child components (ResultValue, ResultTablesByKey) */
 @import "./style.css";
 </style>

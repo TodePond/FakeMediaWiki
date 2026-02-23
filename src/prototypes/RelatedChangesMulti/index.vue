@@ -1,20 +1,20 @@
 <template>
 	<main class="related-changes">
 		<form class="page-input-form" @submit.prevent="search">
-			<h1>Related changes</h1>
-			<CdxLabel input-id="page-name">Page name</CdxLabel>
+			<h1>Multi-page related changes</h1>
+			<CdxLabel input-id="page-name">Page names</CdxLabel>
 			<div class="page-input-row">
 				<CdxTextInput
 					id="page-name"
 					v-model="pageName"
 					autocomplete="off"
 					input-type="search"
-					placeholder="e.g. Wikipedia"
+					placeholder="e.g. Wikipedia, Wikidata"
 				/>
 				<CdxButton type="submit">Load related changes</CdxButton>
 			</div>
 			<div
-				v-if="allRevisionsData.length > 0"
+				v-if="allRevisionsData.length > 0 && !isMultiPage"
 				class="link-type-filters"
 				role="group"
 				aria-label="Filter by link type"
@@ -61,19 +61,48 @@
 					>
 						<template v-if="!expandedItemIds.has(change.id)">
 							<div class="history-row">
-								<CdxIcon
-									v-if="getLinkTypeIcon(change)"
-									:icon="getLinkTypeIcon(change)!.icon"
-									:style="{ color: getLinkTypeIcon(change)!.color }"
-									class="link-type-icon"
-									size="small"
-									:aria-label="
-										getLinkTypeIcon(change)!.label.replace(
-											'[[pageName]]',
-											pageName
-										)
-									"
-								/>
+								<span
+									class="feed-count-badges"
+									:title="getFeedCountTitle(change)"
+									:aria-label="getFeedCountTitle(change)"
+								>
+									<span
+										v-if="(change.feedCountBidirectional ?? 0) > 0"
+										class="feed-count-badge"
+										title="Bidirectional"
+									>
+										<CdxIcon
+											:icon="cdxIconLink"
+											size="x-small"
+											class="feed-count-icon"
+										/>
+										{{ change.feedCountBidirectional }}
+									</span>
+									<span
+										v-if="(change.feedCountOutgoing ?? 0) > 0"
+										class="feed-count-badge"
+										title="Outgoing"
+									>
+										<CdxIcon
+											:icon="cdxIconArrowUp"
+											size="x-small"
+											class="feed-count-icon"
+										/>
+										{{ change.feedCountOutgoing }}
+									</span>
+									<span
+										v-if="(change.feedCountBacklink ?? 0) > 0"
+										class="feed-count-badge"
+										title="Backlinks"
+									>
+										<CdxIcon
+											:icon="cdxIconArrowDown"
+											size="x-small"
+											class="feed-count-icon"
+										/>
+										{{ change.feedCountBacklink }}
+									</span>
+								</span>
 								<CdxIcon
 									v-if="getPredictionIcon(change.id).icon"
 									:icon="getPredictionIcon(change.id).icon!"
@@ -243,28 +272,42 @@
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
-								<div
-									v-if="getLinkTypeIcon(change)"
-									class="link-type-card"
-									:title="
-										getLinkTypeIcon(change)!.label.replace(
-											'[[pageName]]',
-											pageName
-										)
-									"
-								>
-									<CdxIcon
-										:icon="getLinkTypeIcon(change)!.icon"
-										:style="{ color: getLinkTypeIcon(change)!.color }"
-										class="link-type-card-icon"
-										size="small"
-									/>
-									<span class="link-type-card-text">{{
-										getLinkTypeIcon(change)!.label.replace(
-											"[[pageName]]",
-											pageName
-										)
-									}}</span>
+								<div class="feed-count-card" :title="getFeedCountTitle(change)">
+									<div class="feed-count-card-row">
+										<span class="feed-count-card-item">
+											<CdxIcon
+												:icon="cdxIconLink"
+												size="x-small"
+												class="feed-count-card-icon"
+											/>
+											<span class="feed-count-card-label">Bidirectional</span>
+											<span class="feed-count-card-value">{{
+												change.feedCountBidirectional ?? 0
+											}}</span>
+										</span>
+										<span class="feed-count-card-item">
+											<CdxIcon
+												:icon="cdxIconArrowUp"
+												size="x-small"
+												class="feed-count-card-icon"
+											/>
+											<span class="feed-count-card-label">Outgoing</span>
+											<span class="feed-count-card-value">{{
+												change.feedCountOutgoing ?? 0
+											}}</span>
+										</span>
+										<span class="feed-count-card-item">
+											<CdxIcon
+												:icon="cdxIconArrowDown"
+												size="x-small"
+												class="feed-count-card-icon"
+											/>
+											<span class="feed-count-card-label">Backlinks</span>
+											<span class="feed-count-card-value">{{
+												change.feedCountBacklink ?? 0
+											}}</span>
+										</span>
+									</div>
 								</div>
 								<div v-if="getPredictionText(change.id)" class="prediction-card">
 									<CdxIcon
@@ -595,12 +638,7 @@ import {
 	cdxIconLink,
 } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
-import type {
-	FWCompareResponse,
-	FWPageHistoryResponse,
-	FWRevision,
-	FWRevisionWithLinkType,
-} from "fakewiki/types"
+import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import { isInteractiveClickTarget } from "../FlaggedWatchlist/clickTargets"
 import { HEART_RISE_DURATION_MS } from "../FlaggedWatchlist/config"
@@ -608,13 +646,17 @@ import type { HistoryRevisionWithHtml, RisingHeart } from "../FlaggedWatchlist/t
 import { usePredictions } from "../FlaggedWatchlist/usePredictions"
 import { useUser } from "../FlaggedWatchlist/useUser"
 import { getRevisionItemZIndex } from "../FlaggedWatchlist/zIndex"
-import { useRelatedPagesFeed } from "./useRelatedPagesFeed"
+import type { RelatedChangeRevisionMulti } from "./useRelatedPagesFeedMulti"
+import { useRelatedPagesFeedMulti } from "./useRelatedPagesFeedMulti"
 
-const PROTOTYPE_NAME = "RelatedChanges"
+const PROTOTYPE_NAME = "RelatedChangesMulti"
 const wiki = new FakeWiki()
 const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageName")
 const filterStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "linkTypeFilters")
-const pageName = ref(localStorage.getItem(pageStorageKey) || "Wikipedia")
+const pageName = ref(
+	localStorage.getItem(pageStorageKey) ||
+		"Little Mix, Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), Rizzle Kicks"
+)
 
 function loadFilterState(): { outgoing: boolean; incoming: boolean; bidirectional: boolean } {
 	try {
@@ -675,11 +717,36 @@ let nextHeartId = 0
 
 const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
 const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
-const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedPagesFeed({
+const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedPagesFeedMulti({
 	wiki,
 	pageName,
 	onUserCategory: cacheUserCategory,
 })
+
+const pageNamesList = computed(() => {
+	const raw = pageName.value.trim()
+	if (!raw) return []
+	return [
+		...new Set(
+			raw
+				.split(",")
+				.map(s => s.trim())
+				.filter(Boolean)
+		),
+	]
+})
+const isMultiPage = computed(() => pageNamesList.value.length > 1)
+
+function getFeedCountTitle(change: RelatedChangeRevisionMulti): string {
+	const both = change.feedCountBidirectional ?? 0
+	const out = change.feedCountOutgoing ?? 0
+	const back = change.feedCountBacklink ?? 0
+	const parts: string[] = []
+	if (both > 0) parts.push(`${both} bidirectional`)
+	if (out > 0) parts.push(`${out} outgoing`)
+	if (back > 0) parts.push(`${back} backlink`)
+	return parts.length ? parts.join("; ") : "No feeds"
+}
 
 const expandedTalkIds = ref<Set<number>>(new Set())
 const talkPageText = ref<Map<number, string>>(new Map())
@@ -694,32 +761,6 @@ function deltaForRev(
 			? (change.delta ?? (rev as FWRevision).delta)
 			: (rev as FWRevision).delta
 	return d != null ? d : null
-}
-
-function getLinkTypeIcon(change: FWRevisionWithLinkType): {
-	icon: typeof cdxIconArrowDown
-	color: string
-	label: string
-} | null {
-	const t = change.linkType
-	if (!t) return null
-	if (t === "to")
-		return {
-			icon: cdxIconArrowUp,
-			color: "var(--color-progressive)",
-			label: "[[pageName]] links to this page.",
-		}
-	if (t === "from")
-		return {
-			icon: cdxIconArrowDown,
-			color: "var(--color-success)",
-			label: "This page links to [[pageName]].",
-		}
-	return {
-		icon: cdxIconLink,
-		color: "var(--color-base)",
-		label: "[[pageName]] links to this page and this page links back.",
-	}
 }
 
 watch([showOutgoing, showIncoming, showBidirectional], saveFilterState)
@@ -790,6 +831,7 @@ async function search(): Promise<void> {
 
 const filteredRevisions = computed(() => {
 	const revs = allRevisionsData.value
+	if (isMultiPage.value) return revs
 	const out = showOutgoing.value
 	const inc = showIncoming.value
 	const both = showBidirectional.value
@@ -813,7 +855,14 @@ const allRevisionsInOrder = computed(() => {
 	return result
 })
 
-const revisionsByDate = computed(() => wiki.groupRevisionsByDate(allRevisions.value))
+const revisionsByDate = computed(
+	() =>
+		wiki.groupRevisionsByDate(allRevisions.value) as Array<{
+			dateKey: string
+			dateLabel: string
+			revisions: RelatedChangeRevisionMulti[]
+		}>
+)
 
 function expandItem(change: FWRevision, event: MouseEvent): void {
 	const target = event.target as HTMLElement
@@ -1069,7 +1118,7 @@ function hasNext(currentId: number): boolean {
 </script>
 
 <style>
-@import "./global.css";
+@import "../RelatedChanges/global.css";
 </style>
 
 <style scoped>

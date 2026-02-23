@@ -78,14 +78,14 @@ export const categories: CategoryDefinition[] = [
 		description: "Experiments in how to source personalized recommendations.",
 	},
 	{
-		id: "feed",
-		name: "Feeds",
-		description: "Early experiments for feeds of information.",
-	},
-	{
 		id: "api",
 		name: "API",
 		description: "Demonstrations of available API.",
+	},
+	{
+		id: "feed",
+		name: "Feeds",
+		description: "Early experiments for feeds of information.",
 	},
 	{
 		id: "article",
@@ -115,6 +115,17 @@ export const categories: CategoryDefinition[] = [
 ]
 
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
+	{
+		type: "prototype",
+		id: "RelatedChangesMulti",
+		name: "Multi-page related changes",
+		description: "Combine related changes from multiple pages.",
+		category: "recommendations",
+		wrapper: "Fullscreen",
+		title: "Multi-page related changes",
+		featured: true,
+		status: "wip",
+	},
 	{
 		type: "prototype",
 		id: "RecommendationWatchlist",
@@ -517,7 +528,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "api",
 		wrapper: "Fullscreen",
 		title: "API Playground",
-		status: "wip",
+		status: "new",
 		featured: true,
 	},
 	{

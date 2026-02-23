@@ -1615,7 +1615,7 @@ export class FakeWiki {
 	): Promise<Record<string, string>> {
 		const out: Record<string, string> = {}
 		if (pageNames.length === 0) return out
-		const base = baseUrl ?? this.base
+		const base = (baseUrl?.trim()) ? baseUrl : this.base
 		const headers = {
 			"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
 		}
@@ -1893,13 +1893,28 @@ export class FakeWiki {
 	/**
 	 * Get page categories
 	 * @param pageName - Page title
-	 * @returns Page categories
+	 * @returns Page categories (array of category titles, e.g. "Category:British rock music groups")
 	 */
-	async getPageCategories(pageName: string): Promise<unknown> {
-		return this.request({
-			api: "wikimedia",
-			path: `page/metadata/${this.encode(pageName)}`,
-		})
+	async getPageCategories(pageName: string): Promise<{ categories: string[] }> {
+		const data = (await this.request({
+			api: "action",
+			params: {
+				action: "query",
+				prop: "categories",
+				titles: pageName,
+				cllimit: "500",
+				formatversion: "2",
+			},
+		})) as {
+			query?: { pages?: Array<{ categories?: Array<{ title: string }>; missing?: boolean }> }
+		}
+		const pages = data.query?.pages ?? []
+		const page = pages[0]
+		if (!page || "missing" in page) {
+			throw new Error("404: Page not found")
+		}
+		const categories = (page.categories ?? []).map((c) => c.title)
+		return { categories }
 	}
 
 	/**
