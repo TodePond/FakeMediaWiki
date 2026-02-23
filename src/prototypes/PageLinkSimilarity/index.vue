@@ -173,7 +173,7 @@ function toggleGraphVisible(): void {
 
 const pageNamesInput = ref(
 	localStorage.getItem("pageLinkSimilarityQuery") ||
-		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks"
+		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), Rizzle Kicks"
 )
 const linksMap = ref<Map<string, string[]>>(new Map())
 const backlinksMap = ref<Map<string, string[]>>(new Map())

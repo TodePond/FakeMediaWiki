@@ -40,14 +40,14 @@
 .watchlist-date-header {
 	font-weight: 300 !important;
 	font-size: 1rem;
-	margin-top: 2rem;
+	margin-top: 1.5rem;
 	text-align: left;
 	margin-bottom: 0;
 	/* color: var(--color-placeholder); */
 }
 
-.watchlist-date-header:first-child {
-	margin-top: 1rem;
+.watchlist-date-header:first-of-type {
+	margin-top: 0.5rem;
 }
 
 /* Same containment as inline history box */
@@ -858,7 +858,15 @@ form footer {
 	justify-content: flex-end;
 }
 
+h1 {
+	margin-top: 2rem;
+}
+
 @container view (max-width: 640px) {
+	h1 {
+		margin-right: 0.5rem;
+		margin-left: 0.5rem;
+	}
 	.watchlist-container {
 		padding-left: 0;
 		padding-right: 0;

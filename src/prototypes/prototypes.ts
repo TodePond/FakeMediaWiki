@@ -123,7 +123,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Recommendation watchlist",
-		status: "wip",
+		status: "new",
 		featured: true,
 	},
 	{
@@ -135,7 +135,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Multiple list building",
-		status: "new",
 		featured: true,
 	},
 	{
@@ -146,7 +145,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "List building",
-		status: "new",
 		featured: true,
 	},
 	{
@@ -157,7 +155,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Page link similarity",
-		status: "new",
 		featured: true,
 	},
 	{
@@ -169,7 +166,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Page links",
-		status: "updated",
 		featured: true,
 	},
 	{
@@ -180,7 +176,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Related changes",
-		status: "new",
 		featured: true,
 	},
 	{
@@ -198,8 +193,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Mobile flagged watchlist",
 				description: "A feed with flagged items.",
 				wrapper: "Mobile",
-				status: "new",
-				featured: true,
 			},
 			{
 				type: "variant",
@@ -207,7 +200,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				title: "Flagged watchlist",
 				name: "Flagged watchlist",
 				description: "A feed with flagged items.",
-				wrapper: "Special",
+				wrapper: "Fullscreen",
 				featured: true,
 			},
 			{
@@ -280,7 +273,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Combined watchlist",
 				description: "Presents results exactly like the Watchlist.",
 				wrapper: "Special",
-				featured: true,
 			},
 		],
 	},
@@ -340,7 +332,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				name: "Combined feed",
 				description: "A stripped-back combined feed with no avatar or thumbnail.",
 				wrapper: "Special",
-				featured: true,
 			},
 			{
 				type: "variant",
@@ -537,8 +528,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "api",
 		wrapper: "Fullscreen",
 		title: "History cache inspector",
-		status: "new",
-		featured: true,
 	},
 	{
 		type: "prototype",
@@ -636,6 +625,5 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		description: "View this prototype in the Mobile layout (phone frame on large screens).",
 		wrapper: "Mobile",
 		category: "wrappers",
-		featured: true,
 	},
 ]

@@ -131,7 +131,7 @@ const PROTOTYPE_NAME = "MultipleListBuilding"
 const QUERY_STORAGE_KEY = "multipleListBuildingQuery"
 const WEIGHTS_STORAGE_KEY = "multipleListBuildingWeights"
 const DEFAULT_QUERY =
-	"Little Mix, Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks"
+	"Little Mix, Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), Rizzle Kicks"
 
 const DEFAULT_WEIGHT_LISTS = 1
 const DEFAULT_WEIGHT_POSITION = 1

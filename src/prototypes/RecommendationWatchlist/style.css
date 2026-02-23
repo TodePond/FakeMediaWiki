@@ -259,7 +259,7 @@
 	/* background-color: var(--background-color-base); */
 	transition: min-height 0.2s ease-in-out;
 	min-height: auto;
-	padding: 0.25rem 0.5rem;
+	padding: 0.25rem 0.4rem;
 	/* margin: 0rem -0.5rem; */
 }
 

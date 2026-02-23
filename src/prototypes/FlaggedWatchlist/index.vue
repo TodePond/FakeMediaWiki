@@ -1,6 +1,7 @@
 <template>
 	<main class="flagged-watchlist">
 		<div class="watchlist-container">
+			<h1>Flagged watchlist</h1>
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>

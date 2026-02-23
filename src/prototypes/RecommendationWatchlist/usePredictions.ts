@@ -95,17 +95,23 @@ export function usePredictions(wiki: FakeWiki) {
 		const notDamagingProb = damaging?.probability?.false ?? 0
 		const isGoodfaithProb = goodfaith?.probability?.true ?? 0
 
-		if (notDamagingProb > 0.99 && isGoodfaithProb > 0.99) {
+		if (notDamagingProb > 0.9 && isGoodfaithProb > 0.9) {
 			return {
 				icon: cdxIconSuccess,
 				color: "var(--color-success)",
+				isLoading: false,
+			}
+		} else if (notDamagingProb > 0.9 || isGoodfaithProb > 0.9) {
+			return {
+				icon: cdxIconSuccess,
+				color: "var(--color-progressive)",
 				isLoading: false,
 			}
 		}
 
 		return {
 			icon: cdxIconSuccess,
-			color: "var(--color-progressive)",
+			color: "var(--color-subtle)",
 			isLoading: false,
 		}
 	}
@@ -124,34 +130,34 @@ export function usePredictions(wiki: FakeWiki) {
 
 		if (damagingProb > 0.9 || goodfaithProb > 0.9) {
 			if (damagingProb > 0.9 && goodfaithProb > 0.9) {
-				return "Likely damaging and bad faith."
+				return "This change probably has a problem and is probably made in bad faith."
 			} else if (damagingProb > 0.9) {
-				return "Likely damaging."
+				return "This change probably has a problem."
 			}
-			return "Likely bad faith."
+			return "This change is probably made in bad faith."
 		}
 
 		if (damagingProb > 0.3 || goodfaithProb > 0.3) {
 			if (damagingProb > 0.3 && goodfaithProb > 0.3) {
-				return "Possibly a problematic edit or made in bad faith."
+				return "This change might have a problem and might be made in bad faith."
 			} else if (damagingProb > 0.3) {
-				return "Possibly has a problem."
+				return "This change might have a problem."
 			}
-			return "Possibly made in bad faith."
+			return "This change might be made in bad faith."
 		}
 
 		const notDamagingProb = damaging?.probability?.false ?? 0
 		const isGoodfaithProb = goodfaith?.probability?.true ?? 0
 
 		if (notDamagingProb > 0.9 && isGoodfaithProb > 0.9) {
-			return "Likely a edit made in good faith."
+			return "This change is probably okay and is probably made in good faith."
 		} else if (notDamagingProb > 0.9) {
-			return "Likely an undamaging edit."
+			return "This change is probably okay."
 		} else if (isGoodfaithProb > 0.9) {
-			return "Likely made in good faith."
+			return "This change is probably made in good faith."
 		}
 
-		return "Possibly okay."
+		return "This change might be okay."
 	}
 
 	return {

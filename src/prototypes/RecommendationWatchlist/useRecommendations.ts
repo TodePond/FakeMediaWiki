@@ -153,9 +153,13 @@ export function useRecommendations({
 
 	/**
 	 * Load recommendation revisions from a list of page titles only (skip list-building).
-	 * Use when restoring from cache. Returns the same titles on success.
+	 * Use when restoring from cache. Optionally pass seedPagesByPage so "Because you watch..." can be shown.
+	 * Returns the same titles on success.
 	 */
-	async function loadRecommendationsFromTitles(titles: string[]): Promise<string[]> {
+	async function loadRecommendationsFromTitles(
+		titles: string[],
+		seedPagesByPage?: Record<string, string[]>
+	): Promise<string[]> {
 		if (titles.length === 0) {
 			recommendationRevisions.value = []
 			allCandidateTitles.value = []
@@ -163,7 +167,21 @@ export function useRecommendations({
 			loadedCandidateCount.value = 0
 			return []
 		}
-		recommendationSeedPagesByPage.value = new Map()
+		if (seedPagesByPage && Object.keys(seedPagesByPage).length > 0) {
+			const map = new Map<string, string[]>()
+			for (const [page, seeds] of Object.entries(seedPagesByPage)) {
+				if (seeds?.length) {
+					map.set(page.trim(), seeds)
+					const withUnderscores = page.trim().replace(/\s+/g, "_")
+					if (withUnderscores !== page.trim()) map.set(withUnderscores, seeds)
+					const withSpaces = page.trim().replace(/_/g, " ")
+					if (withSpaces !== page.trim()) map.set(withSpaces, seeds)
+				}
+			}
+			recommendationSeedPagesByPage.value = map
+		} else {
+			recommendationSeedPagesByPage.value = new Map()
+		}
 		recommendationProgress.value = {
 			loadedFromCache: true,
 			listBuildingTotal: titles.length,
@@ -284,7 +302,7 @@ export function useRecommendations({
 		return processed
 	}
 
-	/** Combined list: main feed plus recommendation revisions not older than oldest main. */
+	/** Combined list: main feed plus recommendation revisions not older than oldest main. Deduped by revision id. */
 	const interleavedRevisions = computed((): FeedRevision[] => {
 		const main = allRevisionsData.value as FeedRevision[]
 		const recs = recommendationRevisions.value
@@ -295,7 +313,9 @@ export function useRecommendations({
 			main[0]!.timestamp
 		)
 		const recsFiltered = recs.filter(r => r.timestamp >= oldestMainTs)
-		return [...main, ...recsFiltered]
+		const mainIds = new Set(main.map(r => r.id))
+		const recsDeduped = recsFiltered.filter(r => !mainIds.has(r.id))
+		return [...main, ...recsDeduped]
 	})
 
 	function getRecommendationSeedPages(pageName: string): string[] {
@@ -306,13 +326,12 @@ export function useRecommendations({
 		if (exact?.length) return exact
 		const withUnderscores = trimmed.replace(/\s+/g, "_")
 		const withSpaces = trimmed.replace(/_/g, " ")
-		const fromMap = map.get(withUnderscores) ?? map.get(withSpaces)
-		if (fromMap?.length) return fromMap
-		// No list-building data (e.g. loaded from cache): show current page queries so "Because you watch" still appears.
-		if (map.size === 0) {
-			return pageSearchQueries.value.map(s => s.trim()).filter(Boolean) as string[]
-		}
-		return []
+		return map.get(withUnderscores) ?? map.get(withSpaces) ?? []
+	}
+
+	/** Current map of recommended page -> seed pages (for persisting to cache). */
+	function getRecommendationSeedPagesMap(): Map<string, string[]> {
+		return recommendationSeedPagesByPage.value
 	}
 
 	return {
@@ -324,5 +343,6 @@ export function useRecommendations({
 		hasMoreRecommendations: computed(() => loadedCandidateCount.value < allCandidateTitles.value.length),
 		interleavedRevisions,
 		getRecommendationSeedPages,
+		getRecommendationSeedPagesMap,
 	}
 }

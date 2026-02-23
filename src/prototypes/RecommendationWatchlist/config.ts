@@ -21,7 +21,6 @@ export const defaultPageSearchQueries = [
 	"Wolf Alice",
 	"Jade Thirlwall",
 	"Confidence Man (band)",
-	"PinkPantheress",
 	"Rizzle Kicks",
 ]
 

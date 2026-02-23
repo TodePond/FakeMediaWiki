@@ -21,7 +21,7 @@
 				<span class="recommendation-progress-text">
 					{{
 						recommendationProgress.loadedFromCache
-							? `${recommendationProgress.found} seed pages (cached)`
+							? `${recommendationProgress.found} cached recommendations`
 							: `List building: ${recommendationProgress.listBuildingCompleted}/${recommendationProgress.listBuildingTotal} seed pages`
 					}}
 				</span>
@@ -798,12 +798,34 @@ const {
 
 const recommendationsCacheKey = wiki.getStorageKey(PROTOTYPE_NAME, "recommendationsCache")
 
-function getRecommendationsCache(): string[] | null {
+interface RecommendationsCache {
+	titles: string[]
+	seedPagesByPage?: Record<string, string[]>
+}
+
+function getRecommendationsCache(): RecommendationsCache | null {
 	try {
 		const raw = localStorage.getItem(recommendationsCacheKey)
 		if (!raw) return null
-		const parsed = JSON.parse(raw) as string[]
-		if (Array.isArray(parsed) && parsed.every(s => typeof s === "string")) return parsed
+		const parsed = JSON.parse(raw)
+		if (Array.isArray(parsed) && parsed.every(s => typeof s === "string")) {
+			return { titles: parsed }
+		}
+		if (
+			parsed &&
+			Array.isArray(parsed.titles) &&
+			parsed.titles.every((s: unknown) => typeof s === "string")
+		) {
+			const seedPagesByPage = parsed.seedPagesByPage
+			const valid =
+				!seedPagesByPage ||
+				(typeof seedPagesByPage === "object" &&
+					!Array.isArray(seedPagesByPage) &&
+					Object.values(seedPagesByPage).every(
+						(v: unknown) => Array.isArray(v) && (v as unknown[]).every(s => typeof s === "string")
+					))
+			return valid ? { titles: parsed.titles, seedPagesByPage: seedPagesByPage as Record<string, string[]> } : { titles: parsed.titles }
+		}
 	} catch {
 		// ignore
 	}
@@ -811,7 +833,19 @@ function getRecommendationsCache(): string[] | null {
 }
 
 function setRecommendationsCache(titles: string[]): void {
-	localStorage.setItem(recommendationsCacheKey, JSON.stringify(titles))
+	const record: Record<string, string[]> = {}
+	for (const t of titles) {
+		const seeds = getRecommendationSeedPages(t)
+		if (seeds.length) record[t] = seeds
+	}
+	if (Object.keys(record).length === 0) {
+		localStorage.setItem(recommendationsCacheKey, JSON.stringify(titles))
+		return
+	}
+	localStorage.setItem(
+		recommendationsCacheKey,
+		JSON.stringify({ titles, seedPagesByPage: record })
+	)
 }
 
 function clearRecommendationsCache(): void {
@@ -842,8 +876,8 @@ async function onLoadMore(): Promise<void> {
 onMounted(async () => {
 	await loadFeed(undefined, false)
 	const cached = getRecommendationsCache()
-	if (cached && cached.length > 0) {
-		await loadRecommendationsFromTitles(cached)
+	if (cached && cached.titles.length > 0) {
+		await loadRecommendationsFromTitles(cached.titles, cached.seedPagesByPage)
 	} else {
 		const titles = await loadRecommendations()
 		if (titles.length > 0) setRecommendationsCache(titles)
