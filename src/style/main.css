@@ -11,6 +11,8 @@
 html {
 	/* background-color: var(--background-color-neutral); */
 	background-color: var(--background-color-base);
+	/* Always reserve space for scrollbar so layout doesn't jump when content height changes */
+	overflow-y: scroll;
 }
 
 body {

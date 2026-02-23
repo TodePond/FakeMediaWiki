@@ -35,6 +35,37 @@
 					<span>Bidirectional</span>
 				</label>
 			</div>
+			<div
+				v-if="allRevisionsData.length > 0 || isLoading"
+				class="score-filter-row"
+				role="group"
+				aria-label="Filter by score"
+			>
+				<CdxLabel :input-id="scoreFilterId"
+					>Show top {{ filterKeepPercent }}% recommendations</CdxLabel
+				>
+				<div class="score-filter-slider-line">
+					<input
+						:id="scoreFilterId"
+						:value="100 - filterKeepPercent"
+						type="range"
+						min="0"
+						max="100"
+						step="1"
+						class="score-filter-slider"
+						aria-valuemin="100"
+						:aria-valuenow="filterKeepPercent"
+						aria-valuemax="0"
+						@input="
+							filterKeepPercent =
+								100 - Number(($event.target as HTMLInputElement).value)
+						"
+					/>
+					<span class="score-filter-value" aria-hidden="true"
+						>{{ filterKeepPercent }}%</span
+					>
+				</div>
+			</div>
 		</form>
 
 		<div class="watchlist-container">
@@ -63,9 +94,20 @@
 							<div class="history-row">
 								<span
 									class="feed-count-badges"
-									:title="getFeedCountTitle(change)"
+									:title="
+										getFeedCountTitle(change) +
+										'. Score: ' +
+										(change.score ?? 0) +
+										' (bidirectional×3, outgoing×2, backlink×1)'
+									"
 									:aria-label="getFeedCountTitle(change)"
 								>
+									<span
+										class="feed-count-badge feed-count-badge-score"
+										title="Score (bidirectional×3, outgoing×2, backlink×1)"
+										aria-label="Score"
+										>{{ change.score ?? 0 }}</span
+									>
 									<span
 										v-if="(change.feedCountBidirectional ?? 0) > 0"
 										class="feed-count-badge"
@@ -274,13 +316,24 @@
 								></div>
 								<div class="feed-count-card" :title="getFeedCountTitle(change)">
 									<div class="feed-count-card-row">
+										<span
+											class="feed-count-card-item feed-count-card-item-score"
+											:title="`Score: ${change.score ?? 0} (bidirectional×3, outgoing×2, backlink×1)`"
+										>
+											<span class="feed-count-card-label">Score</span>
+											<span class="feed-count-card-value">{{
+												change.score ?? 0
+											}}</span>
+										</span>
 										<span class="feed-count-card-item">
 											<CdxIcon
 												:icon="cdxIconLink"
 												size="x-small"
 												class="feed-count-card-icon"
 											/>
-											<span class="feed-count-card-label">Bidirectional</span>
+											<span class="feed-count-card-label"
+												>Bidirectional links</span
+											>
 											<span class="feed-count-card-value">{{
 												change.feedCountBidirectional ?? 0
 											}}</span>
@@ -291,7 +344,9 @@
 												size="x-small"
 												class="feed-count-card-icon"
 											/>
-											<span class="feed-count-card-label">Outgoing</span>
+											<span class="feed-count-card-label"
+												>Outgoing links</span
+											>
 											<span class="feed-count-card-value">{{
 												change.feedCountOutgoing ?? 0
 											}}</span>
@@ -302,7 +357,9 @@
 												size="x-small"
 												class="feed-count-card-icon"
 											/>
-											<span class="feed-count-card-label">Backlinks</span>
+											<span class="feed-count-card-label"
+												>Backlink links</span
+											>
 											<span class="feed-count-card-value">{{
 												change.feedCountBacklink ?? 0
 											}}</span>
@@ -691,6 +748,10 @@ const showOutgoing = ref(filterState.outgoing)
 const showIncoming = ref(filterState.incoming)
 const showBidirectional = ref(filterState.bidirectional)
 
+const scoreFilterId = "related-changes-multi-score-filter"
+/** Keep top N% by score (0–100). Default 3%. */
+const filterKeepPercent = ref(3)
+
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
 const loadedDiffs = ref<Map<number, FWCompareResponse>>(new Map())
@@ -845,7 +906,17 @@ const filteredRevisions = computed(() => {
 	})
 })
 
-const allRevisions = computed(() => filteredRevisions.value)
+/** Keep only the top N% of items by score (preserves original order) */
+const allRevisions = computed(() => {
+	const revs = filteredRevisions.value
+	if (revs.length === 0) return revs
+	const keepFraction = filterKeepPercent.value / 100
+	const scores = revs.map(r => r.score ?? 0)
+	const sortedScores = [...scores].sort((a, b) => b - a)
+	const keepCount = Math.max(1, Math.ceil(revs.length * keepFraction))
+	const threshold = sortedScores[keepCount - 1] ?? 0
+	return revs.filter(r => (r.score ?? 0) >= threshold)
+})
 
 const allRevisionsInOrder = computed(() => {
 	const result: FWRevision[] = []

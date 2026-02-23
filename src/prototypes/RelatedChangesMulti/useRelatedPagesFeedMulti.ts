@@ -7,6 +7,10 @@ import { ref } from "vue"
 const LIMIT = 50
 const DAYS = 30
 
+const BIDIRECTIONAL_SCORE = 4
+const OUTGOING_SCORE = 2
+const BACKLINK_SCORE = 1
+
 /** Counts of how many selected pages' feeds included this item per link type */
 export type FeedCountByLinkType = {
 	bidirectional: number
@@ -14,13 +18,21 @@ export type FeedCountByLinkType = {
 	backlink: number
 }
 
-/** Revision with feed counts per link type (bidirectional, outgoing, backlink) */
+/** Revision with feed counts per link type (bidirectional, outgoing, backlink) and score */
 export type RelatedChangeRevisionMulti = FWRevisionWithLinkType & {
 	feedCount: number
 	feedCountBidirectional: number
 	feedCountOutgoing: number
 	feedCountBacklink: number
+	/** Score: bidirectional×3 + outgoing×2 + backlink×1 */
+	score: number
 	sourcePageNames?: string[]
+}
+
+function computeScore(bidirectional: number, outgoing: number, backlink: number): number {
+	return (
+		bidirectional * BIDIRECTIONAL_SCORE + outgoing * OUTGOING_SCORE + backlink * BACKLINK_SCORE
+	)
 }
 
 function revisionKey(r: {
@@ -56,7 +68,14 @@ export function useRelatedPagesFeedMulti({
 			errors.value = []
 			return
 		}
-		const pageNames = [...new Set(raw.split(",").map(s => s.trim()).filter(Boolean))]
+		const pageNames = [
+			...new Set(
+				raw
+					.split(",")
+					.map(s => s.trim())
+					.filter(Boolean)
+			),
+		]
 		if (pageNames.length === 0) {
 			allRevisionsData.value = []
 			errors.value = []
@@ -103,6 +122,11 @@ export function useRelatedPagesFeedMulti({
 							feedCountBidirectional,
 							feedCountOutgoing,
 							feedCountBacklink,
+							score: computeScore(
+								feedCountBidirectional,
+								feedCountOutgoing,
+								feedCountBacklink
+							),
 						} as RelatedChangeRevisionMulti
 					})
 				)
@@ -155,13 +179,11 @@ export function useRelatedPagesFeedMulti({
 					feedCountBidirectional: countBidirectional,
 					feedCountOutgoing: countOutgoing,
 					feedCountBacklink: countBacklink,
+					score: computeScore(countBidirectional, countOutgoing, countBacklink),
 					sourcePageNames: [...sourcePageNames],
 				})
 			)
-			merged.sort(
-				(a, b) =>
-					new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-			)
+			merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
 			const enriched = await Promise.all(
 				merged.map(async item => {
@@ -170,6 +192,7 @@ export function useRelatedPagesFeedMulti({
 						feedCountBidirectional,
 						feedCountOutgoing,
 						feedCountBacklink,
+						score,
 						sourcePageNames,
 						...rev
 					} = item
@@ -191,6 +214,7 @@ export function useRelatedPagesFeedMulti({
 						feedCountBidirectional,
 						feedCountOutgoing,
 						feedCountBacklink,
+						score,
 						sourcePageNames,
 					} as RelatedChangeRevisionMulti
 				})
