@@ -121,7 +121,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		name: "Recommendation watchlist",
 		description: "Watchlist feed with recommended page changes inserted every now and then.",
 		category: "recommendations",
-		wrapper: "Special",
+		wrapper: "Fullscreen",
 		title: "Recommendation watchlist",
 		status: "wip",
 		featured: true,

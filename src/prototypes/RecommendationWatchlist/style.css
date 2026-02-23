@@ -1,5 +1,11 @@
 /* Watchlist presented in history-box style: one box per date with rows */
 
+.recommendation-watchlist-title {
+	/* padding: 0 1rem; */
+	width: 100%;
+	max-width: 800px;
+}
+
 .recommendation-watchlist-header {
 	width: 100%;
 	max-width: 800px;
@@ -33,7 +39,7 @@
 }
 
 .recommendation-progress {
-	margin: 0rem 0 1rem;
+	margin: 1.5rem 0 1rem 0;
 	padding: 0rem 0;
 	font-size: 0.875rem;
 	color: var(--color-subtle, #54595d);
@@ -179,11 +185,49 @@
 	}
 }
 
+.item-source-info {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0.5rem 0;
+	padding: 0.5rem 0.75rem;
+	background-color: var(--background-color-subtle, #f8f9fa);
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	font-size: 0.875rem;
+	line-height: 1.4;
+}
+
+.item-source-info-icon {
+	flex-shrink: 0;
+}
+
+.item-source-info-watchlist .item-source-info-icon {
+	color: var(--color-base, #202122);
+}
+
+.item-source-info-recommendation .item-source-info-icon {
+	color: var(--color-progressive, #36c);
+}
+
+.item-source-info-text {
+	color: var(--color-base, #202122);
+}
+
+.item-source-info-link {
+	color: var(--color-progressive, #36c);
+	text-decoration: none;
+}
+
+.item-source-info-link:hover {
+	text-decoration: underline;
+}
+
 .prediction-card {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-	margin-top: 0.75rem;
+	margin-top: 0.5rem;
 	padding: 0.5rem 0.75rem;
 	background-color: var(--background-color-subtle, #f8f9fa);
 	border: 1px solid var(--border-color-subtle);
@@ -197,7 +241,7 @@
 }
 
 .prediction-card-text {
-	color: var(--color-base);
+	color: var(--color-base, #202122);
 }
 
 .history-row-second {
@@ -233,7 +277,7 @@
 }
 
 .history-item-recommendation.history-item:has(.history-expanded) {
-	background-color: rgba(51, 102, 204, 0.08);
+	background-color: inherit;
 }
 
 .history-item a,
@@ -891,10 +935,9 @@ a:hover {
 	word-break: break-word;
 }
 
-/* Form layout (same as other watchlist variants) */
 main {
 	display: flex;
-	gap: 2rem;
+	gap: 1rem;
 	justify-content: space-between;
 	width: 100%;
 }
@@ -946,13 +989,17 @@ form footer {
 }
 
 @container view (max-width: 640px) {
+	.recommendation-watchlist-header {
+		padding-left: 1rem;
+		padding-right: 1rem;
+	}
 	.watchlist-container {
-		padding-left: 0;
-		padding-right: 0;
+		padding-left: 0rem;
+		padding-right: 0rem;
 	}
 	.recommendation-watchlist {
-		padding-left: 0;
-		padding-right: 0;
+		padding-left: 0rem;
+		padding-right: 0rem;
 	}
 	.watchlist-date-header {
 		padding-left: 0.5rem;

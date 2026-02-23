@@ -1,6 +1,7 @@
 <template>
 	<main class="recommendation-watchlist">
 		<header class="recommendation-watchlist-header">
+			<h1 class="recommendation-watchlist-title">Recommendation watchlist</h1>
 			<form class="recommendation-watchlist-form" @submit.prevent="search">
 				<CdxLabel for="page-queries-input">Page queries (comma-separated)</CdxLabel>
 				<CdxTextInput
@@ -12,8 +13,6 @@
 				/>
 				<CdxButton type="submit" :disabled="isLoading"> Refresh feed </CdxButton>
 			</form>
-		</header>
-		<div class="watchlist-container">
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
@@ -94,6 +93,8 @@
 			>
 				Refresh recommendations
 			</CdxButton>
+		</header>
+		<div class="watchlist-container">
 			<div v-if="isLoading" class="watchlist-loading">
 				<CdxProgressBar inline />
 			</div>
@@ -221,12 +222,6 @@
 							</div>
 							<div class="history-expanded">
 								<div class="history-title-row">
-									<CdxIcon
-										v-if="(change as FeedRevision).isRecommendation"
-										:icon="cdxIconLightbulb"
-										class="prediction-icon recommendation-bulb-icon"
-										size="small"
-									/>
 									<a
 										target="_blank"
 										:href="wiki.getPageUrl(change.pageName!)"
@@ -293,6 +288,7 @@
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
+
 								<div v-if="getPredictionText(change.id)" class="prediction-card">
 									<CdxIcon
 										v-if="getPredictionIcon(change.id).icon"
@@ -311,6 +307,81 @@
 									<span class="prediction-card-text">{{
 										getPredictionText(change.id)
 									}}</span>
+								</div>
+								<div
+									class="item-source-info"
+									:class="{
+										'item-source-info-watchlist': !(change as FeedRevision)
+											.isRecommendation,
+										'item-source-info-recommendation': (change as FeedRevision)
+											.isRecommendation,
+									}"
+								>
+									<CdxIcon
+										:icon="
+											(change as FeedRevision).isRecommendation
+												? cdxIconLightbulb
+												: cdxIconStar
+										"
+										:class="
+											(change as FeedRevision).isRecommendation
+												? 'item-source-info-icon recommendation-bulb-icon'
+												: 'item-source-info-icon recommendation-star-icon'
+										"
+										size="small"
+									/>
+									<span class="item-source-info-text">
+										<template v-if="(change as FeedRevision).isRecommendation">
+											<template
+												v-if="
+													change.pageName &&
+													getRecommendationSeedPages(change.pageName)
+														.length
+												"
+											>
+												Recommended for you because you watch
+												<template
+													v-for="(name, i) in getRecommendationSeedPages(
+														change.pageName!
+													)"
+													:key="name"
+												>
+													<a
+														:href="wiki.getPageUrl(name)"
+														target="_blank"
+														rel="noopener"
+														class="item-source-info-link"
+														@click.stop
+														>{{ name }}</a
+													><span
+														v-if="
+															i <
+															getRecommendationSeedPages(
+																change.pageName!
+															).length -
+																2
+														"
+														>, </span
+													><span
+														v-else-if="
+															i ===
+															getRecommendationSeedPages(
+																change.pageName!
+															).length -
+																2
+														"
+													>
+														and </span
+													><span v-else>.</span>
+												</template>
+											</template>
+											<template v-else
+												>This change was recommended for you based on your
+												watchlist.</template
+											>
+										</template>
+										<template v-else>This page is on your watchlist.</template>
+									</span>
 								</div>
 								<footer class="history-expanded-footer">
 									<button
@@ -717,6 +788,7 @@ const {
 	hasMoreRecommendations,
 	interleavedRevisions,
 	recommendationProgress,
+	getRecommendationSeedPages,
 } = useRecommendations({
 	wiki,
 	pageSearchQueries,

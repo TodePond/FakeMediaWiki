@@ -39,7 +39,7 @@ h1,
 h2 {
 	font-family: var(--font-family-heading-main);
 	color: var(--color-emphasized);
-	/* line-height: var(--line-height-medium) !important; */
+	line-height: var(--line-height-large);
 	font-weight: var(--font-weight-bold);
 }
 

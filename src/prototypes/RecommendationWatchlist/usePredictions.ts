@@ -124,30 +124,34 @@ export function usePredictions(wiki: FakeWiki) {
 
 		if (damagingProb > 0.9 || goodfaithProb > 0.9) {
 			if (damagingProb > 0.9 && goodfaithProb > 0.9) {
-				return "It's likely that this edit is damaging and made in bad faith"
+				return "Likely damaging and bad faith."
 			} else if (damagingProb > 0.9) {
-				return "It's likely that this edit is damaging"
+				return "Likely damaging."
 			}
-			return "It's likely that this edit was made in bad faith"
+			return "Likely bad faith."
 		}
 
 		if (damagingProb > 0.3 || goodfaithProb > 0.3) {
 			if (damagingProb > 0.3 && goodfaithProb > 0.3) {
-				return "It's possible that this edit has a problem or made in bad faith"
+				return "Possibly a problematic edit or made in bad faith."
 			} else if (damagingProb > 0.3) {
-				return "It's possible that this edit has a problem"
+				return "Possibly has a problem."
 			}
-			return "It's possible that this edit was made in bad faith"
+			return "Possibly made in bad faith."
 		}
 
 		const notDamagingProb = damaging?.probability?.false ?? 0
 		const isGoodfaithProb = goodfaith?.probability?.true ?? 0
 
 		if (notDamagingProb > 0.9 && isGoodfaithProb > 0.9) {
-			return "It's likely that this edit is good and made in good faith"
+			return "Likely a edit made in good faith."
+		} else if (notDamagingProb > 0.9) {
+			return "Likely an undamaging edit."
+		} else if (isGoodfaithProb > 0.9) {
+			return "Likely made in good faith."
 		}
 
-		return "It's possible that this edit is okay"
+		return "Possibly okay."
 	}
 
 	return {
