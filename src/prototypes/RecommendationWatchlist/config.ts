@@ -16,14 +16,13 @@ export const RECOMMENDATION_HISTORY_CONCURRENCY = 2
 export const RECOMMENDATION_PROCESS_CONCURRENCY = 3
 
 export const defaultPageSearchQueries = [
-	"Wikipedia",
+	"Little Mix",
 	"Wet Leg",
+	"Wolf Alice",
 	"Jade Thirlwall",
-	"Jools Holland",
-	"Rizzle Kicks",
-	"Water",
 	"Confidence Man (band)",
-	"Algorave",
+	"PinkPantheress",
+	"Rizzle Kicks",
 ]
 
 export const defaultUserSearchQueries = ["Samwalton9", "Todepond", "Humbugtheman"]

@@ -338,3 +338,9 @@ export interface FWMultiPageListBuildingEntry {
 	positionScore: number
 	pageTitles: string[]
 }
+
+/** Result from getMultiPageListBuilding: aggregated entries and number of seed pages completed. */
+export interface FWMultiPageListBuildingResult {
+	entries: FWMultiPageListBuildingEntry[]
+	completedCount: number
+}

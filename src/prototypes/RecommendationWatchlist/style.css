@@ -1,5 +1,67 @@
 /* Watchlist presented in history-box style: one box per date with rows */
 
+.recommendation-watchlist-header {
+	width: 100%;
+	max-width: 800px;
+	margin: 0 10px;
+	padding: 0 2.7rem 0rem;
+	box-sizing: border-box;
+}
+
+.recommendation-watchlist-form {
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	gap: 0.5rem 1rem;
+	align-items: flex-start;
+	width: 100%;
+}
+
+.recommendation-watchlist-form .cdx-label {
+	margin: 0;
+}
+
+.recommendation-watchlist-input {
+	min-width: 200px;
+	flex: 1;
+}
+
+.reload-recommendations-button {
+	margin-bottom: 0.5rem;
+	width: max-content;
+	align-self: flex-start;
+}
+
+.recommendation-progress {
+	margin: 0rem 0 1rem;
+	padding: 0rem 0;
+	font-size: 0.875rem;
+	color: var(--color-subtle, #54595d);
+}
+
+.recommendation-progress-text {
+	display: block;
+	margin-bottom: 0.25rem;
+}
+
+.recommendation-progress-text-second {
+	margin-top: 0.5rem;
+}
+
+.recommendation-progress-bar {
+	height: 4px;
+	background: var(--background-color-subtle, #eaecf0);
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+.recommendation-progress-bar-fill {
+	height: 100%;
+	background: var(--color-progressive, #36c);
+	border-radius: 2px;
+	transition: width 0.15s ease-out;
+}
+
 .watchlist-loading {
 	padding: 1rem;
 	display: flex;
@@ -82,8 +144,16 @@
 
 .prediction-icon {
 	flex-shrink: 0;
-	margin-right: 0.5rem;
-	vertical-align: middle;
+	margin-right: 0.4rem;
+	/* vertical-align: middle; */
+	/* height: 10px; */
+}
+
+.source-icon {
+	/* position: absolute; */
+	/* float: right; */
+	/* left: -1.5rem; */
+	/* top: 0.5rem; */
 }
 
 .recommendation-bulb-icon {

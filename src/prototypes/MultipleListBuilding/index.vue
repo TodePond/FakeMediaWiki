@@ -131,7 +131,7 @@ const PROTOTYPE_NAME = "MultipleListBuilding"
 const QUERY_STORAGE_KEY = "multipleListBuildingQuery"
 const WEIGHTS_STORAGE_KEY = "multipleListBuildingWeights"
 const DEFAULT_QUERY =
-	"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks"
+	"Little Mix, Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), PinkPantheress, Rizzle Kicks"
 
 const DEFAULT_WEIGHT_LISTS = 1
 const DEFAULT_WEIGHT_POSITION = 1
@@ -233,14 +233,15 @@ async function buildList(): Promise<void> {
 		loadedCount.value = 0
 		aggregated.value = []
 
-		for await (const { entries, completedCount } of wiki.getMultiPageListBuilding(
-			lang.value,
-			pageTitles,
-			{ k: 10, concurrency: 2 }
-		)) {
-			aggregated.value = entries
-			loadedCount.value = completedCount
-		}
+		const result = await wiki.getMultiPageListBuilding(lang.value, pageTitles, {
+			k: 10,
+			onLoad: ({ entries, completedCount }) => {
+				aggregated.value = entries
+				loadedCount.value = completedCount
+			},
+		})
+		aggregated.value = result.entries
+		loadedCount.value = result.completedCount
 
 		const titles = [
 			...new Set(

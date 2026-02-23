@@ -1,9 +1,99 @@
 <template>
 	<main class="recommendation-watchlist">
+		<header class="recommendation-watchlist-header">
+			<form class="recommendation-watchlist-form" @submit.prevent="search">
+				<CdxLabel for="page-queries-input">Page queries (comma-separated)</CdxLabel>
+				<CdxTextInput
+					id="page-queries-input"
+					v-model="pageQueriesInput"
+					input-type="text"
+					class="recommendation-watchlist-input"
+					@input="syncPageQueriesFromInput"
+				/>
+				<CdxButton type="submit" :disabled="isLoading"> Refresh feed </CdxButton>
+			</form>
+		</header>
 		<div class="watchlist-container">
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
+
+			<div class="recommendation-progress" aria-live="polite">
+				<span class="recommendation-progress-text">
+					{{
+						recommendationProgress.loadedFromCache
+							? `${recommendationProgress.found} seed pages (cached)`
+							: `List building: ${recommendationProgress.listBuildingCompleted}/${recommendationProgress.listBuildingTotal} seed pages`
+					}}
+				</span>
+				<div
+					v-if="recommendationProgress.listBuildingTotal > 0"
+					class="recommendation-progress-bar"
+					role="progressbar"
+					:aria-valuenow="recommendationProgress.listBuildingCompleted"
+					:aria-valuemin="0"
+					:aria-valuemax="recommendationProgress.listBuildingTotal"
+				>
+					<div
+						class="recommendation-progress-bar-fill"
+						:style="{
+							width: `${(recommendationProgress.listBuildingCompleted / recommendationProgress.listBuildingTotal) * 100}%`,
+						}"
+					/>
+				</div>
+				<span class="recommendation-progress-text recommendation-progress-text-second">
+					Recommendations: {{ recommendationProgress.found }}
+					{{ recommendationProgress.recommendationsTruncated ? "found" : "candidates" }},
+					{{ recommendationProgress.historiesLoaded }}/{{
+						recommendationProgress.historiesTotal
+					}}
+					histories loaded
+				</span>
+				<div
+					v-if="recommendationProgress.historiesTotal > 0"
+					class="recommendation-progress-bar"
+					role="progressbar"
+					:aria-valuenow="recommendationProgress.historiesLoaded"
+					:aria-valuemin="0"
+					:aria-valuemax="recommendationProgress.historiesTotal"
+				>
+					<div
+						class="recommendation-progress-bar-fill"
+						:style="{
+							width: `${(recommendationProgress.historiesLoaded / recommendationProgress.historiesTotal) * 100}%`,
+						}"
+					/>
+				</div>
+				<span class="recommendation-progress-text recommendation-progress-text-second">
+					Processing: {{ recommendationProgress.processingLoaded }}/{{
+						recommendationProgress.processingTotal
+					}}
+					revisions
+				</span>
+				<div
+					v-if="recommendationProgress.processingTotal > 0"
+					class="recommendation-progress-bar"
+					role="progressbar"
+					:aria-valuenow="recommendationProgress.processingLoaded"
+					:aria-valuemin="0"
+					:aria-valuemax="recommendationProgress.processingTotal"
+				>
+					<div
+						class="recommendation-progress-bar-fill"
+						:style="{
+							width: `${(recommendationProgress.processingLoaded / recommendationProgress.processingTotal) * 100}%`,
+						}"
+					/>
+				</div>
+			</div>
+			<CdxButton
+				type="button"
+				class="reload-recommendations-button"
+				:disabled="isLoading"
+				@click="onReloadRecommendations"
+			>
+				Refresh recommendations
+			</CdxButton>
 			<div v-if="isLoading" class="watchlist-loading">
 				<CdxProgressBar inline />
 			</div>
@@ -16,7 +106,10 @@
 						:class="[
 							'history-item',
 							{ 'history-item-expanded': expandedItemIds.has(change.id) },
-							{ 'history-item-recommendation': (change as FeedRevision).isRecommendation },
+							{
+								'history-item-recommendation': (change as FeedRevision)
+									.isRecommendation,
+							},
 						]"
 						:style="{
 							zIndex: String(getItemZIndex(dateGroup.dateKey, changeIndex)),
@@ -25,12 +118,6 @@
 					>
 						<template v-if="!expandedItemIds.has(change.id)">
 							<div class="history-row">
-								<CdxIcon
-									v-if="(change as FeedRevision).isRecommendation"
-									:icon="cdxIconLightbulb"
-									class="prediction-icon recommendation-bulb-icon"
-									size="small"
-								/>
 								<CdxIcon
 									v-if="getPredictionIcon(change.id).icon"
 									:icon="getPredictionIcon(change.id).icon!"
@@ -41,6 +128,18 @@
 											'prediction-icon-loading': getPredictionIcon(change.id)
 												.isLoading,
 										},
+									]"
+									size="small"
+								/><CdxIcon
+									:icon="
+										(change as FeedRevision).isRecommendation
+											? cdxIconLightbulb
+											: cdxIconStar
+									"
+									:class="[
+										(change as FeedRevision).isRecommendation
+											? 'prediction-icon source-icon recommendation-bulb-icon'
+											: 'prediction-icon source-icon recommendation-star-icon',
 									]"
 									size="small"
 								/>
@@ -507,8 +606,11 @@
 					</div>
 				</div>
 			</template>
-			<div v-if="!isLoading && hasMore" class="load-more-container">
-				<CdxButton :disabled="isLoadingMore" @click="loadMore">
+			<div
+				v-if="!isLoading && (hasMore || hasMoreRecommendations)"
+				class="load-more-container"
+			>
+				<CdxButton :disabled="isLoadingMore" @click="onLoadMore">
 					{{ isLoadingMore ? "Loading..." : "Load more" }}
 				</CdxButton>
 			</div>
@@ -528,8 +630,13 @@
 </template>
 
 <script setup lang="ts">
-import { CdxButton, CdxIcon, CdxProgressBar } from "@wikimedia/codex"
-import { cdxIconArrowNext, cdxIconArrowPrevious, cdxIconLightbulb } from "@wikimedia/codex-icons"
+import { CdxButton, CdxIcon, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
+import {
+	cdxIconArrowNext,
+	cdxIconArrowPrevious,
+	cdxIconLightbulb,
+	cdxIconStar,
+} from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
@@ -539,16 +646,12 @@ import {
 	defaultUserSearchQueries,
 	HEART_RISE_DURATION_MS,
 	PROTOTYPE_NAME,
-	RECOMMENDATION_HISTORY_CONCURRENCY,
-	RECOMMENDATION_INTERVAL,
-	RECOMMENDATION_LANG,
-	RECOMMENDATION_MAX_PAGES,
-	RECOMMENDATION_PROCESS_CONCURRENCY,
 } from "./config"
 import { loadQueries } from "./queries"
 import type { HistoryRevisionWithHtml, RisingHeart } from "./types"
 import { useFeed } from "./useFeed"
 import { usePredictions } from "./usePredictions"
+import { useRecommendations, type FeedRevision } from "./useRecommendations"
 import { useUser } from "./useUser"
 import { getRevisionItemZIndex } from "./zIndex"
 
@@ -558,6 +661,15 @@ const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries2")
 const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries2")
 const pageSearchQueries = ref<string[]>(loadQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadQueries(userStorageKey, defaultUserSearchQueries))
+/** Comma-separated string for the page queries input; kept in sync with pageSearchQueries. */
+const pageQueriesInput = ref(pageSearchQueries.value.join(", "))
+
+function syncPageQueriesFromInput(): void {
+	pageSearchQueries.value = pageQueriesInput.value
+		.split(",")
+		.map(s => s.trim())
+		.filter(Boolean)
+}
 
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
@@ -589,16 +701,6 @@ const thankedRevisionIds = ref<Set<number>>(new Set())
 const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
 
-/** Revision with optional recommendation flag (recent change from a recommended page). */
-type FeedRevision = FWRevision & {
-	isRecommendation?: true
-	/** If set, use for date grouping so recs appear in the same date section as the main feed they're interleaved with. */
-	groupByTimestamp?: string
-}
-
-/** Revisions from recommended pages (from getMultiPageListBuilding), to be interleaved every N entries. */
-const recommendationRevisions = ref<FeedRevision[]>([])
-
 const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
 const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } = useFeed(
 	{
@@ -608,6 +710,41 @@ const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, l
 		onUserCategory: cacheUserCategory,
 	}
 )
+const {
+	loadRecommendations,
+	loadRecommendationsFromTitles,
+	loadMoreRecommendations,
+	hasMoreRecommendations,
+	interleavedRevisions,
+	recommendationProgress,
+} = useRecommendations({
+	wiki,
+	pageSearchQueries,
+	allRevisionsData,
+	cacheUserCategory,
+})
+
+const recommendationsCacheKey = wiki.getStorageKey(PROTOTYPE_NAME, "recommendationsCache")
+
+function getRecommendationsCache(): string[] | null {
+	try {
+		const raw = localStorage.getItem(recommendationsCacheKey)
+		if (!raw) return null
+		const parsed = JSON.parse(raw) as string[]
+		if (Array.isArray(parsed) && parsed.every(s => typeof s === "string")) return parsed
+	} catch {
+		// ignore
+	}
+	return null
+}
+
+function setRecommendationsCache(titles: string[]): void {
+	localStorage.setItem(recommendationsCacheKey, JSON.stringify(titles))
+}
+
+function clearRecommendationsCache(): void {
+	localStorage.removeItem(recommendationsCacheKey)
+}
 
 /** Which revision ids have the talk page expanded */
 const expandedTalkIds = ref<Set<number>>(new Set())
@@ -618,8 +755,28 @@ const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
 const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
 
-onMounted(() => {
-	search()
+async function onReloadRecommendations(): Promise<void> {
+	clearRecommendationsCache()
+	wiki.clearListBuildingCache()
+	const titles = await loadRecommendations()
+	if (titles.length > 0) setRecommendationsCache(titles)
+}
+
+async function onLoadMore(): Promise<void> {
+	await loadMore()
+	await loadMoreRecommendations()
+}
+
+onMounted(async () => {
+	await loadFeed(undefined, false)
+	const cached = getRecommendationsCache()
+	if (cached && cached.length > 0) {
+		await loadRecommendationsFromTitles(cached)
+	} else {
+		const titles = await loadRecommendations()
+		if (titles.length > 0) setRecommendationsCache(titles)
+	}
+	saveSearchQueries()
 	setupKeyboardNavigation()
 })
 
@@ -680,124 +837,10 @@ function saveSearchQueries(): void {
 	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
 }
 
-/** Run async tasks with a concurrency limit; returns results in input order. */
-async function runWithConcurrency<T, R>(
-	items: T[],
-	concurrency: number,
-	fn: (item: T) => Promise<R>
-): Promise<R[]> {
-	const results: R[] = []
-	let index = 0
-	async function worker(): Promise<void> {
-		while (index < items.length) {
-			const i = index++
-			const item = items[i]
-			if (item === undefined) continue
-			results[i] = await fn(item)
-		}
-	}
-	await Promise.all(
-		Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
-	)
-	return results
-}
-
-async function loadRecommendations(): Promise<void> {
-	const pageNames = pageSearchQueries.value
-		.filter(name => name.trim() !== "")
-		.map(name => name.trim())
-	if (pageNames.length === 0) {
-		recommendationRevisions.value = []
-		return
-	}
-	let lastEntries: { item: { page_title: string; redlink?: boolean } }[] = []
-	for await (const { entries } of wiki.getMultiPageListBuilding(
-		RECOMMENDATION_LANG,
-		pageNames,
-		{ k: 10, concurrency: 2 }
-	)) {
-		lastEntries = entries
-	}
-	console.log("[RecommendationWatchlist] lastEntries count:", lastEntries.length, lastEntries.slice(0, 3))
-	const recommendedTitles = [
-		...new Set(
-			lastEntries
-				.filter(e => !e.item.redlink && e.item.page_title?.trim() && e.item.page_title !== "-")
-				.map(e => e.item.page_title.trim())
-		),
-	].slice(0, RECOMMENDATION_MAX_PAGES)
-	console.log("[RecommendationWatchlist] recommendedTitles:", recommendedTitles)
-	if (recommendedTitles.length === 0) {
-		recommendationRevisions.value = []
-		return
-	}
-	// Fetch page history with limited concurrency to avoid too many requests
-	const revsByPage = await runWithConcurrency(
-		recommendedTitles,
-		RECOMMENDATION_HISTORY_CONCURRENCY,
-		async pageName => {
-			const response = await wiki.getPageHistory(pageName, { limit: 2 })
-			return (response.revisions || []).map(rev => ({
-				...rev,
-				pageName,
-			}))
-		}
-	)
-	const flatRevs = revsByPage.flat()
-	console.log("[RecommendationWatchlist] flatRevs count:", flatRevs.length, revsByPage.map(r => r.length))
-	const processed = await runWithConcurrency(
-		flatRevs,
-		RECOMMENDATION_PROCESS_CONCURRENCY,
-		async revision => {
-			const pageName = (revision as { pageName: string }).pageName
-			const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-			const toolbar = wiki.parseToolbarEditSummary(_summary)
-			const summary = toolbar
-				? toolbar
-				: {
-						comment: _summary,
-						hashtags: [],
-						other: [],
-						suggestedBy: null,
-						useThisBot: null,
-						reportBugs: null,
-					}
-			const commentText = summary.comment
-				? summary.comment +
-					(summary.suggestedBy
-						? " Suggested by [[User:" +
-							summary.suggestedBy +
-							"|" +
-							summary.suggestedBy +
-							"]]"
-						: "")
-				: ""
-			summary.comment = commentText
-				? await wiki.transformWikitextToHtml(commentText, pageName)
-				: ""
-			summary.hashtags = Array.isArray(summary.hashtags)
-				? summary.hashtags.join(" ")
-				: summary.hashtags
-			const userCategory = await wiki.getUserCategory(revision.user.name)
-			cacheUserCategory(revision.user.name, userCategory)
-			return {
-				...revision,
-				comment: revision.comment || "",
-				summary,
-				pageName,
-				avatarUrl: null,
-				isRecommendation: true as const,
-			} as FeedRevision
-		}
-	)
-	processed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-	recommendationRevisions.value = processed
-	console.log("[RecommendationWatchlist] recs set:", processed.length, processed.slice(0, 2))
-}
-
 async function search(): Promise<void> {
 	await loadFeed(undefined, false)
-	await loadRecommendations()
+	const titles = await loadRecommendations()
+	if (titles.length > 0) setRecommendationsCache(titles)
 	saveSearchQueries()
 	// Clear expanded/loaded diffs and history when feed is refreshed
 	expandedDiffIds.value = new Set()
@@ -812,35 +855,6 @@ async function search(): Promise<void> {
 	// Keep thanked state - don't clear it on refresh
 	// Keep talk page text cached
 }
-
-/** Interleave recommendation revisions every RECOMMENDATION_INTERVAL main feed entries. Recs get groupByTimestamp from the last main rev so they appear in the same date section. */
-const interleavedRevisions = computed((): FeedRevision[] => {
-	const main = allRevisionsData.value
-	const recs = recommendationRevisions.value
-	if (recs.length === 0) return main
-	const out: FeedRevision[] = []
-	const interval = RECOMMENDATION_INTERVAL
-	let mainIndex = 0
-	let recIndex = 0
-	let lastMainTimestamp: string | undefined
-	while (mainIndex < main.length || recIndex < recs.length) {
-		for (let i = 0; i < interval && mainIndex < main.length; i++) {
-			const m = main[mainIndex] as FeedRevision
-			out.push(m)
-			lastMainTimestamp = m.timestamp
-			mainIndex++
-		}
-		if (recIndex < recs.length) {
-			const rec = recs[recIndex]
-			out.push({
-				...rec,
-				groupByTimestamp: lastMainTimestamp ?? rec.timestamp,
-			})
-			recIndex++
-		}
-	}
-	return out
-})
 
 /** Get all revisions in order (flattened from revisionsByDate) */
 const allRevisionsInOrder = computed(() => {

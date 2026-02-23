@@ -117,6 +117,17 @@ export const categories: CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "prototype",
+		id: "RecommendationWatchlist",
+		name: "Recommendation watchlist",
+		description: "Watchlist feed with recommended page changes inserted every now and then.",
+		category: "recommendations",
+		wrapper: "Special",
+		title: "Recommendation watchlist",
+		status: "wip",
+		featured: true,
+	},
+	{
+		type: "prototype",
 		id: "MultipleListBuilding",
 		name: "Multiple list building",
 		description:
@@ -172,28 +183,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		status: "new",
 		featured: true,
 	},
-	{
-		type: "prototype",
-		id: "RecommendationWatchlist",
-		name: "Recommendation watchlist",
-		description:
-			"Watchlist feed with recommended page changes inserted every now and then. It doesn't work very well yet. Lu will improve it on Monday, but feel free to have a look now! (It takes a little bit of time for the recommendations to load.)",
-		category: "recommendations",
-		wrapper: "Special",
-		title: "Recommendation watchlist",
-		status: "wip",
-		featured: true,
-	},
-	// {
-	// 	type: "prototype",
-	// 	id: "PageSharedLinks",
-	// 	name: "Shared page links",
-	// 	description: "How to get outgoing links from multiple pages.",
-	// 	category: "recommendations",
-	// 	wrapper: "Component",
-	// 	title: "Page shared links",
-	// 	status: "wip",
-	// },
 	{
 		type: "variants",
 		id: "StyledWatchlist",

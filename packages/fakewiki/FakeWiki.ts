@@ -14,6 +14,7 @@ import type {
 	FWLiftWingResponse,
 	FWListBuildingResponse,
 	FWMultiPageListBuildingEntry,
+	FWMultiPageListBuildingResult,
 	FWOnThisDayItem,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
@@ -1715,6 +1716,14 @@ export class FakeWiki {
 	}
 
 	/**
+	 * Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding
+	 * calls re-fetch from the API. Use when the user explicitly requests fresh recommendations.
+	 */
+	clearListBuildingCache(): void {
+		this.listBuildingCache.clear()
+	}
+
+	/**
 	 * Merge one page's list-building response into the aggregation map.
 	 * Key is source:itemKey(item); existing entries get listCount and positionScore accumulated.
 	 */
@@ -1737,8 +1746,11 @@ export class FakeWiki {
 			list.forEach((item, i) => {
 				const rank = i + 1
 				const positionContrib = 1 / rank
-				const itemKey = item.qid || item.page_title || ""
-				const key = `${source}:${itemKey}`
+				// Use a unique key per item so entries from different seeds don't collapse when itemKey is empty
+				const itemKey = item.qid || item.page_title?.trim() || ""
+				const key = itemKey
+					? `${source}:${itemKey}`
+					: `${source}:${seedPageTitle}-${i}`
 				const existing = map.get(key)
 				if (existing) {
 					existing.listCount += 1
@@ -1757,78 +1769,86 @@ export class FakeWiki {
 	}
 
 	/**
-	 * Get list-building results for multiple seed pages, yielding increasingly updated
-	 * aggregated entries after each page's response is merged.
+	 * Dedupe entries by recommended page (item.page_title), merge scores, filter invalid,
+	 * and sort by quality (positionScore + listCount descending).
+	 */
+	private dedupeAndSortListBuildingEntries(
+		entries: FWMultiPageListBuildingEntry[]
+	): FWMultiPageListBuildingEntry[] {
+		const byPage = new Map<string, FWMultiPageListBuildingEntry>()
+		for (const e of entries) {
+			const title = e.item.page_title?.trim()
+			if (!title || title === "-" || e.item.redlink) continue
+			const existing = byPage.get(title)
+			if (existing) {
+				existing.listCount += e.listCount
+				existing.positionScore += e.positionScore
+				for (const t of e.pageTitles) existing.pageTitles.push(t)
+			} else {
+				byPage.set(title, {
+					item: e.item,
+					listCount: e.listCount,
+					positionScore: e.positionScore,
+					pageTitles: [...e.pageTitles],
+				})
+			}
+		}
+		const result = [...byPage.values()]
+		result.sort((a, b) => {
+			const scoreA = a.positionScore + a.listCount
+			const scoreB = b.positionScore + b.listCount
+			return scoreB - scoreA
+		})
+		return result
+	}
+
+	/**
+	 * Get list-building results for multiple seed pages. Returns the final aggregated list
+	 * deduped by recommended page and sorted by quality (best first). Optionally pass onLoad
+	 * to receive progressively complete lists (each call is the full current list, same shape).
 	 * @param lang - Language code (e.g. "en")
 	 * @param pageTitles - Seed page titles (deduplicated; empty titles skipped)
-	 * @param options - Optional per-source result count (k, default 10) and concurrency (default 2)
-	 * @yields { entries, completedCount } after each page merge
+	 * @param options - Optional k and onLoad callback (always processes one seed page at a time)
+	 * @returns Final { entries, completedCount } with entries deduped and sorted
 	 */
-	async *getMultiPageListBuilding(
+	async getMultiPageListBuilding(
 		lang: string,
 		pageTitles: string[],
-		options?: { k?: number; concurrency?: number }
-	): AsyncGenerator<
-		{ entries: FWMultiPageListBuildingEntry[]; completedCount: number },
-		void,
-		undefined
-	> {
+		options?: {
+			k?: number
+			onLoad?: (data: FWMultiPageListBuildingResult) => void
+		}
+	): Promise<FWMultiPageListBuildingResult> {
 		const titles = [...new Set(pageTitles)].filter(t => t.trim().length > 0)
 		const k = Math.min(100, Math.max(1, options?.k ?? 10))
-		const concurrency = Math.max(1, options?.concurrency ?? 2)
+		const onLoad = options?.onLoad
 		const map = new Map<string, FWMultiPageListBuildingEntry>()
 		const state = { completedCount: 0 }
 
 		if (titles.length === 0) {
-			yield { entries: [], completedCount: 0 }
-			return
+			const empty = { entries: [], completedCount: 0 }
+			onLoad?.(empty)
+			return empty
 		}
 
-		let nextIndex = 0
-		const yieldQueue: { entries: FWMultiPageListBuildingEntry[]; completedCount: number }[] = []
-		let resolveNext: (() => void) | null = null
-		const waitForNextYield = (): Promise<{ entries: FWMultiPageListBuildingEntry[]; completedCount: number }> =>
-			new Promise(resolve => {
-				if (yieldQueue.length > 0) {
-					resolve(yieldQueue.shift()!)
-				} else {
-					resolveNext = () => {
-						const v = yieldQueue.shift()!
-						resolve(v)
-					}
-				}
-			})
-
-		const workerCount = Math.min(concurrency, titles.length)
-		const workers = Array.from({ length: workerCount }, () =>
-			(async (): Promise<void> => {
-				while (nextIndex < titles.length) {
-					const index = nextIndex++
-					const title = titles[index]
-					const data = await this.getListBuilding(lang, { pageTitle: title, k })
-					this.mergeListBuildingResponseIntoMap(map, title, data)
-					state.completedCount += 1
-					const payload = {
-						entries: [...map.values()],
-						completedCount: state.completedCount,
-					}
-					yieldQueue.push(payload)
-					if (resolveNext) {
-						const fn = resolveNext
-						resolveNext = null
-						fn()
-					}
-				}
-			}).bind(this)
-		)
-
-		const runAll = Promise.all(workers.map(w => w()))
-
-		for (let i = 0; i < titles.length; i++) {
-			yield await waitForNextYield()
+		// Process pages sequentially so every seed is merged into the combined map.
+		for (const title of titles) {
+			const data = await this.getListBuilding(lang, { pageTitle: title, k })
+			this.mergeListBuildingResponseIntoMap(map, title, data)
+			state.completedCount += 1
+			const deduped = this.dedupeAndSortListBuildingEntries([...map.values()])
+			const payload: FWMultiPageListBuildingResult = {
+				entries: deduped,
+				completedCount: state.completedCount,
+			}
+			onLoad?.(payload)
 		}
 
-		await runAll
+		const deduped = this.dedupeAndSortListBuildingEntries([...map.values()])
+		return {
+			entries: deduped,
+			completedCount: state.completedCount,
+		}
 	}
 
 	/**
