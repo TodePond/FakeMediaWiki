@@ -117,6 +117,18 @@ export const categories: CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "prototype",
+		id: "RelatedRecommendations",
+		name: "Related recommendation feed",
+		description:
+			"Feed with recommendations based on related changes. Currently not working correctly - fixing it tomorrow :)",
+		category: "recommendations",
+		wrapper: "Fullscreen",
+		title: "Related recommendations",
+		status: "wip",
+		featured: true,
+	},
+	{
+		type: "prototype",
 		id: "RelatedChangesMulti",
 		name: "Multi-page related changes",
 		description: "Combine related changes from multiple pages.",
@@ -124,13 +136,13 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		wrapper: "Fullscreen",
 		title: "Multi-page related changes",
 		featured: true,
-		status: "wip",
+		status: "new",
 	},
 	{
 		type: "prototype",
 		id: "RecommendationWatchlist",
-		name: "Recommendation watchlist",
-		description: "Watchlist feed with recommended page changes inserted every now and then.",
+		name: "Link recommendation feed",
+		description: "Feed with recommended page changes inserted every now and then.",
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Recommendation watchlist",

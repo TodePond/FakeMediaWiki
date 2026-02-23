@@ -1,5 +1,5 @@
 import type { FakeWiki } from "fakewiki"
-import type { FWRevisionWithLinkType } from "fakewiki/types"
+import type { FWTopRelatedChange } from "fakewiki/types"
 import type { Ref } from "vue"
 import { ref } from "vue"
 
@@ -7,40 +7,17 @@ import { ref } from "vue"
 const LIMIT = 50
 const DAYS = 30
 
-const BIDIRECTIONAL_SCORE = 4
-const OUTGOING_SCORE = 2
-const BACKLINK_SCORE = 1
-
-/** Counts of how many selected pages' feeds included this item per link type */
-export type FeedCountByLinkType = {
-	bidirectional: number
-	outgoing: number
-	backlink: number
-}
-
-/** Revision with feed counts per link type (bidirectional, outgoing, backlink) and score */
-export type RelatedChangeRevisionMulti = FWRevisionWithLinkType & {
+/** Revision with feed counts per link type and score (from getTopRelatedChanges or single-page enrichment). */
+export type RelatedChangeRevisionMulti = FWTopRelatedChange & {
 	feedCount: number
-	feedCountBidirectional: number
-	feedCountOutgoing: number
-	feedCountBacklink: number
-	/** Score: bidirectional×3 + outgoing×2 + backlink×1 */
-	score: number
-	sourcePageNames?: string[]
-}
-
-function computeScore(bidirectional: number, outgoing: number, backlink: number): number {
-	return (
-		bidirectional * BIDIRECTIONAL_SCORE + outgoing * OUTGOING_SCORE + backlink * BACKLINK_SCORE
-	)
-}
-
-function revisionKey(r: {
-	pageName?: string | null
-	timestamp: string
-	user: { name: string }
-}): string {
-	return `${(r.pageName ?? "").toLowerCase()}\t${r.timestamp}\t${r.user.name}`
+	summary: {
+		comment: string
+		hashtags: string[]
+		other: string[]
+		suggestedBy: string | null
+		useThisBot: string | null
+		reportBugs: string | null
+	}
 }
 
 interface UseRelatedPagesFeedMultiArgs {
@@ -88,119 +65,22 @@ export function useRelatedPagesFeedMulti({
 			const d = new Date()
 			d.setDate(d.getDate() - DAYS)
 			const from = d.toISOString()
-			const options = {
-				showOutgoing: true,
-				showIncoming: true,
+			// Request full list (100%); UI applies top-N% filter client-side so slider doesn't refetch
+			const topChanges = await wiki.getTopRelatedChanges(pageNames, {
+				percentage: 100,
+				scoreMultipliers: { bidirectional: 3, outgoing: 2, backlink: 1 },
 				limit: LIMIT,
 				days: DAYS,
 				from,
-			}
-
-			if (pageNames.length === 1) {
-				const revisions = await wiki.getRelatedChanges(pageNames[0], options)
-				const enriched = await Promise.all(
-					revisions.map(async rev => {
-						const userCategory = await wiki.getUserCategory(rev.user.name)
-						onUserCategory(rev.user.name, userCategory)
-						const comment = rev.comment ?? ""
-						const t = rev.linkType ?? "to"
-						const feedCountBidirectional = t === "both" ? 1 : 0
-						const feedCountOutgoing = t === "to" ? 1 : 0
-						const feedCountBacklink = t === "from" ? 1 : 0
-						return {
-							...rev,
-							comment,
-							summary: {
-								comment,
-								hashtags: [],
-								other: [],
-								suggestedBy: null,
-								useThisBot: null,
-								reportBugs: null,
-							},
-							feedCount: 1,
-							feedCountBidirectional,
-							feedCountOutgoing,
-							feedCountBacklink,
-							score: computeScore(
-								feedCountBidirectional,
-								feedCountOutgoing,
-								feedCountBacklink
-							),
-						} as RelatedChangeRevisionMulti
-					})
-				)
-				allRevisionsData.value = enriched
-				return
-			}
-
-			// Multiple pages: fetch all in parallel, then merge by revision key; count by link type
-			const results = await Promise.all(
-				pageNames.map(name => wiki.getRelatedChanges(name, options))
-			)
-			const byKey = new Map<
-				string,
-				{
-					rev: FWRevisionWithLinkType
-					sourcePageNames: Set<string>
-					countBidirectional: number
-					countOutgoing: number
-					countBacklink: number
-				}
-			>()
-			for (let i = 0; i < pageNames.length; i++) {
-				const sourcePage = pageNames[i]
-				const revisions = results[i] ?? []
-				for (const r of revisions) {
-					const key = revisionKey(r)
-					const t = r.linkType ?? "to"
-					const existing = byKey.get(key)
-					if (existing) {
-						existing.sourcePageNames.add(sourcePage)
-						if (t === "both") existing.countBidirectional += 1
-						else if (t === "to") existing.countOutgoing += 1
-						else existing.countBacklink += 1
-					} else {
-						byKey.set(key, {
-							rev: r,
-							sourcePageNames: new Set([sourcePage]),
-							countBidirectional: t === "both" ? 1 : 0,
-							countOutgoing: t === "to" ? 1 : 0,
-							countBacklink: t === "from" ? 1 : 0,
-						})
-					}
-				}
-			}
-
-			const merged = [...byKey.values()].map(
-				({ rev, sourcePageNames, countBidirectional, countOutgoing, countBacklink }) => ({
-					...rev,
-					feedCount: sourcePageNames.size,
-					feedCountBidirectional: countBidirectional,
-					feedCountOutgoing: countOutgoing,
-					feedCountBacklink: countBacklink,
-					score: computeScore(countBidirectional, countOutgoing, countBacklink),
-					sourcePageNames: [...sourcePageNames],
-				})
-			)
-			merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
+			})
 			const enriched = await Promise.all(
-				merged.map(async item => {
-					const {
-						feedCount,
-						feedCountBidirectional,
-						feedCountOutgoing,
-						feedCountBacklink,
-						score,
-						sourcePageNames,
-						...rev
-					} = item
-					const userCategory = await wiki.getUserCategory(rev.user.name)
-					onUserCategory(rev.user.name, userCategory)
-					const comment = rev.comment ?? ""
+				topChanges.map(async r => {
+					const userCategory = await wiki.getUserCategory(r.user.name)
+					onUserCategory(r.user.name, userCategory)
+					const comment = r.comment ?? ""
+					const sourcePageNames = r.sourcePageNames ?? []
 					return {
-						...rev,
+						...r,
 						comment,
 						summary: {
 							comment,
@@ -210,12 +90,7 @@ export function useRelatedPagesFeedMulti({
 							useThisBot: null,
 							reportBugs: null,
 						},
-						feedCount,
-						feedCountBidirectional,
-						feedCountOutgoing,
-						feedCountBacklink,
-						score,
-						sourcePageNames,
+						feedCount: sourcePageNames.length,
 					} as RelatedChangeRevisionMulti
 				})
 			)

@@ -1,39 +1,20 @@
 <template>
-	<main class="related-changes">
-		<form class="page-input-form" @submit.prevent="search">
-			<h1>Multi-page related changes</h1>
-			<CdxLabel input-id="page-name">Page names</CdxLabel>
-			<div class="page-input-row">
+	<main class="recommendation-watchlist">
+		<header class="recommendation-watchlist-header">
+			<h1 class="recommendation-watchlist-title">Related recommendations</h1>
+			<form class="recommendation-watchlist-form" @submit.prevent="search">
+				<CdxLabel for="page-queries-input">Page queries (comma-separated)</CdxLabel>
 				<CdxTextInput
-					id="page-name"
-					v-model="pageName"
-					autocomplete="off"
-					input-type="search"
-					placeholder="e.g. Wikipedia, Wikidata"
+					id="page-queries-input"
+					v-model="pageQueriesInput"
+					input-type="text"
+					class="recommendation-watchlist-input"
+					@input="syncPageQueriesFromInput"
 				/>
-				<CdxButton type="submit">Load related changes</CdxButton>
-			</div>
-			<div
-				v-if="allRevisionsData.length > 0 && !isMultiPage"
-				class="link-type-filters"
-				role="group"
-				aria-label="Filter by link type"
-			>
-				<label class="filter-checkbox">
-					<input v-model="showOutgoing" type="checkbox" />
-					<CdxIcon :icon="cdxIconArrowUp" size="x-small" class="filter-icon" />
-					<span>Outgoing</span>
-				</label>
-				<label class="filter-checkbox">
-					<input v-model="showIncoming" type="checkbox" />
-					<CdxIcon :icon="cdxIconArrowDown" size="x-small" class="filter-icon" />
-					<span>Incoming</span>
-				</label>
-				<label class="filter-checkbox">
-					<input v-model="showBidirectional" type="checkbox" />
-					<CdxIcon :icon="cdxIconLink" size="x-small" class="filter-icon" />
-					<span>Bidirectional</span>
-				</label>
+				<CdxButton type="submit" :disabled="isLoading"> Refresh feed </CdxButton>
+			</form>
+			<div v-if="errors.length > 0" class="error">
+				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
 			<div
 				v-if="allRevisionsData.length > 0 || isLoading"
@@ -42,7 +23,7 @@
 				aria-label="Filter by score"
 			>
 				<CdxLabel :input-id="scoreFilterId"
-					>Show top {{ filterKeepPercent }}% recommendations</CdxLabel
+					>Keep top {{ filterKeepPercent }}% by score</CdxLabel
 				>
 				<div class="score-filter-slider-line">
 					<input
@@ -53,25 +34,30 @@
 						max="100"
 						step="1"
 						class="score-filter-slider"
-						aria-valuemin="100"
+						aria-valuemin="0"
 						:aria-valuenow="filterKeepPercent"
-						aria-valuemax="0"
+						aria-valuemax="100"
 						@input="
 							filterKeepPercent =
 								100 - Number(($event.target as HTMLInputElement).value)
 						"
+						@change="onSliderChange"
 					/>
 					<span class="score-filter-value" aria-hidden="true"
 						>{{ filterKeepPercent }}%</span
 					>
 				</div>
 			</div>
-		</form>
-
+			<CdxButton
+				type="button"
+				class="reload-recommendations-button"
+				:disabled="isLoading"
+				@click="onReloadRecommendations"
+			>
+				Refresh feed
+			</CdxButton>
+		</header>
 		<div class="watchlist-container">
-			<div v-if="errors.length > 0" class="error">
-				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
-			</div>
 			<div v-if="isLoading" class="watchlist-loading">
 				<CdxProgressBar inline />
 			</div>
@@ -84,6 +70,10 @@
 						:class="[
 							'history-item',
 							{ 'history-item-expanded': expandedItemIds.has(change.id) },
+							{
+								'history-item-recommendation': (change as FeedRevision)
+									.isRecommendation,
+							},
 						]"
 						:style="{
 							zIndex: String(getItemZIndex(dateGroup.dateKey, changeIndex)),
@@ -92,59 +82,6 @@
 					>
 						<template v-if="!expandedItemIds.has(change.id)">
 							<div class="history-row">
-								<span
-									class="feed-count-badges"
-									:title="
-										getFeedCountTitle(change) +
-										'. Score: ' +
-										(change.score ?? 0) +
-										' (bidirectional×3, outgoing×2, backlink×1)'
-									"
-									:aria-label="getFeedCountTitle(change)"
-								>
-									<span
-										class="feed-count-badge feed-count-badge-score"
-										title="Score (bidirectional×3, outgoing×2, backlink×1)"
-										aria-label="Score"
-										>{{ change.score ?? 0 }}</span
-									>
-									<span
-										v-if="(change.feedCountBidirectional ?? 0) > 0"
-										class="feed-count-badge"
-										title="Bidirectional"
-									>
-										<CdxIcon
-											:icon="cdxIconLink"
-											size="x-small"
-											class="feed-count-icon"
-										/>
-										{{ change.feedCountBidirectional }}
-									</span>
-									<span
-										v-if="(change.feedCountOutgoing ?? 0) > 0"
-										class="feed-count-badge"
-										title="Outgoing"
-									>
-										<CdxIcon
-											:icon="cdxIconArrowUp"
-											size="x-small"
-											class="feed-count-icon"
-										/>
-										{{ change.feedCountOutgoing }}
-									</span>
-									<span
-										v-if="(change.feedCountBacklink ?? 0) > 0"
-										class="feed-count-badge"
-										title="Backlinks"
-									>
-										<CdxIcon
-											:icon="cdxIconArrowDown"
-											size="x-small"
-											class="feed-count-icon"
-										/>
-										{{ change.feedCountBacklink }}
-									</span>
-								</span>
 								<CdxIcon
 									v-if="getPredictionIcon(change.id).icon"
 									:icon="getPredictionIcon(change.id).icon!"
@@ -157,7 +94,18 @@
 										},
 									]"
 									size="small"
-									:title="getPredictionText(change.id) ?? undefined"
+								/><CdxIcon
+									:icon="
+										(change as FeedRevision).isRecommendation
+											? cdxIconLightbulb
+											: cdxIconStar
+									"
+									:class="[
+										(change as FeedRevision).isRecommendation
+											? 'prediction-icon source-icon recommendation-bulb-icon'
+											: 'prediction-icon source-icon recommendation-star-icon',
+									]"
+									size="small"
 								/>
 								<a
 									target="_blank"
@@ -176,12 +124,9 @@
 								>
 									{{ wiki.formatTime(change.timestamp) }}</span
 								><span
-									v-if="change.delta != null"
 									:class="[
 										'history-delta',
-										change.delta != null
-											? wiki.getDeltaClass(change.delta, false)
-											: 'history-delta-unknown',
+										wiki.getDeltaClass(change.delta ?? 0, false),
 										{
 											'history-delta-expanded': expandedDiffIds.has(
 												change.id
@@ -189,9 +134,7 @@
 										},
 									]"
 								>
-									{{
-										change.delta != null ? wiki.formatDelta(change.delta) : ""
-									}}</span
+									{{ wiki.formatDelta(change.delta) }}</span
 								>
 								<span class="user-name-container"
 									><a
@@ -251,9 +194,7 @@
 										type="button"
 										:class="[
 											'history-delta',
-											change.delta != null
-												? wiki.getDeltaClass(change.delta, false)
-												: 'history-delta-unknown',
+											wiki.getDeltaClass(change.delta ?? 0, false),
 											{
 												'history-delta-expanded': expandedDiffIds.has(
 													change.id
@@ -262,11 +203,7 @@
 										]"
 										@click.stop="toggleDiff(change)"
 									>
-										{{
-											change.delta != null
-												? wiki.formatDelta(change.delta)
-												: ""
-										}}
+										{{ wiki.formatDelta(change.delta) }}
 									</button>
 									<button
 										type="button"
@@ -314,58 +251,7 @@
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
-								<div class="feed-count-card" :title="getFeedCountTitle(change)">
-									<div class="feed-count-card-row">
-										<span
-											class="feed-count-card-item feed-count-card-item-score"
-											:title="`Score: ${change.score ?? 0} (bidirectional×3, outgoing×2, backlink×1)`"
-										>
-											<span class="feed-count-card-label">Score</span>
-											<span class="feed-count-card-value">{{
-												change.score ?? 0
-											}}</span>
-										</span>
-										<span class="feed-count-card-item">
-											<CdxIcon
-												:icon="cdxIconLink"
-												size="x-small"
-												class="feed-count-card-icon"
-											/>
-											<span class="feed-count-card-label"
-												>Bidirectional links</span
-											>
-											<span class="feed-count-card-value">{{
-												change.feedCountBidirectional ?? 0
-											}}</span>
-										</span>
-										<span class="feed-count-card-item">
-											<CdxIcon
-												:icon="cdxIconArrowUp"
-												size="x-small"
-												class="feed-count-card-icon"
-											/>
-											<span class="feed-count-card-label"
-												>Outgoing links</span
-											>
-											<span class="feed-count-card-value">{{
-												change.feedCountOutgoing ?? 0
-											}}</span>
-										</span>
-										<span class="feed-count-card-item">
-											<CdxIcon
-												:icon="cdxIconArrowDown"
-												size="x-small"
-												class="feed-count-card-icon"
-											/>
-											<span class="feed-count-card-label"
-												>Backlink links</span
-											>
-											<span class="feed-count-card-value">{{
-												change.feedCountBacklink ?? 0
-											}}</span>
-										</span>
-									</div>
-								</div>
+
 								<div v-if="getPredictionText(change.id)" class="prediction-card">
 									<CdxIcon
 										v-if="getPredictionIcon(change.id).icon"
@@ -384,6 +270,81 @@
 									<span class="prediction-card-text">{{
 										getPredictionText(change.id)
 									}}</span>
+								</div>
+								<div
+									class="item-source-info"
+									:class="{
+										'item-source-info-watchlist': !(change as FeedRevision)
+											.isRecommendation,
+										'item-source-info-recommendation': (change as FeedRevision)
+											.isRecommendation,
+									}"
+								>
+									<CdxIcon
+										:icon="
+											(change as FeedRevision).isRecommendation
+												? cdxIconLightbulb
+												: cdxIconStar
+										"
+										:class="
+											(change as FeedRevision).isRecommendation
+												? 'item-source-info-icon recommendation-bulb-icon'
+												: 'item-source-info-icon recommendation-star-icon'
+										"
+										size="small"
+									/>
+									<span class="item-source-info-text">
+										<template v-if="(change as FeedRevision).isRecommendation">
+											<template
+												v-if="
+													change.pageName &&
+													getRecommendationSeedPages(change.pageName)
+														.length
+												"
+											>
+												Recommended for you because you watch
+												<template
+													v-for="(name, i) in getRecommendationSeedPages(
+														change.pageName!
+													)"
+													:key="name"
+												>
+													<a
+														:href="wiki.getPageUrl(name)"
+														target="_blank"
+														rel="noopener"
+														class="item-source-info-link"
+														@click.stop
+														>{{ name }}</a
+													><span
+														v-if="
+															i <
+															getRecommendationSeedPages(
+																change.pageName!
+															).length -
+																2
+														"
+														>, </span
+													><span
+														v-else-if="
+															i ===
+															getRecommendationSeedPages(
+																change.pageName!
+															).length -
+																2
+														"
+													>
+														and </span
+													><span v-else>.</span>
+												</template>
+											</template>
+											<template v-else
+												>This change was recommended for you based on your
+												watchlist.</template
+											>
+										</template>
+										<template v-else>This page is on your watchlist.</template>
+									</span>
 								</div>
 								<footer class="history-expanded-footer">
 									<button
@@ -514,6 +475,13 @@
 									"
 								></textarea>
 								<div class="talk-editor-footer">
+									<!-- <CdxButton
+										weight="quiet"
+										action="destructive"
+										@click="collapseItem(change.id)"
+									>
+										Cancel
+									</CdxButton> -->
 									<CdxButton weight="primary" @click="handleAddTopic(change)">
 										Add topic
 									</CdxButton>
@@ -553,12 +521,12 @@
 										><span
 											:class="[
 												'history-delta',
-												deltaForRev(change, rev) != null
-													? wiki.getDeltaClass(
-															deltaForRev(change, rev)!,
-															false
-														)
-													: 'history-delta-unknown',
+												wiki.getDeltaClass(
+													(rev.id === change.id
+														? (change.delta ?? rev.delta)
+														: rev.delta) ?? 0,
+													false
+												),
 												{
 													'history-delta-expanded': expandedHistoryDiffIds
 														.get(change.id)
@@ -567,9 +535,11 @@
 											]"
 										>
 											{{
-												deltaForRev(change, rev) != null
-													? wiki.formatDelta(deltaForRev(change, rev))
-													: ""
+												wiki.formatDelta(
+													rev.id === change.id
+														? (change.delta ?? rev.delta)
+														: rev.delta
+												)
 											}}</span
 										><a
 											target="_blank"
@@ -670,6 +640,11 @@
 					</div>
 				</div>
 			</template>
+			<div v-if="!isLoading && hasMore" class="load-more-container">
+				<CdxButton :disabled="isLoadingMore" @click="onLoadMore">
+					{{ isLoadingMore ? "Loading..." : "Load more" }}
+				</CdxButton>
+			</div>
 		</div>
 
 		<div class="thank-hearts-overlay" aria-hidden="true">
@@ -688,84 +663,63 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import {
-	cdxIconArrowDown,
 	cdxIconArrowNext,
 	cdxIconArrowPrevious,
-	cdxIconArrowUp,
-	cdxIconLink,
+	cdxIconLightbulb,
+	cdxIconStar,
 } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
-import { isInteractiveClickTarget } from "../FlaggedWatchlist/clickTargets"
-import { HEART_RISE_DURATION_MS } from "../FlaggedWatchlist/config"
-import type { HistoryRevisionWithHtml, RisingHeart } from "../FlaggedWatchlist/types"
-import { usePredictions } from "../FlaggedWatchlist/usePredictions"
-import { useUser } from "../FlaggedWatchlist/useUser"
-import { getRevisionItemZIndex } from "../FlaggedWatchlist/zIndex"
-import type { RelatedChangeRevisionMulti } from "./useRelatedPagesFeedMulti"
-import { useRelatedPagesFeedMulti } from "./useRelatedPagesFeedMulti"
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
+import { isInteractiveClickTarget } from "../RecommendationWatchlist/clickTargets"
+import { loadQueries } from "../RecommendationWatchlist/queries"
+import type { HistoryRevisionWithHtml, RisingHeart } from "../RecommendationWatchlist/types"
+import { useFeed } from "../RecommendationWatchlist/useFeed"
+import { usePredictions } from "../RecommendationWatchlist/usePredictions"
+import { useUser } from "../RecommendationWatchlist/useUser"
+import { getRevisionItemZIndex } from "../RecommendationWatchlist/zIndex"
+import { DEFAULT_TOP_PERCENT, HEART_RISE_DURATION_MS, PROTOTYPE_NAME } from "./config"
+import { useRelatedRecommendations, type FeedRevision } from "./useRelatedRecommendations"
 
-const PROTOTYPE_NAME = "RelatedChangesMulti"
 const wiki = new FakeWiki()
-const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageName")
-const filterStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "linkTypeFilters")
-const pageName = ref(
-	localStorage.getItem(pageStorageKey) ||
-		"Little Mix, Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), Rizzle Kicks"
-)
 
-function loadFilterState(): { outgoing: boolean; incoming: boolean; bidirectional: boolean } {
-	try {
-		const s = localStorage.getItem(filterStorageKey)
-		if (s) {
-			const parsed = JSON.parse(s)
-			return {
-				outgoing: parsed.outgoing !== false,
-				incoming: parsed.incoming !== false,
-				bidirectional: parsed.bidirectional !== false,
-			}
-		}
-	} catch {
-		// ignore
-	}
-	return { outgoing: true, incoming: true, bidirectional: true }
+const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries2")
+const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries2")
+const defaultPageSearchQueries = ["Wikipedia", "Wikidata"]
+const defaultUserSearchQueries = [] as string[]
+const pageSearchQueries = ref<string[]>(loadQueries(pageStorageKey, defaultPageSearchQueries))
+const userSearchQueries = ref<string[]>(loadQueries(userStorageKey, defaultUserSearchQueries))
+const scoreFilterId = "related-recommendations-score-filter"
+const filterKeepPercent = ref(DEFAULT_TOP_PERCENT)
+/** Comma-separated string for the page queries input; kept in sync with pageSearchQueries. */
+const pageQueriesInput = ref(pageSearchQueries.value.join(", "))
+
+function syncPageQueriesFromInput(): void {
+	pageSearchQueries.value = pageQueriesInput.value
+		.split(",")
+		.map(s => s.trim())
+		.filter(Boolean)
 }
-
-function saveFilterState(): void {
-	localStorage.setItem(
-		filterStorageKey,
-		JSON.stringify({
-			outgoing: showOutgoing.value,
-			incoming: showIncoming.value,
-			bidirectional: showBidirectional.value,
-		})
-	)
-}
-
-const filterState = loadFilterState()
-const showOutgoing = ref(filterState.outgoing)
-const showIncoming = ref(filterState.incoming)
-const showBidirectional = ref(filterState.bidirectional)
-
-const scoreFilterId = "related-changes-multi-score-filter"
-/** Keep top N% by score (0–100). Default 3%. */
-const filterKeepPercent = ref(3)
 
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
+/** Loaded diff data keyed by revision id */
 const loadedDiffs = ref<Map<number, FWCompareResponse>>(new Map())
+/** Revision ids currently loading their diff */
 const loadingDiffIds = ref<Set<number>>(new Set())
 
-/** Which revision ids have inline history expanded */
+/** Which revision ids have inline history expanded (we use change.id as key) */
 const expandedHistoryIds = ref<Set<number>>(new Set())
+/** Per change (change.id): set of revision ids with inline diff expanded in that history */
 const expandedHistoryDiffIds = ref<Map<number, Set<number>>>(new Map())
+/** Loaded history data keyed by page name (revisions include commentHtml) */
 const loadedHistories = ref<
 	Map<
 		string,
 		Omit<FWPageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }
 	>
 >(new Map())
+/** Page names currently loading history */
 const loadingHistoryPageNames = ref<Set<string>>(new Set())
 
 /** Which revision ids have the feed item body expanded */
@@ -773,83 +727,88 @@ const expandedItemIds = ref<Set<number>>(new Set())
 
 /** Revision ids that have been "thanked" (mock) */
 const thankedRevisionIds = ref<Set<number>>(new Set())
+/** Rising heart particles: id, viewport position, and thank vs unthank */
 const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
 
 const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
-const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
-const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedPagesFeedMulti({
+const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } = useFeed(
+	{
+		wiki,
+		pageSearchQueries,
+		userSearchQueries,
+		onUserCategory: cacheUserCategory,
+	}
+)
+const {
+	loadRecommendations,
+	interleavedRevisions,
+	recommendationProgress,
+	getRecommendationSeedPages,
+} = useRelatedRecommendations({
 	wiki,
-	pageName,
-	onUserCategory: cacheUserCategory,
+	pageSearchQueries,
+	allRevisionsData,
+	filterKeepPercent,
+	cacheUserCategory,
 })
 
-const pageNamesList = computed(() => {
-	const raw = pageName.value.trim()
-	if (!raw) return []
-	return [
-		...new Set(
-			raw
-				.split(",")
-				.map(s => s.trim())
-				.filter(Boolean)
-		),
-	]
-})
-const isMultiPage = computed(() => pageNamesList.value.length > 1)
-
-function getFeedCountTitle(change: RelatedChangeRevisionMulti): string {
-	const both = change.feedCountBidirectional ?? 0
-	const out = change.feedCountOutgoing ?? 0
-	const back = change.feedCountBacklink ?? 0
-	const parts: string[] = []
-	if (both > 0) parts.push(`${both} bidirectional`)
-	if (out > 0) parts.push(`${out} outgoing`)
-	if (back > 0) parts.push(`${back} backlink`)
-	return parts.length ? parts.join("; ") : "No feeds"
-}
-
+/** Which revision ids have the talk page expanded */
 const expandedTalkIds = ref<Set<number>>(new Set())
+/** Talk page text content keyed by revision id */
 const talkPageText = ref<Map<number, string>>(new Map())
+/** Current editor mode: 'visual' or 'source' */
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
-function deltaForRev(
-	change: FWRevision,
-	rev: { id: number; delta?: number | null }
-): number | null {
-	const d =
-		rev.id === change.id
-			? (change.delta ?? (rev as FWRevision).delta)
-			: (rev as FWRevision).delta
-	return d != null ? d : null
+const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
+
+async function onReloadRecommendations(): Promise<void> {
+	await loadFeed(undefined, false)
+	await loadRecommendations()
 }
 
-watch([showOutgoing, showIncoming, showBidirectional], saveFilterState)
+/** Called when the "Keep top N%" slider is released; reload recommendations with new percentage. */
+function onSliderChange(): void {
+	loadRecommendations()
+}
 
-onMounted(() => {
-	if (pageName.value.trim()) {
-		search()
-	}
+async function onLoadMore(): Promise<void> {
+	await loadMore()
+}
+
+onMounted(async () => {
+	await loadFeed(undefined, false)
+	await loadRecommendations()
+	saveSearchQueries()
 	setupKeyboardNavigation()
 })
 
 function setupKeyboardNavigation(): void {
 	const handleKeyDown = (event: KeyboardEvent): void => {
+		// Don't handle if a form element is focused
 		const activeElement = document.activeElement
-		if (!activeElement) return
+		if (!activeElement) {
+			return
+		}
 		const isInputElement =
 			activeElement.tagName === "INPUT" ||
 			activeElement.tagName === "TEXTAREA" ||
 			activeElement.tagName === "SELECT"
 		const isContentEditable =
 			activeElement instanceof HTMLElement && activeElement.isContentEditable
-		if (isInputElement || isContentEditable) return
+		if (isInputElement || isContentEditable) {
+			return
+		}
 
 		const direction = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0
-		if (direction === 0) return
+		if (direction === 0) {
+			return
+		}
 
 		const expandedIds = Array.from(expandedItemIds.value)
-		if (expandedIds.length === 0) return
+		if (expandedIds.length === 0) {
+			return
+		}
 
 		const currentId = expandedIds[0]
 		const buttonType = direction < 0 ? "previous" : "next"
@@ -864,21 +823,28 @@ function setupKeyboardNavigation(): void {
 	}
 
 	window.addEventListener("keydown", handleKeyDown)
-	;(window as any).__relatedChangesKeyHandler = handleKeyDown
+	// Store the handler so we can remove it later
+	;(window as any).__flaggedWatchlistKeyHandler = handleKeyDown
 }
 
 onUnmounted(() => {
-	const handler = (window as any).__relatedChangesKeyHandler
+	const handler = (window as any).__flaggedWatchlistKeyHandler
 	if (handler) {
 		window.removeEventListener("keydown", handler)
-		delete (window as any).__relatedChangesKeyHandler
+		delete (window as any).__flaggedWatchlistKeyHandler
 	}
 })
 
+function saveSearchQueries(): void {
+	localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
+	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
+}
+
 async function search(): Promise<void> {
-	if (!pageName.value.trim()) return
-	localStorage.setItem(pageStorageKey, pageName.value)
-	await loadFeed()
+	await loadFeed(undefined, false)
+	await loadRecommendations()
+	saveSearchQueries()
+	// Clear expanded/loaded diffs and history when feed is refreshed
 	expandedDiffIds.value = new Set()
 	loadedDiffs.value = new Map()
 	loadingDiffIds.value = new Set()
@@ -888,36 +854,11 @@ async function search(): Promise<void> {
 	loadingHistoryPageNames.value = new Set()
 	expandedItemIds.value = new Set()
 	expandedTalkIds.value = new Set()
+	// Keep thanked state - don't clear it on refresh
+	// Keep talk page text cached
 }
 
-const filteredRevisions = computed(() => {
-	const revs = allRevisionsData.value
-	if (isMultiPage.value) return revs
-	const out = showOutgoing.value
-	const inc = showIncoming.value
-	const both = showBidirectional.value
-	if (out && inc && both) return revs
-	return revs.filter(r => {
-		const t = r.linkType
-		if (!t) return true
-		if (t === "to") return out
-		if (t === "from") return inc
-		return both
-	})
-})
-
-/** Keep only the top N% of items by score (client-side; no refetch when slider changes). */
-const allRevisions = computed(() => {
-	const revs = filteredRevisions.value
-	if (revs.length === 0) return revs
-	const keepFraction = filterKeepPercent.value / 100
-	const scores = revs.map(r => r.score ?? 0)
-	const sortedScores = [...scores].sort((a, b) => b - a)
-	const keepCount = Math.max(1, Math.ceil(revs.length * keepFraction))
-	const threshold = sortedScores[keepCount - 1] ?? 0
-	return revs.filter(r => (r.score ?? 0) >= threshold)
-})
-
+/** Get all revisions in order (flattened from revisionsByDate) */
 const allRevisionsInOrder = computed(() => {
 	const result: FWRevision[] = []
 	for (const group of revisionsByDate.value) {
@@ -926,21 +867,40 @@ const allRevisionsInOrder = computed(() => {
 	return result
 })
 
-const revisionsByDate = computed(
-	() =>
-		wiki.groupRevisionsByDate(allRevisions.value) as Array<{
-			dateKey: string
-			dateLabel: string
-			revisions: RelatedChangeRevisionMulti[]
-		}>
-)
+/** Group by date using groupByTimestamp for recs so they appear in the same date section as the main feed they're interleaved with. */
+const revisionsByDate = computed(() => {
+	const revisions = interleavedRevisions.value
+	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
+	revisions.forEach(revision => {
+		const ts = (revision as FeedRevision).groupByTimestamp ?? revision.timestamp
+		const key = wiki.toDateKey(ts)
+		const dateLabel = wiki.formatDate(ts, "long")
+		if (!grouped.has(key)) {
+			grouped.set(key, { dateLabel, revisions: [] })
+		}
+		grouped.get(key)!.revisions.push(revision)
+	})
+	return Array.from(grouped.entries())
+		.sort((a, b) => b[0].localeCompare(a[0]))
+		.map(([dateKey, data]) => ({
+			dateKey,
+			dateLabel: data.dateLabel,
+			revisions: data.revisions,
+		}))
+})
 
 function expandItem(change: FWRevision, event: MouseEvent): void {
+	// Don't expand if clicking on links or buttons
 	const target = event.target as HTMLElement
-	if (isInteractiveClickTarget(target)) return
+	if (isInteractiveClickTarget(target)) {
+		return
+	}
 	const id = change.id
+	// Add this item to the set of expanded items
 	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value).add(id)
+	// Automatically expand diff view
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.add(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
 	ensureDiffLoaded(change)
@@ -954,6 +914,7 @@ function collapseItem(id: number): void {
 }
 
 function handleItemClick(change: FWRevision, event: MouseEvent): void {
+	// Only expand if not already expanded
 	if (!expandedItemIds.value.has(change.id)) {
 		expandItem(change, event)
 	}
@@ -967,7 +928,8 @@ function toggleDiff(change: FWRevision): void {
 		expandedDiffIds.value.delete(id)
 		return
 	}
-	expandedDiffIds.value = new Set(expandedDiffIds.value).add(id)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.add(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
@@ -997,52 +959,60 @@ function handleHistoryItemClick(
 	pageName: string,
 	event: MouseEvent
 ): void {
+	// Don't toggle if clicking on links or buttons
 	const target = event.target as HTMLElement
-	if (isInteractiveClickTarget(target)) return
+	if (isInteractiveClickTarget(target)) {
+		return
+	}
+	// Toggle the diff for this history item
 	toggleHistoryDiff(changeId, rev, pageName)
 }
 
 function toggleHistory(change: FWRevision): void {
 	const id = change.id
-	const page = change.pageName
-	if (!page) return
+	const pageName = change.pageName
+	if (!pageName) return
 	const expanded = expandedHistoryIds.value.has(id)
 	if (expanded) {
 		expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 		expandedHistoryIds.value.delete(id)
 		return
 	}
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value).add(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.add(id)
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.delete(id)
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
 	expandedTalkIds.value.delete(id)
-	if (loadedHistories.value.has(page)) return
-	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value).add(page)
-	wiki.clearPageHistoryCache(page)
-	wiki.getPageHistory(page)
+	if (loadedHistories.value.has(pageName)) return
+	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
+	loadingHistoryPageNames.value.add(pageName)
+	// Clear cache so we get fresh data; cache may be stale or from getCombinedFeed pagination
+	wiki.clearPageHistoryCache(pageName)
+	wiki.getPageHistory(pageName)
 		.then(async response => {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => {
+					// Fetch user category for history revisions
 					const userCategory = await wiki.getUserCategory(rev.user.name)
 					cacheUserCategory(rev.user.name, userCategory)
 					return {
 						...rev,
-						commentHtml: await wiki.getEditSummaryHtml(rev.comment || "", page),
+						commentHtml: await wiki.getEditSummaryHtml(rev.comment || "", pageName),
 					}
 				})
 			)
-			loadedHistories.value = new Map(loadedHistories.value).set(page, {
+			loadedHistories.value = new Map(loadedHistories.value).set(pageName, {
 				...response,
 				revisions,
 			})
 			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
-			loadingHistoryPageNames.value.delete(page)
+			loadingHistoryPageNames.value.delete(pageName)
 		})
 		.catch(e => {
 			console.error("Failed to load history", e)
 			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
-			loadingHistoryPageNames.value.delete(page)
+			loadingHistoryPageNames.value.delete(pageName)
 		})
 }
 
@@ -1079,11 +1049,13 @@ function toggleTalk(change: FWRevision): void {
 		expandedTalkIds.value.delete(id)
 		return
 	}
-	expandedTalkIds.value = new Set(expandedTalkIds.value).add(id)
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.add(id)
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.delete(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
+	// Initialize text content and editor mode if not already set
 	if (!talkPageText.value.has(id)) {
 		talkPageText.value = new Map(talkPageText.value).set(id, "")
 	}
@@ -1097,18 +1069,26 @@ function updateTalkText(id: number, text: string): void {
 }
 
 function handleAddTopic(change: FWRevision): void {
+	// TODO: Implement add topic functionality
 	const text = talkPageText.value.get(change.id) || ""
 	console.log("Add topic:", text)
+	// For now, just close the talk tab
+	// Keep the item expanded though
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
 	expandedTalkIds.value.delete(change.id)
 }
 
 function ensureDiffLoaded(change: Pick<FWRevision, "id" | "pageName">): void {
-	if (loadedDiffs.value.has(change.id)) return
-	const page = change.pageName
-	if (!page) return
-	loadingDiffIds.value = new Set(loadingDiffIds.value).add(change.id)
-	wiki.getRevisionDiff(page, change.id)
+	if (loadedDiffs.value.has(change.id)) {
+		return
+	}
+	const pageName = change.pageName
+	if (!pageName) {
+		return
+	}
+	loadingDiffIds.value = new Set(loadingDiffIds.value)
+	loadingDiffIds.value.add(change.id)
+	wiki.getRevisionDiff(pageName, change.id)
 		.then(response => {
 			loadedDiffs.value = new Map(loadedDiffs.value).set(change.id, response)
 			loadingDiffIds.value = new Set(loadingDiffIds.value)
@@ -1128,18 +1108,25 @@ function navigateToAdjacent(
 ): void {
 	const revisions = allRevisionsInOrder.value
 	const currentIndex = revisions.findIndex(r => r.id === currentId)
-	if (currentIndex < 0) return
+	if (currentIndex < 0) {
+		return
+	}
 
 	const nextIndex = currentIndex + direction
-	if (nextIndex < 0 || nextIndex >= revisions.length) return
+	if (nextIndex < 0 || nextIndex >= revisions.length) {
+		return
+	}
 
 	const targetRevision = revisions[nextIndex]
-	if (!targetRevision) return
+	if (!targetRevision) {
+		return
+	}
 
 	collapseItem(currentId)
 
 	expandedItemIds.value = new Set(expandedItemIds.value).add(targetRevision.id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value).add(targetRevision.id)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.add(targetRevision.id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(targetRevision.id)
 	ensureDiffLoaded(targetRevision)
@@ -1151,7 +1138,9 @@ function navigateToAdjacent(
 			const navButton = item.querySelector(
 				`[data-navigation-button="${buttonType}"]`
 			) as HTMLElement | null
-			if (!navButton) continue
+			if (!navButton) {
+				continue
+			}
 			const newButtonTopRelativeToViewport =
 				navButton.getBoundingClientRect().top + window.scrollY
 			const scrollDelta = newButtonTopRelativeToViewport - buttonTopRelativeToViewport
@@ -1161,6 +1150,7 @@ function navigateToAdjacent(
 	})
 }
 
+/** Navigate to previous item, maintaining scroll position */
 function navigateToPrevious(currentId: number, event: MouseEvent): void {
 	event.stopPropagation()
 	const button = event.currentTarget as HTMLElement
@@ -1168,6 +1158,7 @@ function navigateToPrevious(currentId: number, event: MouseEvent): void {
 	navigateToAdjacent(currentId, -1, buttonTopRelativeToViewport)
 }
 
+/** Navigate to next item, maintaining scroll position */
 function navigateToNext(currentId: number, event: MouseEvent): void {
 	event.stopPropagation()
 	const button = event.currentTarget as HTMLElement
@@ -1175,12 +1166,14 @@ function navigateToNext(currentId: number, event: MouseEvent): void {
 	navigateToAdjacent(currentId, 1, buttonTopRelativeToViewport)
 }
 
+/** Check if there is a previous item */
 function hasPrevious(currentId: number): boolean {
 	const revisions = allRevisionsInOrder.value
 	const currentIndex = revisions.findIndex(r => r.id === currentId)
 	return currentIndex > 0
 }
 
+/** Check if there is a next item */
 function hasNext(currentId: number): boolean {
 	const revisions = allRevisionsInOrder.value
 	const currentIndex = revisions.findIndex(r => r.id === currentId)
@@ -1188,10 +1181,10 @@ function hasNext(currentId: number): boolean {
 }
 </script>
 
-<style>
-@import "../RelatedChanges/global.css";
-</style>
-
 <style scoped>
 @import "./style.css";
+</style>
+
+<style>
+@import "./global.css";
 </style>

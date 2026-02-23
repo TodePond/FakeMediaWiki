@@ -30,6 +30,8 @@ import type {
 	FWRevision,
 	FWRevisionPredictions,
 	FWRevisionWithLinkType,
+	FWTopRelatedChange,
+	FWTopRelatedOptions,
 	FWToolbarComment,
 	FWUserCategory,
 	FWUserContrib,
@@ -86,6 +88,13 @@ export class FakeWiki {
 	 * Cache for list-building API results (key = lang:pageTitle:qid:k).
 	 */
 	private listBuildingCache = new Map<string, FWListBuildingResponse>()
+
+	/**
+	 * Cache for getTopRelatedChanges full merged list (before percentage filter).
+	 * Key: cache key from (sorted page names, limit, days, from, score multipliers).
+	 * Value: full merged FWTopRelatedChange[] (sorted by timestamp desc).
+	 */
+	private topRelatedChangesCache = new Map<string, FWTopRelatedChange[]>()
 
 	/**
 	 * Create a new FakeWiki instance
@@ -1481,6 +1490,162 @@ export class FakeWiki {
 			(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 		)
 		return merged
+	}
+
+	/**
+	 * Get related changes from multiple seed pages, merged and filtered to the top N% by score.
+	 * Score = feedCountBidirectional * multiplierBidir + feedCountOutgoing * multiplierOut + feedCountBacklink * multiplierBack.
+	 * Order is preserved (by timestamp desc); no extra sorting after filtering.
+	 */
+	async getTopRelatedChanges(
+		pageNames: string[],
+		options: FWTopRelatedOptions = {}
+	): Promise<FWTopRelatedChange[]> {
+		const {
+			percentage = 3,
+			scoreMultipliers = {},
+			limit = 50,
+			days = 7,
+			from,
+		} = options
+		const bidir = scoreMultipliers.bidirectional ?? 3
+		const out = scoreMultipliers.outgoing ?? 2
+		const back = scoreMultipliers.backlink ?? 1
+		const trimmed = pageNames.map(p => p.trim()).filter(Boolean)
+		const seeds = [...new Set(trimmed)].sort()
+		if (seeds.length === 0) return []
+
+		const cacheKey = JSON.stringify([
+			seeds,
+			limit,
+			days,
+			from ?? "",
+			bidir,
+			out,
+			back,
+		])
+		const cachedFull = this.topRelatedChangesCache.get(cacheKey)
+		if (cachedFull !== undefined) {
+			const keepFraction = Math.max(0, Math.min(1, percentage / 100))
+			const scores = cachedFull.map(r => r.score).sort((a, b) => b - a)
+			const keepCount = Math.max(1, Math.ceil(scores.length * keepFraction))
+			const threshold = scores[keepCount - 1] ?? 0
+			return cachedFull.filter(r => r.score >= threshold)
+		}
+
+		function score(
+			countBidirectional: number,
+			countOutgoing: number,
+			countBacklink: number
+		): number {
+			return countBidirectional * bidir + countOutgoing * out + countBacklink * back
+		}
+
+		const getRelatedOpts = { showOutgoing: true, showIncoming: true, limit, days, from }
+		const revKey = (r: { pageName?: string | null; timestamp: string; user: { name: string } }) =>
+			`${(r.pageName ?? "").toLowerCase()}\t${r.timestamp}\t${r.user.name}`
+
+		if (seeds.length === 1) {
+			const revisions = await this.getRelatedChanges(seeds[0]!, getRelatedOpts)
+			const withScore: FWTopRelatedChange[] = revisions.map(r => {
+				const t = r.linkType ?? "to"
+				const cb = t === "both" ? 1 : 0
+				const co = t === "to" ? 1 : 0
+				const cl = t === "from" ? 1 : 0
+				return {
+					...r,
+					feedCountBidirectional: cb,
+					feedCountOutgoing: co,
+					feedCountBacklink: cl,
+					score: score(cb, co, cl),
+					sourcePageNames: [seeds[0]!],
+				}
+			})
+			withScore.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+			this.topRelatedChangesCache.set(cacheKey, withScore)
+			const keepFraction = Math.max(0, Math.min(1, percentage / 100))
+			const scores = withScore.map(r => r.score).sort((a, b) => b - a)
+			const keepCount = Math.max(1, Math.ceil(scores.length * keepFraction))
+			const threshold = scores[keepCount - 1] ?? 0
+			return withScore.filter(r => r.score >= threshold)
+		}
+
+		const results = await Promise.all(
+			seeds.map(name => this.getRelatedChanges(name, getRelatedOpts))
+		)
+		const byKey = new Map<
+			string,
+			{
+				rev: FWRevisionWithLinkType
+				sourcePageNames: Set<string>
+				countBidirectional: number
+				countOutgoing: number
+				countBacklink: number
+			}
+		>()
+		for (let i = 0; i < seeds.length; i++) {
+			const sourcePage = seeds[i]!
+			const revisions = results[i] ?? []
+			for (const r of revisions) {
+				const key = revKey(r)
+				const t = r.linkType ?? "to"
+				const existing = byKey.get(key)
+				if (existing) {
+					existing.sourcePageNames.add(sourcePage)
+					if (t === "both") existing.countBidirectional += 1
+					else if (t === "to") existing.countOutgoing += 1
+					else existing.countBacklink += 1
+				} else {
+					byKey.set(key, {
+						rev: r,
+						sourcePageNames: new Set([sourcePage]),
+						countBidirectional: t === "both" ? 1 : 0,
+						countOutgoing: t === "to" ? 1 : 0,
+						countBacklink: t === "from" ? 1 : 0,
+					})
+				}
+			}
+		}
+
+		const merged: FWTopRelatedChange[] = [...byKey.values()].map(
+			({ rev, sourcePageNames, countBidirectional, countOutgoing, countBacklink }) => ({
+				...rev,
+				feedCountBidirectional: countBidirectional,
+				feedCountOutgoing: countOutgoing,
+				feedCountBacklink: countBacklink,
+				score: score(countBidirectional, countOutgoing, countBacklink),
+				sourcePageNames: [...sourcePageNames],
+			})
+		)
+		merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+		this.topRelatedChangesCache.set(cacheKey, merged)
+
+		const keepFraction = Math.max(0, Math.min(1, percentage / 100))
+		const scores = merged.map(r => r.score).sort((a, b) => b - a)
+		const keepCount = Math.max(1, Math.ceil(scores.length * keepFraction))
+		const threshold = scores[keepCount - 1] ?? 0
+		return merged.filter(r => r.score >= threshold)
+	}
+
+	/**
+	 * Get the list of page titles that appear in the top N% of related changes by score.
+	 * Same options as getTopRelatedChanges; returns unique page names in order of first appearance.
+	 */
+	async getTopRelatedPages(
+		pageNames: string[],
+		options: FWTopRelatedOptions = {}
+	): Promise<string[]> {
+		const changes = await this.getTopRelatedChanges(pageNames, options)
+		const seen = new Set<string>()
+		const order: string[] = []
+		for (const r of changes) {
+			const name = r.pageName?.trim()
+			if (name && !seen.has(name.toLowerCase())) {
+				seen.add(name.toLowerCase())
+				order.push(name)
+			}
+		}
+		return order
 	}
 
 	/**

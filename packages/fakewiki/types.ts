@@ -94,6 +94,32 @@ export type FWRevisionWithLinkType = FWRevision & {
 	linkType?: "to" | "from" | "both"
 }
 
+/** Score multipliers for top-related filtering (defaults: bidirectional 3, outgoing 2, backlink 1). */
+export interface FWTopRelatedScoreMultipliers {
+	bidirectional?: number
+	outgoing?: number
+	backlink?: number
+}
+
+/** Options for getTopRelatedChanges / getTopRelatedPages. */
+export interface FWTopRelatedOptions {
+	/** Keep top N% by score (default 3). */
+	percentage?: number
+	scoreMultipliers?: FWTopRelatedScoreMultipliers
+	limit?: number
+	days?: number
+	from?: string
+}
+
+/** Revision from getTopRelatedChanges: has score and per-link-type feed counts. */
+export type FWTopRelatedChange = FWRevisionWithLinkType & {
+	score: number
+	feedCountBidirectional: number
+	feedCountOutgoing: number
+	feedCountBacklink: number
+	sourcePageNames?: string[]
+}
+
 /**
  * Standardized result type for prototype data.
  * This provides a consistent structure for storing and managing results across prototypes.
