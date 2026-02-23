@@ -48,14 +48,6 @@
 					>
 				</div>
 			</div>
-			<CdxButton
-				type="button"
-				class="reload-recommendations-button"
-				:disabled="isLoading"
-				@click="onReloadRecommendations"
-			>
-				Refresh feed
-			</CdxButton>
 		</header>
 		<div class="watchlist-container">
 			<div v-if="isLoading" class="watchlist-loading">
