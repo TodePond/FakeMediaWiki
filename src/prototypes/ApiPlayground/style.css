@@ -98,7 +98,7 @@
 
 .form-section {
 	margin-bottom: 1.5rem;
-	padding: 1rem;
+	padding: 1.25rem 1.5rem;
 }
 
 .param-form {
@@ -125,19 +125,25 @@
 	margin-top: 0.5rem;
 }
 
+.result-error-wrapper {
+	margin: 1.5rem 0;
+	padding: 0 1.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
 .result-error {
 	color: var(--color-destructive);
-	padding: 0.75rem;
+	padding: 0.75rem 1rem;
 	border: 1px solid var(--color-destructive);
 	background: var(--background-color-destructive-subtle);
 	border-radius: 4px;
-	margin: 1rem 0;
 }
 
 .result-area {
 	overflow-x: auto;
-	padding: 1rem;
-	padding-top: 0;
+	padding: 0 1.5rem 1rem;
 }
 
 .result-area--image {
@@ -288,6 +294,7 @@
 .no-selection {
 	color: var(--color-base--subtle);
 	margin: 0;
+	padding: 1.25rem 1.5rem;
 }
 
 @media (max-width: 720px) {

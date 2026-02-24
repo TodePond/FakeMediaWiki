@@ -83,7 +83,9 @@
 							<CdxProgressIndicator v-if="isLoading" aria-label="Loading" />
 						</div>
 					</div>
-					<div v-if="error" class="result-error">{{ error }}</div>
+					<div v-if="error" class="result-error-wrapper">
+						<div class="result-error">{{ error }}</div>
+					</div>
 					<div
 						v-else-if="result !== undefined"
 						class="result-area"
@@ -208,6 +210,38 @@ function buildArgs(method: MethodDescriptor): unknown[] {
 	return positional
 }
 
+const PREDICTION_METHOD_NAMES = new Set([
+	"getDamagingPrediction",
+	"getGoodfaithPrediction",
+	"getDamagingPredictions",
+	"getGoodFaithPredictions",
+	"getRevisionPredictions",
+	"getRevisionPredictionsFromOres",
+])
+
+function isPredictionFailure(methodName: string, out: unknown): boolean {
+	if (!PREDICTION_METHOD_NAMES.has(methodName)) return false
+	if (out === null) return true
+	if (out instanceof Map) return out.size === 0
+	if (typeof out === "object" && out !== null && !Array.isArray(out)) {
+		const obj = out as Record<string, unknown>
+		const keys = Object.keys(obj)
+		if (keys.length === 0) return true
+		// getRevisionPredictions / getRevisionPredictionsFromOres: check if any entry has usable data
+		const hasAnyScore = keys.some((revId) => {
+			const entry = obj[revId]
+			return (
+				typeof entry === "object" &&
+				entry !== null &&
+				((entry as Record<string, unknown>).damaging != null ||
+					(entry as Record<string, unknown>).goodfaith != null)
+			)
+		})
+		return !hasAnyScore
+	}
+	return false
+}
+
 async function run(): Promise<void> {
 	if (!selectedMethod.value) return
 	const method = selectedMethod.value
@@ -222,6 +256,10 @@ async function run(): Promise<void> {
 		}
 		const out = await fn.apply(wiki, args)
 		result.value = out
+		if (isPredictionFailure(method.name, out)) {
+			error.value =
+				"Prediction service returned no data. The service may be temporarily unavailable (e.g. Lift Wing or ORES)."
+		}
 	} catch (err) {
 		error.value = (err as Error).message
 	} finally {

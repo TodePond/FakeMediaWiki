@@ -2848,6 +2848,29 @@ export class FakeWiki {
 	}
 
 	/**
+	 * Read error message from a prediction API (Lift Wing / ORES) error response body.
+	 * @param response - Failed fetch response
+	 * @param apiName - Optional label (e.g. "ORES") for fallback message
+	 * @returns Error message string to throw
+	 */
+	private async getPredictionApiErrorMessage(
+		response: Response,
+		apiName = "Lift Wing"
+	): Promise<string> {
+		const fallback = `${apiName} API error: ${response.status}`
+		try {
+			const text = await response.text()
+			const body = text ? (JSON.parse(text) as { error?: string }) : null
+			if (body && typeof body.error === "string" && body.error.trim()) {
+				return body.error.trim()
+			}
+		} catch {
+			// ignore parse errors
+		}
+		return fallback
+	}
+
+	/**
 	 * Get damaging prediction for a single revision from Lift Wing API
 	 * @param revisionId - Revision ID
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
@@ -2871,7 +2894,8 @@ export class FakeWiki {
 			})
 
 			if (!response.ok) {
-				throw new Error(`Lift Wing API error: ${response.status}`)
+				const message = await this.getPredictionApiErrorMessage(response)
+				throw new Error(message)
 			}
 
 			const data = (await response.json()) as FWLiftWingResponse
@@ -2882,6 +2906,7 @@ export class FakeWiki {
 
 			return wikiData.scores[String(revisionId)].damaging.score
 		} catch (error) {
+			if (error instanceof Error) throw error
 			console.error(`Failed to get damaging prediction for revision ${revisionId}:`, error)
 			return null
 		}
@@ -2911,7 +2936,8 @@ export class FakeWiki {
 			})
 
 			if (!response.ok) {
-				throw new Error(`Lift Wing API error: ${response.status}`)
+				const message = await this.getPredictionApiErrorMessage(response)
+				throw new Error(message)
 			}
 
 			const data = (await response.json()) as FWLiftWingResponse
@@ -2922,6 +2948,7 @@ export class FakeWiki {
 
 			return wikiData.scores[String(revisionId)].goodfaith.score
 		} catch (error) {
+			if (error instanceof Error) throw error
 			console.error(`Failed to get goodfaith prediction for revision ${revisionId}:`, error)
 			return null
 		}
@@ -2946,6 +2973,10 @@ export class FakeWiki {
 				return { revId, prediction }
 			})
 		)
+
+		// Surface first API error so callers (e.g. playground) can show the service message
+		const rejected = predictions.find((r): r is PromiseRejectedResult => r.status === "rejected")
+		if (rejected) throw rejected.reason
 
 		// Collect successful results
 		for (const result of predictions) {
@@ -2976,6 +3007,10 @@ export class FakeWiki {
 				return { revId, prediction }
 			})
 		)
+
+		// Surface first API error so callers (e.g. playground) can show the service message
+		const rejected = predictions.find((r): r is PromiseRejectedResult => r.status === "rejected")
+		if (rejected) throw rejected.reason
 
 		// Collect successful results
 		for (const result of predictions) {
@@ -3014,6 +3049,76 @@ export class FakeWiki {
 			}
 			if (goodfaithResults.has(revId)) {
 				combined[revId].goodfaith = goodfaithResults.get(revId)!
+			}
+		}
+
+		return combined
+	}
+
+	/**
+	 * Get damaging and goodfaith predictions from ORES (single request per batch).
+	 * ORES is a scoring aggregator; one call returns both models. Prefer this when
+	 * Lift Wing is unavailable or for lower latency on batch requests.
+	 * @see https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/Usage
+	 * @see https://www.mediawiki.org/wiki/ORES
+	 * @param revisionIds - Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)
+	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
+	 * @returns Map of revision ID to both prediction scores (same shape as getRevisionPredictions)
+	 */
+	async getRevisionPredictionsFromOres(
+		revisionIds: number[],
+		wiki?: string
+	): Promise<FWRevisionPredictions> {
+		const wikiCode = wiki || this.getWikiCode()
+		const combined: FWRevisionPredictions = {}
+		if (revisionIds.length === 0) return combined
+
+		const ORES_BATCH_SIZE = 20
+		const chunks: number[][] = []
+		for (let i = 0; i < revisionIds.length; i += ORES_BATCH_SIZE) {
+			chunks.push(revisionIds.slice(i, i + ORES_BATCH_SIZE))
+		}
+
+		const userAgent = this.apiUserAgent ?? DEFAULT_API_USER_AGENT
+
+		const results = await Promise.all(
+			chunks.map(async chunk => {
+				const revids = chunk.join("|")
+				const url = `https://ores.wikimedia.org/v3/scores/${wikiCode}/?models=damaging|goodfaith&revids=${encodeURIComponent(revids)}`
+				try {
+					const response = await fetch(url, {
+						method: "GET",
+						headers: {
+							"Api-User-Agent": userAgent,
+						},
+					})
+					if (!response.ok) {
+						const message = await this.getPredictionApiErrorMessage(response, "ORES")
+						throw new Error(message)
+					}
+					return (await response.json()) as FWLiftWingResponse
+				} catch (error) {
+					if (error instanceof Error) throw error
+					console.error(`ORES request failed for revids ${revids}:`, error)
+					return null
+				}
+			})
+		)
+
+		for (const data of results) {
+			if (!data?.[wikiCode]?.scores) continue
+			const scores = data[wikiCode].scores
+			for (const revIdStr of Object.keys(scores)) {
+				const revId = Number(revIdStr)
+				if (Number.isNaN(revId)) continue
+				combined[revId] = {}
+				const entry = scores[revIdStr]
+				if (entry.damaging?.score) {
+					combined[revId].damaging = entry.damaging.score
+				}
+				if (entry.goodfaith?.score) {
+					combined[revId].goodfaith = entry.goodfaith.score
+				}
 			}
 		}
 

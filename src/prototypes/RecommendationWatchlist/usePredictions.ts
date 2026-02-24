@@ -19,7 +19,11 @@ export interface PredictionIconState {
 	isError?: boolean
 }
 
-export function usePredictions(wiki: FakeWiki) {
+export type PredictionSource = "liftwing" | "ores"
+
+export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSource }) {
+	const source = options?.source ?? "liftwing"
+
 	/** Cache of revision predictions (damaging and goodfaith) */
 	const revisionPredictions = ref<PredictionMap>(new Map())
 	/** Revision IDs currently loading predictions */
@@ -41,7 +45,10 @@ export function usePredictions(wiki: FakeWiki) {
 		loadingPredictions.value.add(revisionId)
 
 		try {
-			const predictions = await wiki.getRevisionPredictions([revisionId])
+			const predictions =
+				source === "ores"
+					? await wiki.getRevisionPredictionsFromOres([revisionId])
+					: await wiki.getRevisionPredictions([revisionId])
 			const pred = predictions[revisionId]
 			if (pred && (pred.damaging ?? pred.goodfaith)) {
 				revisionPredictions.value.set(revisionId, pred)

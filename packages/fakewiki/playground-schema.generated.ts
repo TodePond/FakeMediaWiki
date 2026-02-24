@@ -157,4 +157,8 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
+  { name: "getRevisionPredictionsFromOres", description: "Get damaging and goodfaith predictions from ORES (single request per batch). Same shape as getRevisionPredictions.", params: [
+      { key: "revisionIds", description: "Array of revision IDs" },
+      { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
+  ] },
 ]

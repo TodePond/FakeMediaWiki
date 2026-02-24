@@ -48,4 +48,5 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 	getDamagingPredictions: { resultHint: "json" },
 	getGoodFaithPredictions: { resultHint: "json" },
 	getRevisionPredictions: { resultHint: "json" },
+	getRevisionPredictionsFromOres: { resultHint: "json" },
 }
