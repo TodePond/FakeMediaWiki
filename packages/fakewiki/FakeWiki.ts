@@ -1520,14 +1520,18 @@ export class FakeWiki {
 		const seeds = [...new Set(trimmed)].sort()
 		if (seeds.length === 0) return []
 
+		const isModulePage = (name: string | null | undefined) =>
+			(name ?? "").trim().startsWith("Module:")
+
 		const cacheKey = JSON.stringify([seeds, limit, days, from ?? "", bidir, out, back])
 		const cachedFull = this.topRelatedChangesCache.get(cacheKey)
 		if (cachedFull !== undefined) {
+			const withoutModules = cachedFull.filter(r => !isModulePage(r.pageName))
 			const keepFraction = Math.max(0, Math.min(1, percentage / 100))
-			const scores = cachedFull.map(r => r.score).sort((a, b) => b - a)
+			const scores = withoutModules.map(r => r.score).sort((a, b) => b - a)
 			const keepCount = Math.max(1, Math.ceil(scores.length * keepFraction))
 			const threshold = scores[keepCount - 1] ?? 0
-			return cachedFull.filter(r => r.score >= threshold)
+			return withoutModules.filter(r => r.score >= threshold)
 		}
 
 		function score(
@@ -1547,7 +1551,8 @@ export class FakeWiki {
 
 		if (seeds.length === 1) {
 			const revisions = await this.getRelatedChanges(seeds[0]!, getRelatedOpts)
-			const withScore: FWTopRelatedChange[] = revisions.map(r => {
+			const filteredRevisions = revisions.filter(r => !isModulePage(r.pageName))
+			const withScore: FWTopRelatedChange[] = filteredRevisions.map(r => {
 				const t = r.linkType ?? "to"
 				const cb = t === "both" ? 1 : 0
 				const co = t === "to" ? 1 : 0
@@ -1589,6 +1594,7 @@ export class FakeWiki {
 			const sourcePage = seeds[i]!
 			const revisions = results[i] ?? []
 			for (const r of revisions) {
+				if (isModulePage(r.pageName)) continue
 				const key = revKey(r)
 				const t = r.linkType ?? "to"
 				const existing = byKey.get(key)
