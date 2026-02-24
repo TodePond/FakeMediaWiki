@@ -119,8 +119,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		type: "prototype",
 		id: "RelatedRecommendations",
 		name: "Related recommendation feed",
-		description:
-			"Feed with recommendations based on related changes. Currently not working correctly - fixing it tomorrow :)",
+		description: "Feed with recommendations based on related changes.",
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Related recommendations",

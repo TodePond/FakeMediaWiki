@@ -103,7 +103,7 @@ export interface FWTopRelatedScoreMultipliers {
 
 /** Options for getTopRelatedChanges / getTopRelatedPages. */
 export interface FWTopRelatedOptions {
-	/** Keep top N% by score (default 3). */
+	/** Keep top N% by score (default 15). */
 	percentage?: number
 	scoreMultipliers?: FWTopRelatedScoreMultipliers
 	limit?: number
@@ -117,7 +117,14 @@ export type FWTopRelatedChange = FWRevisionWithLinkType & {
 	feedCountBidirectional: number
 	feedCountOutgoing: number
 	feedCountBacklink: number
+	/** All seed pages that have this page in their related changes (same for every revision on the page). */
 	sourcePageNames?: string[]
+	/** Seed pages that have this page as bidirectional (for expanded-view icons). */
+	sourcePageNamesBidirectional?: string[]
+	/** Seed pages that have this page as outgoing (for expanded-view icons). */
+	sourcePageNamesOutgoing?: string[]
+	/** Seed pages that have this page as backlink (for expanded-view icons). */
+	sourcePageNamesBacklink?: string[]
 }
 
 /** Result from getTopRelatedPages: page title and its score (from first appearance in top changes). */

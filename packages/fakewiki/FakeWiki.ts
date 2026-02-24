@@ -1505,14 +1505,16 @@ export class FakeWiki {
 
 	/**
 	 * Get related changes from multiple seed pages, merged and filtered to the top N% by score.
-	 * Score = feedCountBidirectional * multiplierBidir + feedCountOutgoing * multiplierOut + feedCountBacklink * multiplierBack.
+	 * Counts and score are per-page: "which feeds this page appears in" (any revision). Same
+	 * feedCountBidirectional/Outgoing/Backlink and score are shown on every revision of that page.
+	 * Uses scoreMultipliers (default bidirectional×4, outgoing×2, backlink×1). No extra API calls.
 	 * Order is preserved (by timestamp desc); no extra sorting after filtering.
 	 */
 	async getTopRelatedChanges(
 		pageNames: string[],
 		options: FWTopRelatedOptions = {}
 	): Promise<FWTopRelatedChange[]> {
-		const { percentage = 3, scoreMultipliers = {}, limit = 50, days = 7, from } = options
+		const { percentage = 15, scoreMultipliers = {}, limit = 50, days = 7, from } = options
 		const bidir = scoreMultipliers.bidirectional ?? 4
 		const out = scoreMultipliers.outgoing ?? 2
 		const back = scoreMultipliers.backlink ?? 1
@@ -1522,16 +1524,20 @@ export class FakeWiki {
 
 		const isModulePage = (name: string | null | undefined) =>
 			(name ?? "").trim().startsWith("Module:")
+		const isCategoryPage = (name: string | null | undefined) =>
+			(name ?? "").trim().startsWith("Category:")
+		const isExcludedRelatedPage = (name: string | null | undefined) =>
+			isModulePage(name) || isCategoryPage(name)
 
 		const cacheKey = JSON.stringify([seeds, limit, days, from ?? "", bidir, out, back])
 		const cachedFull = this.topRelatedChangesCache.get(cacheKey)
 		if (cachedFull !== undefined) {
-			const withoutModules = cachedFull.filter(r => !isModulePage(r.pageName))
+			const filtered = cachedFull.filter(r => !isExcludedRelatedPage(r.pageName))
 			const keepFraction = Math.max(0, Math.min(1, percentage / 100))
-			const scores = withoutModules.map(r => r.score).sort((a, b) => b - a)
+			const scores = filtered.map(r => r.score).sort((a, b) => b - a)
 			const keepCount = Math.max(1, Math.ceil(scores.length * keepFraction))
 			const threshold = scores[keepCount - 1] ?? 0
-			return withoutModules.filter(r => r.score >= threshold)
+			return filtered.filter(r => r.score >= threshold)
 		}
 
 		function score(
@@ -1551,24 +1557,55 @@ export class FakeWiki {
 
 		if (seeds.length === 1) {
 			const revisions = await this.getRelatedChanges(seeds[0]!, getRelatedOpts)
-			const filteredRevisions = revisions.filter(r => !isModulePage(r.pageName))
-			const withScore: FWTopRelatedChange[] = filteredRevisions.map(r => {
-				const t = r.linkType ?? "to"
-				const cb = t === "both" ? 1 : 0
-				const co = t === "to" ? 1 : 0
-				const cl = t === "from" ? 1 : 0
-				return {
-					...r,
-					feedCountBidirectional: cb,
-					feedCountOutgoing: co,
-					feedCountBacklink: cl,
-					score: score(cb, co, cl),
-					sourcePageNames: [seeds[0]!],
-				}
-			})
+			const filteredRevisions = revisions.filter(r => !isExcludedRelatedPage(r.pageName))
+			const withScore: FWTopRelatedChange[] = filteredRevisions.map(r => ({
+				...r,
+				feedCountBidirectional: 0,
+				feedCountOutgoing: 0,
+				feedCountBacklink: 0,
+				score: 0,
+				sourcePageNames: [seeds[0]!],
+			}))
 			withScore.sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 			)
+			// Page-level counts: does this page appear in the (single) feed? 0 or 1 per link type; same on every revision
+			const pageKeyOne = (name: string | null | undefined) =>
+				(name ?? "").trim().toLowerCase()
+			const pageHasBidir = new Map<string, boolean>()
+			const pageHasOut = new Map<string, boolean>()
+			const pageHasBack = new Map<string, boolean>()
+			for (const r of withScore) {
+				const key = pageKeyOne(r.pageName)
+				const t = r.linkType ?? "to"
+				if (!pageHasBidir.has(key)) {
+					pageHasBidir.set(key, false)
+					pageHasOut.set(key, false)
+					pageHasBack.set(key, false)
+				}
+				if (t === "both") pageHasBidir.set(key, true)
+				else if (t === "to") pageHasOut.set(key, true)
+				else pageHasBack.set(key, true)
+			}
+			const seedName = seeds[0]!
+			for (const r of withScore) {
+				const key = pageKeyOne(r.pageName)
+				const hasBidir = pageHasBidir.get(key) ?? false
+				const hasOut = pageHasOut.get(key) ?? false
+				const hasBack = pageHasBack.get(key) ?? false
+				// Bidirectional if feed said "both" or if we saw both outgoing and backlink (treat as bidir)
+				const isBidir = hasBidir || (hasOut && hasBack)
+				const cb = isBidir ? 1 : 0
+				const co = isBidir ? 0 : (hasOut ? 1 : 0)
+				const cl = isBidir ? 0 : (hasBack ? 1 : 0)
+				r.feedCountBidirectional = cb
+				r.feedCountOutgoing = co
+				r.feedCountBacklink = cl
+				r.score = score(cb, co, cl)
+				r.sourcePageNamesBidirectional = cb ? [seedName] : []
+				r.sourcePageNamesOutgoing = co ? [seedName] : []
+				r.sourcePageNamesBacklink = cl ? [seedName] : []
+			}
 			this.topRelatedChangesCache.set(cacheKey, withScore)
 			const keepFraction = Math.max(0, Math.min(1, percentage / 100))
 			const scores = withScore.map(r => r.score).sort((a, b) => b - a)
@@ -1580,52 +1617,121 @@ export class FakeWiki {
 		const results = await Promise.all(
 			seeds.map(name => this.getRelatedChanges(name, getRelatedOpts))
 		)
+		type SeedLinkType = "to" | "from" | "both"
 		const byKey = new Map<
 			string,
 			{
 				rev: FWRevisionWithLinkType
-				sourcePageNames: Set<string>
-				countBidirectional: number
-				countOutgoing: number
-				countBacklink: number
+				seedToType: Map<string, SeedLinkType>
 			}
 		>()
 		for (let i = 0; i < seeds.length; i++) {
 			const sourcePage = seeds[i]!
 			const revisions = results[i] ?? []
 			for (const r of revisions) {
-				if (isModulePage(r.pageName)) continue
+				if (isExcludedRelatedPage(r.pageName)) continue
 				const key = revKey(r)
-				const t = r.linkType ?? "to"
+				const t: SeedLinkType = (r.linkType ?? "to") as SeedLinkType
 				const existing = byKey.get(key)
 				if (existing) {
-					existing.sourcePageNames.add(sourcePage)
-					if (t === "both") existing.countBidirectional += 1
-					else if (t === "to") existing.countOutgoing += 1
-					else existing.countBacklink += 1
+					existing.seedToType.set(sourcePage, t)
 				} else {
 					byKey.set(key, {
 						rev: r,
-						sourcePageNames: new Set([sourcePage]),
-						countBidirectional: t === "both" ? 1 : 0,
-						countOutgoing: t === "to" ? 1 : 0,
-						countBacklink: t === "from" ? 1 : 0,
+						seedToType: new Map([[sourcePage, t]]),
 					})
 				}
 			}
 		}
 
-		const merged: FWTopRelatedChange[] = [...byKey.values()].map(
-			({ rev, sourcePageNames, countBidirectional, countOutgoing, countBacklink }) => ({
+		const merged: (FWTopRelatedChange & { seedToType?: Map<string, SeedLinkType> })[] =
+			[...byKey.values()].map(({ rev, seedToType }) => ({
 				...rev,
-				feedCountBidirectional: countBidirectional,
-				feedCountOutgoing: countOutgoing,
-				feedCountBacklink: countBacklink,
-				score: score(countBidirectional, countOutgoing, countBacklink),
-				sourcePageNames: [...sourcePageNames],
-			})
-		)
+				feedCountBidirectional: 0,
+				feedCountOutgoing: 0,
+				feedCountBacklink: 0,
+				score: 0,
+				sourcePageNames: [...seedToType.keys()],
+				seedToType,
+			}))
 		merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+		// Page-level counts and score: which feeds this page appears in (any revision); same counts on every revision
+		const pageKey = (name: string | null | undefined) => (name ?? "").trim().toLowerCase()
+		const pageSeedsBidir = new Map<string, Set<string>>()
+		const pageSeedsOut = new Map<string, Set<string>>()
+		const pageSeedsBack = new Map<string, Set<string>>()
+		for (const r of merged) {
+			const key = pageKey(r.pageName)
+			const seedToType = r.seedToType
+			if (!seedToType) continue
+			if (!pageSeedsBidir.has(key)) {
+				pageSeedsBidir.set(key, new Set())
+				pageSeedsOut.set(key, new Set())
+				pageSeedsBack.set(key, new Set())
+			}
+			for (const [s, type] of seedToType) {
+				if (type === "both") pageSeedsBidir.get(key)!.add(s)
+				else if (type === "to") pageSeedsOut.get(key)!.add(s)
+				else pageSeedsBack.get(key)!.add(s)
+			}
+		}
+		// Seeds that appear in both outgoing and backlink → treat as bidirectional
+		const allPageKeys = new Set([
+			...pageSeedsBidir.keys(),
+			...pageSeedsOut.keys(),
+			...pageSeedsBack.keys(),
+		])
+		for (const key of allPageKeys) {
+			const bidirSet = pageSeedsBidir.get(key)
+			const outSet = pageSeedsOut.get(key)
+			const backSet = pageSeedsBack.get(key)
+			if (!outSet || !backSet) continue
+			for (const s of outSet) {
+				if (backSet.has(s)) {
+					bidirSet?.add(s)
+					outSet.delete(s)
+					backSet.delete(s)
+				}
+			}
+		}
+		// If a seed has the page as bidirectional, count it only as bidir (don't also count as outgoing/backlink)
+		for (const [key, bidirSet] of pageSeedsBidir) {
+			const outSet = pageSeedsOut.get(key)
+			const backSet = pageSeedsBack.get(key)
+			if (outSet) for (const s of bidirSet) outSet.delete(s)
+			if (backSet) for (const s of bidirSet) backSet.delete(s)
+		}
+		const pageSourceNames = new Map<string, string[]>()
+		const pageSourceNamesBidir = new Map<string, string[]>()
+		const pageSourceNamesOut = new Map<string, string[]>()
+		const pageSourceNamesBack = new Map<string, string[]>()
+		for (const key of new Set([...pageSeedsBidir.keys(), ...pageSeedsOut.keys(), ...pageSeedsBack.keys()])) {
+			const bidir = pageSeedsBidir.get(key) ?? new Set<string>()
+			const out = pageSeedsOut.get(key) ?? new Set<string>()
+			const back = pageSeedsBack.get(key) ?? new Set<string>()
+			const union = new Set<string>([...bidir, ...out, ...back])
+			pageSourceNames.set(key, [...union].sort())
+			pageSourceNamesBidir.set(key, [...bidir].sort())
+			pageSourceNamesOut.set(key, [...out].sort())
+			pageSourceNamesBack.set(key, [...back].sort())
+		}
+		for (const r of merged) {
+			const key = pageKey(r.pageName)
+			const cb = pageSeedsBidir.get(key)?.size ?? 0
+			const co = pageSeedsOut.get(key)?.size ?? 0
+			const cl = pageSeedsBack.get(key)?.size ?? 0
+			r.feedCountBidirectional = cb
+			r.feedCountOutgoing = co
+			r.feedCountBacklink = cl
+			r.score = score(cb, co, cl)
+			r.sourcePageNames = pageSourceNames.get(key) ?? []
+			r.sourcePageNamesBidirectional = pageSourceNamesBidir.get(key) ?? []
+			r.sourcePageNamesOutgoing = pageSourceNamesOut.get(key) ?? []
+			r.sourcePageNamesBacklink = pageSourceNamesBack.get(key) ?? []
+			delete (r as { seedToType?: Map<string, SeedLinkType> }).seedToType
+		}
+
 		this.topRelatedChangesCache.set(cacheKey, merged)
 
 		const keepFraction = Math.max(0, Math.min(1, percentage / 100))

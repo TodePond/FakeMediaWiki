@@ -62,7 +62,7 @@ export function usePredictions(wiki: FakeWiki) {
 		if (failedPredictions.value.has(revisionId)) {
 			return {
 				icon: cdxIconError,
-				color: "var(--color-destructive)",
+				color: "var(--color-subtle)",
 				isLoading: false,
 				isError: true,
 			}
@@ -91,7 +91,7 @@ export function usePredictions(wiki: FakeWiki) {
 		if (!predictions.damaging && !predictions.goodfaith) {
 			return {
 				icon: cdxIconError,
-				color: "var(--color-destructive)",
+				color: "var(--color-subtle)",
 				isLoading: false,
 				isError: true,
 			}

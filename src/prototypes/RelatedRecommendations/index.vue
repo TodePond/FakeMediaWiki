@@ -753,10 +753,17 @@ import { getRevisionItemZIndex } from "./zIndex"
 
 const wiki = new FakeWiki()
 
-const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries2")
-const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries2")
+const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries3")
+const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries3")
 const topPercentStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "topPercent")
-const defaultPageSearchQueries = ["Wikipedia", "Wikidata"]
+const defaultPageSearchQueries = [
+	"Little Mix",
+	"Wet Leg",
+	"Wolf Alice",
+	"Jade Thirlwall",
+	"Confidence Man (band)",
+	"Rizzle Kicks",
+]
 const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
 const pageSearchQueries = ref<string[]>(loadQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadQueries(userStorageKey, defaultUserSearchQueries))

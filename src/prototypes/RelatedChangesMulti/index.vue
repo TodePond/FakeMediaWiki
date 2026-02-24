@@ -97,15 +97,15 @@
 									class="feed-count-badges"
 									:title="
 										getFeedCountTitle(change) +
-										'. Score: ' +
+										'. Page score: ' +
 										(change.score ?? 0) +
-										' (bidirectional×3, outgoing×2, backlink×1)'
+										' (bidirectional×4, outgoing×2, backlink×1 per seed)'
 									"
 									:aria-label="getFeedCountTitle(change)"
 								>
 									<span
 										class="feed-count-badge feed-count-badge-score"
-										title="Score (bidirectional×3, outgoing×2, backlink×1)"
+										title="Page score: sum over seeds of weighted link-type presence (bidirectional×4, outgoing×2, backlink×1)"
 										aria-label="Score"
 										>{{ change.score ?? 0 }}</span
 									>
@@ -319,7 +319,7 @@
 									<div class="feed-count-card-row">
 										<span
 											class="feed-count-card-item feed-count-card-item-score"
-											:title="`Score: ${change.score ?? 0} (bidirectional×3, outgoing×2, backlink×1)`"
+											:title="`Page score: ${change.score ?? 0} (bidirectional×4, outgoing×2, backlink×1 per seed)`"
 										>
 											<span class="feed-count-card-label">Score</span>
 											<span class="feed-count-card-value">{{
@@ -366,6 +366,60 @@
 											}}</span>
 										</span>
 									</div>
+								</div>
+								<div
+									v-if="(change.sourcePageNames?.length ?? 0) > 0"
+									class="feed-source-pages"
+								>
+									<span class="feed-source-pages-label">Seed pages:</span>
+									<ul class="feed-source-pages-list">
+										<li
+											v-for="name in change.sourcePageNames"
+											:key="name"
+											class="feed-source-page-item"
+										>
+											<span class="feed-source-page-name">{{ name }}</span>
+											<span
+												class="feed-source-page-icons"
+												aria-label="Link types"
+											>
+												<CdxIcon
+													v-if="
+														(
+															change.sourcePageNamesBidirectional ??
+															[]
+														).includes(name)
+													"
+													:icon="cdxIconLink"
+													size="x-small"
+													class="feed-source-page-icon"
+													title="Bidirectional"
+												/>
+												<CdxIcon
+													v-if="
+														(
+															change.sourcePageNamesOutgoing ?? []
+														).includes(name)
+													"
+													:icon="cdxIconArrowUp"
+													size="x-small"
+													class="feed-source-page-icon"
+													title="Outgoing"
+												/>
+												<CdxIcon
+													v-if="
+														(
+															change.sourcePageNamesBacklink ?? []
+														).includes(name)
+													"
+													:icon="cdxIconArrowDown"
+													size="x-small"
+													class="feed-source-page-icon"
+													title="Backlink"
+												/>
+											</span>
+										</li>
+									</ul>
 								</div>
 								<div v-if="getPredictionText(change.id)" class="prediction-card">
 									<CdxIcon
@@ -753,13 +807,13 @@ const showBidirectional = ref(filterState.bidirectional)
 
 function loadTopPercent(): number {
 	const raw = localStorage.getItem(topPercentStorageKey)
-	if (raw === null) return 3
+	if (raw === null) return 15
 	const n = Number(raw)
-	return Number.isFinite(n) ? Math.max(1, Math.min(100, Math.round(n))) : 3
+	return Number.isFinite(n) ? Math.max(1, Math.min(100, Math.round(n))) : 15
 }
 
 const scoreFilterId = "related-changes-multi-score-filter"
-/** Keep top N% by score (0–100). Default 3%. */
+/** Keep top N% by score (0–100). Default 15%. */
 const filterKeepPercent = ref(loadTopPercent())
 
 function saveTopPercent(): void {
