@@ -827,7 +827,10 @@ function deltaForRev(
 
 watch([showOutgoing, showIncoming, showBidirectional], saveFilterState)
 
+const RESERVE_SCROLLBAR_GUTTER_CLASS = "reserve-scrollbar-gutter"
+
 onMounted(() => {
+	document.documentElement.classList.add(RESERVE_SCROLLBAR_GUTTER_CLASS)
 	if (pageName.value.trim()) {
 		search()
 	}
@@ -869,6 +872,7 @@ function setupKeyboardNavigation(): void {
 }
 
 onUnmounted(() => {
+	document.documentElement.classList.remove(RESERVE_SCROLLBAR_GUTTER_CLASS)
 	const handler = (window as any).__relatedChangesKeyHandler
 	if (handler) {
 		window.removeEventListener("keydown", handler)

@@ -11,7 +11,10 @@
 html {
 	/* background-color: var(--background-color-neutral); */
 	background-color: var(--background-color-base);
-	/* Always reserve space for scrollbar so layout doesn't jump when content height changes */
+}
+
+/* Applied by slider prototypes on mount; reserves scrollbar space to avoid layout jump */
+html.reserve-scrollbar-gutter {
 	overflow-y: scroll;
 }
 

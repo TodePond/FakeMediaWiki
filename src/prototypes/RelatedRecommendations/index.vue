@@ -770,7 +770,10 @@ async function onLoadMore(): Promise<void> {
 	await loadMore()
 }
 
+const RESERVE_SCROLLBAR_GUTTER_CLASS = "reserve-scrollbar-gutter"
+
 onMounted(async () => {
+	document.documentElement.classList.add(RESERVE_SCROLLBAR_GUTTER_CLASS)
 	await loadFeed(undefined, false)
 	await loadRecommendations()
 	saveSearchQueries()
@@ -822,6 +825,7 @@ function setupKeyboardNavigation(): void {
 }
 
 onUnmounted(() => {
+	document.documentElement.classList.remove(RESERVE_SCROLLBAR_GUTTER_CLASS)
 	const handler = (window as any).__flaggedWatchlistKeyHandler
 	if (handler) {
 		window.removeEventListener("keydown", handler)
