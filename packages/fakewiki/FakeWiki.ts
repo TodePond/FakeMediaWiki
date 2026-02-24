@@ -30,9 +30,9 @@ import type {
 	FWRevision,
 	FWRevisionPredictions,
 	FWRevisionWithLinkType,
+	FWToolbarComment,
 	FWTopRelatedChange,
 	FWTopRelatedOptions,
-	FWToolbarComment,
 	FWUserCategory,
 	FWUserContrib,
 	FWUserInfo,
@@ -51,6 +51,9 @@ const DEFAULT_USER_CONTRIBS_LIMIT = 20
 /** Maximum limit we allow for user contribution history (Action API supports up to 500). */
 const USER_CONTRIBS_MAX_LIMIT = 500
 
+/** Default Api-User-Agent sent to Wikimedia/Lift Wing APIs. Override via constructor options to test or identify your client. */
+const DEFAULT_API_USER_AGENT = "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)"
+
 /**
  * Helper for interacting with Wikimedia and MediaWiki REST APIs.
  */
@@ -59,6 +62,11 @@ export class FakeWiki {
 	 * Base URL for the API
 	 */
 	base: string
+
+	/**
+	 * Optional custom Api-User-Agent for external APIs (e.g. Lift Wing). If not set, DEFAULT_API_USER_AGENT is used.
+	 */
+	private apiUserAgent: string | undefined
 
 	/**
 	 * Cache for user information
@@ -99,9 +107,11 @@ export class FakeWiki {
 	/**
 	 * Create a new FakeWiki instance
 	 * @param base - Base URL for the API
+	 * @param options - Optional settings; use `apiUserAgent` to override the identifier sent to Lift Wing / Wikimedia APIs (e.g. for testing).
 	 */
-	constructor(base = "https://en.wikipedia.org/") {
+	constructor(base = "https://en.wikipedia.org/", options?: { apiUserAgent?: string }) {
 		this.base = base
+		this.apiUserAgent = options?.apiUserAgent
 		this.userInfoCache = new Map()
 		this.userCategoryCache = new Map()
 	}
@@ -1420,7 +1430,6 @@ export class FakeWiki {
 			// console.log("text", text)
 			const parser = new DOMParser()
 			const doc = parser.parseFromString(text, "application/xml")
-			console.log("DOC", doc)
 			const parseError = doc.querySelector("parsererror")
 			if (parseError) throw new Error("Failed to parse related changes feed")
 			return doc
@@ -1501,13 +1510,7 @@ export class FakeWiki {
 		pageNames: string[],
 		options: FWTopRelatedOptions = {}
 	): Promise<FWTopRelatedChange[]> {
-		const {
-			percentage = 3,
-			scoreMultipliers = {},
-			limit = 50,
-			days = 7,
-			from,
-		} = options
+		const { percentage = 3, scoreMultipliers = {}, limit = 50, days = 7, from } = options
 		const bidir = scoreMultipliers.bidirectional ?? 3
 		const out = scoreMultipliers.outgoing ?? 2
 		const back = scoreMultipliers.backlink ?? 1
@@ -1515,15 +1518,7 @@ export class FakeWiki {
 		const seeds = [...new Set(trimmed)].sort()
 		if (seeds.length === 0) return []
 
-		const cacheKey = JSON.stringify([
-			seeds,
-			limit,
-			days,
-			from ?? "",
-			bidir,
-			out,
-			back,
-		])
+		const cacheKey = JSON.stringify([seeds, limit, days, from ?? "", bidir, out, back])
 		const cachedFull = this.topRelatedChangesCache.get(cacheKey)
 		if (cachedFull !== undefined) {
 			const keepFraction = Math.max(0, Math.min(1, percentage / 100))
@@ -1542,8 +1537,11 @@ export class FakeWiki {
 		}
 
 		const getRelatedOpts = { showOutgoing: true, showIncoming: true, limit, days, from }
-		const revKey = (r: { pageName?: string | null; timestamp: string; user: { name: string } }) =>
-			`${(r.pageName ?? "").toLowerCase()}\t${r.timestamp}\t${r.user.name}`
+		const revKey = (r: {
+			pageName?: string | null
+			timestamp: string
+			user: { name: string }
+		}) => `${(r.pageName ?? "").toLowerCase()}\t${r.timestamp}\t${r.user.name}`
 
 		if (seeds.length === 1) {
 			const revisions = await this.getRelatedChanges(seeds[0]!, getRelatedOpts)
@@ -1561,7 +1559,9 @@ export class FakeWiki {
 					sourcePageNames: [seeds[0]!],
 				}
 			})
-			withScore.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+			withScore.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
 			this.topRelatedChangesCache.set(cacheKey, withScore)
 			const keepFraction = Math.max(0, Math.min(1, percentage / 100))
 			const scores = withScore.map(r => r.score).sort((a, b) => b - a)
@@ -1780,7 +1780,7 @@ export class FakeWiki {
 	): Promise<Record<string, string>> {
 		const out: Record<string, string> = {}
 		if (pageNames.length === 0) return out
-		const base = (baseUrl?.trim()) ? baseUrl : this.base
+		const base = baseUrl?.trim() ? baseUrl : this.base
 		const headers = {
 			"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
 		}
@@ -1913,9 +1913,7 @@ export class FakeWiki {
 				const positionContrib = 1 / rank
 				// Use a unique key per item so entries from different seeds don't collapse when itemKey is empty
 				const itemKey = item.qid || item.page_title?.trim() || ""
-				const key = itemKey
-					? `${source}:${itemKey}`
-					: `${source}:${seedPageTitle}-${i}`
+				const key = itemKey ? `${source}:${itemKey}` : `${source}:${seedPageTitle}-${i}`
 				const existing = map.get(key)
 				if (existing) {
 					existing.listCount += 1
@@ -2078,7 +2076,7 @@ export class FakeWiki {
 		if (!page || "missing" in page) {
 			throw new Error("404: Page not found")
 		}
-		const categories = (page.categories ?? []).map((c) => c.title)
+		const categories = (page.categories ?? []).map(c => c.title)
 		return { categories }
 	}
 
@@ -2867,7 +2865,7 @@ export class FakeWiki {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
 				},
 				body: JSON.stringify({ rev_id: revisionId }),
 			})
@@ -2907,7 +2905,7 @@ export class FakeWiki {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
 				},
 				body: JSON.stringify({ rev_id: revisionId }),
 			})

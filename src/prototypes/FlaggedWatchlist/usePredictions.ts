@@ -1,5 +1,5 @@
 import type { Icon } from "@wikimedia/codex-icons"
-import { cdxIconAlert, cdxIconEllipsis, cdxIconSuccess } from "@wikimedia/codex-icons"
+import { cdxIconAlert, cdxIconEllipsis, cdxIconError, cdxIconSuccess } from "@wikimedia/codex-icons"
 import type { FakeWiki } from "fakewiki"
 import type { FWLiftWingPrediction } from "fakewiki/types"
 import { ref } from "vue"
@@ -16,6 +16,7 @@ export interface PredictionIconState {
 	icon: Icon | null
 	color: string
 	isLoading: boolean
+	isError?: boolean
 }
 
 export function usePredictions(wiki: FakeWiki) {
@@ -23,11 +24,17 @@ export function usePredictions(wiki: FakeWiki) {
 	const revisionPredictions = ref<PredictionMap>(new Map())
 	/** Revision IDs currently loading predictions */
 	const loadingPredictions = ref<Set<number>>(new Set())
+	/** Revision IDs that failed to load (service error) */
+	const failedPredictions = ref<Set<number>>(new Set())
 
 	/** Lazily load predictions for a revision */
 	async function loadPrediction(revisionId: number): Promise<void> {
-		// Skip if already loaded or currently loading
-		if (revisionPredictions.value.has(revisionId) || loadingPredictions.value.has(revisionId)) {
+		// Skip if already loaded, currently loading, or previously failed
+		if (
+			revisionPredictions.value.has(revisionId) ||
+			loadingPredictions.value.has(revisionId) ||
+			failedPredictions.value.has(revisionId)
+		) {
 			return
 		}
 
@@ -36,11 +43,15 @@ export function usePredictions(wiki: FakeWiki) {
 		try {
 			const predictions = await wiki.getRevisionPredictions([revisionId])
 			const pred = predictions[revisionId]
-			if (pred) {
+			if (pred && (pred.damaging ?? pred.goodfaith)) {
 				revisionPredictions.value.set(revisionId, pred)
+			} else {
+				// Service returned no usable data (e.g. 500)
+				failedPredictions.value.add(revisionId)
 			}
 		} catch (error) {
 			console.error(`Failed to load prediction for revision ${revisionId}:`, error)
+			failedPredictions.value.add(revisionId)
 		} finally {
 			loadingPredictions.value.delete(revisionId)
 		}
@@ -48,6 +59,15 @@ export function usePredictions(wiki: FakeWiki) {
 
 	/** Get prediction icon and color for a revision */
 	function getPredictionIcon(revisionId: number): PredictionIconState {
+		if (failedPredictions.value.has(revisionId)) {
+			return {
+				icon: cdxIconError,
+				color: "var(--color-destructive)",
+				isLoading: false,
+				isError: true,
+			}
+		}
+
 		if (loadingPredictions.value.has(revisionId)) {
 			return {
 				icon: cdxIconEllipsis,
@@ -64,6 +84,16 @@ export function usePredictions(wiki: FakeWiki) {
 				icon: cdxIconEllipsis,
 				color: "var(--color-subtle)",
 				isLoading: true,
+			}
+		}
+
+		// No usable scores (shouldn't happen if we only set when we have data)
+		if (!predictions.damaging && !predictions.goodfaith) {
+			return {
+				icon: cdxIconError,
+				color: "var(--color-destructive)",
+				isLoading: false,
+				isError: true,
 			}
 		}
 
@@ -112,9 +142,17 @@ export function usePredictions(wiki: FakeWiki) {
 
 	/** Get prediction text description for a revision */
 	function getPredictionText(revisionId: number): string | null {
+		if (failedPredictions.value.has(revisionId)) {
+			return "There was an error when getting a prediction for this change."
+		}
+
 		const predictions = revisionPredictions.value.get(revisionId)
 		if (!predictions) {
 			return null
+		}
+
+		if (!predictions.damaging && !predictions.goodfaith) {
+			return "There was an error when getting a prediction for this change."
 		}
 
 		const damaging = predictions.damaging

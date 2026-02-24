@@ -280,6 +280,7 @@
 											},
 										]"
 										size="small"
+										:title="getPredictionText(change.id) ?? undefined"
 									/>
 									<span class="prediction-card-text">{{
 										getPredictionText(change.id)
