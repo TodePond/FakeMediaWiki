@@ -11,6 +11,14 @@
 					class="recommendation-watchlist-input"
 					@input="syncPageQueriesFromInput"
 				/>
+				<CdxLabel for="user-queries-input">User queries (comma-separated)</CdxLabel>
+				<CdxTextInput
+					id="user-queries-input"
+					v-model="userQueriesInput"
+					input-type="text"
+					class="recommendation-watchlist-input"
+					@input="syncUserQueriesFromInput"
+				/>
 				<CdxButton type="submit" :disabled="isLoading"> Refresh feed </CdxButton>
 			</form>
 			<div v-if="errors.length > 0" class="error">
@@ -736,9 +744,18 @@ const pageSearchQueries = ref<string[]>(loadQueries(pageStorageKey, defaultPageS
 const userSearchQueries = ref<string[]>(loadQueries(userStorageKey, defaultUserSearchQueries))
 /** Comma-separated string for the page queries input; kept in sync with pageSearchQueries. */
 const pageQueriesInput = ref(pageSearchQueries.value.join(", "))
+/** Comma-separated string for the user queries input; kept in sync with userSearchQueries. */
+const userQueriesInput = ref(userSearchQueries.value.join(", "))
 
 function syncPageQueriesFromInput(): void {
 	pageSearchQueries.value = pageQueriesInput.value
+		.split(",")
+		.map(s => s.trim())
+		.filter(Boolean)
+}
+
+function syncUserQueriesFromInput(): void {
+	userSearchQueries.value = userQueriesInput.value
 		.split(",")
 		.map(s => s.trim())
 		.filter(Boolean)

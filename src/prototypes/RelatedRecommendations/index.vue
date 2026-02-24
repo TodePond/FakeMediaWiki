@@ -11,6 +11,14 @@
 					class="recommendation-watchlist-input"
 					@input="syncPageQueriesFromInput"
 				/>
+				<CdxLabel for="user-queries-input">User queries (comma-separated)</CdxLabel>
+				<CdxTextInput
+					id="user-queries-input"
+					v-model="userQueriesInput"
+					input-type="text"
+					class="recommendation-watchlist-input"
+					@input="syncUserQueriesFromInput"
+				/>
 				<CdxButton type="submit" :disabled="isLoading"> Refresh feed </CdxButton>
 			</form>
 			<div v-if="errors.length > 0" class="error">
@@ -747,17 +755,34 @@ const wiki = new FakeWiki()
 
 const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries2")
 const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries2")
+const topPercentStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "topPercent")
 const defaultPageSearchQueries = ["Wikipedia", "Wikidata"]
-const defaultUserSearchQueries = [] as string[]
+const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
 const pageSearchQueries = ref<string[]>(loadQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadQueries(userStorageKey, defaultUserSearchQueries))
 const scoreFilterId = "related-recommendations-score-filter"
-const filterKeepPercent = ref(DEFAULT_TOP_PERCENT)
+
+function loadTopPercent(): number {
+	const raw = localStorage.getItem(topPercentStorageKey)
+	if (raw === null) return DEFAULT_TOP_PERCENT
+	const n = Number(raw)
+	return Number.isFinite(n) ? Math.max(1, Math.min(100, Math.round(n))) : DEFAULT_TOP_PERCENT
+}
+const filterKeepPercent = ref(loadTopPercent())
 /** Comma-separated string for the page queries input; kept in sync with pageSearchQueries. */
 const pageQueriesInput = ref(pageSearchQueries.value.join(", "))
+/** Comma-separated string for the user queries input; kept in sync with userSearchQueries. */
+const userQueriesInput = ref(userSearchQueries.value.join(", "))
 
 function syncPageQueriesFromInput(): void {
 	pageSearchQueries.value = pageQueriesInput.value
+		.split(",")
+		.map(s => s.trim())
+		.filter(Boolean)
+}
+
+function syncUserQueriesFromInput(): void {
+	userSearchQueries.value = userQueriesInput.value
 		.split(",")
 		.map(s => s.trim())
 		.filter(Boolean)
@@ -867,8 +892,9 @@ async function onReloadRecommendations(): Promise<void> {
 	await loadRecommendations()
 }
 
-/** Called when the "Keep top N%" slider is released; reload recommendations with new percentage. */
+/** Called when the "Keep top N%" slider is released; persist and reload recommendations with new percentage. */
 function onSliderChange(): void {
+	localStorage.setItem(topPercentStorageKey, String(filterKeepPercent.value))
 	loadRecommendations()
 }
 

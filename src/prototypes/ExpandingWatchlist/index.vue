@@ -451,7 +451,7 @@ const defaultPageSearchQueries = [
 	"Confidence Man (band)",
 	"Algorave",
 ]
-const defaultUserSearchQueries = ["Samwalton9", "Todepond"]
+const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
 const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
 

@@ -136,7 +136,7 @@ const wiki = new FakeWiki()
 const pageStorageKey = "searchQueryFeedPages"
 const userStorageKey = "searchQueryFeedUsers"
 const defaultPageSearchQueries = ["Wikipedia", "Wet Leg", "Water"]
-const defaultUserSearchQueries = ["Samwalton9", "Humbugtheman", "Todepond"]
+const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
 const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
 

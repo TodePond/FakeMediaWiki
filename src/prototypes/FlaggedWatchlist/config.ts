@@ -15,7 +15,7 @@ export const defaultPageSearchQueries = [
 	"Algorave",
 ]
 
-export const defaultUserSearchQueries = ["Samwalton9", "Todepond", "Humbugtheman"]
+export const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
 
 /** User type display configuration */
 export const userTypeConfig: Record<UserCategory, UserTypeConfig> = {

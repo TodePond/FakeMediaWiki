@@ -60,6 +60,7 @@
 							filterKeepPercent =
 								100 - Number(($event.target as HTMLInputElement).value)
 						"
+						@change="saveTopPercent"
 					/>
 					<span class="score-filter-value" aria-hidden="true"
 						>{{ filterKeepPercent }}%</span
@@ -711,6 +712,7 @@ const PROTOTYPE_NAME = "RelatedChangesMulti"
 const wiki = new FakeWiki()
 const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageName")
 const filterStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "linkTypeFilters")
+const topPercentStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "topPercent")
 const pageName = ref(
 	localStorage.getItem(pageStorageKey) ||
 		"Little Mix, Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), Rizzle Kicks"
@@ -749,9 +751,20 @@ const showOutgoing = ref(filterState.outgoing)
 const showIncoming = ref(filterState.incoming)
 const showBidirectional = ref(filterState.bidirectional)
 
+function loadTopPercent(): number {
+	const raw = localStorage.getItem(topPercentStorageKey)
+	if (raw === null) return 3
+	const n = Number(raw)
+	return Number.isFinite(n) ? Math.max(1, Math.min(100, Math.round(n))) : 3
+}
+
 const scoreFilterId = "related-changes-multi-score-filter"
 /** Keep top N% by score (0–100). Default 3%. */
-const filterKeepPercent = ref(3)
+const filterKeepPercent = ref(loadTopPercent())
+
+function saveTopPercent(): void {
+	localStorage.setItem(topPercentStorageKey, String(filterKeepPercent.value))
+}
 
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())

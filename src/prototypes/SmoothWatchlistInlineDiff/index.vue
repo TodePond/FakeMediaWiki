@@ -414,7 +414,7 @@ const PROTOTYPE_NAME = "SmoothWatchlistInlineDiff"
 const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
 const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
 const defaultPageSearchQueries = ["Wikipedia", "Wet Leg", "Water"]
-const defaultUserSearchQueries = ["Samwalton9", "Humbugtheman", "Todepond"]
+const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
 const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
 
