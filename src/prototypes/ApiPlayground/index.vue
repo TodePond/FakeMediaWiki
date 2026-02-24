@@ -54,7 +54,6 @@
 						type="button"
 						class="burger-button"
 						aria-label="Open methods menu"
-						aria-expanded="sidebarOpen"
 						@click="sidebarOpen = !sidebarOpen"
 					>
 						<CdxIcon :icon="cdxIconMenu" />
