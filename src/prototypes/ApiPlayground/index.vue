@@ -1,12 +1,33 @@
 <template>
 	<section class="api-playground">
 		<div class="playground-layout">
-			<aside class="sidebar">
+			<div
+				v-if="sidebarOpen"
+				class="sidebar-overlay"
+				aria-hidden="true"
+				@click="sidebarOpen = false"
+			/>
+			<aside
+				class="sidebar"
+				:class="{ 'sidebar--open': sidebarOpen }"
+				aria-label="API methods menu"
+			>
+				<div class="sidebar-header-mobile">
+					<span class="sidebar-title-mobile">Methods</span>
+					<button
+						type="button"
+						class="sidebar-close"
+						aria-label="Close menu"
+						@click="sidebarOpen = false"
+					>
+						<CdxIcon :icon="cdxIconClose" />
+					</button>
+				</div>
 				<div class="filter-row">
 					<CdxTextInput
 						v-model="filterQuery"
 						input-type="search"
-						placeholder="Filter methods..."
+						placeholder="Filter..."
 						class="filter-input"
 					/>
 				</div>
@@ -17,22 +38,40 @@
 						type="button"
 						class="method-item"
 						:class="{ 'method-item--selected': selectedMethod?.name === method.name }"
-						:ref="(el) => setMethodButtonRef(method.name, el)"
-						@click="selectMethod(method)"
+						:ref="el => setMethodButtonRef(method.name, el)"
+						@click="onSelectMethod(method)"
 					>
 						<span class="method-item__name">{{ method.name }}</span>
-						<span v-if="method.description" class="method-item__desc">{{ method.description.split('\n')[0] }}</span>
+						<span v-if="method.description" class="method-item__desc">{{
+							method.description.split("\n")[0]
+						}}</span>
 					</button>
 				</nav>
 			</aside>
 			<main class="main">
+				<header class="mobile-header">
+					<button
+						type="button"
+						class="burger-button"
+						aria-label="Open methods menu"
+						aria-expanded="sidebarOpen"
+						@click="sidebarOpen = !sidebarOpen"
+					>
+						<CdxIcon :icon="cdxIconMenu" />
+					</button>
+					<span class="mobile-header-title">API Playground</span>
+				</header>
 				<template v-if="selectedMethod">
 					<div class="form-section">
 						<h2 class="method-title">{{ selectedMethod.name }}</h2>
 						<p v-if="selectedMethod.description" class="method-description">
 							{{ selectedMethod.description }}
 						</p>
-						<form v-if="selectedMethod.params.length > 0" class="param-form" @submit.prevent="run">
+						<form
+							v-if="selectedMethod.params.length > 0"
+							class="param-form"
+							@submit.prevent="run"
+						>
 							<div
 								v-for="param in selectedMethod.params"
 								:key="param.key"
@@ -44,33 +83,41 @@
 								<CdxTextInput
 									v-if="param.type === 'string' || param.type === 'date'"
 									:id="`param-${param.key}`"
-									v-model="(paramValues[param.key] as string)"
-									:placeholder="param.type === 'date' ? 'YYYY/MM/DD or MM/DD' : ''"
+									v-model="paramValues[param.key] as string"
+									:placeholder="
+										param.type === 'date' ? 'YYYY/MM/DD or MM/DD' : ''
+									"
 								/>
 								<CdxTextInput
 									v-else-if="param.type === 'number'"
 									:id="`param-${param.key}`"
-									v-model="(paramValues[param.key] as number)"
+									v-model="paramValues[param.key] as number"
 									input-type="number"
 								/>
 								<CdxSelect
 									v-else-if="param.type === 'enum' && param.options"
 									:id="`param-${param.key}`"
-									v-model:selected="(paramValues[param.key] as string)"
-									:menu-items="param.options.map((o) => ({ value: o, label: o }))"
+									v-model:selected="paramValues[param.key] as string"
+									:menu-items="param.options.map(o => ({ value: o, label: o }))"
 								/>
 								<input
 									v-else-if="param.type === 'boolean'"
 									:id="`param-${param.key}`"
-									v-model="(paramValues[param.key] as boolean)"
+									v-model="paramValues[param.key] as boolean"
 									type="checkbox"
 									class="param-checkbox"
 								/>
 								<CdxTextInput
 									v-else
 									:id="`param-${param.key}`"
-									v-model="(paramValues[param.key] as string)"
-									:placeholder="param.type === 'stringArray' ? 'Comma-separated' : param.type === 'numberArray' ? 'Comma-separated numbers' : ''"
+									v-model="paramValues[param.key] as string"
+									:placeholder="
+										param.type === 'stringArray'
+											? 'Comma-separated'
+											: param.type === 'numberArray'
+												? 'Comma-separated numbers'
+												: ''
+									"
 								/>
 							</div>
 							<div class="button-row">
@@ -105,22 +152,31 @@
 </template>
 
 <script setup lang="ts">
-import { CdxButton, CdxLabel, CdxProgressIndicator, CdxSelect, CdxTextInput } from "@wikimedia/codex"
+import {
+	CdxButton,
+	CdxIcon,
+	CdxLabel,
+	CdxProgressIndicator,
+	CdxSelect,
+	CdxTextInput,
+} from "@wikimedia/codex"
+import { cdxIconClose, cdxIconMenu } from "@wikimedia/codex-icons"
+import { FakeWiki } from "fakewiki"
 import { computed, nextTick, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { FakeWiki } from "fakewiki"
-import { playgroundMethods } from "./playground-data"
 import type { MethodDescriptor } from "./playground-data"
-import ResultValue from "./ResultValue.vue"
-import ResultTablesByKey from "./ResultTablesByKey.vue"
+import { playgroundMethods } from "./playground-data"
 import ResultCode from "./ResultCode.vue"
 import ResultImage from "./ResultImage.vue"
+import ResultTablesByKey from "./ResultTablesByKey.vue"
+import ResultValue from "./ResultValue.vue"
 
 const wiki = new FakeWiki()
 const route = useRoute()
 const router = useRouter()
 
 const filterQuery = ref("")
+const sidebarOpen = ref(false)
 const selectedMethod = ref<MethodDescriptor | null>(null)
 const paramValues = ref<Record<string, unknown>>({})
 const isLoading = ref(false)
@@ -131,7 +187,7 @@ const filteredMethods = computed(() => {
 	const q = filterQuery.value.trim().toLowerCase()
 	if (!q) return playgroundMethods
 	return playgroundMethods.filter(
-		(m) =>
+		m =>
 			m.name.toLowerCase().includes(q) ||
 			(m.description && m.description.toLowerCase().includes(q))
 	)
@@ -155,6 +211,11 @@ function selectMethod(method: MethodDescriptor): void {
 	}
 	paramValues.value = defaults
 	router.push({ path: route.path, query: { method: method.name } })
+	sidebarOpen.value = false
+}
+
+function onSelectMethod(method: MethodDescriptor): void {
+	selectMethod(method)
 }
 
 function parseParamValue(
@@ -165,15 +226,20 @@ function parseParamValue(
 	if (param.type === "boolean") return Boolean(raw)
 	if (param.type === "stringArray") {
 		const s = String(raw).trim()
-		return s ? s.split(",").map((x) => x.trim()).filter(Boolean) : []
+		return s
+			? s
+					.split(",")
+					.map(x => x.trim())
+					.filter(Boolean)
+			: []
 	}
 	if (param.type === "numberArray") {
 		const s = String(raw).trim()
 		return s
 			? s
 					.split(",")
-					.map((x) => parseInt(x.trim(), 10))
-					.filter((n) => !Number.isNaN(n))
+					.map(x => parseInt(x.trim(), 10))
+					.filter(n => !Number.isNaN(n))
 			: []
 	}
 	if (param.type === "date") {
@@ -194,7 +260,10 @@ function buildArgs(method: MethodDescriptor): unknown[] {
 
 	for (const param of method.params) {
 		const raw = paramValues.value[param.key]
-		const value = parseParamValue(param, raw !== undefined ? raw as string | number | boolean : "")
+		const value = parseParamValue(
+			param,
+			raw !== undefined ? (raw as string | number | boolean) : ""
+		)
 		if (optionKeys.has(param.key)) {
 			if (!options) options = {}
 			if (value !== "" && value !== undefined && value !== null) {
@@ -228,7 +297,7 @@ function isPredictionFailure(methodName: string, out: unknown): boolean {
 		const keys = Object.keys(obj)
 		if (keys.length === 0) return true
 		// getRevisionPredictions / getRevisionPredictionsFromOres: check if any entry has usable data
-		const hasAnyScore = keys.some((revId) => {
+		const hasAnyScore = keys.some(revId => {
 			const entry = obj[revId]
 			return (
 				typeof entry === "object" &&
@@ -250,7 +319,9 @@ async function run(): Promise<void> {
 	result.value = undefined
 	try {
 		const args = buildArgs(method)
-		const fn = (wiki as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[method.name]
+		const fn = (wiki as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[
+			method.name
+		]
 		if (typeof fn !== "function") {
 			throw new Error(`Method ${method.name} not found on FakeWiki`)
 		}
@@ -275,7 +346,8 @@ const resultRenderer = computed(() => {
 	if (hint === "code") return ResultCode
 	if (data === undefined || data === null) return ResultValue
 	if (typeof data === "string") {
-		if (name === "getPageThumbnail" || name === "getPageHero" || name === "getUserAvatar") return ResultImage
+		if (name === "getPageThumbnail" || name === "getPageHero" || name === "getUserAvatar")
+			return ResultImage
 		return ResultCode
 	}
 	if (typeof data === "object") {
@@ -290,7 +362,11 @@ const resultRenderer = computed(() => {
 
 function isRecordOfRevisions(obj: Record<string, unknown>): boolean {
 	return Object.values(obj).every(
-		(v) => v !== null && typeof v === "object" && !Array.isArray(v) && Array.isArray((v as Record<string, unknown>).revisions)
+		v =>
+			v !== null &&
+			typeof v === "object" &&
+			!Array.isArray(v) &&
+			Array.isArray((v as Record<string, unknown>).revisions)
 	)
 }
 
@@ -315,19 +391,17 @@ function scrollSelectedMethodIntoView(): void {
 
 function methodNameFromQuery(): string | undefined {
 	const name = route.query.method
-	return typeof name === "string" && playgroundMethods.some((m) => m.name === name)
+	return typeof name === "string" && playgroundMethods.some(m => m.name === name)
 		? name
 		: undefined
 }
 
 watch(
 	filteredMethods,
-	(list) => {
+	list => {
 		if (list.length === 0) return
 		const nameFromQuery = methodNameFromQuery()
-		const toSelect = nameFromQuery
-			? list.find((m) => m.name === nameFromQuery)
-			: list[0]
+		const toSelect = nameFromQuery ? list.find(m => m.name === nameFromQuery) : list[0]
 		if (toSelect && (!selectedMethod.value || selectedMethod.value.name !== toSelect.name)) {
 			selectedMethod.value = toSelect
 			isLoading.value = false
@@ -355,10 +429,14 @@ watch(
 
 watch(
 	() => route.query,
-	(query) => {
+	query => {
 		const name = typeof query.method === "string" ? query.method : undefined
-		if (name && selectedMethod.value?.name !== name && playgroundMethods.some((m) => m.name === name)) {
-			const method = playgroundMethods.find((m) => m.name === name)
+		if (
+			name &&
+			selectedMethod.value?.name !== name &&
+			playgroundMethods.some(m => m.name === name)
+		) {
+			const method = playgroundMethods.find(m => m.name === name)
 			if (method) selectMethod(method)
 		}
 	}
