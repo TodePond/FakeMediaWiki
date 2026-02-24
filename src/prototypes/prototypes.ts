@@ -124,7 +124,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "recommendations",
 		wrapper: "Fullscreen",
 		title: "Related recommendations",
-		status: "wip",
+		status: "new",
 		featured: true,
 	},
 	{

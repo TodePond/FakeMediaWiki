@@ -4,8 +4,8 @@ import type { Ref } from "vue"
 import { ref } from "vue"
 
 /** API max for feedrecentchanges */
-const LIMIT = 50
-const DAYS = 30
+const LIMIT = 20
+const DAYS = 7
 
 /** Revision with feed counts per link type and score (from getTopRelatedChanges or single-page enrichment). */
 export type RelatedChangeRevisionMulti = FWTopRelatedChange & {
@@ -68,7 +68,6 @@ export function useRelatedPagesFeedMulti({
 			// Request full list (100%); UI applies top-N% filter client-side so slider doesn't refetch
 			const topChanges = await wiki.getTopRelatedChanges(pageNames, {
 				percentage: 100,
-				scoreMultipliers: { bidirectional: 3, outgoing: 2, backlink: 1 },
 				limit: LIMIT,
 				days: DAYS,
 				from,

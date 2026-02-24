@@ -23,7 +23,7 @@
 				aria-label="Filter by score"
 			>
 				<CdxLabel :input-id="scoreFilterId"
-					>Keep top {{ filterKeepPercent }}% by score</CdxLabel
+					>Show top {{ filterKeepPercent }}% recommendations</CdxLabel
 				>
 				<div class="score-filter-slider-line">
 					<input
@@ -50,10 +50,37 @@
 			</div>
 		</header>
 		<div class="watchlist-container">
-			<div v-if="isLoading" class="watchlist-loading">
-				<CdxProgressBar inline />
+			<div class="watchlist-loading watchlist-loading-always">
+				<p class="watchlist-loading-text">
+					{{ loadingStage.label }}
+				</p>
+				<div
+					v-if="loadingStage.percent === null"
+					class="watchlist-loading-bar"
+					aria-label="Loading"
+				>
+					<CdxProgressBar inline aria-label="Loading" />
+				</div>
+				<div
+					v-else
+					class="watchlist-loading-bar watchlist-loading-bar-complete"
+					role="progressbar"
+					:aria-valuenow="loadingStage.percent"
+					aria-valuemin="0"
+					aria-valuemax="100"
+					:aria-label="loadingStage.percent === 100 ? 'Loading complete' : 'Loading'"
+				>
+					<div
+						class="watchlist-loading-bar-fill"
+						:style="{ width: loadingStage.percent + '%' }"
+					/>
+				</div>
 			</div>
-			<template v-else v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
+			<template
+				v-if="!isLoading || interleavedRevisions.length > 0"
+				v-for="dateGroup in revisionsByDate"
+				:key="dateGroup.dateKey"
+			>
 				<h4 class="watchlist-date-header">{{ dateGroup.dateLabel }}</h4>
 				<div class="watchlist-history-box">
 					<div
@@ -100,6 +127,19 @@
 									]"
 									size="small"
 								/>
+								<span
+									v-if="
+										(change as FeedRevision).isRecommendation &&
+										(change as FeedRevision).score != null
+									"
+									class="feed-count-badges"
+									title="Score (bidirectional×3, outgoing×2, backlink×1)"
+									aria-label="Score"
+								>
+									<span class="feed-count-badge feed-count-badge-score">{{
+										(change as FeedRevision).score
+									}}</span>
+								</span>
 								<a
 									target="_blank"
 									:href="wiki.getPageUrl(change.pageName!)"
@@ -339,6 +379,33 @@
 										</template>
 										<template v-else>This page is on your watchlist.</template>
 									</span>
+								</div>
+								<div
+									v-if="
+										(change as FeedRevision).isRecommendation &&
+										(change as FeedRevision).score != null
+									"
+									class="feed-count-card feed-count-card-recommendation-score"
+									:title="`Recommendation score: ${(change as FeedRevision).score}`"
+									aria-label="Recommendation score"
+								>
+									<div class="feed-count-card-row">
+										<CdxIcon
+											:icon="cdxIconLink"
+											size="small"
+											class="feed-count-card-icon"
+										/>
+										<span
+											class="feed-count-card-item feed-count-card-item-score"
+										>
+											<span class="feed-count-card-label"
+												>Recommendation score:</span
+											>
+											<span class="feed-count-card-value">{{
+												(change as FeedRevision).score
+											}}</span>
+										</span>
+									</div>
 								</div>
 								<footer class="history-expanded-footer">
 									<button
@@ -660,20 +727,21 @@ import {
 	cdxIconArrowNext,
 	cdxIconArrowPrevious,
 	cdxIconLightbulb,
+	cdxIconLink,
 	cdxIconStar,
 } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
-import { isInteractiveClickTarget } from "../RecommendationWatchlist/clickTargets"
-import { loadQueries } from "../RecommendationWatchlist/queries"
-import type { HistoryRevisionWithHtml, RisingHeart } from "../RecommendationWatchlist/types"
-import { useFeed } from "../RecommendationWatchlist/useFeed"
-import { usePredictions } from "../RecommendationWatchlist/usePredictions"
-import { useUser } from "../RecommendationWatchlist/useUser"
-import { getRevisionItemZIndex } from "../RecommendationWatchlist/zIndex"
+import { isInteractiveClickTarget } from "./clickTargets"
 import { DEFAULT_TOP_PERCENT, HEART_RISE_DURATION_MS, PROTOTYPE_NAME } from "./config"
+import { loadQueries } from "./queries"
+import type { HistoryRevisionWithHtml, RisingHeart } from "./types"
+import { useFeed } from "./useFeed"
+import { usePredictions } from "./usePredictions"
 import { useRelatedRecommendations, type FeedRevision } from "./useRelatedRecommendations"
+import { useUser } from "./useUser"
+import { getRevisionItemZIndex } from "./zIndex"
 
 const wiki = new FakeWiki()
 
@@ -726,26 +794,34 @@ const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
 
 const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
+
+/** Shared ref so feed and recommendations use one list (user queries + recommended page names). */
+const allRevisionsDataRef = ref<FWRevision[]>([])
+const {
+	loadRecommendations,
+	loadMoreRecommendations,
+	interleavedRevisions,
+	getRecommendationSeedPages,
+	isRecommendationsLoading,
+	recommendationProgress,
+} = useRelatedRecommendations({
+	wiki,
+	pageSearchQueries,
+	allRevisionsData: allRevisionsDataRef,
+	filterKeepPercent,
+	cacheUserCategory,
+})
+
+/** Feed uses only the user's watchlist page queries so their pages always appear; recommendations are merged from our fetch. */
 const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } = useFeed(
 	{
 		wiki,
 		pageSearchQueries,
 		userSearchQueries,
 		onUserCategory: cacheUserCategory,
+		allRevisionsDataRef,
 	}
 )
-const {
-	loadRecommendations,
-	interleavedRevisions,
-	recommendationProgress,
-	getRecommendationSeedPages,
-} = useRelatedRecommendations({
-	wiki,
-	pageSearchQueries,
-	allRevisionsData,
-	filterKeepPercent,
-	cacheUserCategory,
-})
 
 /** Which revision ids have the talk page expanded */
 const expandedTalkIds = ref<Set<number>>(new Set())
@@ -755,6 +831,36 @@ const talkPageText = ref<Map<number, string>>(new Map())
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
 const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
+
+/** Loading stage label and bar percent (0–100 or null for indeterminate) for the always-visible loading block. */
+const loadingStage = computed(() => {
+	const loading = isLoading.value || isRecommendationsLoading.value
+	if (!loading) {
+		return { label: "Ready", percent: 100 as number }
+	}
+	if (isLoading.value) {
+		return { label: "Loading main feed…", percent: null as number | null }
+	}
+	const p = recommendationProgress.value
+	if (p.listBuildingTotal > 0 && p.listBuildingCompleted < p.listBuildingTotal) {
+		return { label: "Finding related pages…", percent: 10 }
+	}
+	if (p.historiesTotal > 0 && p.historiesLoaded < p.historiesTotal) {
+		const ratio = p.historiesTotal > 0 ? p.historiesLoaded / p.historiesTotal : 0
+		return {
+			label: `Loading page histories… (${p.historiesLoaded} of ${p.historiesTotal})`,
+			percent: Math.round(15 + 40 * ratio),
+		}
+	}
+	if (p.processingTotal > 0 && p.processingLoaded < p.processingTotal) {
+		const ratio = p.processingTotal > 0 ? p.processingLoaded / p.processingTotal : 0
+		return {
+			label: `Processing revisions… (${p.processingLoaded} of ${p.processingTotal})`,
+			percent: Math.round(55 + 45 * ratio),
+		}
+	}
+	return { label: "Loading…", percent: null as number | null }
+})
 
 async function onReloadRecommendations(): Promise<void> {
 	await loadFeed(undefined, false)
@@ -768,6 +874,7 @@ function onSliderChange(): void {
 
 async function onLoadMore(): Promise<void> {
 	await loadMore()
+	await loadMoreRecommendations()
 }
 
 const RESERVE_SCROLLBAR_GUTTER_CLASS = "reserve-scrollbar-gutter"

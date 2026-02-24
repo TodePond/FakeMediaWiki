@@ -95,6 +95,14 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "targetPageName", description: "Page title to get related changes for" },
       { key: "options", description: "showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)" }
   ] },
+  { name: "getTopRelatedChanges", description: "Get related changes from multiple seed pages, merged and filtered to the top N% by score.\nScore = feedCountBidirectional * multiplierBidir + feedCountOutgoing * multiplierOut + feedCountBacklink * multiplierBack.\nOrder is preserved (by timestamp desc); no extra sorting after filtering.", params: [
+      { key: "pageNames" },
+      { key: "options" }
+  ] },
+  { name: "getTopRelatedPages", description: "Get the list of page titles that appear in the top N% of related changes by score.\nSame options as getTopRelatedChanges; returns unique page names in order of first appearance,\neach with the score from the first change that introduced that page (static per page).", params: [
+      { key: "pageNames" },
+      { key: "options" }
+  ] },
   { name: "getPageThumbnail", description: "Get thumbnail image for a page.\nUses the lead image (page summary) when available; otherwise falls back to the\nfirst image on the page (e.g. infobox image).", params: [
       { key: "pageName", description: "Page title" }
   ] },
@@ -157,8 +165,8 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
-  { name: "getRevisionPredictionsFromOres", description: "Get damaging and goodfaith predictions from ORES (single request per batch). Same shape as getRevisionPredictions.", params: [
-      { key: "revisionIds", description: "Array of revision IDs" },
+  { name: "getRevisionPredictionsFromOres", description: "Get damaging and goodfaith predictions from ORES (single request per batch).\nORES is a scoring aggregator; one call returns both models. Prefer this when\nLift Wing is unavailable or for lower latency on batch requests.", params: [
+      { key: "revisionIds", description: "Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
 ]

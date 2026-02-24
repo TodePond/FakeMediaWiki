@@ -33,6 +33,8 @@ import type {
 	FWToolbarComment,
 	FWTopRelatedChange,
 	FWTopRelatedOptions,
+	FWTopRelatedPageWithScore,
+	FWTopRelatedPagesResult,
 	FWUserCategory,
 	FWUserContrib,
 	FWUserInfo,
@@ -1511,7 +1513,7 @@ export class FakeWiki {
 		options: FWTopRelatedOptions = {}
 	): Promise<FWTopRelatedChange[]> {
 		const { percentage = 3, scoreMultipliers = {}, limit = 50, days = 7, from } = options
-		const bidir = scoreMultipliers.bidirectional ?? 3
+		const bidir = scoreMultipliers.bidirectional ?? 4
 		const out = scoreMultipliers.outgoing ?? 2
 		const back = scoreMultipliers.backlink ?? 1
 		const trimmed = pageNames.map(p => p.trim()).filter(Boolean)
@@ -1629,23 +1631,25 @@ export class FakeWiki {
 
 	/**
 	 * Get the list of page titles that appear in the top N% of related changes by score.
-	 * Same options as getTopRelatedChanges; returns unique page names in order of first appearance.
+	 * Same options as getTopRelatedChanges; returns unique page names in order of first appearance,
+	 * each with the score from the first change that introduced that page (static per page),
+	 * plus the changes that were retrieved as part of the scoring process (with sourcePageNames and link-type info).
 	 */
 	async getTopRelatedPages(
 		pageNames: string[],
 		options: FWTopRelatedOptions = {}
-	): Promise<string[]> {
+	): Promise<FWTopRelatedPagesResult> {
 		const changes = await this.getTopRelatedChanges(pageNames, options)
 		const seen = new Set<string>()
-		const order: string[] = []
+		const order: FWTopRelatedPageWithScore[] = []
 		for (const r of changes) {
 			const name = r.pageName?.trim()
 			if (name && !seen.has(name.toLowerCase())) {
 				seen.add(name.toLowerCase())
-				order.push(name)
+				order.push({ title: name, score: r.score })
 			}
 		}
-		return order
+		return { pages: order, changes }
 	}
 
 	/**
@@ -2975,7 +2979,9 @@ export class FakeWiki {
 		)
 
 		// Surface first API error so callers (e.g. playground) can show the service message
-		const rejected = predictions.find((r): r is PromiseRejectedResult => r.status === "rejected")
+		const rejected = predictions.find(
+			(r): r is PromiseRejectedResult => r.status === "rejected"
+		)
 		if (rejected) throw rejected.reason
 
 		// Collect successful results
@@ -3009,7 +3015,9 @@ export class FakeWiki {
 		)
 
 		// Surface first API error so callers (e.g. playground) can show the service message
-		const rejected = predictions.find((r): r is PromiseRejectedResult => r.status === "rejected")
+		const rejected = predictions.find(
+			(r): r is PromiseRejectedResult => r.status === "rejected"
+		)
 		if (rejected) throw rejected.reason
 
 		// Collect successful results

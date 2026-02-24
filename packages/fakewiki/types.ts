@@ -120,6 +120,20 @@ export type FWTopRelatedChange = FWRevisionWithLinkType & {
 	sourcePageNames?: string[]
 }
 
+/** Result from getTopRelatedPages: page title and its score (from first appearance in top changes). */
+export interface FWTopRelatedPageWithScore {
+	title: string
+	score: number
+}
+
+/** Full result from getTopRelatedPages: pages with scores plus the changes used for scoring (with sourcePageNames and link-type info). */
+export interface FWTopRelatedPagesResult {
+	/** Unique page titles in order of first appearance, each with its score. */
+	pages: FWTopRelatedPageWithScore[]
+	/** The related changes that were retrieved and scored (includes sourcePageNames, linkType, feedCountBidirectional, etc.). */
+	changes: FWTopRelatedChange[]
+}
+
 /**
  * Standardized result type for prototype data.
  * This provides a consistent structure for storing and managing results across prototypes.
