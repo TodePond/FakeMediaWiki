@@ -29,6 +29,15 @@ export interface UsePredictionsOptions {
 	warningThreshold?: number
 }
 
+export type PredictionModel = "damaging" | "goodfaith"
+
+export interface PredictionPercentages {
+	/** P(damaging) */
+	damaging: number
+	/** P(good faith) */
+	goodfaith: number
+}
+
 const DEFAULT_SUCCESS_THRESHOLD = 0.9
 const DEFAULT_WARNING_THRESHOLD = 0.3
 
@@ -115,9 +124,10 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 		const damaging = predictions.damaging
 		const goodfaith = predictions.goodfaith
 		const damagingProb = damaging?.probability?.true ?? 0
-		const goodfaithProb = goodfaith?.probability?.false ?? 0
+		const badFaithProb = goodfaith?.probability?.false ?? 0
+		const risk = Math.max(damagingProb, badFaithProb)
 
-		if (damagingProb > successThreshold || goodfaithProb > successThreshold) {
+		if (risk > successThreshold) {
 			return {
 				icon: cdxIconAlert,
 				color: "var(--color-destructive)",
@@ -125,7 +135,7 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 			}
 		}
 
-		if (damagingProb > warningThreshold || goodfaithProb > warningThreshold) {
+		if (risk > warningThreshold) {
 			return {
 				icon: cdxIconAlert,
 				color: "var(--color-warning)",
@@ -133,16 +143,15 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 			}
 		}
 
-		const notDamagingProb = damaging?.probability?.false ?? 0
-		const isGoodfaithProb = goodfaith?.probability?.true ?? 0
-
-		if (notDamagingProb > successThreshold && isGoodfaithProb > successThreshold) {
+		if (risk < 1 - successThreshold) {
 			return {
 				icon: cdxIconSuccess,
 				color: "var(--color-success)",
 				isLoading: false,
 			}
-		} else if (notDamagingProb > successThreshold || isGoodfaithProb > successThreshold) {
+		}
+
+		if (risk < 1 - warningThreshold) {
 			return {
 				icon: cdxIconSuccess,
 				color: "var(--color-progressive)",
@@ -174,38 +183,129 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 		const damaging = predictions.damaging
 		const goodfaith = predictions.goodfaith
 		const damagingProb = damaging?.probability?.true ?? 0
-		const goodfaithProb = goodfaith?.probability?.false ?? 0
+		const badFaithProb = goodfaith?.probability?.false ?? 0
+		const risk = Math.max(damagingProb, badFaithProb)
 
-		if (damagingProb > successThreshold || goodfaithProb > successThreshold) {
-			if (damagingProb > successThreshold && goodfaithProb > successThreshold) {
-				return "This change probably has a problem and is probably made in bad faith."
-			} else if (damagingProb > successThreshold) {
-				return "This change probably has a problem."
-			}
-			return "This change is probably made in bad faith."
+		if (risk > successThreshold) {
+			return "This change probably has a problem."
 		}
 
-		if (damagingProb > warningThreshold || goodfaithProb > warningThreshold) {
-			if (damagingProb > warningThreshold && goodfaithProb > warningThreshold) {
-				return "This change might have a problem and might be made in bad faith."
-			} else if (damagingProb > warningThreshold) {
-				return "This change might have a problem."
-			}
-			return "This change might be made in bad faith."
+		if (risk > warningThreshold) {
+			return "This change might have a problem."
 		}
 
-		const notDamagingProb = damaging?.probability?.false ?? 0
-		const isGoodfaithProb = goodfaith?.probability?.true ?? 0
-
-		if (notDamagingProb > successThreshold && isGoodfaithProb > successThreshold) {
-			return "This change is probably okay and is probably made in good faith."
-		} else if (notDamagingProb > successThreshold) {
+		if (risk < 1 - successThreshold) {
 			return "This change is probably okay."
-		} else if (isGoodfaithProb > successThreshold) {
-			return "This change is probably made in good faith."
+		}
+
+		if (risk < 1 - warningThreshold) {
+			return "This change is probably okay."
 		}
 
 		return "This change might be okay."
+	}
+
+	function getPredictionIconForModel(
+		revisionId: number,
+		model: PredictionModel
+	): PredictionIconState {
+		if (failedPredictions.value.has(revisionId)) {
+			return {
+				icon: cdxIconError,
+				color: "var(--color-subtle)",
+				isLoading: false,
+				isError: true,
+			}
+		}
+
+		if (loadingPredictions.value.has(revisionId)) {
+			return {
+				icon: cdxIconEllipsis,
+				color: "var(--color-subtle)",
+				isLoading: true,
+			}
+		}
+
+		const predictions = revisionPredictions.value.get(revisionId)
+		if (!predictions) {
+			void loadPrediction(revisionId)
+			return {
+				icon: cdxIconEllipsis,
+				color: "var(--color-subtle)",
+				isLoading: true,
+			}
+		}
+
+		if (
+			(model === "damaging" && !predictions.damaging) ||
+			(model === "goodfaith" && !predictions.goodfaith)
+		) {
+			return {
+				icon: cdxIconError,
+				color: "var(--color-subtle)",
+				isLoading: false,
+				isError: true,
+			}
+		}
+
+		const risk =
+			model === "damaging"
+				? (predictions.damaging?.probability?.true ?? 0)
+				: (predictions.goodfaith?.probability?.false ?? 0)
+
+		if (risk > successThreshold) {
+			return {
+				icon: cdxIconAlert,
+				color: "var(--color-destructive)",
+				isLoading: false,
+			}
+		}
+
+		if (risk > warningThreshold) {
+			return {
+				icon: cdxIconAlert,
+				color: "var(--color-warning)",
+				isLoading: false,
+			}
+		}
+
+		if (risk < 1 - successThreshold) {
+			return {
+				icon: cdxIconSuccess,
+				color: "var(--color-success)",
+				isLoading: false,
+			}
+		}
+
+		if (risk < 1 - warningThreshold) {
+			return {
+				icon: cdxIconSuccess,
+				color: "var(--color-progressive)",
+				isLoading: false,
+			}
+		}
+
+		return {
+			icon: cdxIconSuccess,
+			color: "var(--color-subtle)",
+			isLoading: false,
+		}
+	}
+
+	function getPredictionPercentages(revisionId: number): PredictionPercentages | null {
+		if (failedPredictions.value.has(revisionId)) {
+			return null
+		}
+
+		const predictions = revisionPredictions.value.get(revisionId)
+		if (!predictions || (!predictions.damaging && !predictions.goodfaith)) {
+			return null
+		}
+
+		return {
+			damaging: predictions.damaging?.probability?.true ?? 0,
+			goodfaith: predictions.goodfaith?.probability?.true ?? 0,
+		}
 	}
 
 	return {
@@ -213,5 +313,7 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 		loadingPredictions,
 		getPredictionIcon,
 		getPredictionText,
+		getPredictionIconForModel,
+		getPredictionPercentages,
 	}
 }

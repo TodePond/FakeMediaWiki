@@ -1,0 +1,77 @@
+@import "../FlaggedWatchlist/style.css";
+
+/* Form: same layout as Related recommendations (comma-separated inputs) */
+.recommendation-watchlist-form {
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	gap: 0.5rem 1rem;
+	align-items: flex-start;
+	width: 100%;
+	order: 0; /* Keep form above the feed (FlaggedWatchlist sets form { order: 2 } which puts it below) */
+}
+
+.recommendation-watchlist-form .cdx-label {
+	margin: 0;
+}
+
+.recommendation-watchlist-input {
+	min-width: 200px;
+	flex: 1;
+}
+
+/* Form for pages/users (Add/Remove row) */
+.input-list-actions {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+
+/* Two prediction icons side by side in the list row */
+.prediction-icons-dual {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	flex-shrink: 0;
+	margin-right: 0.5rem;
+	vertical-align: middle;
+}
+
+.prediction-icons-dual .prediction-icon {
+	margin-right: 0;
+}
+
+/* Percentages in the expanded card */
+.prediction-percentages {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-top: 0.75rem;
+	padding: 0.5rem 0.75rem;
+	background-color: var(--background-color-subtle, #f8f9fa);
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	font-size: 0.875rem;
+	line-height: 1.4;
+}
+
+.prediction-percentages-item {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.prediction-percentages-label {
+	color: var(--color-subtle);
+}
+
+.prediction-percentages-value {
+	font-weight: 500;
+}
+
+@container view (max-width: 640px) {
+	.recommendation-watchlist-form {
+		padding: 0 0.5rem;
+	}
+}

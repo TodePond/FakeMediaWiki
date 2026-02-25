@@ -28,8 +28,8 @@ const media = await wiki.getPageMedia("Wikipedia")
 const { revisions } = await wiki.getPageHistory("Wikipedia", { limit: 20 })
 const { revisions: userRevs } = await wiki.getUserHistory("Todepond", { limit: 10 })
 const combined = await wiki.getCombinedFeed({
-	pageNames: ["Wikipedia"],
-	userNames: ["Todepond"],
+	pageNames: ["Wikipedia", "Wet Leg"],
+	userNames: ["Todepond", "Samwalton9"],
 	limit: 15,
 })
 ```
@@ -58,8 +58,8 @@ const lineClass = wiki.getDiffLineClass(line.type)
 const random = await wiki.getRandomPage("summary")
 const featured = await wiki.getFeaturedPage()
 const onThisDay = await wiki.getOnThisDay()
-const related = await wiki.getTopRelatedChanges(["Wikipedia"], { limit: 20 })
-const linksMap = await wiki.getPagesLinks(["Wikipedia"])
+const related = await wiki.getTopRelatedChanges(["Wikipedia", "Wet Leg"], { limit: 20 })
+const linksMap = await wiki.getPagesLinks(["Wikipedia", "Wet Leg"])
 const listBuilding = await wiki.getListBuilding("en", { qid: "Q123", k: 10 })
 ```
 
@@ -68,15 +68,18 @@ const listBuilding = await wiki.getListBuilding("en", { qid: "Q123", k: 10 })
 ```typescript
 const user = await wiki.getUserInfo("Todepond")
 const avatar = await wiki.getUserAvatar("Todepond")
-const display = await wiki.getUserCategoryDisplay("Todepond") // cache or fetch
-// In templates after feed has loaded: wiki.getCachedUserCategoryDisplay(userName)
+const display = await wiki.getUserCategoryDisplay("Todepond")
 ```
 
 **ML predictions** – damaging/goodfaith per revision or batch (Lift Wing or ORES):
 
 ```typescript
 const damaging = await wiki.getDamagingPrediction(revId)
+const goodfaith = await wiki.getGoodfaithPrediction(revId)
+const damagingMap = await wiki.getDamagingPredictions([revId1, revId2])
+const goodfaithMap = await wiki.getGoodFaithPredictions([revId1, revId2])
 const predictions = await wiki.getRevisionPredictions([revId1, revId2])
+const predictionsOres = await wiki.getRevisionPredictionsFromOres([revId1, revId2])
 ```
 
 **URLs and formatting** – page/revision/user/history/edit URLs; date and delta formatting; delta CSS class:
@@ -85,7 +88,7 @@ const predictions = await wiki.getRevisionPredictions([revId1, revId2])
 const pageUrl = wiki.getPageUrl("Wikipedia")
 const revUrl = wiki.getRevisionUrl("Wikipedia", 123456789)
 const formatted = wiki.formatDate(rev.timestamp, "short")
-const deltaClass = wiki.getDeltaClass(rev.delta) // use with fakewiki/style/delta.css
+const deltaClass = wiki.getDeltaClass(rev.delta)
 ```
 
 **Result and state helpers** – loading/error/data state for UI; storage keys for prototypes:
@@ -128,16 +131,18 @@ const { allRevisionsData, loadFeed, isLoading } = useRelatedChanges({
 await loadFeed()
 ```
 
-**`usePredictions`** – lazy-load damaging/goodfaith predictions for revision IDs, with icon/color state for UI.
+**`usePredictions`** – lazy-load damaging/goodfaith predictions for revision IDs, with icon/color and text for UI.
 
 ```typescript
 import { usePredictions } from "fakewiki"
 
-const { revisionPredictions, loadPrediction, getPredictionState } = usePredictions(wiki, {
-	source: "liftwing", // or "ores"
-})
+const { revisionPredictions, loadPrediction, getPredictionIcon, getPredictionText } =
+	usePredictions(wiki, {
+		source: "liftwing",
+	})
 await loadPrediction(revisionId)
-const state = getPredictionState(revisionId) // { icon, color, isLoading, isError }
+const state = getPredictionIcon(revisionId)
+const message = getPredictionText(revisionId)
 ```
 
 **`useRelatedChangesRecommendations`** – recommend related pages from a feed’s revisions and merge recommended revisions into the feed.
@@ -145,7 +150,7 @@ const state = getPredictionState(revisionId) // { icon, color, isLoading, isErro
 ```typescript
 import { useRelatedChangesRecommendations } from "fakewiki"
 
-const pageQueries = ref(["Wikipedia"])
+const pageQueries = ref(["Wikipedia", "Wet Leg"])
 const allRevisionsData = ref(revisionsFromFeed)
 const filterKeepPercent = ref(15)
 const { interleavedRevisions, loadRecommendations, recommendationProgress } =
@@ -163,7 +168,7 @@ await loadRecommendations()
 ```typescript
 import { useListBuildingRecommendations } from "fakewiki"
 
-const pageQueries = ref(["Wikipedia"])
+const pageQueries = ref(["Wikipedia", "Wet Leg"])
 const allRevisionsData = ref(revisionsFromFeed)
 const { interleavedRevisions, loadRecommendations, recommendationProgress } =
 	useListBuildingRecommendations({

@@ -95,11 +95,11 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "targetPageName", description: "Page title to get related changes for" },
       { key: "options", description: "showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)" }
   ] },
-  { name: "getTopRelatedChanges", description: "Get related changes from multiple seed pages, merged and filtered to the top N% by score.\nScore = feedCountBidirectional * multiplierBidir + feedCountOutgoing * multiplierOut + feedCountBacklink * multiplierBack.\nOrder is preserved (by timestamp desc); no extra sorting after filtering.", params: [
+  { name: "getTopRelatedChanges", description: "Get related changes from multiple seed pages, merged and filtered to the top N% by score.\nCounts and score are per-page: \"which feeds this page appears in\" (any revision). Same\nfeedCountBidirectional/Outgoing/Backlink and score are shown on every revision of that page.\nUses scoreMultipliers (default bidirectional×4, outgoing×2, backlink×1). No extra API calls.\nOrder is preserved (by timestamp desc); no extra sorting after filtering.", params: [
       { key: "pageNames" },
       { key: "options" }
   ] },
-  { name: "getTopRelatedPages", description: "Get the list of page titles that appear in the top N% of related changes by score.\nSame options as getTopRelatedChanges; returns unique page names in order of first appearance,\neach with the score from the first change that introduced that page (static per page).", params: [
+  { name: "getTopRelatedPages", description: "Get the list of page titles that appear in the top N% of related changes by score.\nSame options as getTopRelatedChanges; returns unique page names in order of first appearance,\neach with the score from the first change that introduced that page (static per page),\nplus the changes that were retrieved as part of the scoring process (with sourcePageNames and link-type info).", params: [
       { key: "pageNames" },
       { key: "options" }
   ] },
@@ -141,6 +141,10 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getUserCategory", description: "Get a user's category (cache-aware main entry point).\nReads from category cache when available; otherwise fetches user info and caches the result.", params: [
       { key: "userName", description: "Username to classify" }
   ] },
+  { name: "getUserCategoryDisplay", description: "Return display config (icon + color) for a user's category. Uses cache when available;\notherwise fetches user info and caches the category, then returns the display config.", params: [
+      { key: "userName", description: "Username to look up" },
+      { key: "options", description: "Optional overrides; `userTypeConfig` merges with the default per-category display config" }
+  ] },
   { name: "getEditSummaryHtml", description: "Get the HTML representation of an edit summary", params: [
       { key: "summary", description: "Edit summary to get the HTML representation of" },
       { key: "pageName", description: "Page name" }
@@ -168,5 +172,10 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getRevisionPredictionsFromOres", description: "Get damaging and goodfaith predictions from ORES (single request per batch).\nORES is a scoring aggregator; one call returns both models. Prefer this when\nLift Wing is unavailable or for lower latency on batch requests.", params: [
       { key: "revisionIds", description: "Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
+  ] },
+  { name: "runWithConcurrency", description: "Run async tasks with a concurrency limit; returns results in input order.", params: [
+      { key: "items" },
+      { key: "concurrency" },
+      { key: "fn" }
   ] },
 ]
