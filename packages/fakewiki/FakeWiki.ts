@@ -845,65 +845,44 @@ export class FakeWiki {
 	 * @param options.userNames - Array of usernames to include
 	 * @param options.pageNames - Array of page titles to include
 	 * @param options.limit - Maximum total number of revisions to return (default and max: PAGE_HISTORY_REVISIONS_PER_REQUEST)
-	 * @param options.after - Revision ID (as string) - only returns revisions older than this
+	 * @param options.after - Map of source (page name or user name) → revision ID to fetch revisions older than (per source). Ensures every page/user keeps paginating.
 	 * @returns Array of revisions sorted by timestamp (newest first), deduplicated by revision ID
 	 */
 	async getCombinedFeed(options: {
 		userNames?: string[]
 		pageNames?: string[]
 		limit?: number
-		after?: string // Revision ID (as string) - for pagination
+		after?: Record<string, string>
 	}): Promise<FWCachedRevision[]> {
 		const {
 			userNames = [],
 			pageNames = [],
 			limit = PAGE_HISTORY_REVISIONS_PER_REQUEST,
-			after,
+			after: afterMap,
 		} = options
 		const totalLimit = Math.min(Math.max(limit, 1), PAGE_HISTORY_REVISIONS_PER_REQUEST)
 		const allRevisions: FWCachedRevision[] = []
 		const seenIds = new Set<number>()
 
-		// Convert 'after' revision ID to a timestamp for user-history cursors
-		// and to find page-specific older_than revision IDs.
-		let afterTimestampIso: string | undefined = undefined
-		let afterTimestamp: number | undefined = undefined
-		let afterPageName: string | undefined = undefined
-		if (after) {
-			const afterId = parseInt(after, 10)
-			// Try to find the timestamp and page in caches
-			for (const [pageName, cached] of this.pageHistoryCache) {
-				const rev = cached.find(r => r.id === afterId)
-				if (rev) {
-					afterTimestampIso = rev.timestamp
-					afterTimestamp = new Date(rev.timestamp).getTime()
-					afterPageName = pageName
-					break
+		// Fetch user contributions - per-user cursor from afterMap (look up rev id in cache for timestamp).
+		if (userNames.length > 0) {
+			const userPromises = userNames.map(async userName => {
+				let userOptions: FWHistoryOptions = {
+					limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
 				}
-			}
-			if (!afterTimestampIso) {
-				for (const [, cached] of this.userHistoryCache) {
-					const rev = cached.find(r => r.id === afterId)
+				const afterRevId = afterMap?.[userName]
+				if (afterRevId) {
+					const cached = this.userHistoryCache.get(userName) || []
+					const rev = cached.find(r => r.id === parseInt(afterRevId, 10))
 					if (rev) {
-						afterTimestampIso = rev.timestamp
-						afterTimestamp = new Date(rev.timestamp).getTime()
-						break
+						userOptions.older_than = rev.timestamp
 					}
 				}
-			}
-		}
-
-		// Fetch user contributions - caching handled internally
-		if (userNames.length > 0) {
-			const userOptions: FWHistoryOptions = {
-				limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
-			}
-			if (afterTimestampIso) {
-				userOptions.older_than = afterTimestampIso
-			}
-			const userResultsMap = await this.getUsersHistory(userNames, userOptions)
-
-			for (const [, history] of userResultsMap) {
+				const history = await this.getUserHistory(userName, userOptions)
+				return { userName, history }
+			})
+			const userResults = await Promise.all(userPromises)
+			for (const { history } of userResults) {
 				if (history.revisions) {
 					for (const rev of history.revisions) {
 						if (rev.id && !seenIds.has(rev.id)) {
@@ -915,24 +894,14 @@ export class FakeWiki {
 			}
 		}
 
-		// Fetch page histories - use older_than (revision ID) when available.
+		// Fetch page histories - per-page cursor from afterMap.
 		if (pageNames.length > 0) {
 			const pagePromises = pageNames.map(async pageName => {
 				try {
-					let options: FWHistoryOptions = {}
-					if (after && afterTimestamp !== undefined) {
-						if (pageName === afterPageName) {
-							options = { older_than: after }
-						} else {
-							// Find a revision ID from this page that's older than after
-							const pageCached = this.pageHistoryCache.get(pageName) || []
-							const olderRev = pageCached
-								.filter(r => new Date(r.timestamp).getTime() < afterTimestamp!)
-								.sort((a, b) => a.id - b.id)[0]
-							if (olderRev) {
-								options = { older_than: String(olderRev.id) }
-							}
-						}
+					const options: FWHistoryOptions = {}
+					const pageAfter = afterMap?.[pageName]
+					if (pageAfter) {
+						options.older_than = pageAfter
 					}
 					const history = await this.getPageHistory(pageName, options)
 					return { pageName, revisions: history.revisions || [] }
@@ -952,15 +921,8 @@ export class FakeWiki {
 			}
 		}
 
-		// If we know the "after" timestamp, enforce it after merging to avoid
-		// leaking newer revisions from sources without a page-specific cursor.
-		const filteredByAfter =
-			afterTimestamp !== undefined
-				? allRevisions.filter(rev => new Date(rev.timestamp).getTime() < afterTimestamp)
-				: allRevisions
-
 		// Sort by timestamp (newest first), then limit
-		return filteredByAfter
+		return allRevisions
 			.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 			.slice(0, totalLimit)
 	}
@@ -1514,7 +1476,7 @@ export class FakeWiki {
 		pageNames: string[],
 		options: FWTopRelatedOptions = {}
 	): Promise<FWTopRelatedChange[]> {
-		const { percentage = 15, scoreMultipliers = {}, limit = 50, days = 7, from } = options
+		const { percentage = 10, scoreMultipliers = {}, limit = 50, days = 7, from } = options
 		const bidir = scoreMultipliers.bidirectional ?? 4
 		const out = scoreMultipliers.outgoing ?? 2
 		const back = scoreMultipliers.backlink ?? 1

@@ -26,7 +26,7 @@ export function useFeed({
 	const errors = ref<string[]>([])
 	const hasMore = ref(true) // Whether there are more revisions to load
 
-	async function loadFeed(after?: string, append = false): Promise<void> {
+	async function loadFeed(after?: Record<string, string>, append = false): Promise<void> {
 		if (!append) {
 			isLoading.value = true
 			errors.value = []
@@ -119,9 +119,23 @@ export function useFeed({
 
 	async function loadMore(): Promise<void> {
 		if (allRevisionsData.value.length === 0) return
-		const oldestRevision = allRevisionsData.value[allRevisionsData.value.length - 1]
-		if (!oldestRevision) return
-		await loadFeed(String(oldestRevision.id), true)
+		const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
+		const userNames = userSearchQueries.value.filter(name => name.trim() !== "")
+		const afterMap: Record<string, string> = {}
+		for (const pageName of pageNames) {
+			const revs = allRevisionsData.value.filter(r => r.pageName === pageName)
+			if (revs.length > 0) {
+				afterMap[pageName] = String(Math.min(...revs.map(r => r.id)))
+			}
+		}
+		for (const userName of userNames) {
+			const revs = allRevisionsData.value.filter(r => r.user?.name === userName)
+			if (revs.length > 0) {
+				afterMap[userName] = String(Math.min(...revs.map(r => r.id)))
+			}
+		}
+		if (Object.keys(afterMap).length === 0) return
+		await loadFeed(afterMap, true)
 	}
 
 	return {

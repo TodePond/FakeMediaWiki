@@ -179,7 +179,7 @@ export function useRelatedRecommendations({
 			processingLoaded: 0,
 		}
 		const allProcessed: FeedRevision[] = []
-		let after: string | undefined
+		let afterMap: Record<string, string> | undefined
 		let fetchRound = 0
 		const processingLoadedCount = ref(0)
 		const processingTotalCount = ref(0)
@@ -193,7 +193,7 @@ export function useRelatedRecommendations({
 			const revisions = await wiki.getCombinedFeed({
 				pageNames: titlesToLoad,
 				limit: RECOMMENDATION_HISTORY_LIMIT,
-				after,
+				after: afterMap,
 			})
 			if (revisions.length === 0) break
 			processingTotalCount.value += revisions.length
@@ -229,7 +229,16 @@ export function useRelatedRecommendations({
 				break
 			}
 			if (revisions.length < RECOMMENDATION_HISTORY_LIMIT) break
-			after = String(oldestInBatch.id)
+			// Per-page cursor so every recommended page keeps paginating (fixes missing history e.g. The Beatles on 20th).
+			afterMap = {}
+			for (const pageName of titlesToLoad) {
+				const revsForPage = allProcessed.filter(r => r.pageName === pageName)
+				if (revsForPage.length > 0) {
+					const oldestId = Math.min(...revsForPage.map(r => r.id))
+					afterMap[pageName] = String(oldestId)
+				}
+			}
+			if (Object.keys(afterMap).length === 0) break
 		}
 
 		allProcessed.sort(
@@ -305,10 +314,19 @@ export function useRelatedRecommendations({
 			)
 			const oldestRecTs = new Date(oldestRec.timestamp).getTime()
 			if (oldestRecTs <= oldestUserTs) break
+			// Per-page cursor so every page keeps paginating (same as loadRecommendations).
+			const afterMap: Record<string, string> = {}
+			for (const pageName of pages) {
+				const revsForPage = recs.filter(r => r.pageName === pageName)
+				if (revsForPage.length > 0) {
+					afterMap[pageName] = String(Math.min(...revsForPage.map(r => r.id)))
+				}
+			}
+			if (Object.keys(afterMap).length === 0) break
 			const revisions = await wiki.getCombinedFeed({
 				pageNames: pages,
 				limit: RECOMMENDATION_HISTORY_LIMIT,
-				after: String(oldestRec.id),
+				after: afterMap,
 			})
 			if (revisions.length === 0) break
 			const newRevs = revisions.filter(r => !existingIds.has(r.id))

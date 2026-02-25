@@ -140,11 +140,11 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 	{
 		type: "prototype",
 		id: "RecommendationWatchlist",
-		name: "Link recommendation feed",
+		name: "List-building recommendation feed",
 		description: "Feed with recommended page changes inserted every now and then.",
 		category: "recommendations",
 		wrapper: "Fullscreen",
-		title: "Recommendation watchlist",
+		title: "List-building recommendation watchlist",
 		status: "new",
 		featured: true,
 	},

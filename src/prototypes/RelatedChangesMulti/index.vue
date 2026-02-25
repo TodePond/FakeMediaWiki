@@ -807,13 +807,13 @@ const showBidirectional = ref(filterState.bidirectional)
 
 function loadTopPercent(): number {
 	const raw = localStorage.getItem(topPercentStorageKey)
-	if (raw === null) return 15
+	if (raw === null) return 10
 	const n = Number(raw)
-	return Number.isFinite(n) ? Math.max(1, Math.min(100, Math.round(n))) : 15
+	return Number.isFinite(n) ? Math.max(1, Math.min(100, Math.round(n))) : 10
 }
 
 const scoreFilterId = "related-changes-multi-score-filter"
-/** Keep top N% by score (0–100). Default 15%. */
+/** Keep top N% by score (0–100). Default 10%. */
 const filterKeepPercent = ref(loadTopPercent())
 
 function saveTopPercent(): void {
