@@ -107,9 +107,11 @@
 												</span> </template
 											>)</template
 										>
-										<template v-else>(…)</template></span
-									><br /></span
-								><a
+										<template v-else>(...)</template></span
+									>
+								</span>
+								<br
+								/><a
 									target="_blank"
 									:href="wiki.getUserUrl(change.user.name)"
 									class="history-user"
@@ -132,7 +134,12 @@
 										type="button"
 										:class="[
 											'history-delta',
-											wiki.getDeltaClass(change.delta ?? 0, false),
+											!mostSignificantByRevId.get(change.id) &&
+											!loadingEditTypesIds.has(change.id)
+												? wiki.getDeltaClass(change.delta ?? 0, false)
+												: '',
+											mostSignificantByRevId.get(change.id)?.segments?.[0]
+												?.deltaClass ?? '',
 											{
 												'history-delta-expanded': expandedDiffIds.has(
 													change.id
@@ -141,7 +148,34 @@
 										]"
 										@click.stop="toggleDiff(change)"
 									>
-										{{ formatDeltaWithCharacters(change.delta) }}
+										<span class="history-delta-inline-info"
+											><template v-if="mostSignificantByRevId.get(change.id)"
+												>(<template
+													v-for="(seg, i) in mostSignificantByRevId.get(
+														change.id
+													)!.segments"
+													:key="i"
+												>
+													<span :class="['history-delta', seg.deltaClass]">{{
+														seg.text
+													}}</span
+													><span
+														v-if="
+															i <
+															mostSignificantByRevId.get(change.id)!.segments
+																.length -
+																1
+														"
+														>,
+													</span> </template
+												>)</template
+											>
+											<template v-else>{{
+												loadingEditTypesIds.has(change.id)
+													? "(...)"
+													: formatDeltaWithCharacters(change.delta)
+											}}</template></span
+										>
 									</button>
 									<button
 										type="button"
@@ -177,42 +211,6 @@
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
-								<div class="change-types-block significant-changes-block">
-									<div class="change-types-label">Significant changes</div>
-									<div
-										v-if="loadingEditTypesIds.has(change.id)"
-										class="change-types-loading"
-									>
-										<CdxProgressBar inline />
-									</div>
-									<div
-										v-else-if="editTypesErrorByRevId.get(change.id)"
-										class="change-types-error"
-									>
-										{{ editTypesErrorByRevId.get(change.id) }}
-									</div>
-									<div
-										v-else-if="
-											mostSignificantByRevId.get(change.id)?.segments?.length
-										"
-										class="significant-change-cards"
-									>
-										<div
-											v-for="(seg, idx) in mostSignificantByRevId.get(
-												change.id
-											)!.segments"
-											:key="`${change.id}-${idx}-${seg.text}`"
-											:class="['significant-change-card', seg.deltaClass]"
-										>
-											<span class="significant-change-card-text">{{
-												seg.text
-											}}</span>
-										</div>
-									</div>
-									<div v-else class="change-types-empty">
-										No significant changes
-									</div>
-								</div>
 								<footer class="history-expanded-footer">
 									<button
 										type="button"
@@ -512,7 +510,11 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
-import type { FWEditTypesDiffDetails, FWEditTypesDiffSummary, FWRevision } from "fakewiki/types"
+import type {
+	FWEditTypesDiffDetails,
+	FWEditTypesDiffSummary,
+	FWRevision,
+} from "fakewiki/types"
 import { computed, onMounted, ref, watch } from "vue"
 import { getSummaryForDisplay } from "../ChangeTypesWatchlist/changeTypesDisplay"
 import { useChangeTypesWatchlist } from "../ChangeTypesWatchlist/useChangeTypesWatchlist"
@@ -555,9 +557,9 @@ const SIGNIFICANCE_ORDER = [
 	"ExternalLink",
 	"Template",
 	"Reference",
+	"Punctuation",
 	"Word",
 	"Whitespace",
-	"Punctuation",
 	"Comment",
 ] as const
 
@@ -607,6 +609,16 @@ function getMostSignificantChange(
 ): { segments: Array<{ text: string; deltaClass: string }> } | null {
 	const summary = displaySummaryByRevId.value.get(revId)
 	if (!summary || typeof summary !== "object" || Object.keys(summary).length === 0) return null
+	const hasSimpleInlineSignal = ["Punctuation", "Word", "Whitespace", "Comment"].some(canonical => {
+		const key = normalizeTypeKey(summary, canonical)
+		if (!key) return false
+		const actions = summary[key]
+		if (!actions || typeof actions !== "object") return false
+		for (const count of Object.values(actions)) {
+			if (typeof count === "number" && count > 0) return true
+		}
+		return false
+	})
 	type InlineCandidate = {
 		text: string
 		deltaClass: string
@@ -639,6 +651,17 @@ function getMostSignificantChange(
 		if (total === 0) continue
 		// Avoid noisy section mentions for pure change/move updates.
 		if (canonical === "Section" && insertC === 0 && removeC === 0) continue
+		// Lone high-level change-only signals often accompany simple punctuation/word edits.
+		// In those cases, prefer the specific low-level signal.
+		if (
+			(canonical === "Paragraph" || canonical === "Sentence") &&
+			insertC === 0 &&
+			removeC === 0 &&
+			changeC === 1 &&
+			hasSimpleInlineSignal
+		) {
+			continue
+		}
 		if (insertC > 0 && removeC === 0 && changeC === 0) {
 			const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
 			candidates.push({ text, deltaClass: deltaClasses.insert, kind: "insert" })
@@ -663,21 +686,12 @@ function getMostSignificantChange(
 	}
 	if (candidates.length === 0) return null
 
-	// Default to one metric; only add a second when primary is change-only and
-	// we can pair it with an insert/remove metric for clearer signal.
+	// Keep the inline summary to a single top metric to avoid noisy mixed signals
+	// in complex edits (e.g. "↻2 paragraphs, +1 word").
 	const primary = candidates[0]
 	const segments: Array<{ text: string; deltaClass: string }> = [
 		{ text: primary.text, deltaClass: primary.deltaClass },
 	]
-	if (primary.kind === "change") {
-		const secondary = candidates.find(c => c.kind === "insert" || c.kind === "remove")
-		if (secondary) {
-			segments.push({ text: secondary.text, deltaClass: secondary.deltaClass })
-			// When we already show a concrete inserted/removed detail, "changed 1 paragraph"
-			// is usually redundant noise in the inline label.
-			if (primary.text === "↻1 paragraph") segments.shift()
-		}
-	}
 
 	return { segments }
 }
@@ -905,6 +919,7 @@ interface DetailCardRow {
 	badgeClass: string
 	rawValue?: unknown
 }
+
 function getVisibleKeysForSection(sectionKey: string): string[] {
 	const k = sectionKey.toLowerCase()
 	if (k === "nodes" || k === "node-edits" || k === "node_edits")

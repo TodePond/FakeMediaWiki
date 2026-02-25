@@ -40,7 +40,8 @@
 	margin-right: 0.2rem;
 }
 
-.change-types-watchlist-inline .history-row > .history-delta .history-delta-inline-info {
+.change-types-watchlist-inline .history-row > .history-delta .history-delta-inline-info,
+.change-types-watchlist-inline .history-expanded .history-delta .history-delta-inline-info {
 	display: inline-block;
 	white-space: nowrap;
 }
@@ -419,18 +420,66 @@ div.change-types-details-context-line {
 .change-types-watchlist-inline .significant-change-cards {
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
+	gap: 0.5rem;
 }
 
 .change-types-watchlist-inline .significant-change-card {
 	display: flex;
-	align-items: center;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.35rem;
+	padding: 0.5rem 0.75rem;
+	background-color: var(--background-color-subtle, #f8f9fa);
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	font-size: 0.875rem;
+	line-height: 1.4;
+}
+
+.change-types-watchlist-inline .significant-change-card-text {
+	font-weight: 600;
+}
+
+.change-types-watchlist-inline .significant-change-card-detail-row {
+	display: flex;
+	align-items: flex-start;
 	gap: 0.4rem;
-	padding: 0.45rem 0.6rem;
-	border-radius: 6px;
+	width: 100%;
+	min-width: 0;
+}
+
+.change-types-watchlist-inline .significant-change-card-detail {
+	color: var(--color-base);
 	font-size: 0.8125rem;
 	line-height: 1.35;
-	font-weight: 600;
+	min-width: 0;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.change-types-watchlist-inline .significant-change-card-detail-expanded {
+	white-space: normal;
+	overflow: visible;
+	text-overflow: clip;
+	word-break: break-word;
+}
+
+.change-types-watchlist-inline .significant-change-card-toggle {
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	color: var(--color-progressive);
+	cursor: pointer;
+	font-size: 0.75rem;
+	line-height: 1.2;
+	flex-shrink: 0;
+}
+
+.change-types-watchlist-inline .significant-change-card-toggle:hover {
+	text-decoration: underline;
 }
 
 .change-types-watchlist-inline .significant-change-card.change-types-delta-add {
