@@ -147,19 +147,34 @@
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
-								<!-- Change type details (edit-types API) -->
-								<div class="change-types-block change-types-details-block">
-									<div
-										v-if="loadingEditTypesIds.has(change.id)"
-										class="change-types-loading"
-									>
+								<!-- Change types summary (same as summary variant) -->
+								<div class="change-types-block">
+									<div class="change-types-label">Change types</div>
+									<div v-if="loadingEditTypesIds.has(change.id)" class="change-types-loading">
 										<CdxProgressBar inline />
 									</div>
-									<div
-										v-else-if="editTypesErrorByRevId.get(change.id)"
-										class="change-types-error"
-									>
+									<div v-else-if="editTypesErrorByRevId.get(change.id)" class="change-types-error">
 										{{ editTypesErrorByRevId.get(change.id) }}
+									</div>
+									<ul v-else-if="displaySummaryByRevId.get(change.id)" class="change-types-list">
+										<li
+											v-for="row in getChangeTypeRows(displaySummaryByRevId.get(change.id)!)"
+											:key="row.key"
+											class="change-types-row"
+										>
+											<span class="change-types-type">{{ row.typeName }}</span>
+											<span :class="['change-types-delta', row.deltaClass]">{{ row.symbol }}{{ row.count }}</span>
+										</li>
+									</ul>
+									<div v-else class="change-types-empty">No change types</div>
+								</div>
+								<!-- Change type details (additive: dropdowns) -->
+								<div class="change-types-block change-types-details-block">
+									<div v-if="loadingDetailsIds.has(change.id)" class="change-types-loading">
+										<CdxProgressBar inline />
+									</div>
+									<div v-else-if="detailsErrorByRevId.get(change.id)" class="change-types-error">
+										{{ detailsErrorByRevId.get(change.id) }}
 									</div>
 									<template v-else-if="editTypesDetailsByRevId.get(change.id)">
 										<div class="change-types-label change-types-details-label">
@@ -779,123 +794,72 @@
 
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
-import console from "console"
 import { FakeWiki } from "fakewiki"
-import type {
-	FWCompareResponse,
-	FWEditTypesDiffDetails,
-	FWPageHistoryResponse,
-	FWPageHistoryRevision,
-	FWRevision,
-} from "fakewiki/types"
+import type { FWEditTypesDiffDetails, FWEditTypesDiffSummary, FWRevision } from "fakewiki/types"
 import { computed, onMounted, ref } from "vue"
-
-/** History revision with edit summary rendered as HTML */
-interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
-	commentHtml: string
-}
+import { getChangeTypeRows, getSummaryForDisplay } from "../ChangeTypesWatchlist/changeTypesDisplay"
+import { useChangeTypesWatchlist } from "../ChangeTypesWatchlist/useChangeTypesWatchlist"
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ChangeTypesWatchlistDetails"
-
-const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
-const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
-const defaultPageSearchQueries = [
-	"Wikipedia",
-	"Wet Leg",
-	"Water",
-	"Confidence Man (band)",
-	"Algorave",
-]
-const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
-const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
-const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
-const pageQueriesInput = ref(pageSearchQueries.value.join(", "))
-const userQueriesInput = ref(userSearchQueries.value.join(", "))
-
+const DEFAULT_PAGE_QUERIES = ["Wikipedia", "Wet Leg", "Water", "Confidence Man (band)", "Algorave"]
+const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
 const MAX_VALUE_LENGTH = 120
 
-function syncPageQueriesFromInput(): void {
-	pageSearchQueries.value = pageQueriesInput.value
-		.split(",")
-		.map(s => s.trim())
-		.filter(Boolean)
-}
-function syncUserQueriesFromInput(): void {
-	userSearchQueries.value = userQueriesInput.value
-		.split(",")
-		.map(s => s.trim())
-		.filter(Boolean)
-}
-
-const allRevisionsData = ref<FWRevision[]>([])
-const isLoading = ref(false)
-const isLoadingMore = ref(false)
-const errors = ref<string[]>([])
-const hasMore = ref(true)
-
-const expandedDiffIds = ref<Set<number>>(new Set())
-const loadedDiffs = ref<Map<number, FWCompareResponse>>(new Map())
-const loadingDiffIds = ref<Set<number>>(new Set())
-
-const expandedHistoryIds = ref<Set<number>>(new Set())
-const expandedHistoryDiffIds = ref<Map<number, Set<number>>>(new Map())
-const loadedHistories = ref<
-	Map<
-		string,
-		Omit<FWPageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }
-	>
->(new Map())
-const loadingHistoryPageNames = ref<Set<string>>(new Set())
-
-const expandedItemIds = ref<Set<number>>(new Set())
-const expandedTalkIds = ref<Set<number>>(new Set())
-const talkPageText = ref<Map<number, string>>(new Map())
-const editorMode = ref<Map<number, "visual" | "source">>(new Map())
-
-const thankedRevisionIds = ref<Set<number>>(new Set())
-const risingHearts = ref<Array<{ id: number; x: number; y: number; type: "thank" | "unthank" }>>([])
-let nextHeartId = 0
-const HEART_RISE_DURATION_MS = 2500
-
-/** Edit-types: details per revision id */
-const editTypesDetailsByRevId = ref<Map<number, FWEditTypesDiffDetails | null>>(new Map())
+/** Summary (same as summary variant) */
+const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
 const editTypesErrorByRevId = ref<Map<number, string>>(new Map())
 const loadingEditTypesIds = ref<Set<number>>(new Set())
 
-/** Expanded long values: key is "revId-sectionKey-itemIdx-rowKey" for "… more" / "less" */
-const expandedDetailValues = ref<Set<string>>(new Set())
+/** Details (additive) */
+const editTypesDetailsByRevId = ref<Map<number, FWEditTypesDiffDetails | null>>(new Map())
+const detailsErrorByRevId = ref<Map<number, string>>(new Map())
+const loadingDetailsIds = ref<Set<number>>(new Set())
 
-/** Section (Context / Node edits / Text edits) collapsed: key = "revId-sectionKey" */
+const expandedDetailValues = ref<Set<string>>(new Set())
 const collapsedDetailsSectionKeys = ref<Set<string>>(new Set())
-/** Item (card) collapsed: key = "revId-sectionKey-idx" */
 const collapsedDetailsItemKeys = ref<Set<string>>(new Set())
 
-function expandedDetailKey(
-	revId: number,
-	sectionKey: string,
-	itemIdx: number,
-	rowKey: string
-): string {
-	return `${revId}-${sectionKey}-${itemIdx}-${rowKey}`
+const displaySummaryByRevId = computed(() => {
+	const map = new Map<number, ReturnType<typeof getSummaryForDisplay>>()
+	for (const [revId, raw] of editTypesByRevId.value) {
+		map.set(revId, getSummaryForDisplay(raw as Record<string, unknown>))
+	}
+	return map
+})
+
+function loadEditTypesSummary(revId: number): void {
+	if (editTypesByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) return
+	loadingEditTypesIds.value = new Set(loadingEditTypesIds.value).add(revId)
+	wiki.getEditTypesDiffSummary(revId)
+		.then(summary => {
+			editTypesByRevId.value = new Map(editTypesByRevId.value).set(revId, summary)
+			editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value)
+			editTypesErrorByRevId.value.delete(revId)
+			loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
+			loadingEditTypesIds.value.delete(revId)
+		})
+		.catch(e => {
+			const msg = e instanceof Error ? e.message : String(e)
+			editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value).set(revId, msg)
+			editTypesByRevId.value = new Map(editTypesByRevId.value).set(revId, null)
+			loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
+			loadingEditTypesIds.value.delete(revId)
+		})
 }
 
 function detailsSectionKey(revId: number, sectionKey: string): string {
 	return `${revId}-${sectionKey}`
 }
-
 function detailsItemKey(revId: number, sectionKey: string, idx: number): string {
 	return `${revId}-${sectionKey}-${idx}`
 }
-
 function isSectionCollapsed(revId: number, sectionKey: string): boolean {
 	return collapsedDetailsSectionKeys.value.has(detailsSectionKey(revId, sectionKey))
 }
-
 function isDetailItemCollapsed(revId: number, sectionKey: string, idx: number): boolean {
 	return collapsedDetailsItemKeys.value.has(detailsItemKey(revId, sectionKey, idx))
 }
-
 function toggleDetailsSection(revId: number, sectionKey: string): void {
 	const key = detailsSectionKey(revId, sectionKey)
 	const next = new Set(collapsedDetailsSectionKeys.value)
@@ -903,7 +867,6 @@ function toggleDetailsSection(revId: number, sectionKey: string): void {
 	else next.add(key)
 	collapsedDetailsSectionKeys.value = next
 }
-
 function toggleDetailsItem(revId: number, sectionKey: string, idx: number): void {
 	const key = detailsItemKey(revId, sectionKey, idx)
 	const next = new Set(collapsedDetailsItemKeys.value)
@@ -912,63 +875,28 @@ function toggleDetailsItem(revId: number, sectionKey: string, idx: number): void
 	collapsedDetailsItemKeys.value = next
 }
 
-/** Human-readable section key; known keys get friendly titles */
+const SECTION_TITLES: Record<string, string> = {
+	context: "Context",
+	"node-edits": "Node edits", node_edits: "Node edits", nodes: "Node edits",
+	"text-edits": "Text edits", text_edits: "Text edits", text: "Text edits",
+}
 function humanizeSectionKey(key: string): string {
-	const map: Record<string, string> = {
-		context: "Context",
-		"node-edits": "Node edits",
-		node_edits: "Node edits",
-		nodes: "Node edits",
-		"text-edits": "Text edits",
-		text_edits: "Text edits",
-		text: "Text edits",
-	}
-	return map[key] ?? key.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+	return SECTION_TITLES[key] ?? key.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
 }
 
-/**
- * Edit-types API returns { article, summary, details: { context, nodes, text } }.
- * We only use the inner details object for sections (context, nodes, text).
- * We never treat "article" as an array or use it for sections; summary is parsed separately via getSummaryFromResponse.
- */
 function getDetailsPayload(details: FWEditTypesDiffDetails | null): Record<string, unknown> | null {
 	if (!details || typeof details !== "object") return null
 	const inner = (details as { details?: Record<string, unknown> }).details
 	if (inner && typeof inner === "object") return inner
-	// No nested details: extract only context/nodes/text so we never pass article or summary to sections
 	const result: Record<string, unknown> = {}
-	const keys = ["context", "nodes", "text", "node-edits", "text-edits"]
-	for (const key of keys) {
+	for (const key of ["context", "nodes", "text", "node-edits", "text-edits"]) {
 		const val = (details as Record<string, unknown>)[key]
 		if (Array.isArray(val)) result[key] = val
 	}
 	return Object.keys(result).length > 0 ? result : null
 }
 
-/** Order for "type" field: biggest structural units first (paragraph > sentence > word). Lower rank = earlier. */
-const TYPE_ORDER: Record<string, number> = {
-	Section: 0,
-	Paragraph: 1,
-	Sentence: 2,
-	Word: 3,
-	Template: 4,
-	Wikilink: 5,
-	Heading: 6,
-	List: 7,
-	Punctuation: 8,
-	Whitespace: 9,
-}
-
-function getTypeRank(type: unknown): number {
-	if (type == null || typeof type !== "string") return 999
-	const rank = TYPE_ORDER[type]
-	return rank !== undefined ? rank : 999
-}
-
-/** Sections from details payload: only known section keys (context, nodes, text). Ignore article, summary, etc. */
-function getDetailsSections(
-	details: FWEditTypesDiffDetails
-): Array<{ key: string; title: string; items: unknown[] }> {
+function getDetailsSections(details: FWEditTypesDiffDetails): Array<{ key: string; title: string; items: unknown[] }> {
 	const payload = getDetailsPayload(details)
 	if (!payload) return []
 	const order = ["context", "nodes", "text", "node-edits", "text-edits"]
@@ -976,30 +904,22 @@ function getDetailsSections(
 	for (const key of order) {
 		const val = payload[key]
 		if (Array.isArray(val) && val.length > 0) {
-			const items = [...val].sort((a, b) => {
-				const aRank = isDetailObject(a) && a.type != null ? getTypeRank(a.type) : 999
-				const bRank = isDetailObject(b) && b.type != null ? getTypeRank(b.type) : 999
-				return aRank - bRank
-			})
+			const items = [...val]
 			sections.push({ key, title: humanizeSectionKey(key), items })
 		}
 	}
 	return sections
 }
-
 function hasAnyDetailsSections(details: FWEditTypesDiffDetails): boolean {
 	return getDetailsSections(details).length > 0
 }
-
 function isDetailObject(item: unknown): item is Record<string, unknown> {
 	return item !== null && typeof item === "object" && !Array.isArray(item)
 }
-
 function isContextSection(sectionKey: string): boolean {
 	return sectionKey.toLowerCase() === "context"
 }
 
-/** Content to show for a context item (non-expandable line). */
 function getContextItemContent(item: Record<string, unknown>): string {
 	const v = item.text ?? item.name ?? item.title ?? item.value
 	if (v == null) return ""
@@ -1007,34 +927,12 @@ function getContextItemContent(item: Record<string, unknown>): string {
 	return formatDetailValue(v)
 }
 
-/** Summary-variant style: type name + colored symbol + count (e.g. "Paragraph ↻1", "Word -4") */
-function getDetailItemSummaryRow(item: Record<string, unknown>): {
-	typeName: string
-	symbol: string
-	count: number
-	deltaClass: string
-} {
-	const typeName = String(item.type ?? item.edittype ?? "Item")
-	const op = getDetailItemOperation(item)
-	const count = typeof item.count === "number" ? item.count : 1
-	const actionDisplay: Record<string, { symbol: string; deltaClass: string }> = {
-		insert: { symbol: "+", deltaClass: "change-types-delta-add" },
-		remove: { symbol: "-", deltaClass: "change-types-delta-remove" },
-		change: { symbol: "↻", deltaClass: "change-types-delta-change" },
-	}
-	const display = op ? actionDisplay[op] : { symbol: "", deltaClass: "change-types-delta-change" }
-	return {
-		typeName,
-		symbol: display.symbol,
-		count,
-		deltaClass: display.deltaClass,
-	}
+const ACTION_DISPLAY: Record<string, { symbol: string; deltaClass: string }> = {
+	insert: { symbol: "+", deltaClass: "change-types-delta-add" },
+	remove: { symbol: "-", deltaClass: "change-types-delta-remove" },
+	change: { symbol: "↻", deltaClass: "change-types-delta-change" },
 }
-
-/** Operation type for row color coding: insert → green, remove → red, change → blue */
-function getDetailItemOperation(
-	item: Record<string, unknown>
-): "insert" | "remove" | "change" | null {
+function getDetailItemOperation(item: Record<string, unknown>): "insert" | "remove" | "change" | null {
 	const edittype = (item.edittype ?? item.action) as string | undefined
 	if (edittype == null || typeof edittype !== "string") return null
 	const v = edittype.toLowerCase()
@@ -1042,6 +940,13 @@ function getDetailItemOperation(
 	if (v === "remove" || v === "delete") return "remove"
 	if (v === "change" || v === "move") return "change"
 	return null
+}
+function getDetailItemSummaryRow(item: Record<string, unknown>): { typeName: string; symbol: string; count: number; deltaClass: string } {
+	const typeName = String(item.type ?? item.edittype ?? "Item")
+	const op = getDetailItemOperation(item)
+	const count = typeof item.count === "number" ? item.count : 1
+	const display = op ? ACTION_DISPLAY[op] : { symbol: "", deltaClass: "change-types-delta-change" }
+	return { typeName, symbol: display.symbol, count, deltaClass: display.deltaClass }
 }
 
 function formatDetailValue(v: unknown): string {
@@ -1051,63 +956,24 @@ function formatDetailValue(v: unknown): string {
 	if (typeof v === "number" || typeof v === "boolean") return String(v)
 	if (Array.isArray(v)) {
 		if (v.length === 0) return "[]"
-		// Short array of primitives: show inline
-		if (v.every(item => item === null || typeof item !== "object")) {
-			return v.map(item => formatDetailValue(item)).join(", ")
-		}
+		if (v.every(item => item === null || typeof item !== "object")) return v.map(item => formatDetailValue(item)).join(", ")
 		return `[${v.length} items]`
 	}
 	if (typeof v === "object") return "[object]"
 	return String(v)
 }
 
-/** Human-friendly labels for detail card keys so it's clear what each value refers to */
 const DETAIL_KEY_LABELS: Record<string, string> = {
-	type: "Type",
-	edittype: "Edit type",
-	action: "Action",
-	name: "Name",
-	title: "Title",
-	label: "Label",
-	section: "Section",
-	before: "Before",
-	after: "After",
-	old: "Old value",
-	new: "New value",
-	key: "Key",
-	value: "Value",
-	text: "Content",
-	content: "Content",
-	changes: "Changes",
-	count: "Count",
+	type: "Type", edittype: "Edit type", action: "Action", name: "Name", title: "Title", label: "Label",
+	section: "Section", before: "Before", after: "After", old: "Old value", new: "New value",
+	key: "Key", value: "Value", text: "Content", content: "Content", changes: "Changes", count: "Count",
 }
-
 function getDetailRowLabel(key: string): string {
 	const k = key.toLowerCase()
 	return DETAIL_KEY_LABELS[k] ?? key.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
 }
+const DETAIL_KEY_ORDER = ["type", "action", "edittype", "name", "title", "label", "section", "before", "after", "old", "new", "key", "value", "text", "count", "changes"]
 
-/** Priority order for object keys: reference first, then change (before/after), then content */
-const DETAIL_KEY_ORDER = [
-	"type",
-	"action",
-	"edittype",
-	"name",
-	"title",
-	"label",
-	"section",
-	"before",
-	"after",
-	"old",
-	"new",
-	"key",
-	"value",
-	"text",
-	"count",
-	"changes",
-]
-
-/** Badge class for known keys (action/edittype) */
 function getBadgeClass(key: string, value: unknown): string {
 	const k = key.toLowerCase()
 	if ((k === "action" || k === "edittype") && typeof value === "string") {
@@ -1128,50 +994,35 @@ interface DetailCardRow {
 	truncated?: boolean
 	expandKey?: string
 	badgeClass: string
-	/** Original value for special rendering (e.g. changes array as table) */
 	rawValue?: unknown
 }
-
-/** Keys to show per section: node-edits use name/section/changes; text and context show type, edittype, content. */
 function getVisibleKeysForSection(sectionKey: string): string[] {
 	const k = sectionKey.toLowerCase()
-	if (k === "nodes" || k === "node-edits" || k === "node_edits")
-		return ["name", "section", "changes"]
-	if (k === "text" || k === "text-edits" || k === "text_edits")
-		return ["text"]
+	if (k === "nodes" || k === "node-edits" || k === "node_edits") return ["name", "section", "changes"]
+	if (k === "text" || k === "text-edits" || k === "text_edits") return ["text"]
 	if (k === "context") return ["type", "name", "text", "section", "label"]
-	// Fallback: show all except none
 	return ["type", "edittype", "name", "section", "text", "before", "after", "changes", "count"]
 }
 
-function getDetailCardRows(
-	obj: Record<string, unknown>,
-	revId: number,
-	sectionKey: string,
-	itemIdx: number
-): DetailCardRow[] {
+function expandedDetailKey(revId: number, sectionKey: string, itemIdx: number, rowKey: string): string {
+	return `${revId}-${sectionKey}-${itemIdx}-${rowKey}`
+}
+
+function getDetailCardRows(obj: Record<string, unknown>, revId: number, sectionKey: string, itemIdx: number): DetailCardRow[] {
 	const visible = getVisibleKeysForSection(sectionKey)
 	const keys = Object.keys(obj).filter(k => visible.includes(k.toLowerCase()))
-	const ordered = [
-		...DETAIL_KEY_ORDER.filter(k => keys.includes(k)),
-		...keys.filter(k => !DETAIL_KEY_ORDER.includes(k)),
-	]
+	const ordered = [...DETAIL_KEY_ORDER.filter(k => keys.includes(k)), ...keys.filter(k => !DETAIL_KEY_ORDER.includes(k))]
 	const rows: DetailCardRow[] = []
 	for (const key of ordered) {
 		const value = obj[key]
 		const raw = formatDetailValue(value)
-		if (key.toLowerCase() === "name" && (value == null || value === "" || raw === "null"))
-			continue
+		if (key.toLowerCase() === "name" && (value == null || value === "" || raw === "null")) continue
 		const truncated = raw.length > MAX_VALUE_LENGTH
 		const short = truncated ? raw.slice(0, MAX_VALUE_LENGTH) + "…" : raw
 		const expandKey = truncated ? expandedDetailKey(revId, sectionKey, itemIdx, key) : undefined
 		rows.push({
 			key,
-			label:
-				(sectionKey.toLowerCase() === "text" || sectionKey.toLowerCase() === "text-edits") &&
-				key.toLowerCase() === "text"
-					? ""
-					: getDetailRowLabel(key),
+			label: (sectionKey.toLowerCase() === "text" || sectionKey.toLowerCase() === "text-edits") && key.toLowerCase() === "text" ? "" : getDetailRowLabel(key),
 			raw,
 			short: truncated ? short : undefined,
 			truncated,
@@ -1190,18 +1041,13 @@ function toggleExpandedDetail(expandKey: string): void {
 	expandedDetailValues.value = next
 }
 
-/** Whether the value is a changes array (list of { change-type, prev, curr }). */
 function isChangesArray(v: unknown): v is Record<string, unknown>[] {
 	return Array.isArray(v) && v.length > 0 && v.every(isDetailObject)
 }
-
-/** Get change-type label from an item (supports change-type and change_type). */
 function getChangeTypeLabel(entry: Record<string, unknown>): string {
 	const t = entry["change-type"] ?? entry.change_type ?? entry.type
 	return t != null ? String(t) : "—"
 }
-
-/** Format a single prev/curr value for display: object with name+value as lines, else string. */
 function formatPrevCurrValue(v: unknown): string {
 	if (v === null || v === undefined) return "—"
 	if (typeof v === "string") return v
@@ -1211,484 +1057,106 @@ function formatPrevCurrValue(v: unknown): string {
 		const o = v as Record<string, unknown>
 		const name = o.name ?? o.key ?? o.param
 		const value = o.value ?? o.text
-		if (name != null && value !== undefined)
-			return `${String(name)}\n${formatPrevCurrValue(value)}`
-		return Object.entries(o)
-			.map(([k, val]) => `${k}: ${formatPrevCurrValue(val)}`)
-			.join("\n")
+		if (name != null && value !== undefined) return `${String(name)}\n${formatPrevCurrValue(value)}`
+		return Object.entries(o).map(([k, val]) => `${k}: ${formatPrevCurrValue(val)}`).join("\n")
 	}
 	return String(v)
 }
 
-onMounted(search)
-
-function saveSearchQueries(): void {
-	localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
-	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
-}
-
-function loadSearchQueries(key: string, defaultValues: string[]): string[] {
-	const savedSearchQueries = localStorage.getItem(key)
-	if (!savedSearchQueries) return defaultValues
-	try {
-		const parsed = JSON.parse(savedSearchQueries)
-		if (Array.isArray(parsed) && parsed.every(value => typeof value === "string")) {
-			return parsed
-		}
-	} catch {
-		// ignore
-	}
-	return defaultValues
-}
-
-async function loadFeed(after?: Record<string, string>, append = false): Promise<void> {
-	if (!append) {
-		isLoading.value = true
-		errors.value = []
-	} else {
-		isLoadingMore.value = true
-	}
-	const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
-	const userNames = userSearchQueries.value.filter(name => name.trim() !== "")
-	try {
-		const revisions = await wiki.getCombinedFeed({
-			pageNames,
-			userNames,
-			limit: 20,
-			after,
-		})
-		const processedRevisions = await Promise.all(
-			revisions.map(async revision => {
-				const pageName =
-					(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
-				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-				const toolbar = wiki.parseToolbarEditSummary(_summary)
-				const summary = toolbar
-					? toolbar
-					: {
-							comment: _summary,
-							hashtags: [],
-							other: [],
-							suggestedBy: null,
-							useThisBot: null,
-							reportBugs: null,
-						}
-				const commentText = summary.comment
-					? summary.comment +
-						(summary.suggestedBy
-							? " Suggested by [[User:" +
-								summary.suggestedBy +
-								"|" +
-								summary.suggestedBy +
-								"]]"
-							: "")
-					: ""
-				summary.comment = commentText
-					? await wiki.transformWikitextToHtml(commentText, pageName)
-					: ""
-				summary.hashtags = Array.isArray(summary.hashtags)
-					? summary.hashtags.join(" ")
-					: summary.hashtags
-				return {
-					...revision,
-					comment: revision.comment || "",
-					summary,
-					pageName,
-					avatarUrl: null,
-				} as FWRevision
-			})
-		)
-		if (append) {
-			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
-			const newRevisions = processedRevisions.filter(r => !existingIds.has(r.id))
-			const merged = [...allRevisionsData.value, ...newRevisions].sort(
-				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-			)
-			allRevisionsData.value = merged
-			hasMore.value = newRevisions.length > 0
-		} else {
-			allRevisionsData.value = processedRevisions
-			hasMore.value = processedRevisions.length === 20
-		}
-		isLoading.value = false
-		isLoadingMore.value = false
-	} catch (e) {
-		isLoading.value = false
-		isLoadingMore.value = false
-		const errorObj = e as Error
-		if (!append) {
-			errors.value = [errorObj.message]
-			allRevisionsData.value = []
-		}
-		hasMore.value = false
-	}
-}
-
-async function search(): Promise<void> {
-	await loadFeed(undefined, false)
-	saveSearchQueries()
-	expandedDiffIds.value = new Set()
-	loadedDiffs.value = new Map()
-	loadingDiffIds.value = new Set()
-	expandedHistoryIds.value = new Set()
-	expandedHistoryDiffIds.value = new Map()
-	loadedHistories.value = new Map()
-	loadingHistoryPageNames.value = new Set()
-	expandedItemIds.value = new Set()
-	expandedTalkIds.value = new Set()
-	editTypesDetailsByRevId.value = new Map()
-	editTypesErrorByRevId.value = new Map()
-	loadingEditTypesIds.value = new Set()
-	expandedDetailValues.value = new Set()
-	collapsedDetailsSectionKeys.value = new Set()
-	collapsedDetailsItemKeys.value = new Set()
-}
-
-async function loadMore(): Promise<void> {
-	if (allRevisionsData.value.length === 0) return
-	const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
-	const userNames = userSearchQueries.value.filter(name => name.trim() !== "")
-	const afterMap: Record<string, string> = {}
-	for (const pageName of pageNames) {
-		const revs = allRevisionsData.value.filter(r => r.pageName === pageName)
-		if (revs.length > 0) afterMap[pageName] = String(Math.min(...revs.map(r => r.id)))
-	}
-	for (const userName of userNames) {
-		const revs = allRevisionsData.value.filter(r => r.user?.name === userName)
-		if (revs.length > 0) afterMap[userName] = String(Math.min(...revs.map(r => r.id)))
-	}
-	if (Object.keys(afterMap).length === 0) return
-	await loadFeed(afterMap, true)
-}
-
-const allRevisions = computed(() => allRevisionsData.value)
-
-const revisionsByDate = computed(() => {
-	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
-	allRevisions.value.forEach(revision => {
-		const dateKey = getDateKey(revision.timestamp)
-		const dateLabel = formatDate(revision.timestamp)
-		if (!grouped.has(dateKey)) grouped.set(dateKey, { dateLabel, revisions: [] })
-		grouped.get(dateKey)!.revisions.push(revision)
-	})
-	return Array.from(grouped.entries())
-		.sort((a, b) => b[0].localeCompare(a[0]))
-		.map(([dateKey, data]) => ({
-			dateKey,
-			dateLabel: data.dateLabel,
-			revisions: data.revisions,
-		}))
-})
-
-function formatDate(timestamp: string): string {
-	const d = new Date(timestamp)
-	const day = d.getDate()
-	const monthNames = [
-		"January",
-		"February",
-		"March",
-		"April",
-		"May",
-		"June",
-		"July",
-		"August",
-		"September",
-		"October",
-		"November",
-		"December",
-	]
-	return `${day} ${monthNames[d.getMonth()]} ${d.getFullYear()}`
-}
-
-function getDateKey(timestamp: string): string {
-	const d = new Date(timestamp)
-	return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`
-}
-
-function formatTime(timestamp: string): string {
-	const d = new Date(timestamp)
-	return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`
-}
-
-function isToday(timestamp: string): boolean {
-	const d = new Date(timestamp)
-	const today = new Date()
-	return (
-		d.getDate() === today.getDate() &&
-		d.getMonth() === today.getMonth() &&
-		d.getFullYear() === today.getFullYear()
-	)
-}
-
-function formatDateShort(timestamp: string): string {
-	const d = new Date(timestamp)
-	return `${d.getDate().toString().padStart(2, "0")}.${(d.getMonth() + 1).toString().padStart(2, "0")}.${d.getFullYear().toString().slice(-2)}`
-}
-
-function formatRelativeDate(timestamp: string): string {
-	return wiki.formatRelativeTimestamp(timestamp, {
-		seconds: "words",
-		minutes: "minutes",
-		hours: "hours",
-		days: "days",
-		weeks: "weeks",
-		months: "months",
-		years: "years",
-	})
-}
-
-function formatDelta(delta: number | null): string {
-	const n = delta != null ? Number(delta) : 0
-	if (Number.isNaN(n)) return "(0)"
-	return `(${n >= 0 ? "+" : ""}${n})`
-}
-
 function loadEditTypesDetails(revId: number): void {
-	if (editTypesDetailsByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) return
-	loadingEditTypesIds.value = new Set(loadingEditTypesIds.value).add(revId)
-	wiki
-		.getEditTypesDiffDetails(revId)
+	if (editTypesDetailsByRevId.value.has(revId) || detailsErrorByRevId.value.has(revId)) return
+	loadingDetailsIds.value = new Set(loadingDetailsIds.value).add(revId)
+	wiki.getEditTypesDiffDetails(revId)
 		.then(details => {
-			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(
-				revId,
-				details
-			)
-			editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value)
-			editTypesErrorByRevId.value.delete(revId)
-			loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
-			loadingEditTypesIds.value.delete(revId)
-			// Start all sections and items collapsed
+			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(revId, details)
+			detailsErrorByRevId.value = new Map(detailsErrorByRevId.value)
+			detailsErrorByRevId.value.delete(revId)
+			loadingDetailsIds.value = new Set(loadingDetailsIds.value)
+			loadingDetailsIds.value.delete(revId)
 			const sections = getDetailsSections(details)
 			collapsedDetailsSectionKeys.value = new Set(collapsedDetailsSectionKeys.value)
 			collapsedDetailsItemKeys.value = new Set(collapsedDetailsItemKeys.value)
 			for (const section of sections) {
 				collapsedDetailsSectionKeys.value.add(detailsSectionKey(revId, section.key))
-				section.items.forEach((_, idx) => {
-					collapsedDetailsItemKeys.value.add(detailsItemKey(revId, section.key, idx))
-				})
+				section.items.forEach((_, idx) => collapsedDetailsItemKeys.value.add(detailsItemKey(revId, section.key, idx)))
 			}
 		})
 		.catch(e => {
 			const msg = e instanceof Error ? e.message : String(e)
-			editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value).set(revId, msg)
+			detailsErrorByRevId.value = new Map(detailsErrorByRevId.value).set(revId, msg)
 			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(revId, null)
-			loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
-			loadingEditTypesIds.value.delete(revId)
+			loadingDetailsIds.value = new Set(loadingDetailsIds.value)
+			loadingDetailsIds.value.delete(revId)
 		})
 }
 
-function expandItem(change: FWRevision, event: MouseEvent): void {
-	const target = event.target as HTMLElement
-	if (
-		target.tagName === "A" ||
-		target.tagName === "BUTTON" ||
-		target.closest("a") ||
-		target.closest("button")
-	)
-		return
-	const id = change.id
-	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value).add(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-	expandedHistoryIds.value.delete(id)
-	loadEditTypesDetails(id)
-	if (!loadedDiffs.value.has(id)) {
-		const pageName = change.pageName
-		if (!pageName) return
-		loadingDiffIds.value = new Set(loadingDiffIds.value).add(id)
-		wiki.getRevisionDiff(pageName, id)
-			.then(response => {
-				loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-				loadingDiffIds.value = new Set(loadingDiffIds.value)
-				loadingDiffIds.value.delete(id)
-			})
-			.catch(e => {
-				console.error("Failed to load diff", e)
-				loadingDiffIds.value = new Set(loadingDiffIds.value)
-				loadingDiffIds.value.delete(id)
-			})
-	}
+function resetEditTypesState(): void {
+	editTypesByRevId.value = new Map()
+	editTypesErrorByRevId.value = new Map()
+	loadingEditTypesIds.value = new Set()
+	editTypesDetailsByRevId.value = new Map()
+	detailsErrorByRevId.value = new Map()
+	loadingDetailsIds.value = new Set()
+	expandedDetailValues.value = new Set()
+	collapsedDetailsSectionKeys.value = new Set()
+	collapsedDetailsItemKeys.value = new Set()
 }
 
-function collapseItem(id: number): void {
-	expandedItemIds.value.delete(id)
-	expandedDiffIds.value.delete(id)
-	expandedHistoryIds.value.delete(id)
-	expandedTalkIds.value.delete(id)
+function onExpandItem(change: FWRevision): void {
+	loadEditTypesSummary(change.id)
+	loadEditTypesDetails(change.id)
 }
 
-function handleItemClick(change: FWRevision, event: MouseEvent): void {
-	if (!expandedItemIds.value.has(change.id)) expandItem(change, event)
-}
+const watchlist = useChangeTypesWatchlist({
+	wiki,
+	prototypeName: PROTOTYPE_NAME,
+	defaultPageQueries: DEFAULT_PAGE_QUERIES,
+	defaultUserQueries: DEFAULT_USER_QUERIES,
+	onExpandItem,
+	resetEditTypesState,
+})
 
-function toggleDiff(change: FWRevision): void {
-	const id = change.id
-	if (expandedDiffIds.value.has(id)) {
-		expandedDiffIds.value = new Set(expandedDiffIds.value)
-		expandedDiffIds.value.delete(id)
-		return
-	}
-	expandedDiffIds.value = new Set(expandedDiffIds.value).add(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-	expandedHistoryIds.value.delete(id)
-	expandedTalkIds.value = new Set(expandedTalkIds.value)
-	expandedTalkIds.value.delete(id)
-	if (loadedDiffs.value.has(id)) return
-	const pageName = change.pageName
-	if (!pageName) return
-	loadingDiffIds.value = new Set(loadingDiffIds.value).add(id)
-	wiki.getRevisionDiff(pageName, id)
-		.then(response => {
-			loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-		.catch(e => {
-			console.error("Failed to load diff", e)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-}
+const {
+	pageQueriesInput,
+	userQueriesInput,
+	syncPageQueriesFromInput,
+	syncUserQueriesFromInput,
+	isLoading,
+	isLoadingMore,
+	errors,
+	hasMore,
+	search,
+	loadMore,
+	revisionsByDate,
+	formatTime,
+	formatDateShort,
+	isToday,
+	formatRelativeDate,
+	formatDelta,
+	expandedDiffIds,
+	expandedHistoryIds,
+	expandedItemIds,
+	expandedTalkIds,
+	loadedDiffs,
+	loadingDiffIds,
+	loadedHistories,
+	expandedHistoryDiffIds,
+	talkPageText,
+	thankedRevisionIds,
+	risingHearts,
+	collapseItem,
+	handleItemClick,
+	toggleDiff,
+	toggleHistory,
+	toggleTalk,
+	updateTalkText,
+	handleAddTopic,
+	onThankClick,
+	getItemZIndex,
+	handleHistoryItemClick,
+} = watchlist
 
-function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: string): void {
-	const id = rev.id
-	const set = expandedHistoryDiffIds.value.get(changeId) ?? new Set<number>()
-	const expanded = set.has(id)
-	const newSet = expanded
-		? (() => {
-				const s = new Set(set)
-				s.delete(id)
-				return s
-			})()
-		: new Set(set).add(id)
-	expandedHistoryDiffIds.value = new Map(expandedHistoryDiffIds.value).set(changeId, newSet)
-	if (expanded) return
-	if (loadedDiffs.value.has(id)) return
-	loadingDiffIds.value = new Set(loadingDiffIds.value).add(id)
-	wiki.getRevisionDiff(pageName, id)
-		.then(response => {
-			loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-		.catch(e => {
-			console.error("Failed to load diff", e)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-}
-
-function handleHistoryItemClick(
-	changeId: number,
-	rev: { id: number },
-	pageName: string,
-	event: MouseEvent
-): void {
-	const target = event.target as HTMLElement
-	if (
-		target.tagName === "A" ||
-		target.tagName === "BUTTON" ||
-		target.closest("a") ||
-		target.closest("button")
-	)
-		return
-	toggleHistoryDiff(changeId, rev, pageName)
-}
-
-function toggleHistory(change: FWRevision): void {
-	const id = change.id
-	const pageName = change.pageName
-	if (!pageName) return
-	const expanded = expandedHistoryIds.value.has(id)
-	if (expanded) {
-		expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-		expandedHistoryIds.value.delete(id)
-		return
-	}
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value)
-	expandedDiffIds.value.delete(id)
-	expandedTalkIds.value = new Set(expandedTalkIds.value)
-	expandedTalkIds.value.delete(id)
-	if (loadedHistories.value.has(pageName)) return
-	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value).add(pageName)
-	wiki.getPageHistory(pageName)
-		.then(async response => {
-			const revisions = await Promise.all(
-				(response.revisions || []).map(async rev => ({
-					...rev,
-					commentHtml: await wiki.getEditSummaryHtml(rev.comment || "", pageName),
-				}))
-			)
-			loadedHistories.value = new Map(loadedHistories.value).set(pageName, {
-				...response,
-				revisions,
-			})
-			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
-			loadingHistoryPageNames.value.delete(pageName)
-		})
-		.catch(e => {
-			console.error("Failed to load history", e)
-			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
-			loadingHistoryPageNames.value.delete(pageName)
-		})
-}
-
-function onThankClick(change: FWRevision, e: MouseEvent): void {
-	e.preventDefault()
-	const id = change.id
-	const x = e.clientX
-	const y = e.clientY
-	const heartId = ++nextHeartId
-	if (thankedRevisionIds.value.has(id)) {
-		thankedRevisionIds.value = new Set(thankedRevisionIds.value)
-		thankedRevisionIds.value.delete(id)
-		risingHearts.value = [...risingHearts.value, { id: heartId, x, y: y - 15, type: "unthank" }]
-	} else {
-		thankedRevisionIds.value = new Set(thankedRevisionIds.value).add(id)
-		risingHearts.value = [...risingHearts.value, { id: heartId, x, y: y - 15, type: "thank" }]
-	}
-	setTimeout(() => {
-		risingHearts.value = risingHearts.value.filter(h => h.id !== heartId)
-	}, HEART_RISE_DURATION_MS)
-}
-
-function getItemZIndex(dateKey: string, changeIndex: number): number {
-	let cumulativeIndex = 0
-	for (const group of revisionsByDate.value) {
-		if (group.dateKey === dateKey) return 10 + cumulativeIndex + changeIndex
-		cumulativeIndex += group.revisions.length
-	}
-	return 10 + cumulativeIndex + changeIndex
-}
-
-function toggleTalk(change: FWRevision): void {
-	const id = change.id
-	const expanded = expandedTalkIds.value.has(id)
-	if (expanded) {
-		expandedTalkIds.value = new Set(expandedTalkIds.value)
-		expandedTalkIds.value.delete(id)
-		return
-	}
-	expandedTalkIds.value = new Set(expandedTalkIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value)
-	expandedDiffIds.value.delete(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-	expandedHistoryIds.value.delete(id)
-	if (!talkPageText.value.has(id)) talkPageText.value = new Map(talkPageText.value).set(id, "")
-	if (!editorMode.value.has(id)) editorMode.value = new Map(editorMode.value).set(id, "source")
-}
-
-function updateTalkText(id: number, text: string): void {
-	talkPageText.value = new Map(talkPageText.value).set(id, text)
-}
-
-function handleAddTopic(change: FWRevision): void {
-	const text = talkPageText.value.get(change.id) || ""
-	console.log("Add topic:", text)
-	expandedTalkIds.value = new Set(expandedTalkIds.value)
-	expandedTalkIds.value.delete(change.id)
-}
+onMounted(search)
 </script>
 
 <style scoped>

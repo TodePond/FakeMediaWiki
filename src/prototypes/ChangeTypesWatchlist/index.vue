@@ -41,137 +41,58 @@
 							'history-item',
 							{ 'history-item-expanded': expandedItemIds.has(change.id) },
 						]"
-						:style="{
-							zIndex: String(getItemZIndex(dateGroup.dateKey, changeIndex)),
-						}"
+						:style="{ zIndex: String(getItemZIndex(dateGroup.dateKey, changeIndex)) }"
 						@click="handleItemClick(change, $event)"
 					>
 						<template v-if="!expandedItemIds.has(change.id)">
 							<div class="history-row">
-								<a
-									target="_blank"
-									:href="wiki.getPageUrl(change.pageName!)"
-									class="history-page"
-									>{{ change.pageName }}</a
-								><span
-									:class="[
-										'history-time',
-										{
-											'history-time-expanded': expandedHistoryIds.has(
-												change.id
-											),
-										},
-									]"
-								>
-									{{ formatTime(change.timestamp) }}</span
-								><span
-									:class="[
-										'history-delta',
-										wiki.getDeltaClass(change.delta ?? 0, false),
-										{
-											'history-delta-expanded': expandedDiffIds.has(
-												change.id
-											),
-										},
-									]"
-								>
-									{{ formatDelta(change.delta) }}</span
-								><a
-									target="_blank"
-									:href="wiki.getUserUrl(change.user.name)"
-									class="history-user"
-									>{{ change.user.name }}</a
-								><span
-									class="history-comment"
-									v-html="change?.summary?.comment ?? ''"
-								></span>
+								<a target="_blank" :href="wiki.getPageUrl(change.pageName!)" class="history-page">{{ change.pageName }}</a>
+								<span :class="['history-time', { 'history-time-expanded': expandedHistoryIds.has(change.id) }]">
+									{{ formatTime(change.timestamp) }}</span>
+								<span :class="['history-delta', wiki.getDeltaClass(change.delta ?? 0, false), { 'history-delta-expanded': expandedDiffIds.has(change.id) }]">
+									{{ formatDelta(change.delta) }}</span>
+								<a target="_blank" :href="wiki.getUserUrl(change.user.name)" class="history-user">{{ change.user.name }}</a>
+								<span class="history-comment" v-html="change?.summary?.comment ?? ''"></span>
 							</div>
 						</template>
 						<template v-else>
 							<div class="history-expanded">
 								<div class="history-title-row">
-									<a
-										target="_blank"
-										:href="wiki.getPageUrl(change.pageName!)"
-										class="history-page-expanded"
-										>{{ change.pageName }}</a
-									><button
+									<a target="_blank" :href="wiki.getPageUrl(change.pageName!)" class="history-page-expanded">{{ change.pageName }}</a>
+									<button
 										type="button"
-										:class="[
-											'history-delta',
-											wiki.getDeltaClass(change.delta ?? 0, false),
-											{
-												'history-delta-expanded': expandedDiffIds.has(
-													change.id
-												),
-											},
-										]"
+										:class="['history-delta', wiki.getDeltaClass(change.delta ?? 0, false), { 'history-delta-expanded': expandedDiffIds.has(change.id) }]"
 										@click.stop="toggleDiff(change)"
 									>
 										{{ formatDelta(change.delta) }}
 									</button>
-									<button
-										type="button"
-										class="history-collapse-button"
-										@click.stop="collapseItem(change.id)"
-										aria-label="Collapse"
-									>
-										−
-									</button>
+									<button type="button" class="history-collapse-button" @click.stop="collapseItem(change.id)" aria-label="Collapse">−</button>
 								</div>
-								<a
-									target="_blank"
-									:href="wiki.getUserUrl(change.user.name)"
-									class="history-user-expanded"
-									>{{ change.user.name }}</a
-								>
+								<a target="_blank" :href="wiki.getUserUrl(change.user.name)" class="history-user-expanded">{{ change.user.name }}</a>
 								<button
 									type="button"
-									:class="[
-										'history-date-expanded',
-										{
-											'history-time-expanded': expandedHistoryIds.has(
-												change.id
-											),
-										},
-									]"
+									:class="['history-date-expanded', { 'history-time-expanded': expandedHistoryIds.has(change.id) }]"
 									@click.stop="toggleHistory(change)"
 								>
 									{{ formatRelativeDate(change.timestamp) }}
 								</button>
-								<div
-									v-if="change?.summary?.comment"
-									class="history-comment-expanded"
-									v-html="change?.summary?.comment ?? ''"
-								></div>
-								<!-- Change types: diff summary only (edit-types API) -->
+								<div v-if="change?.summary?.comment" class="history-comment-expanded" v-html="change?.summary?.comment ?? ''"></div>
 								<div class="change-types-block">
 									<div class="change-types-label">Change types</div>
-									<div
-										v-if="loadingEditTypesIds.has(change.id)"
-										class="change-types-loading"
-									>
+									<div v-if="loadingEditTypesIds.has(change.id)" class="change-types-loading">
 										<CdxProgressBar inline />
 									</div>
-									<div
-										v-else-if="editTypesErrorByRevId.get(change.id)"
-										class="change-types-error"
-									>
+									<div v-else-if="editTypesErrorByRevId.get(change.id)" class="change-types-error">
 										{{ editTypesErrorByRevId.get(change.id) }}
 									</div>
-									<ul
-										v-else-if="displaySummaryByRevId.get(change.id)"
-										class="change-types-list"
-									>
+									<ul v-else-if="displaySummaryByRevId.get(change.id)" class="change-types-list">
 										<li
 											v-for="row in getChangeTypeRows(displaySummaryByRevId.get(change.id)!)"
 											:key="row.key"
 											class="change-types-row"
 										>
 											<span class="change-types-type">{{ row.typeName }}</span>
-											<span :class="['change-types-delta', row.deltaClass]">
-												{{ row.symbol }}{{ row.count }}
-											</span>
+											<span :class="['change-types-delta', row.deltaClass]">{{ row.symbol }}{{ row.count }}</span>
 										</li>
 									</ul>
 									<div v-else class="change-types-empty">No change types</div>
@@ -180,11 +101,7 @@
 									<button
 										type="button"
 										class="history-action-button history-action-button-left"
-										:class="{
-											'history-action-button-active': expandedTalkIds.has(
-												change.id
-											),
-										}"
+										:class="{ 'history-action-button-active': expandedTalkIds.has(change.id) }"
 										@click.stop="toggleTalk(change)"
 									>
 										(talk)
@@ -193,11 +110,7 @@
 										<button
 											type="button"
 											class="history-action-button"
-											:class="{
-												'history-action-button-active': expandedDiffIds.has(
-													change.id
-												),
-											}"
+											:class="{ 'history-action-button-active': expandedDiffIds.has(change.id) }"
 											@click.stop="toggleDiff(change)"
 										>
 											(diff)
@@ -205,10 +118,7 @@
 										<button
 											type="button"
 											class="history-action-button"
-											:class="{
-												'history-action-button-active':
-													expandedHistoryIds.has(change.id),
-											}"
+											:class="{ 'history-action-button-active': expandedHistoryIds.has(change.id) }"
 											@click.stop="toggleHistory(change)"
 										>
 											(hist)
@@ -216,66 +126,29 @@
 										<button
 											type="button"
 											class="history-action-button"
-											:class="{
-												'history-action-button-thanked':
-													thankedRevisionIds.has(change.id),
-											}"
+											:class="{ 'history-action-button-thanked': thankedRevisionIds.has(change.id) }"
 											:disabled="thankedRevisionIds.has(change.id)"
 											@click.stop="onThankClick(change, $event)"
 										>
-											{{
-												thankedRevisionIds.has(change.id)
-													? "(thanked)"
-													: "(thanks)"
-											}}
+											{{ thankedRevisionIds.has(change.id) ? "(thanked)" : "(thanks)" }}
 										</button>
 									</div>
 								</footer>
 							</div>
 						</template>
 						<div v-if="expandedDiffIds.has(change.id)" class="history-inline-diff">
-							<div
-								v-if="loadedDiffs.get(change.id)?.diff?.length"
-								class="change-diff"
-							>
+							<div v-if="loadedDiffs.get(change.id)?.diff?.length" class="change-diff">
 								<div
 									v-for="(line, lineIdx) in loadedDiffs.get(change.id)!.diff"
 									:key="lineIdx"
 									:class="['diff-line', wiki.getDiffLineClass(line.type)]"
 								>
 									<span class="diff-line-text">
-										<template
-											v-if="
-												(line.type === 0 ||
-													line.type === 1 ||
-													line.type === 2 ||
-													line.type === 3 ||
-													line.type === 4 ||
-													line.type === 5) &&
-												line.highlightRanges?.length
-											"
-										>
-											<template
-												v-for="(seg, segIdx) in wiki.getDiffLineSegments(
-													line
-												)"
-												:key="segIdx"
-											>
-												<span
-													v-if="seg.type === 'add'"
-													class="diff-char-add"
-													>{{ seg.text }}</span
-												>
-												<span
-													v-else-if="seg.type === 'remove'"
-													class="diff-char-remove"
-													>{{ seg.text }}</span
-												>
-												<span
-													v-else-if="seg.type === 'change'"
-													class="diff-char-change"
-													>{{ seg.text }}</span
-												>
+										<template v-if="(line.type === 0 || line.type === 1 || line.type === 2 || line.type === 3 || line.type === 4 || line.type === 5) && line.highlightRanges?.length">
+											<template v-for="(seg, segIdx) in wiki.getDiffLineSegments(line)" :key="segIdx">
+												<span v-if="seg.type === 'add'" class="diff-char-add">{{ seg.text }}</span>
+												<span v-else-if="seg.type === 'remove'" class="diff-char-remove">{{ seg.text }}</span>
+												<span v-else-if="seg.type === 'change'" class="diff-char-change">{{ seg.text }}</span>
 												<template v-else>{{ seg.text }}</template>
 											</template>
 										</template>
@@ -283,10 +156,7 @@
 									</span>
 								</div>
 							</div>
-							<div
-								v-else-if="loadingDiffIds.has(change.id)"
-								class="history-diff-loading"
-							>
+							<div v-else-if="loadingDiffIds.has(change.id)" class="history-diff-loading">
 								<CdxProgressBar inline />
 							</div>
 							<div v-else class="history-diff-empty">No diff</div>
@@ -297,157 +167,50 @@
 									class="talk-editor-textarea"
 									placeholder="Write on the editor's talk page..."
 									:value="talkPageText.get(change.id) || ''"
-									@input="
-										updateTalkText(
-											change.id,
-											($event.target as HTMLTextAreaElement).value
-										)
-									"
+									@input="updateTalkText(change.id, ($event.target as HTMLTextAreaElement).value)"
 								></textarea>
 								<div class="talk-editor-footer">
-									<CdxButton weight="primary" @click="handleAddTopic(change)">
-										Add topic
-									</CdxButton>
+									<CdxButton weight="primary" @click="handleAddTopic(change)">Add topic</CdxButton>
 								</div>
 							</div>
 						</div>
-						<div
-							v-if="expandedHistoryIds.has(change.id)"
-							class="history-inline-history"
-						>
-							<div
-								v-if="loadedHistories.get(change.pageName!)?.revisions?.length"
-								class="history-inline-history-box"
-							>
+						<div v-if="expandedHistoryIds.has(change.id)" class="history-inline-history">
+							<div v-if="loadedHistories.get(change.pageName!)?.revisions?.length" class="history-inline-history-box">
 								<div
 									v-for="rev in loadedHistories.get(change.pageName!)!.revisions"
 									:key="rev.id"
-									:class="[
-										'history-item',
-										{ 'history-item-current': rev.id === change.id },
-									]"
-									@click="
-										handleHistoryItemClick(
-											change.id,
-											rev,
-											change.pageName!,
-											$event
-										)
-									"
+									:class="['history-item', { 'history-item-current': rev.id === change.id }]"
+									@click="handleHistoryItemClick(change.id, rev, change.pageName!, $event)"
 								>
 									<div class="history-row">
-										<span class="history-time">{{
-											isToday(rev.timestamp)
-												? formatTime(rev.timestamp)
-												: formatDateShort(rev.timestamp)
-										}}</span
-										><span
-											:class="[
-												'history-delta',
-												wiki.getDeltaClass(
-													(rev.id === change.id
-														? (change.delta ?? rev.delta)
-														: rev.delta) ?? 0,
-													false
-												),
-												{
-													'history-delta-expanded': expandedHistoryDiffIds
-														.get(change.id)
-														?.has(rev.id),
-												},
-											]"
-										>
-											{{
-												formatDelta(
-													rev.id === change.id
-														? (change.delta ?? rev.delta)
-														: rev.delta
-												)
-											}}</span
-										><a
-											target="_blank"
-											:href="wiki.getUserUrl(rev.user.name)"
-											class="history-user"
-											>{{ rev.user.name }}</a
-										><span
-											class="history-comment"
-											v-html="rev.commentHtml ?? rev.comment ?? ''"
-										></span>
+										<span class="history-time">{{ isToday(rev.timestamp) ? formatTime(rev.timestamp) : formatDateShort(rev.timestamp) }}</span>
+										<span :class="['history-delta', wiki.getDeltaClass((rev.id === change.id ? (change.delta ?? rev.delta) : rev.delta) ?? 0, false), { 'history-delta-expanded': expandedHistoryDiffIds.get(change.id)?.has(rev.id) }]">
+											{{ formatDelta(rev.id === change.id ? (change.delta ?? rev.delta) : rev.delta) }}</span>
+										<a target="_blank" :href="wiki.getUserUrl(rev.user.name)" class="history-user">{{ rev.user.name }}</a>
+										<span class="history-comment" v-html="rev.commentHtml ?? rev.comment ?? ''"></span>
 									</div>
-									<div
-										v-if="expandedHistoryDiffIds.get(change.id)?.has(rev.id)"
-										class="history-inline-diff history-inline-diff-nested"
-									>
-										<div
-											v-if="loadedDiffs.get(rev.id)?.diff?.length"
-											class="change-diff"
-										>
-											<div
-												v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!
-													.diff"
-												:key="lineIdx"
-												:class="[
-													'diff-line',
-													wiki.getDiffLineClass(line.type),
-												]"
-											>
+									<div v-if="expandedHistoryDiffIds.get(change.id)?.has(rev.id)" class="history-inline-diff history-inline-diff-nested">
+										<div v-if="loadedDiffs.get(rev.id)?.diff?.length" class="change-diff">
+											<div v-for="(line, lineIdx) in loadedDiffs.get(rev.id)!.diff" :key="lineIdx" :class="['diff-line', wiki.getDiffLineClass(line.type)]">
 												<span class="diff-line-text">
-													<template
-														v-if="
-															(line.type === 0 ||
-																line.type === 1 ||
-																line.type === 2 ||
-																line.type === 3 ||
-																line.type === 4 ||
-																line.type === 5) &&
-															line.highlightRanges?.length
-														"
-													>
-														<template
-															v-for="(
-																seg, segIdx
-															) in wiki.getDiffLineSegments(line)"
-															:key="segIdx"
-														>
-															<span
-																v-if="seg.type === 'add'"
-																class="diff-char-add"
-																>{{ seg.text }}</span
-															>
-															<span
-																v-else-if="seg.type === 'remove'"
-																class="diff-char-remove"
-																>{{ seg.text }}</span
-															>
-															<span
-																v-else-if="seg.type === 'change'"
-																class="diff-char-change"
-																>{{ seg.text }}</span
-															>
-															<template v-else>{{
-																seg.text
-															}}</template>
+													<template v-if="(line.type === 0 || line.type === 1 || line.type === 2 || line.type === 3 || line.type === 4 || line.type === 5) && line.highlightRanges?.length">
+														<template v-for="(seg, segIdx) in wiki.getDiffLineSegments(line)" :key="segIdx">
+															<span v-if="seg.type === 'add'" class="diff-char-add">{{ seg.text }}</span>
+															<span v-else-if="seg.type === 'remove'" class="diff-char-remove">{{ seg.text }}</span>
+															<span v-else-if="seg.type === 'change'" class="diff-char-change">{{ seg.text }}</span>
+															<template v-else>{{ seg.text }}</template>
 														</template>
 													</template>
-													<template v-else>{{
-														line.text || " "
-													}}</template>
+													<template v-else>{{ line.text || " " }}</template>
 												</span>
 											</div>
 										</div>
-										<div
-											v-else-if="loadingDiffIds.has(rev.id)"
-											class="history-diff-loading"
-										>
-											<CdxProgressBar inline />
-										</div>
+										<div v-else-if="loadingDiffIds.has(rev.id)" class="history-diff-loading"><CdxProgressBar inline /></div>
 										<div v-else class="history-diff-empty">No diff</div>
 									</div>
 								</div>
 							</div>
-							<div v-else class="history-diff-loading">
-								<CdxProgressBar inline />
-							</div>
+							<div v-else class="history-diff-loading"><CdxProgressBar inline /></div>
 						</div>
 					</div>
 				</div>
@@ -458,7 +221,6 @@
 				</CdxButton>
 			</div>
 		</div>
-
 		<div class="thank-hearts-overlay" aria-hidden="true">
 			<div
 				v-for="heart in risingHearts"
@@ -475,411 +237,22 @@
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
-import type {
-	FWCompareResponse,
-	FWEditTypesDiffSummary,
-	FWPageHistoryResponse,
-	FWPageHistoryRevision,
-	FWRevision,
-} from "fakewiki/types"
+import type { FWEditTypesDiffSummary, FWRevision } from "fakewiki/types"
 import { computed, onMounted, ref } from "vue"
-
-/** History revision with edit summary rendered as HTML */
-interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
-	commentHtml: string
-}
+import { getChangeTypeRows, getSummaryForDisplay } from "./changeTypesDisplay"
+import { useChangeTypesWatchlist } from "./useChangeTypesWatchlist"
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ChangeTypesWatchlist"
+const DEFAULT_PAGE_QUERIES = ["Wikipedia", "Wet Leg", "Water", "Confidence Man (band)", "Algorave"]
+const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
 
-const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
-const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
-const defaultPageSearchQueries = [
-	"Wikipedia",
-	"Wet Leg",
-	"Water",
-	"Confidence Man (band)",
-	"Algorave",
-]
-const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
-const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
-const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
-/** Comma-separated string for the page queries input; kept in sync with pageSearchQueries. */
-const pageQueriesInput = ref(pageSearchQueries.value.join(", "))
-/** Comma-separated string for the user queries input; kept in sync with userSearchQueries. */
-const userQueriesInput = ref(userSearchQueries.value.join(", "))
-
-function syncPageQueriesFromInput(): void {
-	pageSearchQueries.value = pageQueriesInput.value
-		.split(",")
-		.map(s => s.trim())
-		.filter(Boolean)
-}
-function syncUserQueriesFromInput(): void {
-	userSearchQueries.value = userQueriesInput.value
-		.split(",")
-		.map(s => s.trim())
-		.filter(Boolean)
-}
-
-// Combined feed results
-const allRevisionsData = ref<FWRevision[]>([])
-const isLoading = ref(false)
-const isLoadingMore = ref(false)
-const errors = ref<string[]>([])
-const hasMore = ref(true)
-
-/** Which revision ids have the inline diff expanded */
-const expandedDiffIds = ref<Set<number>>(new Set())
-/** Loaded diff data keyed by revision id */
-const loadedDiffs = ref<Map<number, FWCompareResponse>>(new Map())
-/** Revision ids currently loading their diff */
-const loadingDiffIds = ref<Set<number>>(new Set())
-
-/** Which revision ids have inline history expanded */
-const expandedHistoryIds = ref<Set<number>>(new Set())
-/** Per change (change.id): set of revision ids with inline diff expanded in that history */
-const expandedHistoryDiffIds = ref<Map<number, Set<number>>>(new Map())
-/** Loaded history data keyed by page name */
-const loadedHistories = ref<
-	Map<
-		string,
-		Omit<FWPageHistoryResponse, "revisions"> & { revisions?: HistoryRevisionWithHtml[] }
-	>
->(new Map())
-/** Page names currently loading history */
-const loadingHistoryPageNames = ref<Set<string>>(new Set())
-
-/** Which revision ids have the feed item body expanded */
-const expandedItemIds = ref<Set<number>>(new Set())
-
-/** Which revision ids have the talk page expanded */
-const expandedTalkIds = ref<Set<number>>(new Set())
-/** Talk page text content keyed by revision id */
-const talkPageText = ref<Map<number, string>>(new Map())
-const editorMode = ref<Map<number, "visual" | "source">>(new Map())
-
-/** Revision ids that have been "thanked" (mock) */
-const thankedRevisionIds = ref<Set<number>>(new Set())
-/** Rising heart particles */
-const risingHearts = ref<Array<{ id: number; x: number; y: number; type: "thank" | "unthank" }>>([])
-let nextHeartId = 0
-const HEART_RISE_DURATION_MS = 2500
-
-/** Edit-types: summary per revision id */
 const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
-/** Edit-types: error message per revision id */
 const editTypesErrorByRevId = ref<Map<number, string>>(new Map())
-/** Revision ids currently loading edit-types */
 const loadingEditTypesIds = ref<Set<number>>(new Set())
 
-/**
- * Extract the simple diff summary for display. The API may return the summary
- * directly or wrapped (e.g. under a "summary" key). We only display type names
- * whose value is a plain map of action -> number.
- */
-function getSummaryForDisplay(
-	raw: FWEditTypesDiffSummary | null
-): Record<string, Record<string, number>> | null {
-	if (!raw || typeof raw !== "object") return null
-	// If the response has a "summary" key with the right shape, use that
-	const summary = (raw as { summary?: Record<string, Record<string, number>> }).summary
-	if (summary && typeof summary === "object") {
-		return summary
-	}
-	// Otherwise use the root only for entries that are action maps (type -> { insert: n, change: n, ... })
-	const result: Record<string, Record<string, number>> = {}
-	for (const [typeName, value] of Object.entries(raw)) {
-		if (
-			value &&
-			typeof value === "object" &&
-			!Array.isArray(value) &&
-			Object.values(value).every(v => typeof v === "number")
-		) {
-			result[typeName] = value as Record<string, number>
-		}
-	}
-	return Object.keys(result).length > 0 ? result : null
-}
-
-/** Per-revision display summary (simple type -> action -> count only). */
-const displaySummaryByRevId = computed(() => {
-	const map = new Map<number, Record<string, Record<string, number>> | null>()
-	for (const [revId, raw] of editTypesByRevId.value) {
-		map.set(revId, getSummaryForDisplay(raw))
-	}
-	return map
-})
-
-/** One row per type+action for the vertical list: type name, symbol (+ / - / ↻), count, delta class. */
-function getChangeTypeRows(
-	summary: Record<string, Record<string, number>>
-): Array<{ key: string; typeName: string; symbol: string; count: number; deltaClass: string }> {
-	const rows: Array<{ key: string; typeName: string; symbol: string; count: number; deltaClass: string }> = []
-	const actionDisplay: Record<string, { symbol: string; deltaClass: string }> = {
-		insert: { symbol: "+", deltaClass: "change-types-delta-add" },
-		remove: { symbol: "-", deltaClass: "change-types-delta-remove" },
-		change: { symbol: "↻", deltaClass: "change-types-delta-change" },
-		move: { symbol: "↻", deltaClass: "change-types-delta-change" },
-	}
-	for (const [typeName, actions] of Object.entries(summary)) {
-		for (const [action, count] of Object.entries(actions)) {
-			if (count <= 0) continue
-			const key = action.toLowerCase()
-			const display = actionDisplay[key] ?? { symbol: action, deltaClass: "change-types-delta-change" }
-			rows.push({
-				key: `${typeName}-${action}`,
-				typeName,
-				symbol: display.symbol,
-				count,
-				deltaClass: display.deltaClass,
-			})
-		}
-	}
-	return rows
-}
-
-onMounted(search)
-
-function saveSearchQueries(): void {
-	localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
-	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
-}
-
-function loadSearchQueries(key: string, defaultValues: string[]): string[] {
-	const savedSearchQueries = localStorage.getItem(key)
-	if (!savedSearchQueries) {
-		return defaultValues
-	}
-	try {
-		const parsed = JSON.parse(savedSearchQueries)
-		if (Array.isArray(parsed) && parsed.every(value => typeof value === "string")) {
-			return parsed
-		}
-	} catch {
-		// ignore
-	}
-	return defaultValues
-}
-
-async function loadFeed(after?: Record<string, string>, append = false): Promise<void> {
-	if (!append) {
-		isLoading.value = true
-		errors.value = []
-	} else {
-		isLoadingMore.value = true
-	}
-
-	const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
-	const userNames = userSearchQueries.value.filter(name => name.trim() !== "")
-
-	try {
-		const revisions = await wiki.getCombinedFeed({
-			pageNames,
-			userNames,
-			limit: 20,
-			after,
-		})
-
-		const processedRevisions = await Promise.all(
-			revisions.map(async revision => {
-				const pageName =
-					(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
-				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-				const toolbar = wiki.parseToolbarEditSummary(_summary)
-				const summary = toolbar
-					? toolbar
-					: {
-							comment: _summary,
-							hashtags: [],
-							other: [],
-							suggestedBy: null,
-							useThisBot: null,
-							reportBugs: null,
-						}
-				const commentText = summary.comment
-					? summary.comment +
-						(summary.suggestedBy
-							? " Suggested by [[User:" +
-								summary.suggestedBy +
-								"|" +
-								summary.suggestedBy +
-								"]]"
-							: "")
-					: ""
-				summary.comment = commentText
-					? await wiki.transformWikitextToHtml(commentText, pageName)
-					: ""
-				summary.hashtags = Array.isArray(summary.hashtags)
-					? summary.hashtags.join(" ")
-					: summary.hashtags
-				const processedRevision: FWRevision = {
-					...revision,
-					comment: revision.comment || "",
-					summary,
-					pageName,
-					avatarUrl: null,
-				}
-				return processedRevision
-			})
-		)
-
-		if (append) {
-			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
-			const newRevisions = processedRevisions.filter(r => !existingIds.has(r.id))
-			const merged = [...allRevisionsData.value, ...newRevisions].sort(
-				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-			)
-			allRevisionsData.value = merged
-			hasMore.value = newRevisions.length > 0
-		} else {
-			allRevisionsData.value = processedRevisions
-			hasMore.value = processedRevisions.length === 20
-		}
-
-		isLoading.value = false
-		isLoadingMore.value = false
-	} catch (e) {
-		isLoading.value = false
-		isLoadingMore.value = false
-		const errorObj = e as Error
-		if (!append) {
-			errors.value = [errorObj.message]
-			allRevisionsData.value = []
-		}
-		hasMore.value = false
-	}
-}
-
-async function search(): Promise<void> {
-	await loadFeed(undefined, false)
-	saveSearchQueries()
-	expandedDiffIds.value = new Set()
-	loadedDiffs.value = new Map()
-	loadingDiffIds.value = new Set()
-	expandedHistoryIds.value = new Set()
-	expandedHistoryDiffIds.value = new Map()
-	loadedHistories.value = new Map()
-	loadingHistoryPageNames.value = new Set()
-	expandedItemIds.value = new Set()
-	expandedTalkIds.value = new Set()
-	editTypesByRevId.value = new Map()
-	editTypesErrorByRevId.value = new Map()
-	loadingEditTypesIds.value = new Set()
-}
-
-async function loadMore(): Promise<void> {
-	if (allRevisionsData.value.length === 0) return
-	const pageNames = pageSearchQueries.value.filter(name => name.trim() !== "")
-	const userNames = userSearchQueries.value.filter(name => name.trim() !== "")
-	const afterMap: Record<string, string> = {}
-	for (const pageName of pageNames) {
-		const revs = allRevisionsData.value.filter(r => r.pageName === pageName)
-		if (revs.length > 0) {
-			afterMap[pageName] = String(Math.min(...revs.map(r => r.id)))
-		}
-	}
-	for (const userName of userNames) {
-		const revs = allRevisionsData.value.filter(r => r.user?.name === userName)
-		if (revs.length > 0) {
-			afterMap[userName] = String(Math.min(...revs.map(r => r.id)))
-		}
-	}
-	if (Object.keys(afterMap).length === 0) return
-	await loadFeed(afterMap, true)
-}
-
-const allRevisions = computed(() => allRevisionsData.value)
-
-const revisionsByDate = computed(() => {
-	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
-
-	allRevisions.value.forEach(revision => {
-		const dateKey = getDateKey(revision.timestamp)
-		const dateLabel = formatDate(revision.timestamp)
-
-		if (!grouped.has(dateKey)) {
-			grouped.set(dateKey, { dateLabel, revisions: [] })
-		}
-
-		grouped.get(dateKey)!.revisions.push(revision)
-	})
-
-	return Array.from(grouped.entries())
-		.sort((a, b) => b[0].localeCompare(a[0]))
-		.map(([dateKey, data]) => ({
-			dateKey,
-			dateLabel: data.dateLabel,
-			revisions: data.revisions,
-		}))
-})
-
-function formatDate(timestamp: string): string {
-	const d = new Date(timestamp)
-	const day = d.getDate()
-	const monthNames = [
-		"January", "February", "March", "April", "May", "June",
-		"July", "August", "September", "October", "November", "December",
-	]
-	const month = monthNames[d.getMonth()]
-	const year = d.getFullYear()
-	return `${day} ${month} ${year}`
-}
-
-function getDateKey(timestamp: string): string {
-	const d = new Date(timestamp)
-	const year = d.getFullYear()
-	const month = (d.getMonth() + 1).toString().padStart(2, "0")
-	const day = d.getDate().toString().padStart(2, "0")
-	return `${year}-${month}-${day}`
-}
-
-function formatTime(timestamp: string): string {
-	const d = new Date(timestamp)
-	return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`
-}
-
-function isToday(timestamp: string): boolean {
-	const d = new Date(timestamp)
-	const today = new Date()
-	return (
-		d.getDate() === today.getDate() &&
-		d.getMonth() === today.getMonth() &&
-		d.getFullYear() === today.getFullYear()
-	)
-}
-
-function formatDateShort(timestamp: string): string {
-	const d = new Date(timestamp)
-	const day = d.getDate().toString().padStart(2, "0")
-	const month = (d.getMonth() + 1).toString().padStart(2, "0")
-	const year = d.getFullYear().toString().slice(-2)
-	return `${day}.${month}.${year}`
-}
-
-function formatRelativeDate(timestamp: string): string {
-	return wiki.formatRelativeTimestamp(timestamp, {
-		seconds: "words",
-		minutes: "minutes",
-		hours: "hours",
-		days: "days",
-		weeks: "weeks",
-		months: "months",
-		years: "years",
-	})
-}
-
-function formatDelta(delta: number | null): string {
-	const n = delta != null ? Number(delta) : 0
-	if (Number.isNaN(n)) return "(0)"
-	const sign = n >= 0 ? "+" : ""
-	return `(${sign}${n})`
-}
-
 function loadEditTypesSummary(revId: number): void {
-	if (editTypesByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) {
-		return
-	}
+	if (editTypesByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) return
 	loadingEditTypesIds.value = new Set(loadingEditTypesIds.value).add(revId)
 	wiki
 		.getEditTypesDiffSummary(revId)
@@ -899,239 +272,75 @@ function loadEditTypesSummary(revId: number): void {
 		})
 }
 
-function expandItem(change: FWRevision, event: MouseEvent): void {
-	const target = event.target as HTMLElement
-	if (
-		target.tagName === "A" ||
-		target.tagName === "BUTTON" ||
-		target.closest("a") ||
-		target.closest("button")
-	) {
-		return
-	}
-	const id = change.id
-	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value).add(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-	expandedHistoryIds.value.delete(id)
-
-	loadEditTypesSummary(id)
-
-	if (!loadedDiffs.value.has(id)) {
-		const pageName = change.pageName
-		if (!pageName) return
-		loadingDiffIds.value = new Set(loadingDiffIds.value).add(id)
-		wiki.getRevisionDiff(pageName, id)
-			.then(response => {
-				loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-				loadingDiffIds.value = new Set(loadingDiffIds.value)
-				loadingDiffIds.value.delete(id)
-			})
-			.catch(e => {
-				console.error("Failed to load diff", e)
-				loadingDiffIds.value = new Set(loadingDiffIds.value)
-				loadingDiffIds.value.delete(id)
-			})
-	}
+function resetEditTypesState(): void {
+	editTypesByRevId.value = new Map()
+	editTypesErrorByRevId.value = new Map()
+	loadingEditTypesIds.value = new Set()
 }
 
-function collapseItem(id: number): void {
-	expandedItemIds.value.delete(id)
-	expandedDiffIds.value.delete(id)
-	expandedHistoryIds.value.delete(id)
-	expandedTalkIds.value.delete(id)
-}
-
-function handleItemClick(change: FWRevision, event: MouseEvent): void {
-	if (!expandedItemIds.value.has(change.id)) {
-		expandItem(change, event)
+const displaySummaryByRevId = computed(() => {
+	const map = new Map<number, ReturnType<typeof getSummaryForDisplay>>()
+	for (const [revId, raw] of editTypesByRevId.value) {
+		map.set(revId, getSummaryForDisplay(raw as Record<string, unknown>))
 	}
-}
+	return map
+})
 
-function toggleDiff(change: FWRevision): void {
-	const id = change.id
-	const expanded = expandedDiffIds.value.has(id)
-	if (expanded) {
-		expandedDiffIds.value = new Set(expandedDiffIds.value)
-		expandedDiffIds.value.delete(id)
-		return
-	}
-	expandedDiffIds.value = new Set(expandedDiffIds.value).add(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-	expandedHistoryIds.value.delete(id)
-	expandedTalkIds.value = new Set(expandedTalkIds.value)
-	expandedTalkIds.value.delete(id)
-	if (loadedDiffs.value.has(id)) return
-	const pageName = change.pageName
-	if (!pageName) return
-	loadingDiffIds.value = new Set(loadingDiffIds.value).add(id)
-	wiki.getRevisionDiff(pageName, id)
-		.then(response => {
-			loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-		.catch(e => {
-			console.error("Failed to load diff", e)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-}
+const watchlist = useChangeTypesWatchlist({
+	wiki,
+	prototypeName: PROTOTYPE_NAME,
+	defaultPageQueries: DEFAULT_PAGE_QUERIES,
+	defaultUserQueries: DEFAULT_USER_QUERIES,
+	onExpandItem: (change: FWRevision) => loadEditTypesSummary(change.id),
+	resetEditTypesState,
+})
 
-function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: string): void {
-	const id = rev.id
-	const set = expandedHistoryDiffIds.value.get(changeId) ?? new Set<number>()
-	const expanded = set.has(id)
-	let newSet: Set<number>
-	if (expanded) {
-		newSet = new Set(set)
-		newSet.delete(id)
-	} else {
-		newSet = new Set(set).add(id)
-	}
-	expandedHistoryDiffIds.value = new Map(expandedHistoryDiffIds.value).set(changeId, newSet)
-	if (expanded) return
-	if (loadedDiffs.value.has(id)) return
-	loadingDiffIds.value = new Set(loadingDiffIds.value).add(id)
-	wiki.getRevisionDiff(pageName, id)
-		.then(response => {
-			loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-		.catch(e => {
-			console.error("Failed to load diff", e)
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
-		})
-}
+const {
+	pageQueriesInput,
+	userQueriesInput,
+	syncPageQueriesFromInput,
+	syncUserQueriesFromInput,
+	isLoading,
+	isLoadingMore,
+	errors,
+	hasMore,
+	search,
+	loadMore,
+	revisionsByDate,
+	formatTime,
+	formatDateShort,
+	isToday,
+	formatRelativeDate,
+	formatDelta,
+	expandedDiffIds,
+	expandedHistoryIds,
+	expandedItemIds,
+	expandedTalkIds,
+	loadedDiffs,
+	loadingDiffIds,
+	loadedHistories,
+	expandedHistoryDiffIds,
+	talkPageText,
+	thankedRevisionIds,
+	risingHearts,
+	collapseItem,
+	handleItemClick,
+	toggleDiff,
+	toggleHistory,
+	toggleTalk,
+	updateTalkText,
+	handleAddTopic,
+	onThankClick,
+	getItemZIndex,
+	handleHistoryItemClick,
+} = watchlist
 
-function handleHistoryItemClick(
-	changeId: number,
-	rev: { id: number },
-	pageName: string,
-	event: MouseEvent
-): void {
-	const target = event.target as HTMLElement
-	if (
-		target.tagName === "A" ||
-		target.tagName === "BUTTON" ||
-		target.closest("a") ||
-		target.closest("button")
-	) {
-		return
-	}
-	toggleHistoryDiff(changeId, rev, pageName)
-}
-
-function toggleHistory(change: FWRevision): void {
-	const id = change.id
-	const pageName = change.pageName
-	if (!pageName) return
-	const expanded = expandedHistoryIds.value.has(id)
-	if (expanded) {
-		expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-		expandedHistoryIds.value.delete(id)
-		return
-	}
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value)
-	expandedDiffIds.value.delete(id)
-	expandedTalkIds.value = new Set(expandedTalkIds.value)
-	expandedTalkIds.value.delete(id)
-	if (loadedHistories.value.has(pageName)) return
-	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value).add(pageName)
-	wiki.getPageHistory(pageName)
-		.then(async response => {
-			const revisions = await Promise.all(
-				(response.revisions || []).map(async rev => ({
-					...rev,
-					commentHtml: await wiki.getEditSummaryHtml(rev.comment || "", pageName),
-				}))
-			)
-			loadedHistories.value = new Map(loadedHistories.value).set(pageName, {
-				...response,
-				revisions,
-			})
-			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
-			loadingHistoryPageNames.value.delete(pageName)
-		})
-		.catch(e => {
-			console.error("Failed to load history", e)
-			loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
-			loadingHistoryPageNames.value.delete(pageName)
-		})
-}
-
-function onThankClick(change: FWRevision, e: MouseEvent): void {
-	e.preventDefault()
-	const id = change.id
-	const x = e.clientX
-	const y = e.clientY
-	const heartId = ++nextHeartId
-
-	if (thankedRevisionIds.value.has(id)) {
-		thankedRevisionIds.value = new Set(thankedRevisionIds.value)
-		thankedRevisionIds.value.delete(id)
-		risingHearts.value = [...risingHearts.value, { id: heartId, x, y: y - 15, type: "unthank" }]
-	} else {
-		thankedRevisionIds.value = new Set(thankedRevisionIds.value).add(id)
-		risingHearts.value = [...risingHearts.value, { id: heartId, x, y: y - 15, type: "thank" }]
-	}
-
-	setTimeout(() => {
-		risingHearts.value = risingHearts.value.filter(h => h.id !== heartId)
-	}, HEART_RISE_DURATION_MS)
-}
-
-function getItemZIndex(dateKey: string, changeIndex: number): number {
-	let cumulativeIndex = 0
-	for (const group of revisionsByDate.value) {
-		if (group.dateKey === dateKey) {
-			return 10 + cumulativeIndex + changeIndex
-		}
-		cumulativeIndex += group.revisions.length
-	}
-	return 10 + cumulativeIndex + changeIndex
-}
-
-function toggleTalk(change: FWRevision): void {
-	const id = change.id
-	const expanded = expandedTalkIds.value.has(id)
-	if (expanded) {
-		expandedTalkIds.value = new Set(expandedTalkIds.value)
-		expandedTalkIds.value.delete(id)
-		return
-	}
-	expandedTalkIds.value = new Set(expandedTalkIds.value).add(id)
-	expandedDiffIds.value = new Set(expandedDiffIds.value)
-	expandedDiffIds.value.delete(id)
-	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
-	expandedHistoryIds.value.delete(id)
-	if (!talkPageText.value.has(id)) {
-		talkPageText.value = new Map(talkPageText.value).set(id, "")
-	}
-	if (!editorMode.value.has(id)) {
-		editorMode.value = new Map(editorMode.value).set(id, "source")
-	}
-}
-
-function updateTalkText(id: number, text: string): void {
-	talkPageText.value = new Map(talkPageText.value).set(id, text)
-}
-
-function handleAddTopic(change: FWRevision): void {
-	const text = talkPageText.value.get(change.id) || ""
-	console.log("Add topic:", text)
-	expandedTalkIds.value = new Set(expandedTalkIds.value)
-	expandedTalkIds.value.delete(change.id)
-}
+onMounted(search)
 </script>
 
 <style scoped>
 @import "./style.css";
 </style>
-
 <style>
 @import "./global.css";
 </style>
