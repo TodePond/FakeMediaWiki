@@ -317,14 +317,33 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		],
 	},
 	{
-		type: "prototype",
+		type: "variants",
 		id: "ChangeTypesWatchlist",
 		name: "Change types watchlist",
-		description: "Expanding watchlist feed with edit-type detection (templates, wikilinks, etc.) per revision.",
+		description:
+			"Expanding watchlist feed with edit-type detection (templates, wikilinks, etc.) per revision.",
 		category: "changeTypes",
-		wrapper: "Fullscreen",
-		title: "Change types watchlist",
-		featured: true,
+		variants: [
+			{
+				type: "variant",
+				id: "ChangeTypesWatchlist",
+				title: "Change types (summary)",
+				name: "Change types watchlist (summary)",
+				description: "Edit-type counts per revision (diff-summary API).",
+				wrapper: "Fullscreen",
+				featured: true,
+			},
+			{
+				type: "variant",
+				id: "ChangeTypesWatchlistDetails",
+				title: "Change types (details)",
+				name: "Change types watchlist (details)",
+				description:
+					"Structured change details per revision: context, node-edits, text-edits (diff-details API).",
+				wrapper: "Fullscreen",
+				featured: true,
+			},
+		],
 	},
 	{
 		type: "variants",

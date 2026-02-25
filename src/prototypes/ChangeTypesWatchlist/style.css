@@ -290,9 +290,7 @@
 }
 
 .change-types-label {
-	font-weight: 600;
-	color: var(--color-base);
-	margin-bottom: 0.25rem;
+	display: none;
 }
 
 .change-types-loading {

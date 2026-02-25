@@ -1,0 +1,369 @@
+/* Extends ChangeTypesWatchlist layout; adds details-block presentation */
+@import "../ChangeTypesWatchlist/style.css";
+
+/* Change type details block (diff-details API) */
+.change-types-watchlist-details .change-types-details-block {
+	margin-top: 0.75rem;
+	max-width: 100%;
+	width: 100%;
+}
+
+.change-types-details-label {
+	margin-top: 0.5rem;
+	margin-bottom: 0.25rem;
+}
+
+.change-types-details-section {
+	margin-top: 0;
+	width: 100%;
+}
+
+.change-types-details-section:first-child {
+	margin-top: 0;
+}
+
+.change-types-details-section-title {
+	font-weight: 600;
+	color: var(--color-base);
+	font-size: 0.8125rem;
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+/* Section toggle: clickable header with + / − */
+.change-types-details-section-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem 0.5rem;
+	flex-wrap: wrap;
+	width: 100%;
+	min-width: 0;
+	text-align: left;
+	background: none;
+	border: none;
+	padding: 0.35rem 0.5rem;
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: inherit;
+	cursor: pointer;
+	border-radius: 0;
+	box-sizing: border-box;
+}
+
+.change-types-details-section-toggle:hover {
+	background-color: var(--background-color-interactive);
+}
+
+.change-types-details-toggle-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.1em;
+	font-size: 0.9rem;
+	line-height: 1;
+	color: var(--color-subtle);
+	flex-shrink: 0;
+	font-weight: 600;
+}
+
+.change-types-details-section-toggle .change-types-details-section-title {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+}
+
+.change-types-details-section-toggle .change-types-details-section-count {
+	margin: 0;
+	font-size: 0.75rem;
+	line-height: 1.4;
+}
+
+.change-types-details-section-count {
+	font-weight: 400;
+	color: var(--color-subtle);
+	font-size: 0.75rem;
+	line-height: 1.4;
+}
+
+.change-types-details-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+.change-types-details-item {
+	min-width: 0;
+}
+
+/* Context section: non-expandable line, same look as item-summary but not clickable */
+.change-types-details-context-line {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	width: 100%;
+	min-width: 0;
+	text-align: left;
+	padding: 0.35rem 0.5rem;
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: var(--color-base);
+	box-sizing: border-box;
+	cursor: default;
+}
+
+div.change-types-details-context-line {
+	padding-left: 2rem;
+}
+
+.change-types-details-context-line.change-types-details-op-insert {
+	background-color: var(--green100, rgba(20, 134, 109, 0.15));
+}
+.change-types-details-context-line.change-types-details-op-remove {
+	background-color: var(--red100, rgba(179, 36, 36, 0.15));
+}
+.change-types-details-context-line.change-types-details-op-change {
+	background-color: var(--background-color-progressive-subtle, rgba(51, 102, 204, 0.1));
+}
+
+.change-types-details-context-content {
+	color: var(--color-subtle);
+	font-family: var(--font-family-mono, ui-monospace, monospace);
+	font-size: 0.8125rem;
+}
+
+/* Collapsed item: one-line summary, click to expand. Same font/padding as card-collapse so row doesn’t resize. */
+.change-types-details-item-summary {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	width: 100%;
+	min-width: 0;
+	text-align: left;
+	background: none;
+	border: none;
+	padding: 0.35rem 0.5rem;
+	padding-left: 1.75rem;
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: var(--color-base);
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.change-types-details-item-summary:hover {
+	background-color: var(--background-color-interactive);
+}
+
+/* Row color by operation: insert = green, remove = red, change = blue */
+.change-types-details-item-summary.change-types-details-op-insert,
+.change-types-details-card-wrapper.change-types-details-op-insert {
+	background-color: var(--green100, rgba(20, 134, 109, 0.15));
+}
+.change-types-details-item-summary.change-types-details-op-insert:hover {
+	background-color: var(--green200, rgba(20, 134, 109, 0.25));
+}
+.change-types-details-item-summary.change-types-details-op-remove,
+.change-types-details-card-wrapper.change-types-details-op-remove {
+	background-color: var(--red100, rgba(179, 36, 36, 0.15));
+}
+.change-types-details-item-summary.change-types-details-op-remove:hover {
+	background-color: var(--red200, rgba(179, 36, 36, 0.25));
+}
+.change-types-details-item-summary.change-types-details-op-change,
+.change-types-details-card-wrapper.change-types-details-op-change {
+	background-color: var(--background-color-progressive-subtle, rgba(51, 102, 204, 0.1));
+}
+.change-types-details-item-summary.change-types-details-op-change:hover {
+	background-color: rgba(51, 102, 204, 0.2);
+}
+
+/* Hover on expanded header row: use same tint as row color */
+.change-types-details-card-wrapper.change-types-details-op-insert
+	.change-types-details-card-collapse:hover {
+	background-color: var(--green200, rgba(20, 134, 109, 0.25));
+}
+.change-types-details-card-wrapper.change-types-details-op-remove
+	.change-types-details-card-collapse:hover {
+	background-color: var(--red200, rgba(179, 36, 36, 0.25));
+}
+.change-types-details-card-wrapper.change-types-details-op-change
+	.change-types-details-card-collapse:hover {
+	background-color: rgba(51, 102, 204, 0.2);
+}
+
+/* Expanded item: header row to collapse + summary line + card. Same font/padding as item-summary so row doesn’t resize. */
+.change-types-details-card-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+.change-types-details-card-collapse {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	width: 100%;
+	min-width: 0;
+	text-align: left;
+	background: none;
+	border: none;
+	padding: 0.35rem 0.5rem;
+	padding-left: 1.75rem;
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: var(--color-subtle);
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.change-types-details-card-collapse:hover {
+	background-color: var(--background-color-interactive);
+	color: var(--color-base);
+}
+
+.change-types-details-card-wrapper .change-types-details-card {
+	border: none;
+	border-radius: 0;
+}
+
+.change-types-details-card {
+	background-color: var(--background-color-base);
+	padding: 0.5rem 0.75rem;
+	padding-left: 2.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.change-types-details-row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	align-items: stretch;
+	min-width: 0;
+}
+
+.change-types-details-key {
+	flex-shrink: 0;
+	color: var(--color-subtle);
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	font-weight: 600;
+}
+
+.change-types-details-value {
+	min-width: 0;
+	word-break: break-word;
+	font-family: var(--font-family-mono, ui-monospace, monospace);
+	font-size: 0.8125rem;
+	line-height: 1.45;
+}
+
+/* Nested changes table (change-type, prev, curr) */
+.change-types-details-changes-table-wrap {
+	overflow-x: auto;
+	margin-top: 0.25rem;
+}
+
+.change-types-details-changes-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.75rem;
+}
+
+.change-types-details-changes-table th,
+.change-types-details-changes-table td {
+	padding: 0.35rem 0.5rem;
+	text-align: left;
+	vertical-align: top;
+	border: 1px solid var(--border-color-subtle, rgba(0, 0, 0, 0.1));
+}
+
+.change-types-details-changes-table th {
+	background-color: var(--background-color-interactive);
+	color: var(--color-subtle);
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.change-types-details-prev-curr-box {
+	background-color: var(--background-color-interactive);
+	border-radius: 4px;
+	padding: 0.35rem 0.5rem;
+	font-family: var(--font-family-mono, ui-monospace, monospace);
+	font-size: 0.8125rem;
+	white-space: pre-wrap;
+	word-break: break-word;
+	min-width: 0;
+}
+
+/* Badges for type / action */
+.change-types-details-badge-type,
+.change-types-details-badge-add,
+.change-types-details-badge-remove,
+.change-types-details-badge-change {
+	display: inline-block;
+	padding: 0.1rem 0.35rem;
+	border-radius: 3px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.change-types-details-badge-type {
+	background-color: var(--background-color-interactive);
+	color: var(--color-base);
+}
+
+.change-types-details-badge-add {
+	background-color: var(--green100, rgba(20, 134, 109, 0.15));
+	color: var(--green600, #14866d);
+}
+
+.change-types-details-badge-remove {
+	background-color: var(--red100, rgba(179, 36, 36, 0.15));
+	color: var(--red600, #b32424);
+}
+
+.change-types-details-badge-change {
+	background-color: var(--background-color-progressive-subtle, rgba(51, 102, 204, 0.1));
+	color: var(--color-progressive, #36c);
+}
+
+.change-types-details-more {
+	background: none;
+	border: none;
+	padding: 0 0.15rem;
+	margin-left: 0.15rem;
+	font: inherit;
+	font-size: 0.75rem;
+	color: var(--color-progressive);
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.change-types-details-more:hover {
+	text-decoration: underline;
+}
+
+.change-types-details-primitive {
+	font-family: var(--font-family-mono, ui-monospace, monospace);
+	font-size: 0.8125rem;
+	color: var(--color-base);
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
