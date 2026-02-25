@@ -144,7 +144,7 @@
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
-								<!-- Change types (edit-types API) -->
+								<!-- Change types: diff summary only (edit-types API) -->
 								<div class="change-types-block">
 									<div class="change-types-label">Change types</div>
 									<div
@@ -159,24 +159,21 @@
 									>
 										{{ editTypesErrorByRevId.get(change.id) }}
 									</div>
-									<div
-										v-else-if="editTypesByRevId.get(change.id) &&
-											Object.keys(editTypesByRevId.get(change.id)!).length > 0"
-										class="change-types-summary"
+									<ul
+										v-else-if="displaySummaryByRevId.get(change.id)"
+										class="change-types-list"
 									>
-										<template
-											v-for="(actions, typeName) in editTypesByRevId.get(change.id)!"
-											:key="typeName"
+										<li
+											v-for="row in getChangeTypeRows(displaySummaryByRevId.get(change.id)!)"
+											:key="row.key"
+											class="change-types-row"
 										>
-											<span
-												v-for="(count, action) in actions"
-												:key="`${typeName}-${action}`"
-												class="change-types-badge"
-											>
-												{{ typeName }}: {{ count }} {{ action }}{{ count !== 1 ? "s" : "" }}
+											<span class="change-types-type">{{ row.typeName }}</span>
+											<span :class="['change-types-delta', row.deltaClass]">
+												{{ row.symbol }}{{ row.count }}
 											</span>
-										</template>
-									</div>
+										</li>
+									</ul>
 									<div v-else class="change-types-empty">No change types</div>
 								</div>
 								<footer class="history-expanded-footer">
@@ -575,6 +572,72 @@ const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map
 const editTypesErrorByRevId = ref<Map<number, string>>(new Map())
 /** Revision ids currently loading edit-types */
 const loadingEditTypesIds = ref<Set<number>>(new Set())
+
+/**
+ * Extract the simple diff summary for display. The API may return the summary
+ * directly or wrapped (e.g. under a "summary" key). We only display type names
+ * whose value is a plain map of action -> number.
+ */
+function getSummaryForDisplay(
+	raw: FWEditTypesDiffSummary | null
+): Record<string, Record<string, number>> | null {
+	if (!raw || typeof raw !== "object") return null
+	// If the response has a "summary" key with the right shape, use that
+	const summary = (raw as { summary?: Record<string, Record<string, number>> }).summary
+	if (summary && typeof summary === "object") {
+		return summary
+	}
+	// Otherwise use the root only for entries that are action maps (type -> { insert: n, change: n, ... })
+	const result: Record<string, Record<string, number>> = {}
+	for (const [typeName, value] of Object.entries(raw)) {
+		if (
+			value &&
+			typeof value === "object" &&
+			!Array.isArray(value) &&
+			Object.values(value).every(v => typeof v === "number")
+		) {
+			result[typeName] = value as Record<string, number>
+		}
+	}
+	return Object.keys(result).length > 0 ? result : null
+}
+
+/** Per-revision display summary (simple type -> action -> count only). */
+const displaySummaryByRevId = computed(() => {
+	const map = new Map<number, Record<string, Record<string, number>> | null>()
+	for (const [revId, raw] of editTypesByRevId.value) {
+		map.set(revId, getSummaryForDisplay(raw))
+	}
+	return map
+})
+
+/** One row per type+action for the vertical list: type name, symbol (+ / - / ↻), count, delta class. */
+function getChangeTypeRows(
+	summary: Record<string, Record<string, number>>
+): Array<{ key: string; typeName: string; symbol: string; count: number; deltaClass: string }> {
+	const rows: Array<{ key: string; typeName: string; symbol: string; count: number; deltaClass: string }> = []
+	const actionDisplay: Record<string, { symbol: string; deltaClass: string }> = {
+		insert: { symbol: "+", deltaClass: "change-types-delta-add" },
+		remove: { symbol: "-", deltaClass: "change-types-delta-remove" },
+		change: { symbol: "↻", deltaClass: "change-types-delta-change" },
+		move: { symbol: "↻", deltaClass: "change-types-delta-change" },
+	}
+	for (const [typeName, actions] of Object.entries(summary)) {
+		for (const [action, count] of Object.entries(actions)) {
+			if (count <= 0) continue
+			const key = action.toLowerCase()
+			const display = actionDisplay[key] ?? { symbol: action, deltaClass: "change-types-delta-change" }
+			rows.push({
+				key: `${typeName}-${action}`,
+				typeName,
+				symbol: display.symbol,
+				count,
+				deltaClass: display.deltaClass,
+			})
+		}
+	}
+	return rows
+}
 
 onMounted(search)
 

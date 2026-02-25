@@ -304,20 +304,41 @@
 	margin-top: 0.25rem;
 }
 
-.change-types-summary {
+.change-types-list {
+	list-style: none;
+	margin: 0.25rem 0 0 0;
+	padding: 0;
 	display: flex;
-	flex-wrap: wrap;
-	gap: 0.35rem;
-	margin-top: 0.25rem;
+	flex-direction: column;
+	gap: 0.15rem;
 }
 
-.change-types-badge {
-	display: inline-block;
-	padding: 0.15rem 0.4rem;
-	background-color: var(--background-color-interactive);
-	border-radius: 2px;
+.change-types-row {
+	display: flex;
+	align-items: baseline;
+	gap: 0.35rem;
+	line-height: 1.4;
+}
+
+.change-types-type {
 	color: var(--color-base);
-	font-size: 0.8125rem;
+}
+
+.change-types-delta {
+	font-variant-numeric: tabular-nums;
+	font-weight: 500;
+}
+
+.change-types-delta-add {
+	color: var(--green600, #14866d);
+}
+
+.change-types-delta-remove {
+	color: var(--red600, #b32424);
+}
+
+.change-types-delta-change {
+	color: var(--color-progressive, #36c);
 }
 
 .change-types-empty {
