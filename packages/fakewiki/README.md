@@ -1,129 +1,157 @@
 # fakewiki
 
-Helpers for building MediaWiki prototypes: API client, storage keys, result types, and shared styles. API details are documented via TSDoc on the source; this file covers package layout and usage at a glance.
+Helpers for building MediaWiki prototypes: API client for Wikipedia and sister sites, Vue composables for feeds and recommendations, shared types, and styles. Use it for page history, search, diffs, discovery feeds, ML predictions, and more.
 
-## Package exports
+## Install
 
-| Export                     | Description                                     |
-| -------------------------- | ----------------------------------------------- |
-| `fakewiki`                 | Main entry: `FakeWiki` class and default export |
-| `fakewiki/types`           | Shared TypeScript types and interfaces          |
-| `fakewiki/style/delta.css` | CSS for delta (change size) indicators          |
-| `fakewiki/playground-schema`   | Generated method list for API Playground (from FakeWiki.ts + TSDoc) |
-| `fakewiki/playground-overrides` | UI-only overrides for the API Playground (hide, resultHint, optionsParamKeys) |
+```bash
+npm install fakewiki
+```
 
-## What’s in the package
-
-- **FakeWiki** – Client for Wikimedia REST API, MediaWiki REST API, and MediaWiki Action API. Use it for page summaries, history, search, diffs, and related endpoints. See TSDoc on `FakeWiki` and its methods for parameters and return types.
-- **Storage keys** – Helpers to build consistent keys for prototype storage (e.g. `getStorageKey`, `getStorageKeys`).
-- **Result pattern** – `FWResult<T>` and helpers like `createResult` / `createResults` for loading/error/data state in prototypes.
-- **Delta utilities** – `getDeltaClass(delta)` for positive/negative/neutral CSS class names; use with `fakewiki/style/delta.css` for styling.
-- **Schemas** – OpenAPI 3.0 specs in `schema/`: `mediawiki-schema.json`, `wikimedia-schema.json`. Useful for docs, codegen, or validation.
-
-## API bases
-
-- **Wikimedia REST API** – `https://en.wikipedia.org/api/rest_v1/` (cacheable, machine-readable content).
-- **MediaWiki REST API** – `https://en.wikipedia.org/w/rest.php/v1/`.
-- **MediaWiki Action API** – `https://en.wikipedia.org/w/api.php` (query parameters).
-
-## Quick usage
+## Quick start
 
 ```typescript
 import { FakeWiki } from "fakewiki"
-import type { FWResult, FWRevision } from "fakewiki/types"
-import "fakewiki/style/delta.css"
 
 const wiki = new FakeWiki()
 
-// Page summary, history, search (see TSDoc for options and return types)
+// Page summary and history
 const summary = await wiki.getPageSummary("Wikipedia")
-const history = await wiki.getPageHistory("Wikipedia", { limit: 5 })
+const history = await wiki.getPageHistory("Wikipedia", { limit: 10 })
 
-// Storage keys for your prototype
-const key = wiki.getStorageKey("PageFeed", "searchQuery")
-
-// Result state for UI
-const result = wiki.createResult<FWRevision>()
-
-// Delta styling
-const deltaClass = wiki.getDeltaClass(150) // "positive"
-```
-
-**Search:**
-
-```typescript
+// Search
 const pages = await wiki.searchPages("Albert Einstein", 10)
 const users = await wiki.searchUsers("Admin", 5)
 const titles = await wiki.searchTitles("Wiki")
 ```
 
-**User info and history:**
+## API overview
+
+The `FakeWiki` class talks to the **Wikimedia REST API**, **MediaWiki REST API**, and **MediaWiki Action API**. All async methods are documented with TSDoc in the source. Below is a grouped overview.
+
+**Pages and content**
+
+- `getPageSummary`, `getPage`, `getPageHtml`, `getPageSource`, `getPageMobileHtml` – page metadata and content
+- `getPageHistory`, `getUserHistory`, `getUsersHistory`, `getCombinedFeed` – revision feeds
+- `getPageMedia`, `getPageThumbnail`, `getPageThumbnails`, `getPageHero`, `getPageCategories` – media and structure
+
+**Search**
+
+- `searchPages`, `searchUsers`, `searchTitles` – full-text and prefix search
+
+**Diffs and revisions**
+
+- `getRevisionDiff`, `getParentRevisionId`, `getRevisionSource` – compare and fetch revision content
+- `getDiffLineSegments`, `getDiffLineClass` – diff line parsing for UI
+
+**Discovery and feeds**
+
+- `getRandomPage`, `getFeaturedPage`, `getOnThisDay` – discovery
+- `getRelatedChanges`, `getTopRelatedChanges`, `getTopRelatedPages` – related changes
+- `getPagesLinks`, `getPagesBacklinks`, `getPagesLinksAndBacklinks` – link graph
+- `getListBuilding`, `getMultiPageListBuilding` – list-building API
+
+**Users**
+
+- `getUserInfo`, `getUserAvatar`, `getUserCategory` – user metadata and classification. `getUserCategory` is cached on the instance; feed hooks call it when loading revisions so the cache is populated. Use `getUserCategoryDisplay(userName)` for icon + color (returns `null` if the user is not yet in the cache). To override icon/color per category for a call, pass a second argument: `getUserCategoryDisplay(userName, { userTypeConfig })`.
+- `getUserCategoryDisplay(userName, options?)`, `getCachedUserCategory(userName)` – read from the in-instance cache for UI (display config or category string for test IDs).
+
+**ML predictions (damaging / goodfaith)**
+
+- `getDamagingPrediction`, `getGoodfaithPrediction`
+- `getRevisionPredictions`, `getRevisionPredictionsFromOres` – batch predictions
+
+**URLs and formatting**
+
+- `getPageUrl`, `getRevisionUrl`, `getUserUrl`, `getHistoryUrl`, `getEditUrl`, etc.
+- `formatDate`, `formatTime`, `formatRelativeTimestamp`, `formatNiceRelativeTimestamp`, `formatDelta`
+- `getDeltaClass(delta)` – CSS class for delta indicators; use with `fakewiki/style/delta.css`
+
+**Result and state helpers**
+
+- `createResult<T>()`, `createResults<T>()` – loading/error/data state for UI
+- `getStorageKey`, `getStorageKeys` – consistent keys for prototype storage (optional)
+
+## Hooks
+
+The package exports composables that work with `FakeWiki` for common prototype patterns. User category caching is handled by FakeWiki: when feed hooks load revisions they call `wiki.getUserCategory(userName)`, and FakeWiki caches the result. In the template use `wiki.getUserCategoryDisplay(userName)` for icon and color. To customize icon/color per category, pass the config at call time: `wiki.getUserCategoryDisplay(userName, { userTypeConfig })`.
+
+**`useFeed`** – combined feed from page and user search queries, with load-more and edit-summary processing. Calls `getUserCategory` for each revision so the cache is ready for `wiki.getUserCategoryDisplay()` in the UI.
 
 ```typescript
-const userInfo = await wiki.getUserInfo("Example")
-const avatarUrl = await wiki.getUserAvatar("Example")
-const userRevisions = await wiki.getUserHistory("Example", { limit: 20 })
-```
+import { useFeed } from "fakewiki"
+import { ref } from "vue"
 
-**Feeds and discovery:**
-
-```typescript
-const feed = await wiki.getCombinedFeed({
-	pageNames: ["Wikipedia", "Wet Leg"],
-	userNames: ["Todepond", "Samwalton9"],
-	limit: 10,
+const pageQueries = ref(["Wikipedia", "Wet Leg"])
+const userQueries = ref(["Todepond"])
+const { allRevisionsData, loadFeed, isLoading, hasMore, loadMore } = useFeed({
+	wiki,
+	pageSearchQueries: pageQueries,
+	userSearchQueries: userQueries,
+	onUserCategory: (userName, category) => {
+		/* cache if needed */
+	},
 })
-const random = await wiki.getRandomPage()
-const featured = await wiki.getFeaturedPage()
-const onThisDay = await wiki.getOnThisDay(new Date())
+await loadFeed()
 ```
 
-**Revisions and diffs:**
+**`useRelatedChanges`** – single- or multi-page related changes feed with summarized comments. Populates FakeWiki’s user category cache for `wiki.getUserCategoryDisplay()`.
 
 ```typescript
-const diff = await wiki.getRevisionDiff("Wikipedia", 123456789)
-const parentId = await wiki.getParentRevisionId("Wikipedia", 123456789)
-const source = await wiki.getRevisionSource(123456789)
+import { useRelatedChanges } from "fakewiki"
+
+const pageName = ref("Wikipedia")
+const { allRevisionsData, loadFeed, isLoading } = useRelatedChanges({
+	wiki,
+	pageName,
+	onUserCategory: (userName, category) => {
+		/* cache */
+	},
+})
+await loadFeed()
 ```
 
-**URLs:**
+**`usePredictions`** – lazy-load damaging/goodfaith predictions for revision IDs, with icon/color state for UI.
 
 ```typescript
-wiki.getPageUrl("Wikipedia")
-wiki.getRevisionUrl(123456789, "Wikipedia")
-wiki.getUserUrl("Example")
+import { usePredictions } from "fakewiki"
+
+const { revisionPredictions, loadPrediction, getPredictionState } = usePredictions(wiki, {
+	source: "liftwing", // or "ores"
+})
+await loadPrediction(revisionId)
+const state = getPredictionState(revisionId) // { icon, color, isLoading, isError }
 ```
 
-**Timestamps:**
+**`useRelatedChangesRecommendations`** – recommend related pages from a feed’s revisions and merge recommended revisions into the feed.
 
-```typescript
-wiki.formatRelativeTime("2024-01-15T12:00:00Z", {
-	seconds: "words",
-	minutes: "minutes",
-	hours: "hours",
-	days: "days",
-	weeks: "date",
-	months: "date",
-	years: "date",
-}) // e.g. "15 January 2024", e.g. "3 minutes ago"
-```
+**`useListBuildingRecommendations`** – recommend pages from list-building API and merge those revisions into the feed.
+
+See the source for full options and return shapes.
+
+## Package exports
+
+| Export                     | Description                                                               |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `fakewiki`                 | Main entry: `FakeWiki`, all types, and all hooks (useUser, useFeed, etc.) |
+| `fakewiki/style/delta.css` | CSS for delta (change size) indicators                                    |
 
 ## API Playground
 
-The Fake MediaWiki app includes an **API Playground** prototype that lists every FakeWiki async method and lets you run them with custom parameters. Method names and parameter metadata are derived from `FakeWiki.ts` and its TSDoc (single source of truth); UI hints live in `playground-overrides.ts`.
+Try every `FakeWiki` method with custom parameters in the browser:
 
-**When you add a new public async method to FakeWiki:** document it with TSDoc (including `@param` for each argument), then run the schema generator so the method appears in the playground:
+**[API Playground →](https://todepond.github.io/Fullscreen/ApiPlayground)**
 
-```bash
-cd packages/fakewiki && npm run generate:playground
-```
+## API bases
 
-This writes `playground-schema.generated.ts`. Optionally run this in CI and fail if the generated file is out of date (e.g. source changed without regenerating).
+- **Wikimedia REST API** – `https://en.wikipedia.org/api/rest_v1/`
+- **MediaWiki REST API** – `https://en.wikipedia.org/w/rest.php/v1/`
+- **MediaWiki Action API** – `https://en.wikipedia.org/w/api.php`
 
-## Reference docs in this package
+## Reference docs (in repo)
 
-- **CODEX_REFERENCE.md** – Codex components, design tokens, and links.
-- **ICON_REFERENCE.md** – Codex icons used in the project and how to add more.
+- **CODEX_REFERENCE.md** – Codex components and design tokens
+- **ICON_REFERENCE.md** – Codex icons used in the project
 
 ## External references
 

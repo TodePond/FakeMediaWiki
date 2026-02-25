@@ -190,15 +190,15 @@
 										>{{ change.user.name }}</a
 									>
 									<CdxIcon
-										v-if="getUserTypeConfig(change.user.name)?.icon"
+										v-if="wiki.getUserCategoryDisplay(change.user.name, { userTypeConfig })?.icon"
 										:class="[
 											'user-type-icon',
-											`user-type-icon-${getCachedUserCategory(change.user.name) || ''}`,
+											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: getUserTypeConfig(change.user.name)?.color,
+											color: wiki.getUserCategoryDisplay(change.user.name, { userTypeConfig })?.color,
 										}"
-										:icon="getUserTypeConfig(change.user.name)!.icon!"
+										:icon="wiki.getUserCategoryDisplay(change.user.name, { userTypeConfig })!.icon!"
 										size="x-small" /></span
 								><span
 									class="history-comment"
@@ -267,15 +267,15 @@
 										class="history-user-expanded"
 										>{{ change.user.name }}</a
 									><CdxIcon
-										v-if="getUserTypeConfig(change.user.name)?.icon"
-										:icon="getUserTypeConfig(change.user.name)!.icon!"
+										v-if="wiki.getUserCategoryDisplay(change.user.name, { userTypeConfig })?.icon"
+										:icon="wiki.getUserCategoryDisplay(change.user.name, { userTypeConfig })!.icon!"
 										:class="[
 											'user-type-icon',
 											'user-type-icon-expanded',
-											`user-type-icon-${getCachedUserCategory(change.user.name) || ''}`,
+											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: getUserTypeConfig(change.user.name)?.color,
+											color: wiki.getUserCategoryDisplay(change.user.name, { userTypeConfig })?.color,
 										}"
 								/></span>
 								<button
@@ -594,15 +594,15 @@
 											class="history-user"
 											>{{ rev.user.name }}</a
 										><CdxIcon
-											v-if="getUserTypeConfig(rev.user.name)?.icon"
-											:icon="getUserTypeConfig(rev.user.name)!.icon!"
+											v-if="wiki.getUserCategoryDisplay(rev.user.name, { userTypeConfig })?.icon"
+											:icon="wiki.getUserCategoryDisplay(rev.user.name, { userTypeConfig })!.icon!"
 											size="x-small"
 											:class="[
 												'user-type-icon',
-												`user-type-icon-${getCachedUserCategory(rev.user.name) || ''}`,
+												`user-type-icon-${wiki.getCachedUserCategory(rev.user.name) || ''}`,
 											]"
 											:style="{
-												color: getUserTypeConfig(rev.user.name)?.color,
+												color: wiki.getUserCategoryDisplay(rev.user.name, { userTypeConfig })?.color,
 											}"
 										/><span
 											class="history-comment"
@@ -723,7 +723,6 @@ import {
 	useFeed,
 	useListBuildingRecommendations,
 	usePredictions,
-	useUser,
 	type FeedRevisionListBuilding as FeedRevision,
 } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
@@ -799,15 +798,11 @@ const thankedRevisionIds = ref<Set<number>>(new Set())
 const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
 
-const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser({
-	userTypeConfig,
-})
 const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } = useFeed(
 	{
 		wiki,
 		pageSearchQueries,
 		userSearchQueries,
-		onUserCategory: cacheUserCategory,
 	}
 )
 const {
@@ -822,7 +817,6 @@ const {
 	wiki,
 	pageSearchQueries,
 	allRevisionsData,
-	cacheUserCategory,
 	options: {
 		recommendationLang: RECOMMENDATION_LANG,
 		recommendationMaxPages: RECOMMENDATION_MAX_PAGES,
@@ -1139,8 +1133,7 @@ function toggleHistory(change: FWRevision): void {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => {
 					// Fetch user category for history revisions
-					const userCategory = await wiki.getUserCategory(rev.user.name)
-					cacheUserCategory(rev.user.name, userCategory)
+					await wiki.getUserCategory(rev.user.name)
 					return {
 						...rev,
 						commentHtml: await wiki.getEditSummaryHtml(rev.comment || "", pageName),

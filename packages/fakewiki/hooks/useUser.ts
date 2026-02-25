@@ -1,54 +1,18 @@
-import { ref } from "vue"
-import { cdxIconHeart, cdxIconUnStar } from "@wikimedia/codex-icons"
-import type { UserCategory, UserTypeConfig } from "./types"
+import type { FWUserCategory, FWUserTypeConfig } from "fakewiki/types"
+import type { FakeWiki } from "fakewiki"
 
-/** Default user type display configuration for watchlist-style prototypes. */
-export const defaultUserTypeConfig: Record<UserCategory, UserTypeConfig> = {
-	unregistered: {
-		icon: null,
-		color: "var(--color-subtle)",
-	},
-	newcomer: {
-		icon: cdxIconHeart,
-		color: "var(--green400)",
-	},
-	learner: {
-		icon: null,
-		color: "var(--yellow400)",
-	},
-	experienced: {
-		icon: cdxIconUnStar,
-		color: "var(--yellow400)",
-	},
-}
-
-export interface UseUserOptions {
-	userTypeConfig?: Record<UserCategory, UserTypeConfig>
-}
-
-export function useUser(options?: UseUserOptions) {
-	const userTypeConfig = options?.userTypeConfig ?? defaultUserTypeConfig
-
-	/** Cache of user categories by username for reactive UI reads */
-	const userCategories = ref<Map<string, UserCategory>>(new Map())
-
-	function cacheUserCategory(userName: string, category: UserCategory): void {
-		userCategories.value = new Map(userCategories.value).set(userName, category)
-	}
-
-	function getCachedUserCategory(userName: string): UserCategory | null {
-		return userCategories.value.get(userName) ?? null
-	}
-
-	function getUserTypeConfig(userName: string): UserTypeConfig | null {
-		const category = getCachedUserCategory(userName)
-		return category ? userTypeConfig[category] : null
-	}
-
+/**
+ * Thin wrapper that returns getUserCategoryDisplay from the given FakeWiki instance.
+ * User category caching is on FakeWiki; use wiki.getUserCategoryDisplay(userName) or
+ * wiki.getUserCategoryDisplay(userName, { userTypeConfig }) in the template.
+ * This composable exists only for call sites that destructure from useUser(wiki).
+ */
+export function useUser(
+	wiki: FakeWiki,
+	options?: { userTypeConfig?: Partial<Record<FWUserCategory, FWUserTypeConfig>> }
+) {
 	return {
-		userCategories,
-		cacheUserCategory,
-		getCachedUserCategory,
-		getUserTypeConfig,
+		getUserCategoryDisplay: (userName: string) =>
+			wiki.getUserCategoryDisplay(userName, options),
 	}
 }

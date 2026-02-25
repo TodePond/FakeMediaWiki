@@ -7,10 +7,6 @@ export interface UseFeedArgs {
 	wiki: FakeWiki
 	pageSearchQueries: Ref<string[]>
 	userSearchQueries: Ref<string[]>
-	onUserCategory: (
-		_userName: string,
-		_category: "unregistered" | "newcomer" | "learner" | "experienced"
-	) => void
 	/** When provided, use this ref for feed data instead of an internal ref (e.g. to share with another composable). */
 	allRevisionsDataRef?: Ref<FWRevision[]>
 }
@@ -19,7 +15,6 @@ export function useFeed({
 	wiki,
 	pageSearchQueries,
 	userSearchQueries,
-	onUserCategory,
 	allRevisionsDataRef,
 }: UseFeedArgs) {
 	// Combined feed results (use caller's ref when provided so feed and recommendations share one list)
@@ -87,8 +82,7 @@ export function useFeed({
 						pageName,
 						avatarUrl: null,
 					}
-					const userCategory = await wiki.getUserCategory(revision.user.name)
-					onUserCategory(revision.user.name, userCategory)
+					await wiki.getUserCategory(revision.user.name)
 					return processedRevision
 				})
 			)

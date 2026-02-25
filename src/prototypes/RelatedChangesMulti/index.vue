@@ -202,15 +202,15 @@
 										>{{ change.user.name }}</a
 									>
 									<CdxIcon
-										v-if="getUserTypeConfig(change.user.name)?.icon"
+										v-if="wiki.getUserCategoryDisplay(change.user.name)?.icon"
 										:class="[
 											'user-type-icon',
-											`user-type-icon-${getCachedUserCategory(change.user.name) || ''}`,
+											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: getUserTypeConfig(change.user.name)?.color,
+											color: wiki.getUserCategoryDisplay(change.user.name)?.color,
 										}"
-										:icon="getUserTypeConfig(change.user.name)!.icon!"
+										:icon="wiki.getUserCategoryDisplay(change.user.name)!.icon!"
 										size="x-small" /></span
 								><span
 									class="history-comment"
@@ -285,15 +285,15 @@
 										class="history-user-expanded"
 										>{{ change.user.name }}</a
 									><CdxIcon
-										v-if="getUserTypeConfig(change.user.name)?.icon"
-										:icon="getUserTypeConfig(change.user.name)!.icon!"
+										v-if="wiki.getUserCategoryDisplay(change.user.name)?.icon"
+										:icon="wiki.getUserCategoryDisplay(change.user.name)!.icon!"
 										:class="[
 											'user-type-icon',
 											'user-type-icon-expanded',
-											`user-type-icon-${getCachedUserCategory(change.user.name) || ''}`,
+											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: getUserTypeConfig(change.user.name)?.color,
+											color: wiki.getUserCategoryDisplay(change.user.name)?.color,
 										}"
 								/></span>
 								<button
@@ -633,15 +633,15 @@
 											class="history-user"
 											>{{ rev.user.name }}</a
 										><CdxIcon
-											v-if="getUserTypeConfig(rev.user.name)?.icon"
-											:icon="getUserTypeConfig(rev.user.name)!.icon!"
+											v-if="wiki.getUserCategoryDisplay(rev.user.name)?.icon"
+											:icon="wiki.getUserCategoryDisplay(rev.user.name)!.icon!"
 											size="x-small"
 											:class="[
 												'user-type-icon',
-												`user-type-icon-${getCachedUserCategory(rev.user.name) || ''}`,
+												`user-type-icon-${wiki.getCachedUserCategory(rev.user.name) || ''}`,
 											]"
 											:style="{
-												color: getUserTypeConfig(rev.user.name)?.color,
+												color: wiki.getUserCategoryDisplay(rev.user.name)?.color,
 											}"
 										/><span
 											class="history-comment"
@@ -755,7 +755,6 @@ import {
 	type RelatedChangeRevisionMulti,
 	usePredictions,
 	useRelatedChanges,
-	useUser,
 } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
@@ -846,12 +845,10 @@ const thankedRevisionIds = ref<Set<number>>(new Set())
 const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
 
-const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
 const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
 const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedChanges({
 	wiki,
 	pageName,
-	onUserCategory: cacheUserCategory,
 })
 
 const pageNamesList = computed(() => {
@@ -1098,8 +1095,7 @@ function toggleHistory(change: FWRevision): void {
 		.then(async response => {
 			const revisions = await Promise.all(
 				(response.revisions || []).map(async rev => {
-					const userCategory = await wiki.getUserCategory(rev.user.name)
-					cacheUserCategory(rev.user.name, userCategory)
+					await wiki.getUserCategory(rev.user.name)
 					return {
 						...rev,
 						commentHtml: await wiki.getEditSummaryHtml(rev.comment || "", page),

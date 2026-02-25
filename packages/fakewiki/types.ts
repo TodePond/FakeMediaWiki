@@ -172,6 +172,12 @@ export interface FWUserInfo {
 /** User experience category used by watchlist-like prototypes */
 export type FWUserCategory = "unregistered" | "newcomer" | "learner" | "experienced"
 
+/** Display config (icon + color) for a user category in watchlist-style UIs. */
+export interface FWUserTypeConfig {
+	icon: import("@wikimedia/codex-icons").Icon | null
+	color: string
+}
+
 /** User contribution entry from Action API list=usercontribs */
 export interface FWUserContrib {
 	revid: number

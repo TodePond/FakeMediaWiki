@@ -29,10 +29,6 @@ export interface UseRelatedChangesRecommendationsArgs {
 	pageSearchQueries: Ref<string[]>
 	allRevisionsData: Ref<FWRevision[]>
 	filterKeepPercent: Ref<number>
-	cacheUserCategory: (
-		_userName: string,
-		_category: "unregistered" | "newcomer" | "learner" | "experienced"
-	) => void
 	options?: UseRelatedChangesRecommendationsOptions
 }
 
@@ -53,7 +49,6 @@ export function useRelatedChangesRecommendations({
 	pageSearchQueries,
 	allRevisionsData,
 	filterKeepPercent,
-	cacheUserCategory,
 	options: opts,
 }: UseRelatedChangesRecommendationsArgs) {
 	const recommendationHistoryLimit =
@@ -116,8 +111,7 @@ export function useRelatedChangesRecommendations({
 		summary.hashtags = Array.isArray(summary.hashtags)
 			? summary.hashtags.join(" ")
 			: summary.hashtags
-		const userCategory = await wiki.getUserCategory(revision.user.name)
-		cacheUserCategory(revision.user.name, userCategory)
+		await wiki.getUserCategory(revision.user.name)
 		return {
 			...revision,
 			comment: revision.comment || "",

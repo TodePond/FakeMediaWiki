@@ -44,17 +44,12 @@ export interface UseRelatedChangesOptions {
 export interface UseRelatedChangesArgs {
 	wiki: FakeWiki
 	pageName: Ref<string>
-	onUserCategory: (
-		_userName: string,
-		_category: "unregistered" | "newcomer" | "learner" | "experienced"
-	) => void
 	options?: UseRelatedChangesOptions
 }
 
 export function useRelatedChanges({
 	wiki,
 	pageName,
-	onUserCategory,
 	options: opts,
 }: UseRelatedChangesArgs) {
 	const limitSingle = opts?.limitSingle ?? DEFAULT_LIMIT_SINGLE
@@ -92,8 +87,7 @@ export function useRelatedChanges({
 				})
 				const enriched: RelatedChangeRevisionSingle[] = await Promise.all(
 					revisions.map(async rev => {
-						const userCategory = await wiki.getUserCategory(rev.user.name)
-						onUserCategory(rev.user.name, userCategory)
+						await wiki.getUserCategory(rev.user.name)
 						const comment = rev.comment ?? ""
 						return {
 							...rev,
@@ -149,8 +143,7 @@ export function useRelatedChanges({
 			})
 			const enriched: RelatedChangeRevisionMulti[] = await Promise.all(
 				topChanges.map(async r => {
-					const userCategory = await wiki.getUserCategory(r.user.name)
-					onUserCategory(r.user.name, userCategory)
+					await wiki.getUserCategory(r.user.name)
 					const comment = r.comment ?? ""
 					const sourcePageNames = r.sourcePageNames ?? []
 					return {

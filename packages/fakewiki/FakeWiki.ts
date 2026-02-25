@@ -39,7 +39,11 @@ import type {
 	FWUserContrib,
 	FWUserInfo,
 	FWUserSearchResult,
+	FWUserTypeConfig,
 } from "./types"
+
+import { cdxIconHeart, cdxIconUnStar } from "@wikimedia/codex-icons"
+import type { Icon } from "@wikimedia/codex-icons"
 
 /** MediaWiki REST API page history returns this many revisions per request; used as default and max for getPageHistory and getCombinedFeed. */
 const PAGE_HISTORY_REVISIONS_PER_REQUEST = 20
@@ -81,6 +85,15 @@ export class FakeWiki {
 	private userCategoryCache: Map<string, FWUserCategory>
 
 	/**
+	 * Display config (icon + color) per user category for watchlist-style UIs.
+	 * Set via constructor options or use built-in default.
+	 */
+	/**
+	 * Default display config (icon + color) per user category. Override per call via getUserCategoryDisplay(userName, { userTypeConfig }).
+	 */
+	private readonly defaultUserTypeConfig: Record<FWUserCategory, FWUserTypeConfig>
+
+	/**
 	 * Cache for page histories
 	 * key = pageName, value = sorted array of revisions (newest first)
 	 */
@@ -116,6 +129,12 @@ export class FakeWiki {
 		this.apiUserAgent = options?.apiUserAgent
 		this.userInfoCache = new Map()
 		this.userCategoryCache = new Map()
+		this.defaultUserTypeConfig = {
+			unregistered: { icon: null as Icon | null, color: "var(--color-subtle)" },
+			newcomer: { icon: cdxIconHeart, color: "var(--green400)" },
+			learner: { icon: null as Icon | null, color: "var(--yellow400)" },
+			experienced: { icon: cdxIconUnStar, color: "var(--yellow400)" },
+		}
 	}
 
 	/**
@@ -2378,6 +2397,35 @@ export class FakeWiki {
 	 */
 	private getUserCategoryFromCache(userName: string): FWUserCategory | null {
 		return this.userCategoryCache.get(userName) ?? null
+	}
+
+	/**
+	 * Return display config (icon + color) for a user's category.
+	 * Category must already be in cache (e.g. after calling getUserCategory or after a feed that calls it has loaded). Returns null if the user is not in the cache.
+	 * Pass `userTypeConfig` in the second argument to override icon/color per category for this call.
+	 * @param userName - Username to look up
+	 * @param options - Optional overrides; `userTypeConfig` merges with the default per-category display config
+	 * @returns Icon and color for the user's category, or null if not cached
+	 */
+	getUserCategoryDisplay(
+		userName: string,
+		options?: { userTypeConfig?: Partial<Record<FWUserCategory, FWUserTypeConfig>> }
+	): FWUserTypeConfig | null {
+		const category = this.getUserCategoryFromCache(userName)
+		if (!category) return null
+		const config = options?.userTypeConfig
+			? { ...this.defaultUserTypeConfig, ...options.userTypeConfig }
+			: this.defaultUserTypeConfig
+		return config[category]
+	}
+
+	/**
+	 * Read a user's category from cache (for UI keys/test ids). Returns null if not yet loaded.
+	 * @param userName - Username to look up
+	 * @returns Cached category or null
+	 */
+	getCachedUserCategory(userName: string): FWUserCategory | null {
+		return this.getUserCategoryFromCache(userName)
 	}
 
 	/**

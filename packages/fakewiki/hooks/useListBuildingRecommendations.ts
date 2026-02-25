@@ -25,10 +25,6 @@ export interface UseListBuildingRecommendationsArgs {
 	wiki: FakeWiki
 	pageSearchQueries: Ref<string[]>
 	allRevisionsData: Ref<FWRevision[]>
-	cacheUserCategory: (
-		_userName: string,
-		_category: "unregistered" | "newcomer" | "learner" | "experienced"
-	) => void
 	options?: UseListBuildingRecommendationsOptions
 }
 
@@ -48,7 +44,6 @@ export function useListBuildingRecommendations({
 	wiki,
 	pageSearchQueries,
 	allRevisionsData,
-	cacheUserCategory,
 	options: opts,
 }: UseListBuildingRecommendationsArgs) {
 	const recommendationLang = opts?.recommendationLang ?? DEFAULT_RECOMMENDATION_LANG
@@ -139,8 +134,7 @@ export function useListBuildingRecommendations({
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
-				const userCategory = await wiki.getUserCategory(revision.user.name)
-				cacheUserCategory(revision.user.name, userCategory)
+				await wiki.getUserCategory(revision.user.name)
 				processingLoaded++
 				recommendationProgress.value = {
 					...recommendationProgress.value,
