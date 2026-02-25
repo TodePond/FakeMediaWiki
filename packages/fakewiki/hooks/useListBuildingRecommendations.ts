@@ -1,88 +1,68 @@
-import type { FakeWiki } from "fakewiki"
+import { FakeWiki } from "../FakeWiki"
 import type { FWRevision } from "fakewiki/types"
 import type { Ref } from "vue"
 import { computed, ref } from "vue"
-import {
-	RECOMMENDATION_HISTORY_CONCURRENCY,
-	RECOMMENDATION_LANG,
-	RECOMMENDATION_MAX_PAGES,
-	RECOMMENDATION_PROCESS_CONCURRENCY,
-} from "./config"
 
 /** Revision with optional recommendation flag (recent change from a recommended page). */
-export type FeedRevision = FWRevision & {
+export type FeedRevisionListBuilding = FWRevision & {
 	isRecommendation?: true
-	/** If set, use for date grouping so recs appear in the same date section as the main feed they're interleaved with. */
 	groupByTimestamp?: string
 }
 
-interface UseRecommendationsArgs {
+export interface UseListBuildingRecommendationsOptions {
+	recommendationLang?: string
+	recommendationMaxPages?: number
+	recommendationHistoryConcurrency?: number
+	recommendationProcessConcurrency?: number
+}
+
+const DEFAULT_RECOMMENDATION_LANG = "en"
+const DEFAULT_RECOMMENDATION_MAX_PAGES = 12
+const DEFAULT_RECOMMENDATION_HISTORY_CONCURRENCY = 2
+const DEFAULT_RECOMMENDATION_PROCESS_CONCURRENCY = 3
+
+export interface UseListBuildingRecommendationsArgs {
 	wiki: FakeWiki
 	pageSearchQueries: Ref<string[]>
 	allRevisionsData: Ref<FWRevision[]>
 	cacheUserCategory: (
-		userName: string,
-		category: "unregistered" | "newcomer" | "learner" | "experienced"
+		_userName: string,
+		_category: "unregistered" | "newcomer" | "learner" | "experienced"
 	) => void
+	options?: UseListBuildingRecommendationsOptions
 }
 
-/** Run async tasks with a concurrency limit; returns results in input order. */
-async function runWithConcurrency<T, R>(
-	items: T[],
-	concurrency: number,
-	fn: (item: T) => Promise<R>
-): Promise<R[]> {
-	const results: R[] = []
-	let index = 0
-	async function worker(): Promise<void> {
-		while (index < items.length) {
-			const i = index++
-			const item = items[i]
-			if (item === undefined) continue
-			results[i] = await fn(item)
-		}
-	}
-	await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()))
-	return results
-}
-
-export interface RecommendationProgress {
-	/** True when current recommendations were restored from cache (no list-building run). */
+export interface ListBuildingRecommendationProgress {
 	loadedFromCache: boolean
-	/** Total seed pages to fetch in list-building phase. */
 	listBuildingTotal: number
-	/** Seed pages merged so far (from getMultiPageListBuilding onLoad). */
 	listBuildingCompleted: number
-	/** Number of recommended pages (candidates before truncation, or found after). */
 	found: number
-	/** True once we have truncated to the final N and set found to that count. */
 	recommendationsTruncated: boolean
-	/** Total number of page histories we will load. */
 	historiesTotal: number
-	/** Number of page histories loaded so far. */
 	historiesLoaded: number
-	/** Total revisions to process (summary HTML, user category). */
 	processingTotal: number
-	/** Revisions processed so far. */
 	processingLoaded: number
 }
 
-export function useRecommendations({
+export function useListBuildingRecommendations({
 	wiki,
 	pageSearchQueries,
 	allRevisionsData,
 	cacheUserCategory,
-}: UseRecommendationsArgs) {
-	/** Revisions from recommended pages (from getMultiPageListBuilding). */
-	const recommendationRevisions = ref<FeedRevision[]>([])
-	/** For each recommended page title, the seed page titles that produced it (from list-building). */
+	options: opts,
+}: UseListBuildingRecommendationsArgs) {
+	const recommendationLang = opts?.recommendationLang ?? DEFAULT_RECOMMENDATION_LANG
+	const recommendationMaxPages = opts?.recommendationMaxPages ?? DEFAULT_RECOMMENDATION_MAX_PAGES
+	const recommendationHistoryConcurrency =
+		opts?.recommendationHistoryConcurrency ?? DEFAULT_RECOMMENDATION_HISTORY_CONCURRENCY
+	const recommendationProcessConcurrency =
+		opts?.recommendationProcessConcurrency ?? DEFAULT_RECOMMENDATION_PROCESS_CONCURRENCY
+
+	const recommendationRevisions = ref<FeedRevisionListBuilding[]>([])
 	const recommendationSeedPagesByPage = ref<Map<string, string[]>>(new Map())
-	/** Full list of candidate titles from last list-building (for load more). */
 	const allCandidateTitles = ref<string[]>([])
-	/** Number of candidate titles we have already loaded history for. */
 	const loadedCandidateCount = ref(0)
-	/** Progress during loadRecommendations: list-building and histories loaded. */
-	const recommendationProgress = ref<RecommendationProgress>({
+	const recommendationProgress = ref<ListBuildingRecommendationProgress>({
 		loadedFromCache: false,
 		listBuildingTotal: 0,
 		listBuildingCompleted: 0,
@@ -94,140 +74,18 @@ export function useRecommendations({
 		processingLoaded: 0,
 	})
 
-	async function loadRecommendations(): Promise<string[]> {
-		const pageNames = pageSearchQueries.value
-			.filter(name => name.trim() !== "")
-			.map(name => name.trim())
-		recommendationProgress.value = {
-			loadedFromCache: false,
-			listBuildingTotal: pageNames.length,
-			listBuildingCompleted: 0,
-			found: 0,
-			recommendationsTruncated: false,
-			historiesTotal: 0,
-			historiesLoaded: 0,
-			processingTotal: 0,
-			processingLoaded: 0,
-		}
-		if (pageNames.length === 0) {
-			recommendationRevisions.value = []
-			return []
-		}
-		const { entries } = await wiki.getMultiPageListBuilding(RECOMMENDATION_LANG, pageNames, {
-			k: 10,
-			onLoad: ({ entries: loadedEntries, completedCount }) => {
-				recommendationProgress.value = {
-					...recommendationProgress.value,
-					found: loadedEntries.length,
-					listBuildingCompleted: completedCount,
-				}
-			},
-		})
-		// Map each recommended page to the seed pages that produced it (for "because you watch X and Y").
-		const seedByPage = new Map<string, string[]>()
-		for (const e of entries) {
-			const raw = e.item.page_title?.trim()
-			if (!raw || !e.pageTitles?.length) continue
-			// Store under multiple key forms so lookup works regardless of space/underscore format.
-			seedByPage.set(raw, e.pageTitles)
-			const withUnderscores = raw.replace(/\s+/g, "_")
-			if (withUnderscores !== raw) seedByPage.set(withUnderscores, e.pageTitles)
-			const withSpaces = raw.replace(/_/g, " ")
-			if (withSpaces !== raw) seedByPage.set(withSpaces, e.pageTitles)
-		}
-		recommendationSeedPagesByPage.value = seedByPage
-		// Entries are already deduped and sorted; keep full list for load more.
-		const allTitles = entries.map(e => e.item.page_title.trim())
-		allCandidateTitles.value = allTitles
-		loadedCandidateCount.value = 0
-		const recommendedTitles = allTitles.slice(0, RECOMMENDATION_MAX_PAGES)
-		if (recommendedTitles.length === 0) {
-			recommendationRevisions.value = []
-			loadedCandidateCount.value = 0
-			return []
-		}
-		recommendationRevisions.value = await fetchAndProcessHistories(recommendedTitles)
-		loadedCandidateCount.value = recommendedTitles.length
-		return recommendedTitles
-	}
-
-	/**
-	 * Load recommendation revisions from a list of page titles only (skip list-building).
-	 * Use when restoring from cache. Optionally pass seedPagesByPage so "Because you watch..." can be shown.
-	 * Returns the same titles on success.
-	 */
-	async function loadRecommendationsFromTitles(
-		titles: string[],
-		seedPagesByPage?: Record<string, string[]>
-	): Promise<string[]> {
-		if (titles.length === 0) {
-			recommendationRevisions.value = []
-			allCandidateTitles.value = []
-			recommendationSeedPagesByPage.value = new Map()
-			loadedCandidateCount.value = 0
-			return []
-		}
-		if (seedPagesByPage && Object.keys(seedPagesByPage).length > 0) {
-			const map = new Map<string, string[]>()
-			for (const [page, seeds] of Object.entries(seedPagesByPage)) {
-				if (seeds?.length) {
-					map.set(page.trim(), seeds)
-					const withUnderscores = page.trim().replace(/\s+/g, "_")
-					if (withUnderscores !== page.trim()) map.set(withUnderscores, seeds)
-					const withSpaces = page.trim().replace(/_/g, " ")
-					if (withSpaces !== page.trim()) map.set(withSpaces, seeds)
-				}
-			}
-			recommendationSeedPagesByPage.value = map
-		} else {
-			recommendationSeedPagesByPage.value = new Map()
-		}
-		recommendationProgress.value = {
-			loadedFromCache: true,
-			listBuildingTotal: titles.length,
-			listBuildingCompleted: titles.length,
-			found: titles.length,
-			recommendationsTruncated: true,
-			historiesTotal: titles.length,
-			historiesLoaded: 0,
-			processingTotal: 0,
-			processingLoaded: 0,
-		}
-		allCandidateTitles.value = titles
-		loadedCandidateCount.value = 0
-		recommendationRevisions.value = await fetchAndProcessHistories(titles)
-		loadedCandidateCount.value = titles.length
-		return titles
-	}
-
-	/**
-	 * Load the next batch of recommendation page histories and append to the list.
-	 * No-op if no more candidates.
-	 */
-	async function loadMoreRecommendations(): Promise<void> {
-		const all = allCandidateTitles.value
-		const loaded = loadedCandidateCount.value
-		if (loaded >= all.length) return
-		const nextBatch = all.slice(loaded, loaded + RECOMMENDATION_MAX_PAGES)
-		if (nextBatch.length === 0) return
-		const existing = recommendationRevisions.value
-		const newRevs = await fetchAndProcessHistories(nextBatch)
-		recommendationRevisions.value = [...existing, ...newRevs].sort(
-			(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-		)
-		loadedCandidateCount.value = loaded + nextBatch.length
-	}
-
-	async function fetchAndProcessHistories(recommendedTitles: string[]): Promise<FeedRevision[]> {
+	async function fetchAndProcessHistories(
+		recommendedTitles: string[]
+	): Promise<FeedRevisionListBuilding[]> {
 		recommendationProgress.value = {
 			...recommendationProgress.value,
 			historiesTotal: recommendedTitles.length,
 			historiesLoaded: 0,
 		}
 		let historiesLoaded = 0
-		const revsByPage = await runWithConcurrency(
+		const revsByPage = await wiki.runWithConcurrency(
 			recommendedTitles,
-			RECOMMENDATION_HISTORY_CONCURRENCY,
+			recommendationHistoryConcurrency,
 			async pageName => {
 				const response = await wiki.getPageHistory(pageName, { limit: 2 })
 				historiesLoaded++
@@ -248,9 +106,9 @@ export function useRecommendations({
 			processingLoaded: 0,
 		}
 		let processingLoaded = 0
-		const processed = await runWithConcurrency(
+		const processed = await wiki.runWithConcurrency(
 			flatRevs,
-			RECOMMENDATION_PROCESS_CONCURRENCY,
+			recommendationProcessConcurrency,
 			async revision => {
 				const pageName = (revision as { pageName: string }).pageName
 				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
@@ -295,16 +153,127 @@ export function useRecommendations({
 					pageName,
 					avatarUrl: null,
 					isRecommendation: true as const,
-				} as FeedRevision
+				} as FeedRevisionListBuilding
 			}
 		)
 		processed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 		return processed
 	}
 
-	/** Combined list: main feed plus recommendation revisions not older than oldest main. Deduped by revision id. */
-	const interleavedRevisions = computed((): FeedRevision[] => {
-		const main = allRevisionsData.value as FeedRevision[]
+	async function loadRecommendations(): Promise<string[]> {
+		const pageNames = pageSearchQueries.value
+			.filter(name => name.trim() !== "")
+			.map(name => name.trim())
+		recommendationProgress.value = {
+			loadedFromCache: false,
+			listBuildingTotal: pageNames.length,
+			listBuildingCompleted: 0,
+			found: 0,
+			recommendationsTruncated: false,
+			historiesTotal: 0,
+			historiesLoaded: 0,
+			processingTotal: 0,
+			processingLoaded: 0,
+		}
+		if (pageNames.length === 0) {
+			recommendationRevisions.value = []
+			return []
+		}
+		const { entries } = await wiki.getMultiPageListBuilding(recommendationLang, pageNames, {
+			k: 10,
+			onLoad: ({ entries: loadedEntries, completedCount }) => {
+				recommendationProgress.value = {
+					...recommendationProgress.value,
+					found: loadedEntries.length,
+					listBuildingCompleted: completedCount,
+				}
+			},
+		})
+		const seedByPage = new Map<string, string[]>()
+		for (const e of entries) {
+			const raw = e.item.page_title?.trim()
+			if (!raw || !e.pageTitles?.length) continue
+			seedByPage.set(raw, e.pageTitles)
+			const withUnderscores = raw.replace(/\s+/g, "_")
+			if (withUnderscores !== raw) seedByPage.set(withUnderscores, e.pageTitles)
+			const withSpaces = raw.replace(/_/g, " ")
+			if (withSpaces !== raw) seedByPage.set(withSpaces, e.pageTitles)
+		}
+		recommendationSeedPagesByPage.value = seedByPage
+		const allTitles = entries.map(e => e.item.page_title.trim())
+		allCandidateTitles.value = allTitles
+		loadedCandidateCount.value = 0
+		const recommendedTitles = allTitles.slice(0, recommendationMaxPages)
+		if (recommendedTitles.length === 0) {
+			recommendationRevisions.value = []
+			loadedCandidateCount.value = 0
+			return []
+		}
+		recommendationRevisions.value = await fetchAndProcessHistories(recommendedTitles)
+		loadedCandidateCount.value = recommendedTitles.length
+		return recommendedTitles
+	}
+
+	async function loadRecommendationsFromTitles(
+		titles: string[],
+		seedPagesByPage?: Record<string, string[]>
+	): Promise<string[]> {
+		if (titles.length === 0) {
+			recommendationRevisions.value = []
+			allCandidateTitles.value = []
+			recommendationSeedPagesByPage.value = new Map()
+			loadedCandidateCount.value = 0
+			return []
+		}
+		if (seedPagesByPage && Object.keys(seedPagesByPage).length > 0) {
+			const map = new Map<string, string[]>()
+			for (const [page, seeds] of Object.entries(seedPagesByPage)) {
+				if (seeds?.length) {
+					map.set(page.trim(), seeds)
+					const withUnderscores = page.trim().replace(/\s+/g, "_")
+					if (withUnderscores !== page.trim()) map.set(withUnderscores, seeds)
+					const withSpaces = page.trim().replace(/_/g, " ")
+					if (withSpaces !== page.trim()) map.set(withSpaces, seeds)
+				}
+			}
+			recommendationSeedPagesByPage.value = map
+		} else {
+			recommendationSeedPagesByPage.value = new Map()
+		}
+		recommendationProgress.value = {
+			loadedFromCache: true,
+			listBuildingTotal: titles.length,
+			listBuildingCompleted: titles.length,
+			found: titles.length,
+			recommendationsTruncated: true,
+			historiesTotal: titles.length,
+			historiesLoaded: 0,
+			processingTotal: 0,
+			processingLoaded: 0,
+		}
+		allCandidateTitles.value = titles
+		loadedCandidateCount.value = 0
+		recommendationRevisions.value = await fetchAndProcessHistories(titles)
+		loadedCandidateCount.value = titles.length
+		return titles
+	}
+
+	async function loadMoreRecommendations(): Promise<void> {
+		const all = allCandidateTitles.value
+		const loaded = loadedCandidateCount.value
+		if (loaded >= all.length) return
+		const nextBatch = all.slice(loaded, loaded + recommendationMaxPages)
+		if (nextBatch.length === 0) return
+		const existing = recommendationRevisions.value
+		const newRevs = await fetchAndProcessHistories(nextBatch)
+		recommendationRevisions.value = [...existing, ...newRevs].sort(
+			(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+		)
+		loadedCandidateCount.value = loaded + nextBatch.length
+	}
+
+	const interleavedRevisions = computed((): FeedRevisionListBuilding[] => {
+		const main = allRevisionsData.value as FeedRevisionListBuilding[]
 		const recs = recommendationRevisions.value
 		if (recs.length === 0) return main
 		if (main.length === 0) return recs
@@ -329,7 +298,6 @@ export function useRecommendations({
 		return map.get(withUnderscores) ?? map.get(withSpaces) ?? []
 	}
 
-	/** Current map of recommended page -> seed pages (for persisting to cache). */
 	function getRecommendationSeedPagesMap(): Map<string, string[]> {
 		return recommendationSeedPagesByPage.value
 	}
@@ -340,7 +308,9 @@ export function useRecommendations({
 		loadRecommendations,
 		loadRecommendationsFromTitles,
 		loadMoreRecommendations,
-		hasMoreRecommendations: computed(() => loadedCandidateCount.value < allCandidateTitles.value.length),
+		hasMoreRecommendations: computed(
+			() => loadedCandidateCount.value < allCandidateTitles.value.length
+		),
 		interleavedRevisions,
 		getRecommendationSeedPages,
 		getRecommendationSeedPagesMap,

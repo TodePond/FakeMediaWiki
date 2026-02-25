@@ -718,7 +718,14 @@ import {
 	cdxIconLightbulb,
 	cdxIconStar,
 } from "@wikimedia/codex-icons"
-import { FakeWiki } from "fakewiki"
+import {
+	FakeWiki,
+	useFeed,
+	useListBuildingRecommendations,
+	usePredictions,
+	useUser,
+	type FeedRevisionListBuilding as FeedRevision,
+} from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import { isInteractiveClickTarget } from "./clickTargets"
@@ -727,13 +734,14 @@ import {
 	defaultUserSearchQueries,
 	HEART_RISE_DURATION_MS,
 	PROTOTYPE_NAME,
+	RECOMMENDATION_HISTORY_CONCURRENCY,
+	RECOMMENDATION_LANG,
+	RECOMMENDATION_MAX_PAGES,
+	RECOMMENDATION_PROCESS_CONCURRENCY,
+	userTypeConfig,
 } from "./config"
 import { loadQueries } from "./queries"
 import type { HistoryRevisionWithHtml, RisingHeart } from "./types"
-import { useFeed } from "./useFeed"
-import { usePredictions } from "./usePredictions"
-import { useRecommendations, type FeedRevision } from "./useRecommendations"
-import { useUser } from "./useUser"
 import { getRevisionItemZIndex } from "./zIndex"
 
 const wiki = new FakeWiki()
@@ -791,7 +799,9 @@ const thankedRevisionIds = ref<Set<number>>(new Set())
 const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
 
-const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
+const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser({
+	userTypeConfig,
+})
 const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } = useFeed(
 	{
 		wiki,
@@ -808,11 +818,17 @@ const {
 	interleavedRevisions,
 	recommendationProgress,
 	getRecommendationSeedPages,
-} = useRecommendations({
+} = useListBuildingRecommendations({
 	wiki,
 	pageSearchQueries,
 	allRevisionsData,
 	cacheUserCategory,
+	options: {
+		recommendationLang: RECOMMENDATION_LANG,
+		recommendationMaxPages: RECOMMENDATION_MAX_PAGES,
+		recommendationHistoryConcurrency: RECOMMENDATION_HISTORY_CONCURRENCY,
+		recommendationProcessConcurrency: RECOMMENDATION_PROCESS_CONCURRENCY,
+	},
 })
 
 const recommendationsCacheKey = wiki.getStorageKey(PROTOTYPE_NAME, "recommendationsCache")
@@ -841,9 +857,15 @@ function getRecommendationsCache(): RecommendationsCache | null {
 				(typeof seedPagesByPage === "object" &&
 					!Array.isArray(seedPagesByPage) &&
 					Object.values(seedPagesByPage).every(
-						(v: unknown) => Array.isArray(v) && (v as unknown[]).every(s => typeof s === "string")
+						(v: unknown) =>
+							Array.isArray(v) && (v as unknown[]).every(s => typeof s === "string")
 					))
-			return valid ? { titles: parsed.titles, seedPagesByPage: seedPagesByPage as Record<string, string[]> } : { titles: parsed.titles }
+			return valid
+				? {
+						titles: parsed.titles,
+						seedPagesByPage: seedPagesByPage as Record<string, string[]>,
+					}
+				: { titles: parsed.titles }
 		}
 	} catch {
 		// ignore

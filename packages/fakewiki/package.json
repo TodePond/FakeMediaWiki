@@ -6,14 +6,19 @@
 	"description": "Helpers for making MediaWiki prototypes",
 	"exports": {
 		".": {
-			"types": "./FakeWiki.ts",
-			"import": "./FakeWiki.ts",
-			"default": "./FakeWiki.ts"
+			"types": "./index.ts",
+			"import": "./index.ts",
+			"default": "./index.ts"
 		},
 		"./types": {
 			"types": "./types.ts",
 			"import": "./types.ts",
 			"default": "./types.ts"
+		},
+		"./hooks": {
+			"types": "./hooks/index.ts",
+			"import": "./hooks/index.ts",
+			"default": "./hooks/index.ts"
 		},
 		"./style/delta.css": "./style/delta.css",
 		"./playground-schema": {
@@ -29,7 +34,9 @@
 	},
 	"files": [
 		"FakeWiki.ts",
+		"index.ts",
 		"types.ts",
+		"hooks",
 		"style",
 		"schema",
 		"playground-schema.generated.ts",
@@ -38,6 +45,10 @@
 	],
 	"scripts": {
 		"generate:playground": "tsx scripts/generate-playground-schema.ts"
+	},
+	"peerDependencies": {
+		"vue": "^3.5.0",
+		"@wikimedia/codex-icons": "^2.0.0"
 	},
 	"devDependencies": {
 		"tsx": "^4.19.2",

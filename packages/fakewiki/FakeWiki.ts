@@ -1907,7 +1907,7 @@ export class FakeWiki {
 	}
 
 	/** Base URL for the list-building API (Toolforge). */
-	private static readonly LIST_BUILDING_API = "https://list-building.toolforge.org/api/serpentine"
+	private readonly LIST_BUILDING_API = "https://list-building.toolforge.org/api/serpentine"
 
 	/**
 	 * Get a list of articles related to a seed page from the list-building API.
@@ -1942,7 +1942,7 @@ export class FakeWiki {
 		if (qid) {
 			params.set("qid", qid)
 		}
-		const url = `${FakeWiki.LIST_BUILDING_API}?${params.toString()}`
+		const url = `${this.LIST_BUILDING_API}?${params.toString()}`
 		const res = await fetch(url, {
 			headers: {
 				Accept: "application/json",
@@ -3205,5 +3205,29 @@ export class FakeWiki {
 		}
 
 		return combined
+	}
+
+	/**
+	 * Run async tasks with a concurrency limit; returns results in input order.
+	 */
+	async runWithConcurrency<T, R>(
+		items: T[],
+		concurrency: number,
+		fn: (_item: T) => Promise<R>
+	): Promise<R[]> {
+		const results: R[] = []
+		let index = 0
+		async function worker(): Promise<void> {
+			while (index < items.length) {
+				const i = index++
+				const item = items[i]
+				if (item === undefined) continue
+				results[i] = await fn(item)
+			}
+		}
+		await Promise.all(
+			Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
+		)
+		return results
 	}
 }

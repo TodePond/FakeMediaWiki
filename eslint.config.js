@@ -93,6 +93,16 @@ export default defineConfig([
 	js.configs.recommended,
 	...pluginVue.configs["flat/essential"],
 	{
+		files: ["packages/fakewiki/**/*.ts"],
+		rules: {
+			"no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+			"@typescript-eslint/no-unused-vars": [
+				"error",
+				{ argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+			],
+		},
+	},
+	{
 		files: ["**/*.vue"],
 		rules: {
 			"vue/multi-word-component-names": "off",

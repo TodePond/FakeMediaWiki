@@ -1,8 +1,34 @@
 import { ref } from "vue"
-import { userTypeConfig } from "./config"
+import { cdxIconHeart, cdxIconUnStar } from "@wikimedia/codex-icons"
 import type { UserCategory, UserTypeConfig } from "./types"
 
-export function useUser() {
+/** Default user type display configuration for watchlist-style prototypes. */
+export const defaultUserTypeConfig: Record<UserCategory, UserTypeConfig> = {
+	unregistered: {
+		icon: null,
+		color: "var(--color-subtle)",
+	},
+	newcomer: {
+		icon: cdxIconHeart,
+		color: "var(--green400)",
+	},
+	learner: {
+		icon: null,
+		color: "var(--yellow400)",
+	},
+	experienced: {
+		icon: cdxIconUnStar,
+		color: "var(--yellow400)",
+	},
+}
+
+export interface UseUserOptions {
+	userTypeConfig?: Record<UserCategory, UserTypeConfig>
+}
+
+export function useUser(options?: UseUserOptions) {
+	const userTypeConfig = options?.userTypeConfig ?? defaultUserTypeConfig
+
 	/** Cache of user categories by username for reactive UI reads */
 	const userCategories = ref<Map<string, UserCategory>>(new Map())
 

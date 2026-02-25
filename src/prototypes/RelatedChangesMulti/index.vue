@@ -750,17 +750,19 @@ import {
 	cdxIconArrowUp,
 	cdxIconLink,
 } from "@wikimedia/codex-icons"
-import { FakeWiki } from "fakewiki"
+import {
+	FakeWiki,
+	type RelatedChangeRevisionMulti,
+	usePredictions,
+	useRelatedChanges,
+	useUser,
+} from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import { isInteractiveClickTarget } from "../FlaggedWatchlist/clickTargets"
 import { HEART_RISE_DURATION_MS } from "../FlaggedWatchlist/config"
 import type { HistoryRevisionWithHtml, RisingHeart } from "../FlaggedWatchlist/types"
-import { usePredictions } from "../FlaggedWatchlist/usePredictions"
-import { useUser } from "../FlaggedWatchlist/useUser"
 import { getRevisionItemZIndex } from "../FlaggedWatchlist/zIndex"
-import type { RelatedChangeRevisionMulti } from "./useRelatedPagesFeedMulti"
-import { useRelatedPagesFeedMulti } from "./useRelatedPagesFeedMulti"
 
 const PROTOTYPE_NAME = "RelatedChangesMulti"
 const wiki = new FakeWiki()
@@ -846,7 +848,7 @@ let nextHeartId = 0
 
 const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
 const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
-const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedPagesFeedMulti({
+const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedChanges({
 	wiki,
 	pageName,
 	onUserCategory: cacheUserCategory,
@@ -983,11 +985,11 @@ const allRevisions = computed(() => {
 	const revs = filteredRevisions.value
 	if (revs.length === 0) return revs
 	const keepFraction = filterKeepPercent.value / 100
-	const scores = revs.map(r => r.score ?? 0)
+	const scores = revs.map(r => (r as RelatedChangeRevisionMulti).score ?? 0)
 	const sortedScores = [...scores].sort((a, b) => b - a)
 	const keepCount = Math.max(1, Math.ceil(revs.length * keepFraction))
 	const threshold = sortedScores[keepCount - 1] ?? 0
-	return revs.filter(r => (r.score ?? 0) >= threshold)
+	return revs.filter(r => ((r as RelatedChangeRevisionMulti).score ?? 0) >= threshold)
 })
 
 const allRevisionsInOrder = computed(() => {

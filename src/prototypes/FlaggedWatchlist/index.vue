@@ -520,7 +520,7 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxProgressBar } from "@wikimedia/codex"
 import { cdxIconArrowNext, cdxIconArrowPrevious } from "@wikimedia/codex-icons"
-import { FakeWiki } from "fakewiki"
+import { FakeWiki, useFeed, usePredictions, useUser } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import { isInteractiveClickTarget } from "./clickTargets"
@@ -529,12 +529,10 @@ import {
 	defaultUserSearchQueries,
 	HEART_RISE_DURATION_MS,
 	PROTOTYPE_NAME,
+	userTypeConfig,
 } from "./config"
 import { loadQueries } from "./queries"
 import type { HistoryRevisionWithHtml, RisingHeart } from "./types"
-import { useFeed } from "./useFeed"
-import { usePredictions } from "./usePredictions"
-import { useUser } from "./useUser"
 import { getRevisionItemZIndex } from "./zIndex"
 
 const wiki = new FakeWiki()
@@ -574,7 +572,9 @@ const thankedRevisionIds = ref<Set<number>>(new Set())
 const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
 
-const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
+const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser({
+	userTypeConfig,
+})
 const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } = useFeed(
 	{
 		wiki,

@@ -595,7 +595,7 @@ import {
 	cdxIconArrowUp,
 	cdxIconLink,
 } from "@wikimedia/codex-icons"
-import { FakeWiki } from "fakewiki"
+import { FakeWiki, usePredictions, useRelatedChanges, useUser } from "fakewiki"
 import type {
 	FWCompareResponse,
 	FWPageHistoryResponse,
@@ -606,10 +606,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import { isInteractiveClickTarget } from "../FlaggedWatchlist/clickTargets"
 import { HEART_RISE_DURATION_MS } from "../FlaggedWatchlist/config"
 import type { HistoryRevisionWithHtml, RisingHeart } from "../FlaggedWatchlist/types"
-import { usePredictions } from "../FlaggedWatchlist/usePredictions"
-import { useUser } from "../FlaggedWatchlist/useUser"
 import { getRevisionItemZIndex } from "../FlaggedWatchlist/zIndex"
-import { useRelatedPagesFeed } from "./useRelatedPagesFeed"
 
 const PROTOTYPE_NAME = "RelatedChanges"
 const wiki = new FakeWiki()
@@ -676,7 +673,7 @@ let nextHeartId = 0
 
 const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
 const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
-const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedPagesFeed({
+const { allRevisionsData, isLoading, errors, loadFeed } = useRelatedChanges({
 	wiki,
 	pageName,
 	onUserCategory: cacheUserCategory,

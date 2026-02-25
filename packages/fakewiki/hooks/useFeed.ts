@@ -3,13 +3,13 @@ import type { FWPageHistoryRevision, FWRevision } from "fakewiki/types"
 import type { Ref } from "vue"
 import { ref } from "vue"
 
-interface UseFeedArgs {
+export interface UseFeedArgs {
 	wiki: FakeWiki
 	pageSearchQueries: Ref<string[]>
 	userSearchQueries: Ref<string[]>
 	onUserCategory: (
-		userName: string,
-		category: "unregistered" | "newcomer" | "learner" | "experienced"
+		_userName: string,
+		_category: "unregistered" | "newcomer" | "learner" | "experienced"
 	) => void
 	/** When provided, use this ref for feed data instead of an internal ref (e.g. to share with another composable). */
 	allRevisionsDataRef?: Ref<FWRevision[]>

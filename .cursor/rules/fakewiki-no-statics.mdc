@@ -1,0 +1,13 @@
+---
+description: No static methods or constants on FakeWiki
+globs: packages/fakewiki/FakeWiki.ts
+alwaysApply: false
+---
+
+# FakeWiki: no statics
+
+Do not add `static` methods, `static` properties, or class-level constants to `FakeWiki`.
+
+- Use instance methods and instance properties (including `private readonly` for configuration) so that behavior stays on the instance and is easier to test and override.
+- If you need shared configuration, use an instance property (e.g. `private readonly BASE_URL = "..."`) and reference it as `this.BASE_URL`.
+- If you need a concurrency helper or similar, implement it as an instance method and call it as `this.runWithConcurrency(...)` or `wiki.runWithConcurrency(...)` from hooks that receive a `FakeWiki` instance.

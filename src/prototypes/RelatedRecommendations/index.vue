@@ -738,17 +738,28 @@ import {
 	cdxIconLink,
 	cdxIconStar,
 } from "@wikimedia/codex-icons"
-import { FakeWiki } from "fakewiki"
+import {
+	FakeWiki,
+	type FeedRevisionRelatedChanges as FeedRevision,
+	useFeed,
+	usePredictions,
+	useRelatedChangesRecommendations,
+	useUser,
+} from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import { isInteractiveClickTarget } from "./clickTargets"
-import { DEFAULT_TOP_PERCENT, HEART_RISE_DURATION_MS, PROTOTYPE_NAME } from "./config"
+import {
+	DEFAULT_TOP_PERCENT,
+	HEART_RISE_DURATION_MS,
+	PROTOTYPE_NAME,
+	RECOMMENDATION_HISTORY_LIMIT,
+	RECOMMENDATION_MAX_PAGES,
+	RECOMMENDATION_PROCESS_CONCURRENCY,
+	userTypeConfig,
+} from "./config"
 import { loadQueries } from "./queries"
 import type { HistoryRevisionWithHtml, RisingHeart } from "./types"
-import { useFeed } from "./useFeed"
-import { usePredictions } from "./usePredictions"
-import { useRelatedRecommendations, type FeedRevision } from "./useRelatedRecommendations"
-import { useUser } from "./useUser"
 import { getRevisionItemZIndex } from "./zIndex"
 
 const wiki = new FakeWiki()
@@ -825,7 +836,9 @@ const thankedRevisionIds = ref<Set<number>>(new Set())
 const risingHearts = ref<RisingHeart[]>([])
 let nextHeartId = 0
 
-const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser()
+const { cacheUserCategory, getCachedUserCategory, getUserTypeConfig } = useUser({
+	userTypeConfig,
+})
 
 /** Shared ref so feed and recommendations use one list (user queries + recommended page names). */
 const allRevisionsDataRef = ref<FWRevision[]>([])
@@ -836,12 +849,18 @@ const {
 	getRecommendationSeedPages,
 	isRecommendationsLoading,
 	recommendationProgress,
-} = useRelatedRecommendations({
+} = useRelatedChangesRecommendations({
 	wiki,
 	pageSearchQueries,
 	allRevisionsData: allRevisionsDataRef,
 	filterKeepPercent,
 	cacheUserCategory,
+	options: {
+		defaultTopPercent: DEFAULT_TOP_PERCENT,
+		recommendationHistoryLimit: RECOMMENDATION_HISTORY_LIMIT,
+		recommendationMaxPages: RECOMMENDATION_MAX_PAGES,
+		recommendationProcessConcurrency: RECOMMENDATION_PROCESS_CONCURRENCY,
+	},
 })
 
 /** Feed uses only the user's watchlist page queries so their pages always appear; recommendations are merged from our fetch. */
@@ -893,11 +912,6 @@ const loadingStage = computed(() => {
 	}
 	return { label: "Loading…", percent: null as number | null }
 })
-
-async function onReloadRecommendations(): Promise<void> {
-	await loadFeed(undefined, false)
-	await loadRecommendations()
-}
 
 /** Called when the "Keep top N%" slider is released; persist and reload recommendations with new percentage. */
 function onSliderChange(): void {

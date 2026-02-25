@@ -21,8 +21,21 @@ export interface PredictionIconState {
 
 export type PredictionSource = "liftwing" | "ores"
 
-export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSource }) {
+export interface UsePredictionsOptions {
+	source?: PredictionSource
+	/** Threshold above which we show success (default 0.9). */
+	successThreshold?: number
+	/** Threshold above which we show warning (default 0.3). */
+	warningThreshold?: number
+}
+
+const DEFAULT_SUCCESS_THRESHOLD = 0.9
+const DEFAULT_WARNING_THRESHOLD = 0.3
+
+export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) {
 	const source = options?.source ?? "liftwing"
+	const successThreshold = options?.successThreshold ?? DEFAULT_SUCCESS_THRESHOLD
+	const warningThreshold = options?.warningThreshold ?? DEFAULT_WARNING_THRESHOLD
 
 	/** Cache of revision predictions (damaging and goodfaith) */
 	const revisionPredictions = ref<PredictionMap>(new Map())
@@ -33,7 +46,6 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 
 	/** Lazily load predictions for a revision */
 	async function loadPrediction(revisionId: number): Promise<void> {
-		// Skip if already loaded, currently loading, or previously failed
 		if (
 			revisionPredictions.value.has(revisionId) ||
 			loadingPredictions.value.has(revisionId) ||
@@ -53,7 +65,6 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 			if (pred && (pred.damaging ?? pred.goodfaith)) {
 				revisionPredictions.value.set(revisionId, pred)
 			} else {
-				// Service returned no usable data (e.g. 500)
 				failedPredictions.value.add(revisionId)
 			}
 		} catch (error) {
@@ -64,7 +75,6 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 		}
 	}
 
-	/** Get prediction icon and color for a revision */
 	function getPredictionIcon(revisionId: number): PredictionIconState {
 		if (failedPredictions.value.has(revisionId)) {
 			return {
@@ -85,7 +95,6 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 
 		const predictions = revisionPredictions.value.get(revisionId)
 		if (!predictions) {
-			// No predictions available yet - trigger lazy load and show ellipsis
 			void loadPrediction(revisionId)
 			return {
 				icon: cdxIconEllipsis,
@@ -94,7 +103,6 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 			}
 		}
 
-		// No usable scores (shouldn't happen if we only set when we have data)
 		if (!predictions.damaging && !predictions.goodfaith) {
 			return {
 				icon: cdxIconError,
@@ -106,12 +114,10 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 
 		const damaging = predictions.damaging
 		const goodfaith = predictions.goodfaith
-
-		// Check for biggest risks (very likely have problems OR very likely bad faith)
 		const damagingProb = damaging?.probability?.true ?? 0
-		const goodfaithProb = goodfaith?.probability?.false ?? 0 // false = bad faith
+		const goodfaithProb = goodfaith?.probability?.false ?? 0
 
-		if (damagingProb > 0.9 || goodfaithProb > 0.9) {
+		if (damagingProb > successThreshold || goodfaithProb > successThreshold) {
 			return {
 				icon: cdxIconAlert,
 				color: "var(--color-destructive)",
@@ -119,8 +125,7 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 			}
 		}
 
-		// Check for slight risks (may have problems OR may be bad faith)
-		if (damagingProb > 0.3 || goodfaithProb > 0.3) {
+		if (damagingProb > warningThreshold || goodfaithProb > warningThreshold) {
 			return {
 				icon: cdxIconAlert,
 				color: "var(--color-warning)",
@@ -128,17 +133,16 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 			}
 		}
 
-		// Check if fairly sure it's good (very likely good AND very likely good faith)
 		const notDamagingProb = damaging?.probability?.false ?? 0
 		const isGoodfaithProb = goodfaith?.probability?.true ?? 0
 
-		if (notDamagingProb > 0.9 && isGoodfaithProb > 0.9) {
+		if (notDamagingProb > successThreshold && isGoodfaithProb > successThreshold) {
 			return {
 				icon: cdxIconSuccess,
 				color: "var(--color-success)",
 				isLoading: false,
 			}
-		} else if (notDamagingProb > 0.9 || isGoodfaithProb > 0.9) {
+		} else if (notDamagingProb > successThreshold || isGoodfaithProb > successThreshold) {
 			return {
 				icon: cdxIconSuccess,
 				color: "var(--color-progressive)",
@@ -153,7 +157,6 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 		}
 	}
 
-	/** Get prediction text description for a revision */
 	function getPredictionText(revisionId: number): string | null {
 		if (failedPredictions.value.has(revisionId)) {
 			return "There was an error when getting a prediction for this change."
@@ -171,21 +174,21 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 		const damaging = predictions.damaging
 		const goodfaith = predictions.goodfaith
 		const damagingProb = damaging?.probability?.true ?? 0
-		const goodfaithProb = goodfaith?.probability?.false ?? 0 // false = bad faith
+		const goodfaithProb = goodfaith?.probability?.false ?? 0
 
-		if (damagingProb > 0.9 || goodfaithProb > 0.9) {
-			if (damagingProb > 0.9 && goodfaithProb > 0.9) {
+		if (damagingProb > successThreshold || goodfaithProb > successThreshold) {
+			if (damagingProb > successThreshold && goodfaithProb > successThreshold) {
 				return "This change probably has a problem and is probably made in bad faith."
-			} else if (damagingProb > 0.9) {
+			} else if (damagingProb > successThreshold) {
 				return "This change probably has a problem."
 			}
 			return "This change is probably made in bad faith."
 		}
 
-		if (damagingProb > 0.3 || goodfaithProb > 0.3) {
-			if (damagingProb > 0.3 && goodfaithProb > 0.3) {
+		if (damagingProb > warningThreshold || goodfaithProb > warningThreshold) {
+			if (damagingProb > warningThreshold && goodfaithProb > warningThreshold) {
 				return "This change might have a problem and might be made in bad faith."
-			} else if (damagingProb > 0.3) {
+			} else if (damagingProb > warningThreshold) {
 				return "This change might have a problem."
 			}
 			return "This change might be made in bad faith."
@@ -194,11 +197,11 @@ export function usePredictions(wiki: FakeWiki, options?: { source?: PredictionSo
 		const notDamagingProb = damaging?.probability?.false ?? 0
 		const isGoodfaithProb = goodfaith?.probability?.true ?? 0
 
-		if (notDamagingProb > 0.9 && isGoodfaithProb > 0.9) {
+		if (notDamagingProb > successThreshold && isGoodfaithProb > successThreshold) {
 			return "This change is probably okay and is probably made in good faith."
-		} else if (notDamagingProb > 0.9) {
+		} else if (notDamagingProb > successThreshold) {
 			return "This change is probably okay."
-		} else if (isGoodfaithProb > 0.9) {
+		} else if (isGoodfaithProb > successThreshold) {
 			return "This change is probably made in good faith."
 		}
 
