@@ -49,4 +49,7 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 	getGoodFaithPredictions: { resultHint: "json" },
 	getRevisionPredictions: { resultHint: "json" },
 	getRevisionPredictionsFromOres: { resultHint: "json" },
+	getEditTypesDiffSummary: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
+	getEditTypesDiffDetails: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
+	getEditTypesDiffDebug: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
 }

@@ -1,38 +1,32 @@
 /* Watchlist presented in history-box style: one box per date with rows */
 
-.recommendation-watchlist-title {
-	/* padding: 0 1rem; */
+.change-types-watchlist {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
 	width: 100%;
-	max-width: 800px;
+	padding: 0 0.7rem;
 }
 
-.recommendation-watchlist-header {
-	width: 100%;
-	max-width: 800px;
-	margin: 0 10px;
-	padding: 0 2.7rem 0rem;
-	box-sizing: border-box;
-}
-
-.recommendation-watchlist-form {
+/* Form: same layout as Flagged watchlist (comma-separated inputs, consistent spacing) */
+.recommendation-watchlist-form.watchlist-search-form {
 	display: flex;
 	flex-direction: column;
 	gap: 0;
 	align-items: flex-start;
 	width: 100%;
+	order: 0;
+	margin-bottom: 1rem;
 }
 
-.recommendation-watchlist-form .cdx-label {
+.change-types-watchlist .recommendation-watchlist-form .cdx-label {
 	margin: 0;
 	padding-top: 0.5rem;
 }
 
-.recommendation-watchlist-form .cdx-label:first-child {
+.change-types-watchlist .recommendation-watchlist-form .cdx-label:first-child {
 	padding-top: 0;
-}
-
-.recommendation-watchlist-form .cdx-button[type="submit"] {
-	margin-top: 1rem;
 }
 
 .recommendation-watchlist-input {
@@ -40,40 +34,18 @@
 	flex: 1;
 }
 
-.reload-recommendations-button {
-	margin-bottom: 0.5rem;
-	width: max-content;
-	align-self: flex-start;
+.change-types-watchlist form footer {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+	padding-top: 1rem;
+	justify-content: flex-end;
 }
 
-.recommendation-progress {
-	margin: 1.5rem 0 1rem 0;
-	padding: 0rem 0;
-	font-size: 0.875rem;
-	color: var(--color-subtle, #54595d);
-}
-
-.recommendation-progress-text {
-	display: block;
-	margin-bottom: 0.25rem;
-}
-
-.recommendation-progress-text-second {
-	margin-top: 0.5rem;
-}
-
-.recommendation-progress-bar {
-	height: 4px;
-	background: var(--background-color-subtle, #eaecf0);
-	border-radius: 2px;
-	overflow: hidden;
-}
-
-.recommendation-progress-bar-fill {
-	height: 100%;
-	background: var(--color-progressive, #36c);
-	border-radius: 2px;
-	transition: width 0.15s ease-out;
+.change-types-watchlist h1 {
+	font-size: 1.75rem;
+	margin: 0 0 1rem 0;
+	width: 100%;
 }
 
 .watchlist-loading {
@@ -91,23 +63,12 @@
 	align-items: center;
 }
 
-.recommendation-watchlist {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	flex-direction: column;
-	width: 100%;
-	padding: 0 0.7rem;
-}
-
 .watchlist-container {
 	display: flex;
 	flex-direction: column;
 	padding-bottom: 5rem;
 	max-width: 800px;
-	margin: 0 10px;
-	padding-left: 2.7rem;
-	padding-right: 2.7rem;
+	margin: 0 auto;
 	position: relative;
 	isolation: isolate;
 	width: 100%;
@@ -128,7 +89,7 @@
 
 /* Same containment as inline history box */
 .watchlist-history-box {
-	/* margin-top: 0.25rem; */
+	margin-top: 0.25rem;
 	position: relative;
 	isolation: isolate;
 	/* border: 1px solid var(--border-color-subtle); */
@@ -156,102 +117,6 @@
 	margin-right: 0.4rem;
 }
 
-.prediction-icon {
-	flex-shrink: 0;
-	margin-right: 0.4rem;
-	/* vertical-align: middle; */
-	/* height: 10px; */
-}
-
-.source-icon {
-	/* position: absolute; */
-	/* float: right; */
-	/* left: -1.5rem; */
-	/* top: 0.5rem; */
-}
-
-.recommendation-bulb-icon {
-	color: var(--color-progressive, #36c);
-}
-
-.prediction-icon-expanded {
-	margin-right: 0.5rem;
-}
-
-.prediction-icon-loading {
-	opacity: 0.6;
-	animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-	0%,
-	100% {
-		opacity: 0.6;
-	}
-	50% {
-		opacity: 1;
-	}
-}
-
-.item-source-info {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin: 0.5rem 0;
-	padding: 0.5rem 0.75rem;
-	background-color: var(--background-color-subtle, #f8f9fa);
-	border: 1px solid var(--border-color-subtle);
-	border-radius: 2px;
-	font-size: 0.875rem;
-	line-height: 1.4;
-}
-
-.item-source-info-icon {
-	flex-shrink: 0;
-}
-
-.item-source-info-watchlist .item-source-info-icon {
-	color: var(--color-base, #202122);
-}
-
-.item-source-info-recommendation .item-source-info-icon {
-	color: var(--color-progressive, #36c);
-}
-
-.item-source-info-text {
-	color: var(--color-base, #202122);
-}
-
-.item-source-info-link {
-	color: var(--color-progressive, #36c);
-	text-decoration: none;
-}
-
-.item-source-info-link:hover {
-	text-decoration: underline;
-}
-
-.prediction-card {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin-top: 0.5rem;
-	padding: 0.5rem 0.75rem;
-	background-color: var(--background-color-subtle, #f8f9fa);
-	border: 1px solid var(--border-color-subtle);
-	border-radius: 2px;
-	font-size: 0.875rem;
-	line-height: 1.4;
-}
-
-.prediction-card-icon {
-	flex-shrink: 0;
-}
-
-.prediction-card-text {
-	color: var(--color-base, #202122);
-}
-
 .history-row-second {
 	/* margin-top: 0.25rem; */
 	/* padding-top: 0.25rem; */
@@ -267,25 +132,12 @@
 	/* background-color: var(--background-color-base); */
 	transition: min-height 0.2s ease-in-out;
 	min-height: auto;
-	padding: 0.25rem 0.4rem;
+	padding: 0.25rem 0.5rem;
 	/* margin: 0rem -0.5rem; */
 }
 
 .history-item:hover:not(.history-item-expanded) {
 	background-color: var(--background-color-progressive-subtle, rgba(51, 102, 204, 0.05));
-}
-
-/* Recommendation rows: bluer background (recommended-page changes) */
-.history-item-recommendation {
-	background-color: rgba(51, 102, 204, 0.12);
-}
-
-.history-item-recommendation:hover:not(.history-item-expanded) {
-	background-color: rgba(51, 102, 204, 0.18);
-}
-
-.history-item-recommendation.history-item:has(.history-expanded) {
-	background-color: inherit;
 }
 
 .history-item a,
@@ -296,51 +148,6 @@
 .history-item-expanded {
 	/* min-height: 8rem; */
 	padding: 1rem 1rem;
-	position: relative;
-}
-
-.history-navigation-buttons {
-	position: absolute;
-	left: -2.75rem;
-	top: 1rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	z-index: 1;
-}
-
-@container view (max-width: 640px) {
-	.history-navigation-buttons {
-		display: none;
-	}
-}
-
-.history-nav-button {
-	background: none;
-	border: 1px solid var(--border-color-subtle);
-	border-radius: 2px;
-	width: 2rem;
-	height: 2rem;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	color: var(--color-base);
-	padding: 0;
-	margin: 0;
-	transition:
-		background-color 0.15s ease,
-		border-color 0.15s ease;
-}
-
-.history-nav-button:hover:not(:disabled) {
-	background-color: var(--background-color-progressive-subtle, rgba(51, 102, 204, 0.05));
-	border-color: var(--border-color-base);
-}
-
-.history-nav-button:disabled {
-	opacity: 0.3;
-	cursor: not-allowed;
 }
 
 .history-expanded {
@@ -354,11 +161,10 @@
 .history-title-row {
 	display: flex;
 	align-items: flex-start;
-	gap: 0rem 0.25rem;
+	gap: 0.25rem;
 	flex-wrap: wrap;
 	position: relative;
 	width: 100%;
-	padding-right: 2rem;
 }
 
 .history-collapse-button {
@@ -387,7 +193,7 @@
 }
 
 .history-expanded .history-delta {
-	font-size: 1.25rem !important;
+	/* font-size: 1.25rem !important; */
 }
 
 .history-item:has(.history-expanded) {
@@ -475,6 +281,49 @@
 	color: var(--color-subtle);
 	line-height: 1.4;
 	margin-top: 0.5rem;
+}
+
+/* Change types (edit-types API) block */
+.change-types-block {
+	margin-top: 0.5rem;
+	font-size: 0.875rem;
+}
+
+.change-types-label {
+	font-weight: 600;
+	color: var(--color-base);
+	margin-bottom: 0.25rem;
+}
+
+.change-types-loading {
+	margin-top: 0.25rem;
+}
+
+.change-types-error {
+	color: var(--color-destructive);
+	margin-top: 0.25rem;
+}
+
+.change-types-summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-top: 0.25rem;
+}
+
+.change-types-badge {
+	display: inline-block;
+	padding: 0.15rem 0.4rem;
+	background-color: var(--background-color-interactive);
+	border-radius: 2px;
+	color: var(--color-base);
+	font-size: 0.8125rem;
+}
+
+.change-types-empty {
+	color: var(--color-subtle);
+	font-style: italic;
+	margin-top: 0.25rem;
 }
 
 .history-expanded-footer {
@@ -596,38 +445,6 @@
 
 .history-user {
 	color: var(--color-progressive, #36c);
-}
-
-.user-name-container {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.25rem;
-}
-
-.user-type-icon {
-	/* display: inline-block; */
-	/* margin-left: -0.2em; */
-	/* margin-top: -0.3em; */
-	/* margin-right: 0.75em; */
-	/* vertical-align: middle; */
-}
-
-.history-expanded .user-name-container {
-	gap: 0.4rem;
-}
-
-.history-expanded .user-type-icon-expanded {
-	/* margin-left: 0.3em; */
-	width: 1em;
-	height: 1em;
-}
-
-a {
-	color: var(--color-progressive);
-}
-
-a:hover {
-	color: var(--color-progressive--hover);
 }
 
 .history-delta {
@@ -866,13 +683,14 @@ a:hover {
 
 /* Same diff block styling as DiffFeedStyled / SmoothWatchlistInlineDiff */
 .change-diff {
-	/* margin-top: 0.5rem; */
+	margin-top: 0.5rem;
 	overflow: hidden;
 	font-family: var(--font-family-mono, ui-monospace, monospace);
 	/* font-size: 0.8125rem; */
 	/* font-size: 0.9rem; */
 	font-size: 13px;
 	line-height: 1.4;
+	max-height: 15rem;
 	overflow-y: auto;
 	border: 1px solid var(--border-color-subtle);
 	border-radius: 2px;
@@ -943,9 +761,10 @@ a:hover {
 	word-break: break-word;
 }
 
+/* Form layout (same as other watchlist variants) */
 main {
 	display: flex;
-	gap: 1rem;
+	gap: 2rem;
 	justify-content: space-between;
 	width: 100%;
 }
@@ -996,38 +815,34 @@ form footer {
 	justify-content: flex-end;
 }
 
-@container view (max-width: 640px) {
-	.recommendation-watchlist-header {
-		padding-left: 1rem;
-		padding-right: 1rem;
+@media (max-width: 900px) {
+	main {
+		flex-direction: column;
 	}
-	.watchlist-container {
-		padding-left: 0rem;
-		padding-right: 0rem;
+
+	form {
+		order: 0;
 	}
-	.recommendation-watchlist {
-		padding-left: 0rem;
-		padding-right: 0rem;
+
+	.inputs-group {
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+		align-items: center;
 	}
-	.watchlist-date-header {
+
+	form footer {
+		justify-content: flex-start;
+	}
+}
+
+@media (max-width: 640px) {
+	.change-types-watchlist form {
 		padding-left: 0.5rem;
 		padding-right: 0.5rem;
 	}
 
-	.history-item:has(.history-expanded) {
-		border-left: none;
-		border-right: none;
-	}
-
-	/* Prevent accidental taps on controls before a result is expanded. */
-	@media (pointer: coarse) {
-		.history-item:not(.history-item-expanded) a,
-		.history-item:not(.history-item-expanded) button,
-		.history-item:not(.history-item-expanded) [role="button"],
-		.history-item:not(.history-item-expanded) input,
-		.history-item:not(.history-item-expanded) select,
-		.history-item:not(.history-item-expanded) textarea {
-			pointer-events: none;
-		}
+	.change-types-watchlist form footer {
+		justify-content: flex-start;
 	}
 }

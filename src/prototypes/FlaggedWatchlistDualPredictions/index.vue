@@ -572,7 +572,7 @@ import { cdxIconArrowNext, cdxIconArrowPrevious } from "@wikimedia/codex-icons"
 import { FakeWiki, useFeed, usePredictions } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
-import { isInteractiveClickTarget } from "../FlaggedWatchlist/clickTargets"
+import { isInteractiveClickTarget } from "./clickTargets"
 import {
 	defaultPageSearchQueries,
 	defaultUserSearchQueries,
@@ -580,9 +580,9 @@ import {
 	PROTOTYPE_NAME,
 	userTypeConfig,
 } from "./config"
-import { loadQueries } from "../FlaggedWatchlist/queries"
-import type { HistoryRevisionWithHtml, RisingHeart } from "../FlaggedWatchlist/types"
-import { getRevisionItemZIndex } from "../FlaggedWatchlist/zIndex"
+import { loadQueries } from "./queries"
+import type { HistoryRevisionWithHtml, RisingHeart } from "./types"
+import { getRevisionItemZIndex } from "./zIndex"
 
 const wiki = new FakeWiki()
 
@@ -1027,5 +1027,5 @@ function hasNext(currentId: number): boolean {
 </style>
 
 <style>
-@import "../FlaggedWatchlist/global.css";
+@import "./global.css";
 </style>

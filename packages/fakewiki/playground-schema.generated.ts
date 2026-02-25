@@ -173,6 +173,18 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "revisionIds", description: "Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
+  { name: "getEditTypesDiffSummary", description: "Get simple diff summary from edit-types API (counts per change type per action).", params: [
+      { key: "revisionId", description: "Revision ID" },
+      { key: "options", description: "Optional lang and content_type (default wikitext)" }
+  ] },
+  { name: "getEditTypesDiffDetails", description: "Get structured diff details from edit-types API (context, node-edits, text-edits).", params: [
+      { key: "revisionId", description: "Revision ID" },
+      { key: "options", description: "Optional lang and content_type (default wikitext)" }
+  ] },
+  { name: "getEditTypesDiffDebug", description: "Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).", params: [
+      { key: "revisionId", description: "Revision ID" },
+      { key: "options", description: "Optional lang and content_type (default wikitext)" }
+  ] },
   { name: "runWithConcurrency", description: "Run async tasks with a concurrency limit; returns results in input order.", params: [
       { key: "items" },
       { key: "concurrency" },

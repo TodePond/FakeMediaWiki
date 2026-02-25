@@ -813,7 +813,7 @@ main {
 }
 
 form {
-	order: 2;
+	order: 0;
 	flex-grow: 1;
 	padding-bottom: 0.5rem;
 }
@@ -850,12 +850,16 @@ form {
 	margin-bottom: 0.5rem;
 }
 
+form .cdx-label {
+	padding-top: 0.5rem;
+}
+
 form footer {
 	display: flex;
 	gap: 0.25rem;
 	flex-wrap: wrap;
 	padding-top: 1rem;
-	justify-content: flex-end;
+	justify-content: flex-start;
 }
 
 h1 {
@@ -866,6 +870,13 @@ h1 {
 	h1 {
 		margin-right: 0.5rem;
 		margin-left: 0.5rem;
+	}
+	form {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+	}
+	form footer {
+		justify-content: flex-start;
 	}
 	.watchlist-container {
 		padding-left: 0;

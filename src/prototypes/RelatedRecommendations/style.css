@@ -16,15 +16,23 @@
 
 .recommendation-watchlist-form {
 	display: flex;
-	flex-wrap: wrap;
 	flex-direction: column;
-	gap: 0.5rem 1rem;
+	gap: 0;
 	align-items: flex-start;
 	width: 100%;
 }
 
 .recommendation-watchlist-form .cdx-label {
 	margin: 0;
+	padding-top: 0.5rem;
+}
+
+.recommendation-watchlist-form .cdx-label:first-child {
+	padding-top: 0;
+}
+
+.recommendation-watchlist-form .cdx-button[type="submit"] {
+	margin-top: 1rem;
 }
 
 .recommendation-watchlist-input {

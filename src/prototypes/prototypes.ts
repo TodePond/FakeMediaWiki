@@ -73,6 +73,11 @@ export const wrappers: WrapperDefinition[] = [
 // Define categories with their descriptions in display order
 export const categories: CategoryDefinition[] = [
 	{
+		id: "changeTypes",
+		name: "Change types",
+		description: "Watchlist-style feeds enriched with edit-type detection (template, wikilink, etc.) per revision.",
+	},
+	{
 		id: "flagging",
 		name: "Flagging",
 		description: "Feeds with flagged items and prediction indicators.",
@@ -310,6 +315,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				wrapper: "Special",
 			},
 		],
+	},
+	{
+		type: "prototype",
+		id: "ChangeTypesWatchlist",
+		name: "Change types watchlist",
+		description: "Expanding watchlist feed with edit-type detection (templates, wikilinks, etc.) per revision.",
+		category: "changeTypes",
+		wrapper: "Fullscreen",
+		title: "Change types watchlist",
+		featured: true,
 	},
 	{
 		type: "variants",

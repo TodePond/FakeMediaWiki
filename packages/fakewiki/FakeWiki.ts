@@ -5,6 +5,9 @@ import type {
 	FWCompareResponse,
 	FWDiffLine,
 	FWDiffSegment,
+	FWEditTypesDiffDetails,
+	FWEditTypesDiffDebug,
+	FWEditTypesDiffSummary,
 	FWFeaturedPage,
 	FWHistoryCacheEntitySnapshot,
 	FWHistoryCacheSnapshot,
@@ -118,6 +121,9 @@ export class FakeWiki {
 	 * Value: full merged FWTopRelatedChange[] (sorted by timestamp desc).
 	 */
 	private topRelatedChangesCache = new Map<string, FWTopRelatedChange[]>()
+
+	/** Base URL for the edit-types API (edit-types.wmcloud.org). */
+	private readonly editTypesBase = "https://edit-types.wmcloud.org"
 
 	/**
 	 * Create a new FakeWiki instance
@@ -3271,6 +3277,108 @@ export class FakeWiki {
 		}
 
 		return combined
+	}
+
+	/**
+	 * Get language code for edit-types API (e.g. "enwiki" -> "en").
+	 * @param wiki - Wiki code from getWikiCode(); if not provided, uses this instance base URL
+	 */
+	private getEditTypesLang(wiki?: string): string {
+		const wikiCode = wiki || this.getWikiCode()
+		return wikiCode.replace(/wiki$/, "") || "en"
+	}
+
+	/**
+	 * Request edit-types API and return JSON or throw on error.
+	 */
+	private async requestEditTypes<T>(
+		endpoint: string,
+		params: { lang: string; revid: number; content_type?: string }
+	): Promise<T> {
+		const url = new URL(endpoint, this.editTypesBase)
+		url.searchParams.set("lang", params.lang)
+		url.searchParams.set("revid", String(params.revid))
+		if (params.content_type) {
+			url.searchParams.set("content_type", params.content_type)
+		}
+		const response = await fetch(url.toString(), {
+			method: "GET",
+			headers: {
+				"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
+			},
+		})
+		if (!response.ok) {
+			let message = `Edit-types API error: ${response.status}`
+			try {
+				const text = await response.text()
+				const body = text ? (JSON.parse(text) as { detail?: string }) : null
+				if (body?.detail && typeof body.detail === "string") {
+					message = body.detail
+				}
+			} catch {
+				// ignore
+			}
+			throw new Error(message)
+		}
+		return response.json() as Promise<T>
+	}
+
+	/**
+	 * Get simple diff summary from edit-types API (counts per change type per action).
+	 * @param revisionId - Revision ID
+	 * @param options - Optional lang and content_type (default wikitext)
+	 * @returns Summary e.g. { Template: { change: 1 }, Wikilink: { insert: 1 } }
+	 * @see https://edit-types.wmcloud.org/docs
+	 * @see https://github.com/geohci/edit-types
+	 */
+	async getEditTypesDiffSummary(
+		revisionId: number,
+		options?: { lang?: string; content_type?: "wikitext" | "html" }
+	): Promise<FWEditTypesDiffSummary> {
+		const lang = options?.lang ?? this.getEditTypesLang()
+		return this.requestEditTypes<FWEditTypesDiffSummary>("/diff-summary", {
+			lang,
+			revid: revisionId,
+			content_type: options?.content_type,
+		})
+	}
+
+	/**
+	 * Get structured diff details from edit-types API (context, node-edits, text-edits).
+	 * @param revisionId - Revision ID
+	 * @param options - Optional lang and content_type (default wikitext)
+	 * @returns Structured details
+	 * @see https://edit-types.wmcloud.org/docs
+	 */
+	async getEditTypesDiffDetails(
+		revisionId: number,
+		options?: { lang?: string; content_type?: "wikitext" | "html" }
+	): Promise<FWEditTypesDiffDetails> {
+		const lang = options?.lang ?? this.getEditTypesLang()
+		return this.requestEditTypes<FWEditTypesDiffDetails>("/diff-details", {
+			lang,
+			revid: revisionId,
+			content_type: options?.content_type,
+		})
+	}
+
+	/**
+	 * Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).
+	 * @param revisionId - Revision ID
+	 * @param options - Optional lang and content_type (default wikitext)
+	 * @returns Debug payload
+	 * @see https://edit-types.wmcloud.org/docs
+	 */
+	async getEditTypesDiffDebug(
+		revisionId: number,
+		options?: { lang?: string; content_type?: "wikitext" | "html" }
+	): Promise<FWEditTypesDiffDebug> {
+		const lang = options?.lang ?? this.getEditTypesLang()
+		return this.requestEditTypes<FWEditTypesDiffDebug>("/diff-debug", {
+			lang,
+			revid: revisionId,
+			content_type: options?.content_type,
+		})
 	}
 
 	/**

@@ -344,6 +344,31 @@ export interface FWRevisionPredictions {
 	}
 }
 
+/** Edit-types API: simple diff summary (counts per change type per action, e.g. Template: { change: 1 }, Wikilink: { insert: 1 }). */
+export type FWEditTypesDiffSummary = Record<string, Record<string, number>>
+
+/** Edit-types API: optional content type for diff-summary/details/debug. */
+export type FWEditTypesContentType = "wikitext" | "html"
+
+/** Options for getEditTypesDiffSummary, getEditTypesDiffDetails, getEditTypesDiffDebug. */
+export interface FWEditTypesOptions {
+	/** Language code (e.g. "en"). If not set, derived from FakeWiki base URL. */
+	lang?: string
+	/** Content type for the revision (default "wikitext"). */
+	content_type?: FWEditTypesContentType
+}
+
+/** Edit-types API: structured diff details (context, node-edits, text-edits). Shape may be refined from API responses. */
+export interface FWEditTypesDiffDetails {
+	context?: unknown[]
+	"node-edits"?: unknown[]
+	"text-edits"?: unknown[]
+	[key: string]: unknown
+}
+
+/** Edit-types API: debug response (full diff, tree diff, simple diff for comparison). */
+export type FWEditTypesDiffDebug = Record<string, unknown>
+
 export interface FWPageSummary {
 	title?: string
 	description?: string
