@@ -397,14 +397,14 @@
 																						<td>
 																							<div class="change-types-details-prev-curr-box">{{
 																								formatPrevCurrValue(
-																									entry.prev ?? entry.previous
+																									getPrevValue(entry)
 																								)
 																							}}</div>
 																						</td>
 																						<td>
 																							<div class="change-types-details-prev-curr-box">{{
 																								formatPrevCurrValue(
-																									entry.curr ?? entry.current
+																									getCurrValue(entry)
 																								)
 																							}}</div>
 																						</td>
@@ -1047,6 +1047,14 @@ function isChangesArray(v: unknown): v is Record<string, unknown>[] {
 function getChangeTypeLabel(entry: Record<string, unknown>): string {
 	const t = entry["change-type"] ?? entry.change_type ?? entry.type
 	return t != null ? String(t) : "—"
+}
+/** Resolve the value to show in the Prev column (previous/before state). Prefer before/old over previous so we don't show action/count when API also sends before/after. */
+function getPrevValue(entry: Record<string, unknown>): unknown {
+	return entry.prev ?? entry.before ?? entry.old ?? entry.previous
+}
+/** Resolve the value to show in the Curr column (current/after state). Prefer after/new over current so we don't show action/count when API also sends before/after. */
+function getCurrValue(entry: Record<string, unknown>): unknown {
+	return entry.curr ?? entry.after ?? entry.new ?? entry.current
 }
 function formatPrevCurrValue(v: unknown): string {
 	if (v === null || v === undefined) return "—"
