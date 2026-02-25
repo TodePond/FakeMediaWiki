@@ -127,10 +127,6 @@
 	/* color: var(--color-placeholder); */
 }
 
-.watchlist-date-header:first-child {
-	margin-top: 1rem;
-}
-
 /* Same containment as inline history box */
 .watchlist-history-box {
 	/* margin-top: 0.25rem; */

@@ -46,10 +46,6 @@
 	/* color: var(--color-placeholder); */
 }
 
-.watchlist-date-header:first-of-type {
-	margin-top: 0.5rem;
-}
-
 /* Same containment as inline history box */
 .watchlist-history-box {
 	/* margin-top: 0.25rem; */

@@ -6,7 +6,6 @@
 	align-items: center;
 	flex-direction: column;
 	width: 100%;
-	padding: 0 0.7rem;
 }
 
 /* Form: same layout as Flagged watchlist (comma-separated inputs, consistent spacing) */
@@ -81,10 +80,6 @@
 	text-align: left;
 	margin-bottom: 0;
 	/* color: var(--color-placeholder); */
-}
-
-.watchlist-date-header:first-child {
-	margin-top: 1rem;
 }
 
 /* Same containment as inline history box */
@@ -328,11 +323,11 @@
 }
 
 .change-types-delta-add {
-	color: var(--green600, #14866d);
+	color: var(--color-content-added);
 }
 
 .change-types-delta-remove {
-	color: var(--red600, #b32424);
+	color: var(--color-content-removed);
 }
 
 .change-types-delta-change {
@@ -853,9 +848,26 @@ form footer {
 	form footer {
 		justify-content: flex-start;
 	}
+
+	.change-types-watchlist .watchlist-container > h1 {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+		box-sizing: border-box;
+	}
+
+	.watchlist-date-header {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+	}
 }
 
 @media (max-width: 640px) {
+	.change-types-watchlist .watchlist-container > h1 {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+		box-sizing: border-box;
+	}
+
 	.change-types-watchlist form {
 		padding-left: 0.5rem;
 		padding-right: 0.5rem;

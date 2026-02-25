@@ -1,6 +1,50 @@
 /* Extends ChangeTypesWatchlist layout; adds details-block presentation */
 @import "../ChangeTypesWatchlist/style.css";
 
+/* Inline variant: grouped summary (type header + action box per type) */
+.change-types-watchlist-inline .change-types-group {
+	margin-top: 0.5rem;
+}
+.change-types-watchlist-inline .change-types-group:first-child {
+	margin-top: 0;
+}
+.change-types-watchlist-inline .change-types-type-header {
+	font-weight: 600;
+	font-size: 0.8125rem;
+	color: var(--color-base);
+	margin-bottom: 0.2rem;
+}
+.change-types-watchlist-inline .change-types-type-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 0.5rem;
+	align-items: center;
+	padding: 0.35rem 0.5rem;
+	background-color: var(--background-color-interactive);
+	border-radius: 6px;
+	min-height: 1.5rem;
+}
+.change-types-watchlist-inline .change-types-type-actions .change-types-row {
+	display: inline-flex;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+}
+
+/* Tighten spacing around inline (+N type) indicator */
+.change-types-watchlist-inline .history-row > .history-time {
+	margin-right: 0.25rem;
+}
+
+.change-types-watchlist-inline .history-row > .history-delta {
+	margin-right: 0.2rem;
+}
+
+.change-types-watchlist-inline .history-row > .history-delta .history-delta-inline-info {
+	display: inline-block;
+	white-space: nowrap;
+}
+
 /* Change type details block (diff-details API) */
 .change-types-watchlist-details .change-types-details-block {
 	margin-top: 0.75rem;
@@ -366,4 +410,40 @@ div.change-types-details-context-line {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.change-types-watchlist-inline .significant-changes-block {
+	margin-top: 0.75rem;
+}
+
+.change-types-watchlist-inline .significant-change-cards {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.change-types-watchlist-inline .significant-change-card {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.45rem 0.6rem;
+	border-radius: 6px;
+	font-size: 0.8125rem;
+	line-height: 1.35;
+	font-weight: 600;
+}
+
+.change-types-watchlist-inline .significant-change-card.change-types-delta-add {
+	background-color: var(--green100, rgba(20, 134, 109, 0.15));
+	color: var(--color-content-added);
+}
+
+.change-types-watchlist-inline .significant-change-card.change-types-delta-remove {
+	background-color: var(--red100, rgba(179, 36, 36, 0.15));
+	color: var(--color-content-removed);
+}
+
+.change-types-watchlist-inline .significant-change-card.change-types-delta-change {
+	background-color: var(--background-color-progressive-subtle, rgba(51, 102, 204, 0.1));
+	color: var(--color-progressive, #36c);
 }

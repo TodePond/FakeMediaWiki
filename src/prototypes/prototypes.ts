@@ -343,6 +343,16 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				wrapper: "Fullscreen",
 				featured: true,
 			},
+			{
+				type: "variant",
+				id: "ChangeTypesWatchlistInline",
+				title: "Change types (inline labels)",
+				name: "Change types watchlist (inline labels)",
+				description:
+					"Phrase-based inline label in collapsed row, grouped summary by type, and change-type details (context, node-edits, text-edits) when expanded.",
+				wrapper: "Fullscreen",
+				featured: true,
+			},
 		],
 	},
 	{
