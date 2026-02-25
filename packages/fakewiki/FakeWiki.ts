@@ -89,7 +89,7 @@ export class FakeWiki {
 	 * Set via constructor options or use built-in default.
 	 */
 	/**
-	 * Default display config (icon + color) per user category. Override per call via getUserCategoryDisplay(userName, { userTypeConfig }).
+	 * Default display config (icon + color) per user category. Override per call via getCachedUserCategoryDisplay(userName, { userTypeConfig }) or getUserCategoryDisplay(userName, { userTypeConfig }).
 	 */
 	private readonly defaultUserTypeConfig: Record<FWUserCategory, FWUserTypeConfig>
 
@@ -2400,14 +2400,15 @@ export class FakeWiki {
 	}
 
 	/**
-	 * Return display config (icon + color) for a user's category.
-	 * Category must already be in cache (e.g. after calling getUserCategory or after a feed that calls it has loaded). Returns null if the user is not in the cache.
-	 * Pass `userTypeConfig` in the second argument to override icon/color per category for this call.
+	 * Return display config (icon + color) for a user's category from cache only.
+	 * Returns null if the user is not in the cache. Use in templates when the feed has already
+	 * populated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use
+	 * getUserCategoryDisplay instead.
 	 * @param userName - Username to look up
 	 * @param options - Optional overrides; `userTypeConfig` merges with the default per-category display config
 	 * @returns Icon and color for the user's category, or null if not cached
 	 */
-	getUserCategoryDisplay(
+	getCachedUserCategoryDisplay(
 		userName: string,
 		options?: { userTypeConfig?: Partial<Record<FWUserCategory, FWUserTypeConfig>> }
 	): FWUserTypeConfig | null {
@@ -2417,6 +2418,23 @@ export class FakeWiki {
 			? { ...this.defaultUserTypeConfig, ...options.userTypeConfig }
 			: this.defaultUserTypeConfig
 		return config[category]
+	}
+
+	/**
+	 * Return display config (icon + color) for a user's category. Uses cache when available;
+	 * otherwise fetches user info and caches the category, then returns the display config.
+	 * @param userName - Username to look up
+	 * @param options - Optional overrides; `userTypeConfig` merges with the default per-category display config
+	 * @returns Icon and color for the user's category
+	 */
+	async getUserCategoryDisplay(
+		userName: string,
+		options?: { userTypeConfig?: Partial<Record<FWUserCategory, FWUserTypeConfig>> }
+	): Promise<FWUserTypeConfig | null> {
+		const cached = this.getCachedUserCategoryDisplay(userName, options)
+		if (cached !== null) return cached
+		await this.getUserCategory(userName)
+		return this.getCachedUserCategoryDisplay(userName, options)
 	}
 
 	/**

@@ -202,15 +202,15 @@
 										>{{ change.user.name }}</a
 									>
 									<CdxIcon
-										v-if="wiki.getUserCategoryDisplay(change.user.name)?.icon"
+										v-if="wiki.getCachedUserCategoryDisplay(change.user.name)?.icon"
 										:class="[
 											'user-type-icon',
 											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: wiki.getUserCategoryDisplay(change.user.name)?.color,
+											color: wiki.getCachedUserCategoryDisplay(change.user.name)?.color,
 										}"
-										:icon="wiki.getUserCategoryDisplay(change.user.name)!.icon!"
+										:icon="wiki.getCachedUserCategoryDisplay(change.user.name)!.icon!"
 										size="x-small" /></span
 								><span
 									class="history-comment"
@@ -285,15 +285,15 @@
 										class="history-user-expanded"
 										>{{ change.user.name }}</a
 									><CdxIcon
-										v-if="wiki.getUserCategoryDisplay(change.user.name)?.icon"
-										:icon="wiki.getUserCategoryDisplay(change.user.name)!.icon!"
+										v-if="wiki.getCachedUserCategoryDisplay(change.user.name)?.icon"
+										:icon="wiki.getCachedUserCategoryDisplay(change.user.name)!.icon!"
 										:class="[
 											'user-type-icon',
 											'user-type-icon-expanded',
 											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: wiki.getUserCategoryDisplay(change.user.name)?.color,
+											color: wiki.getCachedUserCategoryDisplay(change.user.name)?.color,
 										}"
 								/></span>
 								<button
@@ -633,15 +633,15 @@
 											class="history-user"
 											>{{ rev.user.name }}</a
 										><CdxIcon
-											v-if="wiki.getUserCategoryDisplay(rev.user.name)?.icon"
-											:icon="wiki.getUserCategoryDisplay(rev.user.name)!.icon!"
+											v-if="wiki.getCachedUserCategoryDisplay(rev.user.name)?.icon"
+											:icon="wiki.getCachedUserCategoryDisplay(rev.user.name)!.icon!"
 											size="x-small"
 											:class="[
 												'user-type-icon',
 												`user-type-icon-${wiki.getCachedUserCategory(rev.user.name) || ''}`,
 											]"
 											:style="{
-												color: wiki.getUserCategoryDisplay(rev.user.name)?.color,
+												color: wiki.getCachedUserCategoryDisplay(rev.user.name)?.color,
 											}"
 										/><span
 											class="history-comment"

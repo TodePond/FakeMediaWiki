@@ -2,100 +2,120 @@
 
 Helpers for building MediaWiki prototypes: API client for Wikipedia and sister sites, Vue composables for feeds and recommendations, shared types, and styles. Use it for page history, search, diffs, discovery feeds, ML predictions, and more.
 
+You can try every `FakeWiki` method with custom parameters in the [playground](https://todepond.github.io/FakeMediaWiki/Fullscreen/ApiPlayground).
+
 ## Install
 
 ```bash
 npm install fakewiki
 ```
 
-## Quick start
+## Usage
+
+**Page content** – summary (extract + thumbnail), full metadata, HTML, wikitext, or media:
 
 ```typescript
-import { FakeWiki } from "fakewiki"
-
-const wiki = new FakeWiki()
-
-// Page summary and history
 const summary = await wiki.getPageSummary("Wikipedia")
-const history = await wiki.getPageHistory("Wikipedia", { limit: 10 })
-
-// Search
-const pages = await wiki.searchPages("Albert Einstein", 10)
-const users = await wiki.searchUsers("Admin", 5)
-const titles = await wiki.searchTitles("Wiki")
+const page = await wiki.getPage("Wikipedia")
+const html = await wiki.getPageHtml("Wikipedia")
+const source = await wiki.getPageSource("Wikipedia")
+const media = await wiki.getPageMedia("Wikipedia")
 ```
 
-## API overview
+**Revision feeds** – by page, user, or combined; supports `limit`, `older_than`, `newer_than`:
 
-The `FakeWiki` class talks to the **Wikimedia REST API**, **MediaWiki REST API**, and **MediaWiki Action API**. All async methods are documented with TSDoc in the source. Below is a grouped overview.
+```typescript
+const { revisions } = await wiki.getPageHistory("Wikipedia", { limit: 20 })
+const { revisions: userRevs } = await wiki.getUserHistory("Todepond", { limit: 10 })
+const combined = await wiki.getCombinedFeed({
+	pageNames: ["Wikipedia"],
+	userNames: ["Todepond"],
+	limit: 15,
+})
+```
 
-**Pages and content**
+**Search** – full-text page search, title prefix (autocomplete), or users:
 
-- `getPageSummary`, `getPage`, `getPageHtml`, `getPageSource`, `getPageMobileHtml` – page metadata and content
-- `getPageHistory`, `getUserHistory`, `getUsersHistory`, `getCombinedFeed` – revision feeds
-- `getPageMedia`, `getPageThumbnail`, `getPageThumbnails`, `getPageHero`, `getPageCategories` – media and structure
+```typescript
+const { pages } = await wiki.searchPages("quantum physics", 10)
+const { pages: titleHits } = await wiki.searchTitles("Albert")
+const users = await wiki.searchUsers("Admin", 5)
+```
 
-**Search**
+**Diffs and revisions** – compare revisions, fetch parent or source, parse diff lines for UI:
 
-- `searchPages`, `searchUsers`, `searchTitles` – full-text and prefix search
+```typescript
+const diff = await wiki.getRevisionDiff("Wikipedia", 123456789)
+const parentId = await wiki.getParentRevisionId("Wikipedia", 123456789)
+const revSource = await wiki.getRevisionSource(123456789)
+const segments = wiki.getDiffLineSegments(diff.diff[0])
+const lineClass = wiki.getDiffLineClass(line.type)
+```
 
-**Diffs and revisions**
+**Discovery and feeds** – random page, featured article, on-this-day; related changes; link graph; list-building API:
 
-- `getRevisionDiff`, `getParentRevisionId`, `getRevisionSource` – compare and fetch revision content
-- `getDiffLineSegments`, `getDiffLineClass` – diff line parsing for UI
+```typescript
+const random = await wiki.getRandomPage("summary")
+const featured = await wiki.getFeaturedPage()
+const onThisDay = await wiki.getOnThisDay()
+const related = await wiki.getTopRelatedChanges(["Wikipedia"], { limit: 20 })
+const linksMap = await wiki.getPagesLinks(["Wikipedia"])
+const listBuilding = await wiki.getListBuilding("en", { qid: "Q123", k: 10 })
+```
 
-**Discovery and feeds**
+**Users** – user info, avatar, category (cached); display config async or sync for templates:
 
-- `getRandomPage`, `getFeaturedPage`, `getOnThisDay` – discovery
-- `getRelatedChanges`, `getTopRelatedChanges`, `getTopRelatedPages` – related changes
-- `getPagesLinks`, `getPagesBacklinks`, `getPagesLinksAndBacklinks` – link graph
-- `getListBuilding`, `getMultiPageListBuilding` – list-building API
+```typescript
+const user = await wiki.getUserInfo("Todepond")
+const avatar = await wiki.getUserAvatar("Todepond")
+const display = await wiki.getUserCategoryDisplay("Todepond") // cache or fetch
+// In templates after feed has loaded: wiki.getCachedUserCategoryDisplay(userName)
+```
 
-**Users**
+**ML predictions** – damaging/goodfaith per revision or batch (Lift Wing or ORES):
 
-- `getUserInfo`, `getUserAvatar`, `getUserCategory` – user metadata and classification. `getUserCategory` is cached on the instance; feed hooks call it when loading revisions so the cache is populated. Use `getUserCategoryDisplay(userName)` for icon + color (returns `null` if the user is not yet in the cache). To override icon/color per category for a call, pass a second argument: `getUserCategoryDisplay(userName, { userTypeConfig })`.
-- `getUserCategoryDisplay(userName, options?)`, `getCachedUserCategory(userName)` – read from the in-instance cache for UI (display config or category string for test IDs).
+```typescript
+const damaging = await wiki.getDamagingPrediction(revId)
+const predictions = await wiki.getRevisionPredictions([revId1, revId2])
+```
 
-**ML predictions (damaging / goodfaith)**
+**URLs and formatting** – page/revision/user/history/edit URLs; date and delta formatting; delta CSS class:
 
-- `getDamagingPrediction`, `getGoodfaithPrediction`
-- `getRevisionPredictions`, `getRevisionPredictionsFromOres` – batch predictions
+```typescript
+const pageUrl = wiki.getPageUrl("Wikipedia")
+const revUrl = wiki.getRevisionUrl("Wikipedia", 123456789)
+const formatted = wiki.formatDate(rev.timestamp, "short")
+const deltaClass = wiki.getDeltaClass(rev.delta) // use with fakewiki/style/delta.css
+```
 
-**URLs and formatting**
+**Result and state helpers** – loading/error/data state for UI; storage keys for prototypes:
 
-- `getPageUrl`, `getRevisionUrl`, `getUserUrl`, `getHistoryUrl`, `getEditUrl`, etc.
-- `formatDate`, `formatTime`, `formatRelativeTimestamp`, `formatNiceRelativeTimestamp`, `formatDelta`
-- `getDeltaClass(delta)` – CSS class for delta indicators; use with `fakewiki/style/delta.css`
-
-**Result and state helpers**
-
-- `createResult<T>()`, `createResults<T>()` – loading/error/data state for UI
-- `getStorageKey`, `getStorageKeys` – consistent keys for prototype storage (optional)
+```typescript
+const result = wiki.createResult<FWRevision>()
+const keys = wiki.getStorageKeys("MyPrototype", "query", 3)
+```
 
 ## Hooks
 
-The package exports composables that work with `FakeWiki` for common prototype patterns. User category caching is handled by FakeWiki: when feed hooks load revisions they call `wiki.getUserCategory(userName)`, and FakeWiki caches the result. In the template use `wiki.getUserCategoryDisplay(userName)` for icon and color. To customize icon/color per category, pass the config at call time: `wiki.getUserCategoryDisplay(userName, { userTypeConfig })`.
+Composables that work with `FakeWiki` for common prototype patterns. Feed hooks populate the user category cache; use `wiki.getCachedUserCategoryDisplay(userName)` in templates for icon/color.
 
-**`useFeed`** – combined feed from page and user search queries, with load-more and edit-summary processing. Calls `getUserCategory` for each revision so the cache is ready for `wiki.getUserCategoryDisplay()` in the UI.
+**`useFeed`** – combined feed from page and user search queries, with load-more and edit-summary processing.
 
 ```typescript
 import { useFeed } from "fakewiki"
 import { ref } from "vue"
 
 const pageQueries = ref(["Wikipedia", "Wet Leg"])
-const userQueries = ref(["Todepond"])
+const userQueries = ref(["Todepond", "Samwalton9"])
 const { allRevisionsData, loadFeed, isLoading, hasMore, loadMore } = useFeed({
 	wiki,
 	pageSearchQueries: pageQueries,
 	userSearchQueries: userQueries,
-	onUserCategory: (userName, category) => {
-		/* cache if needed */
-	},
 })
 await loadFeed()
 ```
 
-**`useRelatedChanges`** – single- or multi-page related changes feed with summarized comments. Populates FakeWiki’s user category cache for `wiki.getUserCategoryDisplay()`.
+**`useRelatedChanges`** – single or multi-page related changes feed with summarized comments.
 
 ```typescript
 import { useRelatedChanges } from "fakewiki"
@@ -104,9 +124,6 @@ const pageName = ref("Wikipedia")
 const { allRevisionsData, loadFeed, isLoading } = useRelatedChanges({
 	wiki,
 	pageName,
-	onUserCategory: (userName, category) => {
-		/* cache */
-	},
 })
 await loadFeed()
 ```
@@ -125,7 +142,37 @@ const state = getPredictionState(revisionId) // { icon, color, isLoading, isErro
 
 **`useRelatedChangesRecommendations`** – recommend related pages from a feed’s revisions and merge recommended revisions into the feed.
 
+```typescript
+import { useRelatedChangesRecommendations } from "fakewiki"
+
+const pageQueries = ref(["Wikipedia"])
+const allRevisionsData = ref(revisionsFromFeed)
+const filterKeepPercent = ref(15)
+const { interleavedRevisions, loadRecommendations, recommendationProgress } =
+	useRelatedChangesRecommendations({
+		wiki,
+		pageSearchQueries: pageQueries,
+		allRevisionsData,
+		filterKeepPercent,
+	})
+await loadRecommendations()
+```
+
 **`useListBuildingRecommendations`** – recommend pages from list-building API and merge those revisions into the feed.
+
+```typescript
+import { useListBuildingRecommendations } from "fakewiki"
+
+const pageQueries = ref(["Wikipedia"])
+const allRevisionsData = ref(revisionsFromFeed)
+const { interleavedRevisions, loadRecommendations, recommendationProgress } =
+	useListBuildingRecommendations({
+		wiki,
+		pageSearchQueries: pageQueries,
+		allRevisionsData,
+	})
+await loadRecommendations()
+```
 
 See the source for full options and return shapes.
 
@@ -135,12 +182,6 @@ See the source for full options and return shapes.
 | -------------------------- | ------------------------------------------------------------------------- |
 | `fakewiki`                 | Main entry: `FakeWiki`, all types, and all hooks (useUser, useFeed, etc.) |
 | `fakewiki/style/delta.css` | CSS for delta (change size) indicators                                    |
-
-## API Playground
-
-Try every `FakeWiki` method with custom parameters in the browser:
-
-**[API Playground →](https://todepond.github.io/Fullscreen/ApiPlayground)**
 
 ## API bases
 
