@@ -16,7 +16,8 @@
     "preview": "vite preview",
     "lint": "eslint . --fix --cache && npm run type-check",
     "type-check": "vue-tsc --noEmit",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "publish": "npm publish -w fakewiki --access public"
   },
   "dependencies": {
     "@wikimedia/codex": "^2.3.3",

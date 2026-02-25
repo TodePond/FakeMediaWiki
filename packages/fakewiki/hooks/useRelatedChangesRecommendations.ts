@@ -1,7 +1,7 @@
-import { FakeWiki } from "../FakeWiki"
 import type { FWRevision } from "fakewiki/types"
 import type { Ref } from "vue"
 import { computed, ref } from "vue"
+import { FakeWiki } from "../FakeWiki"
 
 /** Revision with optional recommendation flag (recent change from a recommended page). */
 export type FeedRevisionRelatedChanges = FWRevision & {
@@ -56,7 +56,8 @@ export function useRelatedChangesRecommendations({
 	cacheUserCategory,
 	options: opts,
 }: UseRelatedChangesRecommendationsArgs) {
-	const recommendationHistoryLimit = opts?.recommendationHistoryLimit ?? DEFAULT_RECOMMENDATION_HISTORY_LIMIT
+	const recommendationHistoryLimit =
+		opts?.recommendationHistoryLimit ?? DEFAULT_RECOMMENDATION_HISTORY_LIMIT
 	const recommendationMaxPages = opts?.recommendationMaxPages ?? DEFAULT_RECOMMENDATION_MAX_PAGES
 	const recommendationProcessConcurrency =
 		opts?.recommendationProcessConcurrency ?? DEFAULT_RECOMMENDATION_PROCESS_CONCURRENCY
@@ -207,9 +208,7 @@ export function useRelatedChangesRecommendations({
 
 		const main = allRevisionsData.value
 		const oldestUserTs =
-			main.length > 0
-				? Math.min(...main.map(r => new Date(r.timestamp).getTime()))
-				: 0
+			main.length > 0 ? Math.min(...main.map(r => new Date(r.timestamp).getTime())) : 0
 
 		recommendationProgress.value = {
 			...recommendationProgress.value,
@@ -243,8 +242,7 @@ export function useRelatedChangesRecommendations({
 			}
 			const processed = await Promise.all(
 				revisions.map(async rev => {
-					const pageName =
-						(rev as FWRevision & { pageName?: string }).pageName ?? ""
+					const pageName = (rev as FWRevision & { pageName?: string }).pageName ?? ""
 					const processedRev = await processOneRevision(
 						{ ...rev, pageName } as FWRevision & { pageName: string },
 						pageName,
@@ -262,10 +260,7 @@ export function useRelatedChangesRecommendations({
 				new Date(a.timestamp).getTime() < new Date(b.timestamp).getTime() ? a : b
 			)
 			allProcessed.push(...processed)
-			if (
-				oldestUserTs > 0 &&
-				new Date(oldestInBatch.timestamp).getTime() <= oldestUserTs
-			) {
+			if (oldestUserTs > 0 && new Date(oldestInBatch.timestamp).getTime() <= oldestUserTs) {
 				break
 			}
 			if (revisions.length < recommendationHistoryLimit) break
@@ -325,8 +320,7 @@ export function useRelatedChangesRecommendations({
 					pageName: (rev as FWRevision & { pageName?: string }).pageName ?? "",
 				})) as (FWRevision & { pageName: string })[],
 				recommendationProcessConcurrency,
-				async revision =>
-					processOneRevision(revision, revision.pageName, scoreByPage)
+				async revision => processOneRevision(revision, revision.pageName, scoreByPage)
 			)
 			recs = [...recs, ...processed].sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -345,17 +339,13 @@ export function useRelatedChangesRecommendations({
 		const main = allRevisionsData.value
 		const recs = recommendationRevisions.value
 		const oldestUserTs =
-			main.length > 0
-				? Math.min(...main.map(r => new Date(r.timestamp).getTime()))
-				: 0
+			main.length > 0 ? Math.min(...main.map(r => new Date(r.timestamp).getTime())) : 0
 		const mainIds = new Set(main.map(r => r.id))
 		const recsOnly = recs.filter(r => !mainIds.has(r.id))
 		const combined = [...main, ...recsOnly]
 		const notOlderThanWatchlist =
 			oldestUserTs > 0
-				? combined.filter(
-						r => new Date(r.timestamp).getTime() >= oldestUserTs
-					)
+				? combined.filter(r => new Date(r.timestamp).getTime() >= oldestUserTs)
 				: combined
 		return notOlderThanWatchlist.sort(
 			(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
