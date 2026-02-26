@@ -765,7 +765,7 @@ function getMostSignificantChanges(revId: number): MostSignificantChangesResult 
 		change: "change-types-delta-change",
 		move: "change-types-delta-change",
 	}
-	const actionSymbols = { insert: "+", remove: "-", change: "↻", move: "↻" }
+	const actionSymbols = { insert: "+", remove: "-", change: "↻", move: "⇄" }
 	for (const level of SIGNIFICANCE_LEVELS) {
 		for (const canonical of level) {
 			const typeKey = normalizeTypeKey(summary, canonical)

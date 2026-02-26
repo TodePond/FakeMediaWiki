@@ -10,7 +10,7 @@ const ACTION_DISPLAY: Record<string, { symbol: string; deltaClass: string }> = {
 	insert: { symbol: "+", deltaClass: "change-types-delta-add" },
 	remove: { symbol: "-", deltaClass: "change-types-delta-remove" },
 	change: { symbol: "↻", deltaClass: "change-types-delta-change" },
-	move: { symbol: "↻", deltaClass: "change-types-delta-change" },
+	move: { symbol: "⇄", deltaClass: "change-types-delta-change" },
 }
 
 /**
