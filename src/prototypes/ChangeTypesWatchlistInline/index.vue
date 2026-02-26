@@ -570,6 +570,7 @@ const DEFAULT_PAGE_QUERIES = [
 	"Little Mix",
 	"Gorillaz",
 	"Jade Thirlwall",
+	"Wet Leg",
 ]
 const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
 const DEFAULT_HIGHLIGHT_COUNT = 1
@@ -603,11 +604,13 @@ const SIGNIFICANCE_LEVELS = [
 	["Table"],
 	["Paragraph"],
 	["Sentence"],
+	["Heading"],
 	["Word", "Reference", "Comment"],
 	["List"],
 	["Wikilink", "ExternalLink"],
 	["Template"],
 	["Punctuation"],
+	["Text Formatting"],
 	["Whitespace"],
 ] as const
 type SignificanceType = (typeof SIGNIFICANCE_LEVELS)[number][number]
@@ -653,21 +656,28 @@ const DISPLAY_LABELS: Record<string, string> = {
 	Template: "template",
 	Paragraph: "paragraph",
 	Section: "section",
+	Heading: "heading",
 	Sentence: "sentence",
 	List: "list",
 	Table: "table",
 	Word: "word",
+	"Text Formatting": "formatting",
+	TextFormatting: "formatting",
 	Whitespace: "whitespace",
 	Punctuation: "punctuation",
 	Comment: "comment",
+}
+
+function canonicalizeTypeName(value: string): string {
+	return value.toLowerCase().replace(/[\s_-]+/g, "")
 }
 
 function normalizeTypeKey(
 	summary: Record<string, Record<string, number>>,
 	canonical: string
 ): string | null {
-	const lower = canonical.toLowerCase()
-	const found = Object.keys(summary).find(k => k.toLowerCase() === lower)
+	const normalizedCanonical = canonicalizeTypeName(canonical)
+	const found = Object.keys(summary).find(k => canonicalizeTypeName(k) === normalizedCanonical)
 	return found ?? null
 }
 
@@ -679,9 +689,10 @@ function getDisplayLabel(typeKey: string, count: number): string {
 
 function formatInlineMetric(typeKey: string, symbol: string, count: number): string {
 	const label = getDisplayLabel(typeKey, count)
-	const normalizedType = typeKey.toLowerCase()
+	const normalizedType = canonicalizeTypeName(typeKey)
 	if (normalizedType === "whitespace") return `${symbol}${DISPLAY_LABELS.Whitespace}`
 	if (normalizedType === "punctuation") return `${symbol}${DISPLAY_LABELS.Punctuation}`
+	if (normalizedType === "textformatting") return `${symbol}${DISPLAY_LABELS["Text Formatting"]}`
 	return `${symbol}${count} ${label}`
 }
 

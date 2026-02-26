@@ -150,30 +150,51 @@
 								<!-- Change types summary (same as summary variant) -->
 								<div class="change-types-block">
 									<div class="change-types-label">Change types</div>
-									<div v-if="loadingEditTypesIds.has(change.id)" class="change-types-loading">
+									<div
+										v-if="loadingEditTypesIds.has(change.id)"
+										class="change-types-loading"
+									>
 										<CdxProgressBar inline />
 									</div>
-									<div v-else-if="editTypesErrorByRevId.get(change.id)" class="change-types-error">
+									<div
+										v-else-if="editTypesErrorByRevId.get(change.id)"
+										class="change-types-error"
+									>
 										{{ editTypesErrorByRevId.get(change.id) }}
 									</div>
-									<ul v-else-if="displaySummaryByRevId.get(change.id)" class="change-types-list">
+									<ul
+										v-else-if="displaySummaryByRevId.get(change.id)"
+										class="change-types-list"
+									>
 										<li
-											v-for="row in getChangeTypeRows(displaySummaryByRevId.get(change.id)!)"
+											v-for="row in getChangeTypeRows(
+												displaySummaryByRevId.get(change.id)!
+											)"
 											:key="row.key"
 											class="change-types-row"
 										>
-											<span class="change-types-type">{{ row.typeName }}</span>
-											<span :class="['change-types-delta', row.deltaClass]">{{ row.symbol }}{{ row.count }}</span>
+											<span class="change-types-type">{{
+												row.typeName
+											}}</span>
+											<span :class="['change-types-delta', row.deltaClass]"
+												>{{ row.symbol }}{{ row.count }}</span
+											>
 										</li>
 									</ul>
 									<div v-else class="change-types-empty">No change types</div>
 								</div>
 								<!-- Change type details (additive: dropdowns) -->
 								<div class="change-types-block change-types-details-block">
-									<div v-if="loadingDetailsIds.has(change.id)" class="change-types-loading">
+									<div
+										v-if="loadingDetailsIds.has(change.id)"
+										class="change-types-loading"
+									>
 										<CdxProgressBar inline />
 									</div>
-									<div v-else-if="detailsErrorByRevId.get(change.id)" class="change-types-error">
+									<div
+										v-else-if="detailsErrorByRevId.get(change.id)"
+										class="change-types-error"
+									>
 										{{ detailsErrorByRevId.get(change.id) }}
 									</div>
 									<template v-else-if="editTypesDetailsByRevId.get(change.id)">
@@ -231,32 +252,56 @@
 														<div
 															class="change-types-details-context-line change-types-row"
 															:class="[
-																getDetailItemOperation(isDetailObject(item) ? item : {}) &&
+																getDetailItemOperation(
+																	isDetailObject(item) ? item : {}
+																) &&
 																	`change-types-details-op-${getDetailItemOperation(isDetailObject(item) ? item : {})}`,
 															]"
 														>
 															<template v-if="isDetailObject(item)">
 																<span class="change-types-type">{{
-																	getDetailItemSummaryRow(item).typeName
+																	getDetailItemSummaryRow(item)
+																		.typeName
 																}}</span>
 																<span
-																	v-if="getDetailItemSummaryRow(item).symbol"
+																	v-if="
+																		getDetailItemSummaryRow(
+																			item
+																		).symbol
+																	"
 																	:class="[
 																		'change-types-delta',
-																		getDetailItemSummaryRow(item).deltaClass,
+																		getDetailItemSummaryRow(
+																			item
+																		).deltaClass,
 																	]"
-																>{{ getDetailItemSummaryRow(item).symbol }}{{
-																	getDetailItemSummaryRow(item).count
-																}}</span>
+																	>{{
+																		getDetailItemSummaryRow(
+																			item
+																		).symbol
+																	}}{{
+																		getDetailItemSummaryRow(
+																			item
+																		).count
+																	}}</span
+																>
 																<span
-																	v-if="getContextItemContent(item)"
+																	v-if="
+																		getContextItemContent(item)
+																	"
 																	class="change-types-details-context-content"
-																>{{ getContextItemContent(item) }}</span>
+																	>{{
+																		getContextItemContent(item)
+																	}}</span
+																>
 															</template>
 															<template v-else>
-																<span class="change-types-details-primitive">{{
-																	formatDetailValue(item)
-																}}</span>
+																<span
+																	class="change-types-details-primitive"
+																	>{{
+																		formatDetailValue(item)
+																	}}</span
+																>
 															</template>
 														</div>
 													</template>
@@ -375,38 +420,79 @@
 																	:key="row.key"
 																	class="change-types-details-row"
 																>
-																	<span v-if="row.label" class="change-types-details-key">{{
-																		row.label
-																	}}</span>
-																	<template v-if="row.key === 'changes' && isChangesArray(row.rawValue)">
-																		<div class="change-types-details-changes-table-wrap">
-																			<table class="change-types-details-changes-table">
+																	<span
+																		v-if="row.label"
+																		class="change-types-details-key"
+																		>{{ row.label }}</span
+																	>
+																	<template
+																		v-if="
+																			row.key === 'changes' &&
+																			isChangesArray(
+																				row.rawValue
+																			)
+																		"
+																	>
+																		<div
+																			class="change-types-details-changes-table-wrap"
+																		>
+																			<table
+																				class="change-types-details-changes-table"
+																			>
 																				<thead>
 																					<tr>
-																						<th>Change type</th>
-																						<th>Prev</th>
-																						<th>Curr</th>
+																						<th>
+																							Change
+																							type
+																						</th>
+																						<th>
+																							Prev
+																						</th>
+																						<th>
+																							Curr
+																						</th>
 																					</tr>
 																				</thead>
 																				<tbody>
 																					<tr
-																						v-for="(entry, ei) in row.rawValue"
+																						v-for="(
+																							entry,
+																							ei
+																						) in row.rawValue"
 																						:key="ei"
 																					>
-																						<td>{{ getChangeTypeLabel(entry) }}</td>
 																						<td>
-																							<div class="change-types-details-prev-curr-box">{{
-																								formatPrevCurrValue(
-																									getPrevValue(entry)
+																							{{
+																								getChangeTypeLabel(
+																									entry
 																								)
-																							}}</div>
+																							}}
 																						</td>
 																						<td>
-																							<div class="change-types-details-prev-curr-box">{{
-																								formatPrevCurrValue(
-																									getCurrValue(entry)
-																								)
-																							}}</div>
+																							<div
+																								class="change-types-details-prev-curr-box"
+																							>
+																								{{
+																									formatPrevCurrValue(
+																										getPrevValue(
+																											entry
+																										)
+																									)
+																								}}
+																							</div>
+																						</td>
+																						<td>
+																							<div
+																								class="change-types-details-prev-curr-box"
+																							>
+																								{{
+																									formatPrevCurrValue(
+																										getCurrValue(
+																											entry
+																										)
+																									)
+																								}}
+																							</div>
 																						</td>
 																					</tr>
 																				</tbody>
@@ -802,7 +888,14 @@ import { useChangeTypesWatchlist } from "../ChangeTypesWatchlist/useChangeTypesW
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ChangeTypesWatchlistDetails"
-const DEFAULT_PAGE_QUERIES = ["Wikipedia", "Wet Leg", "Water", "Confidence Man (band)", "Algorave"]
+const DEFAULT_PAGE_QUERIES = [
+	"Confidence Man (band)",
+	"Algorave",
+	"Little Mix",
+	"Gorillaz",
+	"Jade Thirlwall",
+	"Wet Leg",
+]
 const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
 const MAX_VALUE_LENGTH = 120
 
@@ -877,8 +970,12 @@ function toggleDetailsItem(revId: number, sectionKey: string, idx: number): void
 
 const SECTION_TITLES: Record<string, string> = {
 	context: "Context",
-	"node-edits": "Node edits", node_edits: "Node edits", nodes: "Node edits",
-	"text-edits": "Text edits", text_edits: "Text edits", text: "Text edits",
+	"node-edits": "Node edits",
+	node_edits: "Node edits",
+	nodes: "Node edits",
+	"text-edits": "Text edits",
+	text_edits: "Text edits",
+	text: "Text edits",
 }
 function humanizeSectionKey(key: string): string {
 	return SECTION_TITLES[key] ?? key.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
@@ -896,7 +993,9 @@ function getDetailsPayload(details: FWEditTypesDiffDetails | null): Record<strin
 	return Object.keys(result).length > 0 ? result : null
 }
 
-function getDetailsSections(details: FWEditTypesDiffDetails): Array<{ key: string; title: string; items: unknown[] }> {
+function getDetailsSections(
+	details: FWEditTypesDiffDetails
+): Array<{ key: string; title: string; items: unknown[] }> {
 	const payload = getDetailsPayload(details)
 	if (!payload) return []
 	const order = ["context", "nodes", "text", "node-edits", "text-edits"]
@@ -932,7 +1031,9 @@ const ACTION_DISPLAY: Record<string, { symbol: string; deltaClass: string }> = {
 	remove: { symbol: "-", deltaClass: "change-types-delta-remove" },
 	change: { symbol: "↻", deltaClass: "change-types-delta-change" },
 }
-function getDetailItemOperation(item: Record<string, unknown>): "insert" | "remove" | "change" | null {
+function getDetailItemOperation(
+	item: Record<string, unknown>
+): "insert" | "remove" | "change" | null {
 	const edittype = (item.edittype ?? item.action) as string | undefined
 	if (edittype == null || typeof edittype !== "string") return null
 	const v = edittype.toLowerCase()
@@ -941,11 +1042,18 @@ function getDetailItemOperation(item: Record<string, unknown>): "insert" | "remo
 	if (v === "change" || v === "move") return "change"
 	return null
 }
-function getDetailItemSummaryRow(item: Record<string, unknown>): { typeName: string; symbol: string; count: number; deltaClass: string } {
+function getDetailItemSummaryRow(item: Record<string, unknown>): {
+	typeName: string
+	symbol: string
+	count: number
+	deltaClass: string
+} {
 	const typeName = String(item.type ?? item.edittype ?? "Item")
 	const op = getDetailItemOperation(item)
 	const count = typeof item.count === "number" ? item.count : 1
-	const display = op ? ACTION_DISPLAY[op] : { symbol: "", deltaClass: "change-types-delta-change" }
+	const display = op
+		? ACTION_DISPLAY[op]
+		: { symbol: "", deltaClass: "change-types-delta-change" }
 	return { typeName, symbol: display.symbol, count, deltaClass: display.deltaClass }
 }
 
@@ -956,7 +1064,8 @@ function formatDetailValue(v: unknown): string {
 	if (typeof v === "number" || typeof v === "boolean") return String(v)
 	if (Array.isArray(v)) {
 		if (v.length === 0) return "[]"
-		if (v.every(item => item === null || typeof item !== "object")) return v.map(item => formatDetailValue(item)).join(", ")
+		if (v.every(item => item === null || typeof item !== "object"))
+			return v.map(item => formatDetailValue(item)).join(", ")
 		return `[${v.length} items]`
 	}
 	if (typeof v === "object") return "[object]"
@@ -964,15 +1073,46 @@ function formatDetailValue(v: unknown): string {
 }
 
 const DETAIL_KEY_LABELS: Record<string, string> = {
-	type: "Type", edittype: "Edit type", action: "Action", name: "Name", title: "Title", label: "Label",
-	section: "Section", before: "Before", after: "After", old: "Old value", new: "New value",
-	key: "Key", value: "Value", text: "Content", content: "Content", changes: "Changes", count: "Count",
+	type: "Type",
+	edittype: "Edit type",
+	action: "Action",
+	name: "Name",
+	title: "Title",
+	label: "Label",
+	section: "Section",
+	before: "Before",
+	after: "After",
+	old: "Old value",
+	new: "New value",
+	key: "Key",
+	value: "Value",
+	text: "Content",
+	content: "Content",
+	changes: "Changes",
+	count: "Count",
 }
 function getDetailRowLabel(key: string): string {
 	const k = key.toLowerCase()
 	return DETAIL_KEY_LABELS[k] ?? key.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
 }
-const DETAIL_KEY_ORDER = ["type", "action", "edittype", "name", "title", "label", "section", "before", "after", "old", "new", "key", "value", "text", "count", "changes"]
+const DETAIL_KEY_ORDER = [
+	"type",
+	"action",
+	"edittype",
+	"name",
+	"title",
+	"label",
+	"section",
+	"before",
+	"after",
+	"old",
+	"new",
+	"key",
+	"value",
+	"text",
+	"count",
+	"changes",
+]
 
 function getBadgeClass(key: string, value: unknown): string {
 	const k = key.toLowerCase()
@@ -998,31 +1138,51 @@ interface DetailCardRow {
 }
 function getVisibleKeysForSection(sectionKey: string): string[] {
 	const k = sectionKey.toLowerCase()
-	if (k === "nodes" || k === "node-edits" || k === "node_edits") return ["name", "section", "changes"]
+	if (k === "nodes" || k === "node-edits" || k === "node_edits")
+		return ["name", "section", "changes"]
 	if (k === "text" || k === "text-edits" || k === "text_edits") return ["text"]
 	if (k === "context") return ["type", "name", "text", "section", "label"]
 	return ["type", "edittype", "name", "section", "text", "before", "after", "changes", "count"]
 }
 
-function expandedDetailKey(revId: number, sectionKey: string, itemIdx: number, rowKey: string): string {
+function expandedDetailKey(
+	revId: number,
+	sectionKey: string,
+	itemIdx: number,
+	rowKey: string
+): string {
 	return `${revId}-${sectionKey}-${itemIdx}-${rowKey}`
 }
 
-function getDetailCardRows(obj: Record<string, unknown>, revId: number, sectionKey: string, itemIdx: number): DetailCardRow[] {
+function getDetailCardRows(
+	obj: Record<string, unknown>,
+	revId: number,
+	sectionKey: string,
+	itemIdx: number
+): DetailCardRow[] {
 	const visible = getVisibleKeysForSection(sectionKey)
 	const keys = Object.keys(obj).filter(k => visible.includes(k.toLowerCase()))
-	const ordered = [...DETAIL_KEY_ORDER.filter(k => keys.includes(k)), ...keys.filter(k => !DETAIL_KEY_ORDER.includes(k))]
+	const ordered = [
+		...DETAIL_KEY_ORDER.filter(k => keys.includes(k)),
+		...keys.filter(k => !DETAIL_KEY_ORDER.includes(k)),
+	]
 	const rows: DetailCardRow[] = []
 	for (const key of ordered) {
 		const value = obj[key]
 		const raw = formatDetailValue(value)
-		if (key.toLowerCase() === "name" && (value == null || value === "" || raw === "null")) continue
+		if (key.toLowerCase() === "name" && (value == null || value === "" || raw === "null"))
+			continue
 		const truncated = raw.length > MAX_VALUE_LENGTH
 		const short = truncated ? raw.slice(0, MAX_VALUE_LENGTH) + "…" : raw
 		const expandKey = truncated ? expandedDetailKey(revId, sectionKey, itemIdx, key) : undefined
 		rows.push({
 			key,
-			label: (sectionKey.toLowerCase() === "text" || sectionKey.toLowerCase() === "text-edits") && key.toLowerCase() === "text" ? "" : getDetailRowLabel(key),
+			label:
+				(sectionKey.toLowerCase() === "text" ||
+					sectionKey.toLowerCase() === "text-edits") &&
+				key.toLowerCase() === "text"
+					? ""
+					: getDetailRowLabel(key),
 			raw,
 			short: truncated ? short : undefined,
 			truncated,
@@ -1065,8 +1225,11 @@ function formatPrevCurrValue(v: unknown): string {
 		const o = v as Record<string, unknown>
 		const name = o.name ?? o.key ?? o.param
 		const value = o.value ?? o.text
-		if (name != null && value !== undefined) return `${String(name)}\n${formatPrevCurrValue(value)}`
-		return Object.entries(o).map(([k, val]) => `${k}: ${formatPrevCurrValue(val)}`).join("\n")
+		if (name != null && value !== undefined)
+			return `${String(name)}\n${formatPrevCurrValue(value)}`
+		return Object.entries(o)
+			.map(([k, val]) => `${k}: ${formatPrevCurrValue(val)}`)
+			.join("\n")
 	}
 	return String(v)
 }
@@ -1076,7 +1239,10 @@ function loadEditTypesDetails(revId: number): void {
 	loadingDetailsIds.value = new Set(loadingDetailsIds.value).add(revId)
 	wiki.getEditTypesDiffDetails(revId)
 		.then(details => {
-			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(revId, details)
+			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(
+				revId,
+				details
+			)
 			detailsErrorByRevId.value = new Map(detailsErrorByRevId.value)
 			detailsErrorByRevId.value.delete(revId)
 			loadingDetailsIds.value = new Set(loadingDetailsIds.value)
@@ -1086,7 +1252,9 @@ function loadEditTypesDetails(revId: number): void {
 			collapsedDetailsItemKeys.value = new Set(collapsedDetailsItemKeys.value)
 			for (const section of sections) {
 				collapsedDetailsSectionKeys.value.add(detailsSectionKey(revId, section.key))
-				section.items.forEach((_, idx) => collapsedDetailsItemKeys.value.add(detailsItemKey(revId, section.key, idx)))
+				section.items.forEach((_, idx) =>
+					collapsedDetailsItemKeys.value.add(detailsItemKey(revId, section.key, idx))
+				)
 			}
 		})
 		.catch(e => {
