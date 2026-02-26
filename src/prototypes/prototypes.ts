@@ -75,7 +75,8 @@ export const categories: CategoryDefinition[] = [
 	{
 		id: "changeTypes",
 		name: "Change types",
-		description: "Watchlist-style feeds enriched with edit-type detection (template, wikilink, etc.) per revision.",
+		description:
+			"Watchlist-style feeds enriched with edit-type detection (template, wikilink, etc.) per revision.",
 	},
 	{
 		id: "flagging",
@@ -324,32 +325,31 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 			"Expanding watchlist feed with edit-type detection (templates, wikilinks, etc.) per revision.",
 		category: "changeTypes",
 		variants: [
-			{
-				type: "variant",
-				id: "ChangeTypesWatchlist",
-				title: "Change types (summary)",
-				name: "Change types watchlist (summary)",
-				description: "Edit-type counts per revision (diff-summary API).",
-				wrapper: "Fullscreen",
-				featured: true,
-			},
+			// TODO: Add support for hidden prototypes
+			// {
+			// 	type: "variant",
+			// 	id: "ChangeTypesWatchlist",
+			// 	title: "Change types (summary)",
+			// 	name: "Change types watchlist (summary)",
+			// 	description: "Edit-type counts per revision (diff-summary API).",
+			// 	wrapper: "Fullscreen",
+			// 	featured: true,
+			// },
 			{
 				type: "variant",
 				id: "ChangeTypesWatchlistDetails",
-				title: "Change types (details)",
-				name: "Change types watchlist (details)",
-				description:
-					"Structured change details per revision: context, node-edits, text-edits (diff-details API).",
+				title: "Change types",
+				name: "Change types",
+				description: "A watchlist that shows information about changes when clicked on.",
 				wrapper: "Fullscreen",
 				featured: true,
 			},
 			{
 				type: "variant",
 				id: "ChangeTypesWatchlistInline",
-				title: "Change types (inline labels)",
-				name: "Change types watchlist (inline labels)",
-				description:
-					"Phrase-based inline label in collapsed row, grouped summary by type, and change-type details (context, node-edits, text-edits) when expanded.",
+				title: "Smart deltas",
+				name: "Smart deltas",
+				description: "A watchlist with more helpful deltas.",
 				wrapper: "Fullscreen",
 				featured: true,
 			},
