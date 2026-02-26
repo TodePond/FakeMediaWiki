@@ -537,7 +537,7 @@ const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ChangeTypesWatchlistInline"
 const DEFAULT_PAGE_QUERIES = ["Wikipedia", "Wet Leg", "Water", "Confidence Man (band)", "Algorave"]
 const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
-const DEFAULT_HIGHLIGHT_COUNT = 3
+const DEFAULT_HIGHLIGHT_COUNT = 1
 const MAX_VALUE_LENGTH = 120
 /** Summary (same as summary variant) */
 const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
