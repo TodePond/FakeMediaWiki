@@ -48,6 +48,14 @@
 						highlightCount
 					}}</span>
 				</div>
+				<label class="inline-smart-filtering-toggle" :for="smartFilteringCheckboxId">
+					<input
+						:id="smartFilteringCheckboxId"
+						v-model="smartFilteringEnabled"
+						type="checkbox"
+					/>
+					Smart filtering
+				</label>
 			</div>
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
@@ -536,9 +544,11 @@ import { useChangeTypesWatchlist } from "../ChangeTypesWatchlist/useChangeTypesW
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ChangeTypesWatchlistInline"
 const highlightCountStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "highlightCount")
+const smartFilteringStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "smartFilteringEnabled")
 const DEFAULT_PAGE_QUERIES = ["Wikipedia", "Wet Leg", "Water", "Confidence Man (band)", "Algorave"]
 const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
 const DEFAULT_HIGHLIGHT_COUNT = 1
+const DEFAULT_SMART_FILTERING_ENABLED = true
 const MAX_VALUE_LENGTH = 120
 /** Summary (same as summary variant) */
 const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
@@ -569,8 +579,8 @@ const SIGNIFICANCE_ORDER = [
 	"Paragraph",
 	"Sentence",
 	"Word",
-	"Comment",
 	"Reference",
+	"Comment",
 	"List",
 	"Wikilink",
 	"ExternalLink",
@@ -580,6 +590,7 @@ const SIGNIFICANCE_ORDER = [
 ] as const
 const MAX_HIGHLIGHT_COUNT = SIGNIFICANCE_ORDER.length
 const highlightCountSliderId = "highlight-count-slider"
+const smartFilteringCheckboxId = "smart-filtering-checkbox"
 function loadHighlightCount(): number {
 	const raw = localStorage.getItem(highlightCountStorageKey)
 	if (raw === null) return DEFAULT_HIGHLIGHT_COUNT
@@ -589,6 +600,12 @@ function loadHighlightCount(): number {
 		: DEFAULT_HIGHLIGHT_COUNT
 }
 const highlightCount = ref(loadHighlightCount())
+function loadSmartFilteringEnabled(): boolean {
+	const raw = localStorage.getItem(smartFilteringStorageKey)
+	if (raw === null) return DEFAULT_SMART_FILTERING_ENABLED
+	return raw === "true"
+}
+const smartFilteringEnabled = ref(loadSmartFilteringEnabled())
 
 /** Short display label for phrase (e.g. "removed 3 links"). Fallback: type name lowercased. */
 const DISPLAY_LABELS: Record<string, string> = {
@@ -631,28 +648,22 @@ function formatInlineMetric(typeKey: string, symbol: string, count: number): str
 }
 
 /** One phrase per type from summary (insert / remove / change). Used for inline label. */
-function getMostSignificantChange(
-	revId: number
-): { segments: Array<{ text: string; deltaClass: string }> } | null {
+type InlineCandidate = {
+	text: string
+	deltaClass: string
+	kind: "insert" | "remove" | "change"
+	count: number
+	canonicalType: (typeof SIGNIFICANCE_ORDER)[number]
+}
+type MostSignificantChangesResult = {
+	segments: Array<{ text: string; deltaClass: string }>
+	candidates: InlineCandidate[]
+}
+
+function getMostSignificantChanges(revId: number): MostSignificantChangesResult | null {
 	const summary = displaySummaryByRevId.value.get(revId)
 	if (!summary || typeof summary !== "object" || Object.keys(summary).length === 0) return null
-	const hasSimpleInlineSignal = ["Punctuation", "Word", "Whitespace", "Comment"].some(
-		canonical => {
-			const key = normalizeTypeKey(summary, canonical)
-			if (!key) return false
-			const actions = summary[key]
-			if (!actions || typeof actions !== "object") return false
-			for (const count of Object.values(actions)) {
-				if (typeof count === "number" && count > 0) return true
-			}
-			return false
-		}
-	)
-	type InlineCandidate = {
-		text: string
-		deltaClass: string
-		kind: "insert" | "remove" | "change"
-	}
+
 	const candidates: InlineCandidate[] = []
 	const deltaClasses = {
 		insert: "change-types-delta-add",
@@ -678,40 +689,64 @@ function getMostSignificantChange(
 		}
 		const total = insertC + removeC + changeC
 		if (total === 0) continue
-		// Avoid noisy section mentions for pure change/move updates.
-		// if (canonical === "Section" && insertC === 0 && removeC === 0) continue
-		// Lone high-level change-only signals often accompany simple punctuation/word edits.
-		// In those cases, prefer the specific low-level signal.
-		// if (
-		// 	(canonical === "Paragraph" || canonical === "Sentence") &&
-		// 	insertC === 0 &&
-		// 	removeC === 0 &&
-		// 	changeC === 1 &&
-		// 	hasSimpleInlineSignal
-		// ) {
-		// 	continue
-		// }
+
 		if (insertC > 0 && removeC === 0 && changeC === 0) {
 			const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
-			candidates.push({ text, deltaClass: deltaClasses.insert, kind: "insert" })
+			candidates.push({
+				text,
+				deltaClass: deltaClasses.insert,
+				kind: "insert",
+				count: insertC,
+				canonicalType: canonical,
+			})
 		} else if (removeC > 0 && insertC === 0 && changeC === 0) {
 			const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
-			candidates.push({ text, deltaClass: deltaClasses.remove, kind: "remove" })
+			candidates.push({
+				text,
+				deltaClass: deltaClasses.remove,
+				kind: "remove",
+				count: removeC,
+				canonicalType: canonical,
+			})
 		} else if (changeC > 0 && insertC === 0 && removeC === 0) {
 			const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
-			candidates.push({ text, deltaClass: deltaClasses.change, kind: "change" })
+			candidates.push({
+				text,
+				deltaClass: deltaClasses.change,
+				kind: "change",
+				count: changeC,
+				canonicalType: canonical,
+			})
 		} else {
 			if (insertC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
-				candidates.push({ text, deltaClass: deltaClasses.insert, kind: "insert" })
+				candidates.push({
+					text,
+					deltaClass: deltaClasses.insert,
+					kind: "insert",
+					count: insertC,
+					canonicalType: canonical,
+				})
 			}
 			if (removeC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
-				candidates.push({ text, deltaClass: deltaClasses.remove, kind: "remove" })
+				candidates.push({
+					text,
+					deltaClass: deltaClasses.remove,
+					kind: "remove",
+					count: removeC,
+					canonicalType: canonical,
+				})
 			}
 			if (changeC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
-				candidates.push({ text, deltaClass: deltaClasses.change, kind: "change" })
+				candidates.push({
+					text,
+					deltaClass: deltaClasses.change,
+					kind: "change",
+					count: changeC,
+					canonicalType: canonical,
+				})
 			}
 		}
 	}
@@ -727,13 +762,44 @@ function getMostSignificantChange(
 		})
 	)
 
-	return { segments }
+	return { segments, candidates }
+}
+
+function shouldFilterImpliedTopCandidate(candidate: InlineCandidate): boolean {
+	const filterableImpliedTypes = new Set<(typeof SIGNIFICANCE_ORDER)[number]>([
+		"Section",
+		"Table",
+		"Paragraph",
+		"Sentence",
+		"Comment",
+	])
+	return (
+		candidate.kind === "change" &&
+		candidate.count === 1 &&
+		filterableImpliedTypes.has(candidate.canonicalType)
+	)
+}
+
+function postProcessMostSignificantChanges(
+	result: MostSignificantChangesResult | null
+): MostSignificantChangesResult | null {
+	if (!result || !smartFilteringEnabled.value) return result
+	const candidates = [...result.candidates]
+	while (candidates.length > 1 && shouldFilterImpliedTopCandidate(candidates[0])) {
+		candidates.shift()
+	}
+	const highlightCandidates = candidates.slice(0, highlightCount.value)
+	const segments = highlightCandidates.map(candidate => ({
+		text: candidate.text,
+		deltaClass: candidate.deltaClass,
+	}))
+	return { segments, candidates }
 }
 
 const mostSignificantByRevId = computed(() => {
-	const map = new Map<number, { segments: Array<{ text: string; deltaClass: string }> } | null>()
+	const map = new Map<number, MostSignificantChangesResult | null>()
 	for (const [revId] of editTypesByRevId.value) {
-		map.set(revId, getMostSignificantChange(revId))
+		map.set(revId, postProcessMostSignificantChanges(getMostSignificantChanges(revId)))
 	}
 	return map
 })
@@ -1192,6 +1258,13 @@ watch(
 	() => highlightCount.value,
 	value => {
 		localStorage.setItem(highlightCountStorageKey, String(value))
+	}
+)
+
+watch(
+	() => smartFilteringEnabled.value,
+	value => {
+		localStorage.setItem(smartFilteringStorageKey, String(value))
 	}
 )
 

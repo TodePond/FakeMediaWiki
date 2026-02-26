@@ -64,6 +64,14 @@
 	min-width: 1.5em;
 }
 
+.inline-smart-filtering-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-top: 0.5rem;
+	font-size: 0.875rem;
+}
+
 /* Tighten spacing around inline (+N type) indicator */
 .change-types-watchlist-inline .history-row > .history-time {
 	margin-right: 0.25rem;
