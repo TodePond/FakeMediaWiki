@@ -48,8 +48,13 @@ function getSummary(jsdoc: string): string | undefined {
 	return summary.length ? summary.join("\n").trim() : undefined
 }
 
+function getCategory(jsdoc: string): string | undefined {
+	const match = jsdoc.match(/\@category\s+([^\n*]+)/)
+	return match?.[1]?.trim()
+}
+
 type ParamSchema = { key: string; description?: string }
-type MethodSchema = { name: string; description?: string; params: ParamSchema[] }
+type MethodSchema = { name: string; description?: string; category?: string; params: ParamSchema[] }
 
 function extractMethods(sourceFile: ts.SourceFile): MethodSchema[] {
 	const methods: MethodSchema[] = []
@@ -62,13 +67,15 @@ function extractMethods(sourceFile: ts.SourceFile): MethodSchema[] {
 					if (ts.isMethodDeclaration(member)) {
 						const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined
 						const isPrivate = modifiers?.some((m) => m.kind === ts.SyntaxKind.PrivateKeyword)
-						const isAsync = modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword)
+						const isProtected = modifiers?.some((m) => m.kind === ts.SyntaxKind.ProtectedKeyword)
 						const methodName = (member.name as ts.Identifier).getText(sourceFile)
-						if (isPrivate || !isAsync || methodName === "request" || methodName.startsWith("_")) continue
+						if (isPrivate || isProtected || methodName === "request" || methodName.startsWith("_"))
+							continue
 
 						const jsdoc = getJSDocComment(member, sourceFile)
 						const paramDocs = jsdoc ? parseParamTags(jsdoc) : new Map<string, string>()
 						const description = jsdoc ? getSummary(jsdoc) : undefined
+						const category = jsdoc ? getCategory(jsdoc) : undefined
 
 						const params: ParamSchema[] = []
 						for (const param of member.parameters) {
@@ -78,7 +85,7 @@ function extractMethods(sourceFile: ts.SourceFile): MethodSchema[] {
 								description: paramDocs.get(paramName),
 							})
 						}
-						methods.push({ name: methodName, description, params })
+						methods.push({ name: methodName, description, category, params })
 					}
 				}
 			}
@@ -95,7 +102,7 @@ function emitTs(methods: MethodSchema[]): string {
 		"",
 		"export type PlaygroundParamSchema = { key: string; description?: string }",
 		"",
-		"export type PlaygroundMethodSchema = { name: string; description?: string; params: PlaygroundParamSchema[] }",
+		"export type PlaygroundMethodSchema = { name: string; description?: string; category?: string; params: PlaygroundParamSchema[] }",
 		"",
 		"export const playgroundSchema: PlaygroundMethodSchema[] = [",
 	]
@@ -109,7 +116,10 @@ function emitTs(methods: MethodSchema[]): string {
 					`      { key: "${p.key}"${p.description ? `, description: "${p.description.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")}"` : ""} }`
 			)
 			.join(",\n")
-		lines.push(`  { name: "${m.name}", description: ${desc}, params: [`)
+		const category = m.category
+			? `"${m.category.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`
+			: "undefined"
+		lines.push(`  { name: "${m.name}", description: ${desc}, category: ${category}, params: [`)
 		lines.push(paramsJson)
 		lines.push("  ] },")
 	}

@@ -12,6 +12,7 @@ export type ParamType =
 	| "boolean"
 	| "enum"
 	| "date"
+	| "json"
 	| "stringArray"
 	| "numberArray"
 
@@ -26,17 +27,41 @@ export type ParamDescriptor = {
 export type MethodDescriptor = {
 	name: string
 	description?: string
+	category: string
 	params: ParamDescriptor[]
 	optionsParamKeys?: string[]
 	resultHint?: "table" | "object" | "code" | "image" | "json"
 }
 
 const NUMBER_KEYS = new Set([
-	"limit", "revId", "k", "days", "fromRevId", "toRevId", "revisionId", "ucstart", "ucend",
+	"limit",
+	"revId",
+	"k",
+	"days",
+	"fromRevId",
+	"toRevId",
+	"revisionId",
+	"ucstart",
+	"ucend",
+	"type",
+	"namespace",
+	"backlinkLimit",
+	"percentage",
+	"highlightCount",
+	"delta",
+	"count",
+	"concurrency",
 ])
 const STRING_ARRAY_KEYS = new Set(["userNames", "pageNames", "pageTitles"])
 const NUMBER_ARRAY_KEYS = new Set(["revisionIds"])
-const BOOLEAN_KEYS = new Set(["showOutgoing", "showIncoming"])
+const BOOLEAN_KEYS = new Set([
+	"showOutgoing",
+	"showIncoming",
+	"improvedDeltaEnabled",
+	"relativeDetailLevelEnabled",
+	"smartFilteringEnabled",
+	"withSign",
+])
 
 /** Sensible defaults so "Run" works out of the box. Matches placeholders used in other prototypes (Wet Leg, Wikipedia, Todepond, etc.). */
 const SENSIBLE_DEFAULTS: Record<string, string | number | boolean> = {
@@ -64,6 +89,10 @@ const SENSIBLE_DEFAULTS: Record<string, string | number | boolean> = {
 	from: "",
 	showOutgoing: true,
 	showIncoming: true,
+	improvedDeltaEnabled: true,
+	relativeDetailLevelEnabled: true,
+	smartFilteringEnabled: true,
+	withSign: true,
 	qid: "",
 	revisionIds: "1337619110",
 	wiki: "",
@@ -74,11 +103,91 @@ const METHOD_PARAM_DEFAULTS: Record<string, Record<string, string | number | boo
 	getOnThisDay: { type: "events" },
 	getFeaturedPage: { date: "" },
 	getAnnouncements: {},
+	getTopRelatedChanges: { percentage: 1 },
+	getTopRelatedPages: { percentage: 1 },
+	encode: { slug: "Wet Leg" },
+	getCombinedFeed: { limit: 20, after: "{}" },
+	getDaysOfActivity: { registrationDate: "2025-02-26T10:30:00Z" },
+	getDeltaClass: { delta: 42 },
+	getStorageKey: { prototypeName: "PageFeed", keyName: "searchQuery" },
+	getStorageKeys: { prototypeName: "PageFeed", keyName: "searchQuery", count: 3 },
+	createResults: { count: 3 },
+	getTableFromEditSummary: {
+		editSummary:
+			"Alter: template type, title. Add: journal, authors 1-1. Removed parameters. Some additions/deletions were parameter name changes. | [[User:UcuchaBot|Use this bot]]. [[User talk:Ucucha|Report bugs]]. | Suggested by Abductive | #UCB_toolbar",
+	},
+	isToday: { timestamp: "2026-02-26T10:30:00Z" },
+	parseToolbarEditSummary: {
+		editSummary:
+			"Alter: template type, title. Add: journal, authors 1-1. Removed parameters. Some additions/deletions were parameter name changes. | [[User:UcuchaBot|Use this bot]]. [[User talk:Ucucha|Report bugs]]. | Suggested by Abductive | #UCB_toolbar",
+	},
+	preprocessEditSummary: { summary: "/* History */ Fix typo" },
+	runWithConcurrency: {
+		items: "[1,2,3]",
+		concurrency: 2,
+		fn: "async (item) => item",
+	},
+	formatDate: { timestamp: "2026-02-26T10:30:00Z", style: "long" },
+	toDateKey: { timestamp: "2026-02-26T10:30:00Z" },
+	formatTime: { timestamp: "2026-02-26T10:30:00Z" },
+	formatRelativeTimestamp: {
+		timestamp: "2026-02-26T10:30:00Z",
+		seconds: "words",
+		minutes: "minutes",
+		hours: "hours",
+		days: "days",
+		weeks: "weeks",
+		months: "months",
+		years: "years",
+	},
+	formatNiceRelativeTimestamp: { timestamp: "2026-02-26T10:30:00Z" },
+	formatDelta: { delta: 42 },
 	searchUsers: { query: "Samwalton9" },
 	searchUsersWithAvatars: { query: "Samwalton9" },
 	compareRevisions: { fromRevId: 1336311016, toRevId: 1337619110 },
+	getRevisionUrl: { id: 1337619110 },
+	getAssetUrlFromUploadUrl: {
+		uploadUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/File.jpg/640px-File.jpg",
+	},
 	getRevisionDiff: { pageName: "Corsica Studios", revId: 1337619110 },
 	getParentRevisionId: { pageName: "Corsica Studios", revId: 1337619110 },
+	getDiffLineSegments: {
+		line: '{"type":1,"text":"Example text","highlightRanges":[{"start":0,"length":7,"type":0}]}',
+	},
+	getStructuredDeltasFromSummary: {
+		summary: '{"Sentence":{"change":1},"Punctuation":{"remove":1}}',
+	},
+	normalizeStructuredDeltaSummary: {
+		raw: '{"summary":{"Sentence":{"change":2,"remove":1},"Punctuation":{"remove":1},"Whitespace":{"change":1},"Comment":{"insert":"2"}},"debug":{"traceId":"demo"}}',
+	},
+	groupRevisionsByDate: {
+		revisions:
+			'[{"id":1337619110,"timestamp":"2026-02-26T10:30:00Z","user":{"name":"Samwalton9"},"delta":42,"comment":"Example summary","pageName":"Wet Leg"},{"id":1337619100,"timestamp":"2026-02-26T09:15:00Z","user":{"name":"Todepond"},"delta":-5,"comment":"Another example","pageName":"Confidence Man (band)"}]',
+	},
+}
+
+const METHOD_CATEGORY_OVERRIDES: Record<string, string> = {
+	getAnnouncements: "Pages and content",
+	getCombinedFeed: "Revisions and diffs",
+	getDaysOfActivity: "Users",
+	getDeltaClass: "Revisions and diffs",
+	getEditSummaryHtml: "Formatting",
+	getMediawikiBase: "URLs",
+	getOnThisDay: "Pages and content",
+	getTableFromEditSummary: "Formatting",
+	getWikimediaBase: "URLs",
+	isIPAddress: "Users",
+	isTemporaryAccount: "Users",
+	isToday: "Formatting",
+	parseToolbarEditSummary: "Formatting",
+	preprocessEditSummary: "Formatting",
+	searchTitles: "Search",
+	encode: "URLs",
+	createResult: "Utilities",
+	createResults: "Utilities",
+	getStorageKey: "Utilities",
+	getStorageKeys: "Utilities",
+	runWithConcurrency: "Utilities",
 }
 
 function inferType(key: string, override?: { inputType?: string; options?: string[] }): ParamType {
@@ -121,14 +230,24 @@ function buildParams(
 			for (const k of optionKeys) {
 				const override = paramOverrides?.[k]
 				const type = inferType(k, override)
+				const methodOverrides = METHOD_PARAM_DEFAULTS[methodName]
+				const hasExplicitMethodDefault = Boolean(methodOverrides && k in methodOverrides)
+				const defaultValue =
+					// Keep optional numeric options unset by default so they can be omitted.
+					type === "number" && !hasExplicitMethodDefault
+						? ""
+						: getSensibleDefault(methodName, k, type, override?.options)
 				out.push({
 					key: k,
 					label: k.replace(/_/g, " "),
 					type,
-					default: getSensibleDefault(methodName, k, type, override?.options),
+					default: defaultValue,
 					options: override?.options,
 				})
 			}
+		} else if (p.key === "options") {
+			// Never render a raw object textbox for options; use explicit option fields via overrides.
+			continue
 		} else {
 			const override = paramOverrides?.[p.key]
 			const type = inferType(p.key, override)
@@ -144,6 +263,32 @@ function buildParams(
 	return out
 }
 
+function inferCategoryFromMethodName(methodName: string): string {
+	const explicitCategory = METHOD_CATEGORY_OVERRIDES[methodName]
+	if (explicitCategory) return explicitCategory
+	const lowerMethodName = methodName.toLowerCase()
+	if (lowerMethodName.includes("cache")) return "Cache and diagnostics"
+	if (lowerMethodName.includes("structureddelta") || lowerMethodName.includes("edittypes"))
+		return "Structured deltas"
+	if (lowerMethodName.includes("url")) return "URLs"
+	if (lowerMethodName.includes("prediction")) return "Predictions"
+	if (lowerMethodName.includes("related") || lowerMethodName.includes("listbuilding"))
+		return "Recommendations"
+	if (lowerMethodName.includes("search")) return "Search"
+	if (lowerMethodName.includes("user")) return "Users"
+	if (lowerMethodName.includes("revision") || lowerMethodName.includes("diff"))
+		return "Revisions and diffs"
+	if (lowerMethodName.includes("page") || lowerMethodName.includes("wikitext"))
+		return "Pages and content"
+	if (
+		lowerMethodName.includes("format") ||
+		lowerMethodName.startsWith("todate") ||
+		lowerMethodName.startsWith("group")
+	)
+		return "Formatting"
+	return "Prototyping"
+}
+
 export const playgroundMethods: MethodDescriptor[] = playgroundSchema
 	.filter((m) => !playgroundOverrides[m.name]?.hide)
 	.map((m) => {
@@ -154,8 +299,10 @@ export const playgroundMethods: MethodDescriptor[] = playgroundSchema
 		return {
 			name: m.name,
 			description: m.description,
+			category: m.category ?? inferCategoryFromMethodName(m.name),
 			params,
 			optionsParamKeys,
 			resultHint: over?.resultHint,
 		}
 	})
+	.sort((a, b) => a.name.localeCompare(b.name))

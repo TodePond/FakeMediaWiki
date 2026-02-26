@@ -924,7 +924,7 @@ const displaySummaryByRevId = computed(() => {
 function loadEditTypesSummary(revId: number): void {
 	if (editTypesByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) return
 	loadingEditTypesIds.value = new Set(loadingEditTypesIds.value).add(revId)
-	wiki.getEditTypesDiffSummary(revId)
+	wiki.getEditTypesSummary(revId)
 		.then(summary => {
 			editTypesByRevId.value = new Map(editTypesByRevId.value).set(revId, summary)
 			editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value)
@@ -1237,7 +1237,7 @@ function formatPrevCurrValue(v: unknown): string {
 function loadEditTypesDetails(revId: number): void {
 	if (editTypesDetailsByRevId.value.has(revId) || detailsErrorByRevId.value.has(revId)) return
 	loadingDetailsIds.value = new Set(loadingDetailsIds.value).add(revId)
-	wiki.getEditTypesDiffDetails(revId)
+	wiki.getEditTypesDetails(revId)
 		.then(details => {
 			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(
 				revId,

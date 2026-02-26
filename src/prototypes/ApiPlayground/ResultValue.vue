@@ -7,6 +7,10 @@
 		v-else-if="valueKey === 'source' && isWikitextLike(displayValue)"
 		class="api-result-source"
 	>{{ displayValue }}</pre>
+	<!-- Empty containers -->
+	<div v-else-if="isEmptyContainer(displayValue)" class="api-result-empty">
+		{{ getEmptyContainerLabel(displayValue) }}
+	</div>
 	<!-- Array of objects → data table with header row -->
 	<div v-else-if="isArrayOfObjects(displayValue)" class="api-result-table-wrap">
 		<table class="api-result-table">
@@ -37,10 +41,6 @@
 				</tr>
 			</tbody>
 		</table>
-	</div>
-	<!-- Object or Map (empty) → message -->
-	<div v-else-if="isObjectOrMap(displayValue) && isEmptyObjectOrMap(displayValue)" class="api-result-empty">
-		No results
 	</div>
 	<!-- Object or Map → key-value table -->
 	<div v-else-if="isObjectOrMap(displayValue)" class="api-result-table-wrap">
@@ -98,6 +98,19 @@ function isObjectOrMap(v: unknown): v is Record<string, unknown> | Map<string, u
 
 function isEmptyObjectOrMap(v: Record<string, unknown> | Map<string, unknown>): boolean {
 	return v instanceof Map ? v.size === 0 : Object.keys(v).length === 0
+}
+
+function isEmptyContainer(v: unknown): boolean {
+	if (Array.isArray(v)) return v.length === 0
+	if (isObjectOrMap(v)) return isEmptyObjectOrMap(v)
+	return false
+}
+
+function getEmptyContainerLabel(v: unknown): string {
+	if (Array.isArray(v)) return "Empty array"
+	if (v instanceof Map) return "Empty object"
+	if (isObjectOrMap(v)) return "Empty object"
+	return "No results"
 }
 
 function objectEntries(v: Record<string, unknown> | Map<string, unknown>): Record<string, unknown> {

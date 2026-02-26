@@ -2,190 +2,325 @@
 
 export type PlaygroundParamSchema = { key: string; description?: string }
 
-export type PlaygroundMethodSchema = { name: string; description?: string; params: PlaygroundParamSchema[] }
+export type PlaygroundMethodSchema = { name: string; description?: string; category?: string; params: PlaygroundParamSchema[] }
 
 export const playgroundSchema: PlaygroundMethodSchema[] = [
-  { name: "getPageSummary", description: "Get a page summary (extract, thumbnail, etc.)", params: [
+  { name: "inspectHistoryCache", description: "Inspect cached history revisions and coverage metadata.\nUseful for debugging pagination and cache behavior in prototypes.", category: undefined, params: [
+      { key: "options", description: "Optional filters for specific page/user keys" }
+  ] },
+  { name: "getWikimediaBase", description: "Get the base URL for the Wikimedia REST API", category: undefined, params: [
+
+  ] },
+  { name: "getMediawikiBase", description: "Get the base URL for the MediaWiki REST API", category: undefined, params: [
+
+  ] },
+  { name: "encodeForUrl", description: "Encode a page title for URL usage", category: undefined, params: [
+      { key: "slug", description: "Page title" }
+  ] },
+  { name: "getPageSummary", description: "Get a page summary (extract, thumbnail, etc.)", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "getPageHtml", description: "Get page content as HTML", params: [
+  { name: "getPageHtml", description: "Get page content as HTML", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "getPageSource", description: "Get page content as wikitext source", params: [
+  { name: "getPageSource", description: "Get page content as wikitext source", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "getPage", description: "Get full page metadata and latest revision", params: [
+  { name: "getPage", description: "Get full page metadata and latest revision", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "searchTitles", description: "Search for pages by title (autocomplete-style)", params: [
+  { name: "searchTitles", description: "Search for pages by title (autocomplete-style)", category: undefined, params: [
       { key: "query", description: "Search query" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
   ] },
-  { name: "searchPages", description: "Full-text search across page titles and content", params: [
+  { name: "searchPages", description: "Full-text search across page titles and content", category: undefined, params: [
       { key: "query", description: "Search query" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
   ] },
-  { name: "searchUsers", description: "Search for users by username (without avatars).", params: [
+  { name: "searchUsers", description: "Search for users by username (without avatars).", category: undefined, params: [
       { key: "query", description: "Search query (username or part of username)" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
   ] },
-  { name: "searchUsersWithAvatars", description: "Search for users by username and fetch their avatars.", params: [
+  { name: "searchUsersWithAvatars", description: "Search for users by username and fetch their avatars.", category: undefined, params: [
       { key: "query", description: "Search query (username or part of username)" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
   ] },
-  { name: "getPageHistory", description: "Get page revision history\nUses caching to avoid fetching the same data twice.\nUses older_than/newer_than cursors for pagination and filtering.", params: [
+  { name: "getPageHistory", description: "Get page revision history\nUses caching to avoid fetching the same data twice.\nUses older_than/newer_than cursors for pagination and filtering.", category: undefined, params: [
       { key: "pageName", description: "Page title" },
       { key: "options", description: "Options" }
   ] },
-  { name: "getUserHistory", description: "Get user contribution history (revisions made by a user)\nUses caching to avoid fetching the same data twice.\nUses older_than/newer_than cursors for pagination and filtering.", params: [
+  { name: "getUserHistory", description: "Get user contribution history (revisions made by a user)\nUses caching to avoid fetching the same data twice.\nUses older_than/newer_than cursors for pagination and filtering.", category: undefined, params: [
       { key: "userName", description: "Username" },
       { key: "options", description: "Options" }
   ] },
-  { name: "getUsersHistory", description: "Get contributions for multiple users by calling getUserHistory for each.\nUses caching to avoid fetching the same data twice.\nFetches user histories in parallel.", params: [
+  { name: "getUsersHistory", description: "Get contributions for multiple users by calling getUserHistory for each.\nUses caching to avoid fetching the same data twice.\nFetches user histories in parallel.", category: undefined, params: [
       { key: "userNames", description: "Array of usernames" },
       { key: "options", description: "Options" }
   ] },
-  { name: "getCombinedFeed", description: "Get a combined feed of revisions from multiple users and/or pages.\nReturns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.\nCaching is handled internally by getUserHistory and getPageHistory.", params: [
+  { name: "getCombinedFeed", description: "Get a combined feed of revisions from multiple users and/or pages.\nReturns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.\nCaching is handled internally by getUserHistory and getPageHistory.", category: undefined, params: [
       { key: "options", description: "Configuration object" }
   ] },
-  { name: "getParentRevisionId", description: "Get the parent (previous) revision ID for a revision on a page.", params: [
+  { name: "clearPageHistoryCache", description: "Clear the page history cache for a page (or all pages if no name given).\nUse when you need fresh data, e.g. when opening the inline history view.", category: undefined, params: [
+      { key: "pageName" }
+  ] },
+  { name: "getParentRevisionId", description: "Get the parent (previous) revision ID for a revision on a page.", category: undefined, params: [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID (we want the revision immediately older than this)" }
   ] },
-  { name: "compareRevisions", description: "Compare two revisions", params: [
+  { name: "compareRevisions", description: "Compare two revisions", category: undefined, params: [
       { key: "fromRevId", description: "Source revision ID (older)" },
       { key: "toRevId", description: "Target revision ID (newer)" }
   ] },
-  { name: "getRevisionSource", description: "Get wikitext source for a revision by ID.", params: [
+  { name: "getRevisionSource", description: "Get wikitext source for a revision by ID.", category: undefined, params: [
       { key: "revId", description: "Revision ID" }
   ] },
-  { name: "getRevisionDiff", description: "Get diff for a revision by comparing it with its parent (previous) revision.\nWhen there is no parent (e.g. first revision), returns a synthetic diff where\nevery line is shown as added.", params: [
+  { name: "getRevisionDiff", description: "Get diff for a revision by comparing it with its parent (previous) revision.\nWhen there is no parent (e.g. first revision), returns a synthetic diff where\nevery line is shown as added.", category: undefined, params: [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID to diff" }
   ] },
-  { name: "getRandomPage", description: "Get a random page", params: [
+  { name: "getDiffLineSegments", description: "Split a diff line into character-level highlight segments.\nConverts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.", category: undefined, params: [
+      { key: "line", description: "Diff line from compare API" }
+  ] },
+  { name: "getDiffLineClass", description: "Map compare API diff line type to a CSS class name.", category: undefined, params: [
+      { key: "type", description: "Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)" }
+  ] },
+  { name: "getRandomPage", description: "Get a random page", category: undefined, params: [
       { key: "format", description: "Format: 'summary', 'html', or 'title' (default: 'summary')" }
   ] },
-  { name: "getFeaturedPage", description: "Get featured page for a specific date", params: [
-      { key: "date", description: "Date object or YYYY/MM/DD string" }
+  { name: "getFeaturedPage", description: "Get featured page for a specific date", category: undefined, params: [
+      { key: "date", description: "Date object or YYYY/MM/DD string (leave blank for today's featured page)" }
   ] },
-  { name: "getOnThisDay", description: "Get \"On This Day\" content for a given type", params: [
+  { name: "getOnThisDay", description: "Get \"On This Day\" content for a given type", category: undefined, params: [
       { key: "type", description: "Type: 'events', 'births', 'deaths', 'holidays', 'selected'" },
       { key: "date", description: "Date object or MM/DD string" }
   ] },
-  { name: "getAnnouncements", description: "Get current announcements", params: [
+  { name: "getAnnouncements", description: "Get current announcements", category: undefined, params: [
 
   ] },
-  { name: "getPageMedia", description: "Get page media (images, audio, etc.)", params: [
+  { name: "getPageMedia", description: "Get page media (images, audio, etc.)", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "getPagesLinks", description: "Get outgoing wikilinks for multiple pages (intra-language links)\nAutomatically handles pagination to fetch all links.", params: [
+  { name: "getPagesLinks", description: "Get outgoing wikilinks for multiple pages (intra-language links)\nAutomatically handles pagination to fetch all links.", category: undefined, params: [
       { key: "pageNames", description: "Array of page titles" },
       { key: "options", description: "Options" }
   ] },
-  { name: "getPagesLinksAndBacklinks", description: "Get outgoing links and backlinks for the given pages in one call.\nConvenience that runs getPagesLinks and getPagesBacklinks in parallel.", params: [
+  { name: "getPagesLinksAndBacklinks", description: "Get outgoing links and backlinks for the given pages in one call.\nConvenience that runs getPagesLinks and getPagesBacklinks in parallel.", category: undefined, params: [
       { key: "pageNames", description: "Array of page titles" },
       { key: "options", description: "Options (namespace for both; backlinkLimit for backlinks only)" }
   ] },
-  { name: "getPagesBacklinks", description: "Get pages that link to the given page(s) (backlinks / \"What links here\")\nUses MediaWiki Action API prop=linkshere.", params: [
+  { name: "getPagesBacklinks", description: "Get pages that link to the given page(s) (backlinks / \"What links here\")\nUses MediaWiki Action API prop=linkshere.", category: undefined, params: [
       { key: "pageNames", description: "Array of page titles to find backlinks for" },
       { key: "options", description: "Options" }
   ] },
-  { name: "getRelatedChanges", description: "Get related changes using the Action API feedrecentchanges (1–2 requests total).\nReturns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).", params: [
+  { name: "getRelatedChanges", description: "Get related changes using the Action API feedrecentchanges (1–2 requests total).\nReturns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).", category: undefined, params: [
       { key: "targetPageName", description: "Page title to get related changes for" },
       { key: "options", description: "showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)" }
   ] },
-  { name: "getTopRelatedChanges", description: "Get related changes from multiple seed pages, merged and filtered to the top N% by score.\nCounts and score are per-page: \"which feeds this page appears in\" (any revision). Same\nfeedCountBidirectional/Outgoing/Backlink and score are shown on every revision of that page.\nUses scoreMultipliers (default bidirectional×4, outgoing×2, backlink×1). No extra API calls.\nOrder is preserved (by timestamp desc); no extra sorting after filtering.", params: [
+  { name: "getTopRelatedChanges", description: "Get related changes from multiple seed pages, merged and filtered to the top N% by score.\nCounts and score are per-page: \"which feeds this page appears in\" (any revision). Same\nfeedCountBidirectional/Outgoing/Backlink and score are shown on every revision of that page.\nUses scoreMultipliers (default bidirectional×4, outgoing×2, backlink×1). No extra API calls.\nOrder is preserved (by timestamp desc); no extra sorting after filtering.", category: undefined, params: [
       { key: "pageNames" },
       { key: "options" }
   ] },
-  { name: "getTopRelatedPages", description: "Get the list of page titles that appear in the top N% of related changes by score.\nSame options as getTopRelatedChanges; returns unique page names in order of first appearance,\neach with the score from the first change that introduced that page (static per page),\nplus the changes that were retrieved as part of the scoring process (with sourcePageNames and link-type info).", params: [
+  { name: "getTopRelatedPages", description: "Get the list of page titles that appear in the top N% of related changes by score.\nSame options as getTopRelatedChanges; returns unique page names in order of first appearance,\neach with the score from the first change that introduced that page (static per page),\nplus the changes that were retrieved as part of the scoring process (with sourcePageNames and link-type info).", category: undefined, params: [
       { key: "pageNames" },
       { key: "options" }
   ] },
-  { name: "getPageThumbnail", description: "Get thumbnail image for a page.\nUses the lead image (page summary) when available; otherwise falls back to the\nfirst image on the page (e.g. infobox image).", params: [
+  { name: "getPageThumbnail", description: "Get thumbnail image for a page.\nUses the lead image (page summary) when available; otherwise falls back to the\nfirst image on the page (e.g. infobox image).", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "getPageThumbnails", description: "Get thumbnail URLs for multiple pages (lead image from each page).\nUses the Action API pageimages in batches of 50.", params: [
+  { name: "getPageThumbnails", description: "Get thumbnail URLs for multiple pages (lead image from each page).\nUses the Action API pageimages in batches of 50.", category: undefined, params: [
       { key: "pageNames", description: "Page titles" },
       { key: "baseUrl", description: "Wiki base URL (e.g. https://en.wikipedia.org/). Defaults to this.base" }
   ] },
-  { name: "getListBuilding", description: "Get a list of articles related to a seed page from the list-building API.\nCombines results from readers, content (links), and morelike models (serpentine order).", params: [
+  { name: "getListBuilding", description: "Get a list of articles related to a seed page from the list-building API.\nCombines results from readers, content (links), and morelike models (serpentine order).", category: undefined, params: [
       { key: "lang", description: "Language code (e.g. \"en\")" },
       { key: "options", description: "Optional page title (seed), QID, and per-source result count (default 10)" }
   ] },
-  { name: "getMultiPageListBuilding", description: "Get list-building results for multiple seed pages. Returns the final aggregated list\ndeduped by recommended page and sorted by quality (best first). Optionally pass onLoad\nto receive progressively complete lists (each call is the full current list, same shape).", params: [
+  { name: "clearListBuildingCache", description: "Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding\ncalls re-fetch from the API. Use when the user explicitly requests fresh recommendations.", category: undefined, params: [
+
+  ] },
+  { name: "getMultiPageListBuilding", description: "Get list-building results for multiple seed pages. Returns the final aggregated list\ndeduped by recommended page and sorted by quality (best first). Optionally pass onLoad\nto receive progressively complete lists (each call is the full current list, same shape).", category: undefined, params: [
       { key: "lang", description: "Language code (e.g. \"en\")" },
       { key: "pageTitles", description: "Seed page titles (deduplicated; empty titles skipped)" },
       { key: "options", description: "Optional k and onLoad callback (always processes one seed page at a time)" }
   ] },
-  { name: "getPageHero", description: "Get page hero image: thumbnail if present, otherwise the first media image.", params: [
+  { name: "getPageHero", description: "Get page hero image: thumbnail if present, otherwise the first media image.", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "transformWikitextToHtml", description: "Transform wikitext to HTML", params: [
+  { name: "transformWikitextToHtml", description: "Transform wikitext to HTML", category: undefined, params: [
       { key: "wikitext", description: "Wikitext content" },
       { key: "pageTitle", description: "Page title for context (optional)" }
   ] },
-  { name: "getPageCategories", description: "Get page categories", params: [
+  { name: "getPageCategories", description: "Get page categories", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "getPageMobileHtml", description: "Get page mobile-optimized HTML", params: [
+  { name: "getPageMobileHtml", description: "Get page mobile-optimized HTML", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "getUserAvatar", description: "Infer a user avatar image from their user page", params: [
+  { name: "getUserAvatar", description: "Infer a user avatar image from their user page", category: undefined, params: [
       { key: "userName", description: "Username" }
   ] },
-  { name: "getUserInfo", description: "Get user information including edit count, registration date, and account type\nResults are cached in memory to avoid repeated API calls for the same user.", params: [
+  { name: "getUserInfo", description: "Get user information including edit count, registration date, and account type\nResults are cached in memory to avoid repeated API calls for the same user.", category: undefined, params: [
       { key: "userName", description: "Username or IP address" }
   ] },
-  { name: "getUserCategory", description: "Get a user's category (cache-aware main entry point).\nReads from category cache when available; otherwise fetches user info and caches the result.", params: [
+  { name: "isTemporaryAccount", description: "Check if a username is a temporary account (starts with ~)", category: undefined, params: [
+      { key: "userName", description: "Username to check" }
+  ] },
+  { name: "isIPAddress", description: "Check if a username is an IP address", category: undefined, params: [
+      { key: "userName", description: "Username to check" }
+  ] },
+  { name: "getDaysOfActivity", description: "Calculate days of activity from registration date", category: undefined, params: [
+      { key: "registrationDate", description: "ISO timestamp string (e.g., \"2007-06-07T16:36:03Z\")" }
+  ] },
+  { name: "getUserCategory", description: "Get a user's category (cache-aware main entry point).\nReads from category cache when available; otherwise fetches user info and caches the result.", category: undefined, params: [
       { key: "userName", description: "Username to classify" }
   ] },
-  { name: "getUserCategoryDisplay", description: "Return display config (icon + color) for a user's category. Uses cache when available;\notherwise fetches user info and caches the category, then returns the display config.", params: [
+  { name: "getCachedUserCategoryDisplay", description: "Return display config (icon + color) for a user's category from cache only.\nReturns null if the user is not in the cache. Use in templates when the feed has already\npopulated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use\ngetUserCategoryDisplay instead.", category: undefined, params: [
       { key: "userName", description: "Username to look up" },
       { key: "options", description: "Optional overrides; `userTypeConfig` merges with the default per-category display config" }
   ] },
-  { name: "getEditSummaryHtml", description: "Get the HTML representation of an edit summary", params: [
+  { name: "getUserCategoryDisplay", description: "Return display config (icon + color) for a user's category. Uses cache when available;\notherwise fetches user info and caches the category, then returns the display config.", category: undefined, params: [
+      { key: "userName", description: "Username to look up" },
+      { key: "options", description: "Optional overrides; `userTypeConfig` merges with the default per-category display config" }
+  ] },
+  { name: "getCachedUserCategory", description: "Read a user's category from cache (for UI keys/test ids). Returns null if not yet loaded.", category: undefined, params: [
+      { key: "userName", description: "Username to look up" }
+  ] },
+  { name: "getTableFromEditSummary", description: "Parse a toolbar-style edit summary into a table of contents", category: undefined, params: [
+      { key: "editSummary", description: "Edit summary to parse" }
+  ] },
+  { name: "parseToolbarEditSummary", description: "Parse a toolbar edit summary into structured parts", category: undefined, params: [
+      { key: "editSummary", description: "Edit summary to parse" }
+  ] },
+  { name: "preprocessEditSummary", description: "Preprocess an edit summary's special wikitext variant to get it ready for transformation.", category: undefined, params: [
+      { key: "summary", description: "Edit summary to preprocess" },
+      { key: "pageName", description: "Page name" }
+  ] },
+  { name: "getEditSummaryHtml", description: "Get the HTML representation of an edit summary", category: undefined, params: [
       { key: "summary", description: "Edit summary to get the HTML representation of" },
       { key: "pageName", description: "Page name" }
   ] },
-  { name: "getDamagingPrediction", description: "Get damaging prediction for a single revision from Lift Wing API", params: [
+  { name: "formatDate", description: "Format date as \"DD Month YYYY\" or \"DD.MM.YY\".", category: undefined, params: [
+      { key: "timestamp" },
+      { key: "style" }
+  ] },
+  { name: "toDateKey", description: "Convert timestamp to YYYY-MM-DD key for grouping.", category: undefined, params: [
+      { key: "timestamp" }
+  ] },
+  { name: "formatTime", description: "Format time as HH:MM.", category: undefined, params: [
+      { key: "timestamp" }
+  ] },
+  { name: "isToday", description: "Check whether a timestamp falls on today in local time.", category: undefined, params: [
+      { key: "timestamp" }
+  ] },
+  { name: "formatRelativeTimestamp", description: "Format relative time (e.g. \"2 minutes ago\", \"3 days ago\").", category: undefined, params: [
+      { key: "timestamp", description: "ISO timestamp string, Date, or epoch" },
+      { key: "options", description: "Formatting options for different time periods" }
+  ] },
+  { name: "formatNiceRelativeTimestamp", description: "Format relative time using the standard watchlist display preset.", category: undefined, params: [
+      { key: "timestamp", description: "ISO timestamp, epoch milliseconds, or Date instance" }
+  ] },
+  { name: "groupRevisionsByDate", description: "Group revisions by calendar date for watchlist-style rendering.", category: undefined, params: [
+      { key: "revisions", description: "Revisions to group (typically already newest-first)" }
+  ] },
+  { name: "formatDelta", description: "Format a revision size delta using watchlist notation.", category: undefined, params: [
+      { key: "delta", description: "Byte delta for a revision; null/NaN are treated as zero" }
+  ] },
+  { name: "getUserUrl", description: "Get URL for a user page", category: undefined, params: [
+      { key: "userName", description: "Username" }
+  ] },
+  { name: "getRevisionUrl", description: "Get URL for viewing a revision diff", category: undefined, params: [
+      { key: "id", description: "Revision ID" },
+      { key: "pageName", description: "Page title" }
+  ] },
+  { name: "getPageUrl", description: "Get URL for a page", category: undefined, params: [
+      { key: "pageName", description: "Page title" }
+  ] },
+  { name: "getHistoryUrl", description: "Get URL for page history", category: undefined, params: [
+      { key: "pageName", description: "Page title" }
+  ] },
+  { name: "getUserTalkUrl", description: "Get URL for user talk page", category: undefined, params: [
+      { key: "userName", description: "Username" }
+  ] },
+  { name: "getUserContribsUrl", description: "Get URL for user contributions", category: undefined, params: [
+      { key: "userName", description: "Username" }
+  ] },
+  { name: "getEditUrl", description: "Get URL for editing a page", category: undefined, params: [
+      { key: "pageName", description: "Page title" }
+  ] },
+  { name: "getThankUrl", description: "Get URL for thanking a user for a revision", category: undefined, params: [
+      { key: "id", description: "Revision ID" }
+  ] },
+  { name: "getAssetUrlFromUploadUrl", description: "Get file page URL from an upload URL\nExtracts the filename from a Wikimedia Commons upload URL and returns a link to the file page", category: undefined, params: [
+      { key: "uploadUrl", description: "Upload URL" },
+      { key: "pageName", description: "Page name where the file is used" }
+  ] },
+  { name: "getStorageKey", description: "Generate a storage key for a prototype", category: undefined, params: [
+      { key: "prototypeName", description: "Name of the prototype (e.g., \"PageFeed\", \"CustomPageFeed\")" },
+      { key: "keyName", description: "Name of the key (e.g., \"searchQuery\", \"pageName\")" }
+  ] },
+  { name: "getStorageKeys", description: "Generate multiple storage keys for a prototype", category: undefined, params: [
+      { key: "prototypeName", description: "Name of the prototype" },
+      { key: "keyName", description: "Base name of the key" },
+      { key: "count", description: "Number of keys to generate" }
+  ] },
+  { name: "createResult", description: "Create a new Result instance with default values", category: undefined, params: [
+
+  ] },
+  { name: "createResults", description: "Create multiple Result instances", category: undefined, params: [
+      { key: "count", description: "Number of results to create" }
+  ] },
+  { name: "getDeltaClass", description: "Get CSS class name for delta (change size) indicator", category: undefined, params: [
+      { key: "delta", description: "Change size (positive, negative, or zero)" },
+      { key: "withSign" }
+  ] },
+  { name: "getDamagingPrediction", description: "Get damaging prediction for a single revision from Lift Wing API", category: undefined, params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
-  { name: "getGoodfaithPrediction", description: "Get goodfaith prediction for a single revision from Lift Wing API", params: [
+  { name: "getGoodfaithPrediction", description: "Get goodfaith prediction for a single revision from Lift Wing API", category: undefined, params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
-  { name: "getDamagingPredictions", description: "Get damaging predictions for multiple revisions in parallel", params: [
+  { name: "getDamagingPredictions", description: "Get damaging predictions for multiple revisions in parallel", category: undefined, params: [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
-  { name: "getGoodFaithPredictions", description: "Get goodfaith predictions for multiple revisions in parallel", params: [
+  { name: "getGoodFaithPredictions", description: "Get goodfaith predictions for multiple revisions in parallel", category: undefined, params: [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
-  { name: "getRevisionPredictions", description: "Get both damaging and goodfaith predictions for multiple revisions in parallel", params: [
+  { name: "getRevisionPredictions", description: "Get both damaging and goodfaith predictions for multiple revisions in parallel", category: undefined, params: [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
-  { name: "getRevisionPredictionsFromOres", description: "Get damaging and goodfaith predictions from ORES (single request per batch).\nORES is a scoring aggregator; one call returns both models. Prefer this when\nLift Wing is unavailable or for lower latency on batch requests.", params: [
+  { name: "getRevisionPredictionsFromOres", description: "Get damaging and goodfaith predictions from ORES (single request per batch).\nORES is a scoring aggregator; one call returns both models. Prefer this when\nLift Wing is unavailable or for lower latency on batch requests.", category: undefined, params: [
       { key: "revisionIds", description: "Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
-  { name: "getEditTypesDiffSummary", description: "Get simple diff summary from edit-types API (counts per change type per action).", params: [
+  { name: "getEditTypesSummary", description: "Get simple diff summary from edit-types API (counts per change type per action).", category: "Structured deltas", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "options", description: "Optional lang and content_type (default wikitext)" }
   ] },
-  { name: "getEditTypesDiffDetails", description: "Get structured diff details from edit-types API (context, node-edits, text-edits).", params: [
+  { name: "getStructuredDeltasFromRevision", description: "Get computed structured-delta output for a revision ID in one call.\nFetches edit-types summary, then computes inline segments with configurable settings.", category: "Structured deltas", params: [
+      { key: "revisionId", description: "Revision ID" },
+      { key: "options", description: "Optional edit-types API options (`lang`, `content_type`) and structured-delta settings" }
+  ] },
+  { name: "getEditTypesDetails", description: "Get structured diff details from edit-types API (context, node-edits, text-edits).", category: "Structured deltas", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "options", description: "Optional lang and content_type (default wikitext)" }
   ] },
-  { name: "getEditTypesDiffDebug", description: "Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).", params: [
+  { name: "getEditTypesDebug", description: "Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).", category: "Structured deltas", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "options", description: "Optional lang and content_type (default wikitext)" }
   ] },
-  { name: "runWithConcurrency", description: "Run async tasks with a concurrency limit; returns results in input order.", params: [
+  { name: "normalizeStructuredDeltaSummary", description: "Normalize edit-types response into summary shape used for structured-delta computation.\nAccepts either root summary object or payload containing a `summary` property.", category: "Structured deltas", params: [
+      { key: "raw" }
+  ] },
+  { name: "getStructuredDeltasFromSummary", description: "Compute structured-delta output (segments + candidates) from a normalized summary.\nReturns null when summary is empty or disabled via `improvedDeltaEnabled`.", category: "Structured deltas", params: [
+      { key: "summary", description: "Pre-normalized summary (type -> action -> count)" },
+      { key: "options", description: "Optional structured-delta settings overrides" }
+  ] },
+  { name: "runWithConcurrency", description: "Run async tasks with a concurrency limit; returns results in input order.", category: undefined, params: [
       { key: "items" },
       { key: "concurrency" },
       { key: "fn" }

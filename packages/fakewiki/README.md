@@ -52,6 +52,15 @@ const segments = wiki.getDiffLineSegments(diff.diff[0])
 const lineClass = wiki.getDiffLineClass(line.type)
 ```
 
+**Structured deltas** – fetch edit-types summaries and compute inline structured delta segments:
+
+```typescript
+const summary = await wiki.getEditTypesSummary(revisionId)
+const structured = wiki.getStructuredDeltasFromSummary(summary)
+const structuredForRevision = await wiki.getStructuredDeltasFromRevision(revisionId)
+const segments = structured?.segments ?? null
+```
+
 **Discovery and feeds** – random page, featured article, on-this-day; related changes; link graph; list-building API:
 
 ```typescript
@@ -177,6 +186,25 @@ const { interleavedRevisions, loadRecommendations, recommendationProgress } =
 		allRevisionsData,
 	})
 await loadRecommendations()
+```
+
+**`useStructuredDeltas`** – load edit-types summaries for revision IDs and compute inline structured delta segments reactively. This hook does not persist settings; pass your own refs/storage wiring if needed.
+
+```typescript
+import { useStructuredDeltas } from "fakewiki"
+
+const revisionIds = computed(() => allRevisionsData.value.map(rev => rev.id))
+const {
+	highlightCount,
+	improvedDeltaEnabled,
+	relativeDetailLevelEnabled,
+	smartFilteringEnabled,
+	getMostSignificantSegments,
+	getDeltaClassForRevision,
+} = useStructuredDeltas({
+	wiki,
+	revisionIds,
+})
 ```
 
 See the source for full options and return shapes.

@@ -14,10 +14,17 @@ export type PlaygroundMethodOverride = {
 
 export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 	request: { hide: true },
+	inspectHistoryCache: { optionsParamKeys: ["pageNames", "userNames"] },
 	getPageHistory: { optionsParamKeys: ["older_than", "newer_than", "limit"] },
 	getUserHistory: { optionsParamKeys: ["older_than", "newer_than", "limit"] },
 	getUsersHistory: { optionsParamKeys: ["older_than", "newer_than", "limit"] },
-	getCombinedFeed: { optionsParamKeys: ["userNames", "pageNames", "limit", "after"] },
+	getCombinedFeed: {
+		optionsParamKeys: ["userNames", "pageNames", "limit", "after"],
+		paramOverrides: { after: { inputType: "json" } },
+	},
+	getPagesLinks: { optionsParamKeys: ["namespace"] },
+	getPagesLinksAndBacklinks: { optionsParamKeys: ["namespace", "backlinkLimit"] },
+	getPagesBacklinks: { optionsParamKeys: ["namespace", "limit"] },
 	getRelatedChanges: {
 		optionsParamKeys: ["showOutgoing", "showIncoming", "limit", "days", "from"],
 	},
@@ -37,6 +44,39 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 		},
 	},
 	getFeaturedPage: { paramOverrides: { date: { inputType: "date" } } },
+	formatRelativeTimestamp: {
+		optionsParamKeys: ["seconds", "minutes", "hours", "days", "weeks", "months", "years"],
+		paramOverrides: {
+			seconds: {
+				inputType: "enum",
+				options: ["words", "date", "seconds", "minutes", "hours", "days", "weeks", "months", "years"],
+			},
+			minutes: {
+				inputType: "enum",
+				options: ["words", "date", "seconds", "minutes", "hours", "days", "weeks", "months", "years"],
+			},
+			hours: {
+				inputType: "enum",
+				options: ["words", "date", "seconds", "minutes", "hours", "days", "weeks", "months", "years"],
+			},
+			days: {
+				inputType: "enum",
+				options: ["words", "date", "seconds", "minutes", "hours", "days", "weeks", "months", "years"],
+			},
+			weeks: {
+				inputType: "enum",
+				options: ["words", "date", "seconds", "minutes", "hours", "days", "weeks", "months", "years"],
+			},
+			months: {
+				inputType: "enum",
+				options: ["words", "date", "seconds", "minutes", "hours", "days", "weeks", "months", "years"],
+			},
+			years: {
+				inputType: "enum",
+				options: ["words", "date", "seconds", "minutes", "hours", "days", "weeks", "months", "years"],
+			},
+		},
+	},
 	getPageThumbnail: { resultHint: "image" },
 	getPageHero: { resultHint: "image" },
 	getUserAvatar: { resultHint: "image" },
@@ -45,11 +85,47 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 	getPageMobileHtml: { resultHint: "code" },
 	getRevisionSource: { resultHint: "code" },
 	transformWikitextToHtml: { resultHint: "code" },
+	getDiffLineSegments: { paramOverrides: { line: { inputType: "json" } } },
+	groupRevisionsByDate: { paramOverrides: { revisions: { inputType: "json" } } },
 	getDamagingPredictions: { resultHint: "json" },
 	getGoodFaithPredictions: { resultHint: "json" },
 	getRevisionPredictions: { resultHint: "json" },
 	getRevisionPredictionsFromOres: { resultHint: "json" },
-	getEditTypesDiffSummary: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
-	getEditTypesDiffDetails: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
-	getEditTypesDiffDebug: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
+	getEditTypesSummary: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
+	getEditTypesDetails: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
+	getEditTypesDebug: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
+	getStructuredDeltasFromSummary: {
+		resultHint: "json",
+		paramOverrides: {
+			summary: { inputType: "json" },
+		},
+		optionsParamKeys: [
+			"highlightCount",
+			"improvedDeltaEnabled",
+			"relativeDetailLevelEnabled",
+			"smartFilteringEnabled",
+		],
+	},
+	getStructuredDeltasFromRevision: {
+		resultHint: "json",
+		optionsParamKeys: [
+			"lang",
+			"content_type",
+			"highlightCount",
+			"improvedDeltaEnabled",
+			"relativeDetailLevelEnabled",
+			"smartFilteringEnabled",
+		],
+	},
+	normalizeStructuredDeltaSummary: {
+		resultHint: "json",
+		paramOverrides: {
+			raw: { inputType: "json" },
+		},
+	},
+	runWithConcurrency: {
+		paramOverrides: {
+			items: { inputType: "json" },
+		},
+	},
 }

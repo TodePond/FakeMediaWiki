@@ -565,10 +565,9 @@
 
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
-import { FakeWiki } from "fakewiki"
-import type { FWEditTypesDiffDetails, FWEditTypesDiffSummary, FWRevision } from "fakewiki/types"
+import { FakeWiki, useStructuredDeltas } from "fakewiki"
+import type { FWEditTypesDiffDetails, FWRevision } from "fakewiki/types"
 import { computed, onMounted, ref, watch } from "vue"
-import { getSummaryForDisplay } from "../ChangeTypesWatchlist/changeTypesDisplay"
 import { useChangeTypesWatchlist } from "../ChangeTypesWatchlist/useChangeTypesWatchlist"
 
 const wiki = new FakeWiki()
@@ -594,11 +593,6 @@ const DEFAULT_SMART_FILTERING_ENABLED = true
 const DEFAULT_IMPROVED_DELTA_ENABLED = true
 const DEFAULT_RELATIVE_DETAIL_LEVEL_ENABLED = true
 const MAX_VALUE_LENGTH = 120
-/** Summary (same as summary variant) */
-const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
-const editTypesErrorByRevId = ref<Map<number, string>>(new Map())
-const loadingEditTypesIds = ref<Set<number>>(new Set())
-
 /** Details (unused in template, kept for compatibility while refactoring) */
 const editTypesDetailsByRevId = ref<Map<number, FWEditTypesDiffDetails | null>>(new Map())
 const detailsErrorByRevId = ref<Map<number, string>>(new Map())
@@ -608,38 +602,7 @@ const expandedDetailValues = ref<Set<string>>(new Set())
 const collapsedDetailsSectionKeys = ref<Set<string>>(new Set())
 const collapsedDetailsItemKeys = ref<Set<string>>(new Set())
 
-const displaySummaryByRevId = computed(() => {
-	const map = new Map<number, ReturnType<typeof getSummaryForDisplay>>()
-	for (const [revId, raw] of editTypesByRevId.value) {
-		map.set(revId, getSummaryForDisplay(raw as Record<string, unknown>))
-	}
-	return map
-})
-
-const SIGNIFICANCE_LEVELS = [
-	["Section"],
-	["Table"],
-	["Paragraph"],
-	["Sentence"],
-	["Heading"],
-	["Word", "Reference", "Comment"],
-	["List"],
-	["Wikilink", "ExternalLink"],
-	["Template"],
-	["Punctuation"],
-	["Text Formatting"],
-	["Whitespace"],
-] as const
-type SignificanceType = (typeof SIGNIFICANCE_LEVELS)[number][number]
-
-const SIGNIFICANCE_LEVEL_BY_TYPE = new Map<SignificanceType, number>()
-SIGNIFICANCE_LEVELS.forEach((level, levelIdx) => {
-	for (const type of level) {
-		SIGNIFICANCE_LEVEL_BY_TYPE.set(type, levelIdx)
-	}
-})
-
-const MAX_HIGHLIGHT_COUNT = SIGNIFICANCE_LEVELS.length
+const MAX_HIGHLIGHT_COUNT = wiki.STRUCTURED_DELTA_MAX_HIGHLIGHT_COUNT
 const highlightCountSliderId = "highlight-count-slider"
 const smartFilteringCheckboxId = "smart-filtering-checkbox"
 const improvedDeltaCheckboxId = "improved-delta-checkbox"
@@ -652,294 +615,25 @@ function loadHighlightCount(): number {
 		? Math.max(1, Math.min(MAX_HIGHLIGHT_COUNT, Math.round(n)))
 		: DEFAULT_HIGHLIGHT_COUNT
 }
-const highlightCount = ref(loadHighlightCount())
+const initialHighlightCount = loadHighlightCount()
 function loadSmartFilteringEnabled(): boolean {
 	const raw = localStorage.getItem(smartFilteringStorageKey)
 	if (raw === null) return DEFAULT_SMART_FILTERING_ENABLED
 	return raw === "true"
 }
-const smartFilteringEnabled = ref(loadSmartFilteringEnabled())
+const initialSmartFilteringEnabled = loadSmartFilteringEnabled()
 function loadImprovedDeltaEnabled(): boolean {
 	const raw = localStorage.getItem(improvedDeltaStorageKey)
 	if (raw === null) return DEFAULT_IMPROVED_DELTA_ENABLED
 	return raw === "true"
 }
-const improvedDeltaEnabled = ref(loadImprovedDeltaEnabled())
+const initialImprovedDeltaEnabled = loadImprovedDeltaEnabled()
 function loadRelativeDetailLevelEnabled(): boolean {
 	const raw = localStorage.getItem(relativeDetailLevelStorageKey)
 	if (raw === null) return DEFAULT_RELATIVE_DETAIL_LEVEL_ENABLED
 	return raw === "true"
 }
-const relativeDetailLevelEnabled = ref(loadRelativeDetailLevelEnabled())
-
-/** Short display label for phrase (e.g. "removed 3 links"). Fallback: type name lowercased. */
-const DISPLAY_LABELS: Record<string, string> = {
-	ExternalLink: "link",
-	Wikilink: "wikilink",
-	Reference: "reference",
-	Template: "template",
-	Paragraph: "paragraph",
-	Section: "section",
-	Heading: "heading",
-	Sentence: "sentence",
-	List: "list",
-	Table: "table",
-	Word: "word",
-	"Text Formatting": "formatting",
-	TextFormatting: "formatting",
-	Whitespace: "whitespace",
-	Punctuation: "punctuation",
-	Comment: "comment",
-}
-
-function canonicalizeTypeName(value: string): string {
-	return value.toLowerCase().replace(/[\s_-]+/g, "")
-}
-
-function normalizeTypeKey(
-	summary: Record<string, Record<string, number>>,
-	canonical: string
-): string | null {
-	const normalizedCanonical = canonicalizeTypeName(canonical)
-	const found = Object.keys(summary).find(k => canonicalizeTypeName(k) === normalizedCanonical)
-	return found ?? null
-}
-
-function getDisplayLabel(typeKey: string, count: number): string {
-	const base = DISPLAY_LABELS[typeKey] ?? typeKey.toLowerCase().replace(/\s+/g, " ")
-	if (count === 1) return base
-	return base.endsWith("s") ? base + "es" : base + "s"
-}
-
-function formatInlineMetric(typeKey: string, symbol: string, count: number): string {
-	const label = getDisplayLabel(typeKey, count)
-	const normalizedType = canonicalizeTypeName(typeKey)
-	if (normalizedType === "whitespace") return `${symbol}${DISPLAY_LABELS.Whitespace}`
-	if (normalizedType === "punctuation") return `${symbol}${DISPLAY_LABELS.Punctuation}`
-	if (normalizedType === "textformatting") return `${symbol}${DISPLAY_LABELS["Text Formatting"]}`
-	return `${symbol}${count} ${label}`
-}
-
-/** One phrase per type from summary (insert / remove / change). Used for inline label. */
-type InlineCandidate = {
-	text: string
-	deltaClass: string
-	kind: "insert" | "remove" | "change"
-	count: number
-	canonicalType: SignificanceType
-}
-type MostSignificantChangesResult = {
-	segments: Array<{ text: string; deltaClass: string }>
-	candidates: InlineCandidate[]
-}
-
-function getHighlightedCandidatesBySignificanceLevel(
-	candidates: InlineCandidate[]
-): InlineCandidate[] {
-	if (candidates.length === 0) return []
-	const getLevel = (candidate: InlineCandidate): number => {
-		return SIGNIFICANCE_LEVEL_BY_TYPE.get(candidate.canonicalType) ?? Number.MAX_SAFE_INTEGER
-	}
-	if (relativeDetailLevelEnabled.value) {
-		const presentLevelsInOrder: number[] = []
-		const seenLevels = new Set<number>()
-		for (const candidate of candidates) {
-			const level = getLevel(candidate)
-			if (seenLevels.has(level)) continue
-			seenLevels.add(level)
-			presentLevelsInOrder.push(level)
-		}
-		const includedLevels = new Set(presentLevelsInOrder.slice(0, highlightCount.value))
-		return candidates.filter(candidate => includedLevels.has(getLevel(candidate)))
-	}
-	const topLevel = getLevel(candidates[0])
-	const maxIncludedLevel = topLevel + highlightCount.value - 1
-	return candidates.filter(candidate => getLevel(candidate) <= maxIncludedLevel)
-}
-
-function getMostSignificantChanges(revId: number): MostSignificantChangesResult | null {
-	const summary = displaySummaryByRevId.value.get(revId)
-	if (!summary || typeof summary !== "object" || Object.keys(summary).length === 0) return null
-
-	const candidates: InlineCandidate[] = []
-	const deltaClasses = {
-		insert: "change-types-delta-add",
-		remove: "change-types-delta-remove",
-		change: "change-types-delta-change",
-		move: "change-types-delta-change",
-	}
-	const actionSymbols = { insert: "+", remove: "-", change: "↻", move: "⇄" }
-	for (const level of SIGNIFICANCE_LEVELS) {
-		for (const canonical of level) {
-			const typeKey = normalizeTypeKey(summary, canonical)
-			if (!typeKey) continue
-			const actions = summary[typeKey]
-			if (!actions || typeof actions !== "object") continue
-			let insertC = 0,
-				removeC = 0,
-				changeC = 0
-			for (const [action, count] of Object.entries(actions)) {
-				if (typeof count !== "number" || count <= 0) continue
-				const a = action.toLowerCase()
-				if (a === "insert" || a === "add") insertC += count
-				else if (a === "remove" || a === "delete") removeC += count
-				else if (a === "change" || a === "move") changeC += count
-			}
-			const total = insertC + removeC + changeC
-			if (total === 0) continue
-
-			if (insertC > 0 && removeC === 0 && changeC === 0) {
-				const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
-				candidates.push({
-					text,
-					deltaClass: deltaClasses.insert,
-					kind: "insert",
-					count: insertC,
-					canonicalType: canonical,
-				})
-			} else if (removeC > 0 && insertC === 0 && changeC === 0) {
-				const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
-				candidates.push({
-					text,
-					deltaClass: deltaClasses.remove,
-					kind: "remove",
-					count: removeC,
-					canonicalType: canonical,
-				})
-			} else if (changeC > 0 && insertC === 0 && removeC === 0) {
-				const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
-				candidates.push({
-					text,
-					deltaClass: deltaClasses.change,
-					kind: "change",
-					count: changeC,
-					canonicalType: canonical,
-				})
-			} else {
-				if (insertC > 0) {
-					const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
-					candidates.push({
-						text,
-						deltaClass: deltaClasses.insert,
-						kind: "insert",
-						count: insertC,
-						canonicalType: canonical,
-					})
-				}
-				if (removeC > 0) {
-					const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
-					candidates.push({
-						text,
-						deltaClass: deltaClasses.remove,
-						kind: "remove",
-						count: removeC,
-						canonicalType: canonical,
-					})
-				}
-				if (changeC > 0) {
-					const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
-					candidates.push({
-						text,
-						deltaClass: deltaClasses.change,
-						kind: "change",
-						count: changeC,
-						canonicalType: canonical,
-					})
-				}
-			}
-		}
-	}
-	if (candidates.length === 0) return null
-
-	const highlightCandidates = getHighlightedCandidatesBySignificanceLevel(candidates)
-
-	// Combine all candidates into a single segment
-	const segments: Array<{ text: string; deltaClass: string }> = highlightCandidates.map(
-		candidate => ({
-			text: candidate.text,
-			deltaClass: candidate.deltaClass,
-		})
-	)
-
-	return { segments, candidates }
-}
-
-function shouldFilterImpliedTopCandidate(candidate: InlineCandidate): boolean {
-	const filterableImpliedTypes = new Set<SignificanceType>([
-		"Section",
-		"Table",
-		"Paragraph",
-		"Sentence",
-		"Comment",
-	])
-	return (
-		candidate.kind === "change" &&
-		candidate.count === 1 &&
-		filterableImpliedTypes.has(candidate.canonicalType)
-	)
-}
-
-function postProcessMostSignificantChanges(
-	result: MostSignificantChangesResult | null
-): MostSignificantChangesResult | null {
-	if (!result || !smartFilteringEnabled.value) return result
-	const candidates = [...result.candidates]
-	while (candidates.length > 1 && shouldFilterImpliedTopCandidate(candidates[0])) {
-		candidates.shift()
-	}
-	const highlightCandidates = getHighlightedCandidatesBySignificanceLevel(candidates)
-	const segments = highlightCandidates.map(candidate => ({
-		text: candidate.text,
-		deltaClass: candidate.deltaClass,
-	}))
-	return { segments, candidates }
-}
-
-const mostSignificantByRevId = computed(() => {
-	const map = new Map<number, MostSignificantChangesResult | null>()
-	for (const [revId] of editTypesByRevId.value) {
-		map.set(revId, postProcessMostSignificantChanges(getMostSignificantChanges(revId)))
-	}
-	return map
-})
-
-function getMostSignificantSegments(
-	revId: number
-): Array<{ text: string; deltaClass: string }> | null {
-	if (!improvedDeltaEnabled.value) return null
-	return mostSignificantByRevId.value.get(revId)?.segments ?? null
-}
-
-function isMostSignificantLoading(revId: number): boolean {
-	return improvedDeltaEnabled.value && loadingEditTypesIds.value.has(revId)
-}
-
-function getDeltaClassForChange(change: FWRevision): string {
-	const segments = getMostSignificantSegments(change.id)
-	if (segments?.length) return segments[0].deltaClass
-	if (isMostSignificantLoading(change.id)) return ""
-	return wiki.getDeltaClass(change.delta ?? 0, false)
-}
-
-function loadEditTypesSummary(revId: number): void {
-	if (editTypesByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) return
-	loadingEditTypesIds.value = new Set(loadingEditTypesIds.value).add(revId)
-	wiki.getEditTypesDiffSummary(revId)
-		.then(summary => {
-			editTypesByRevId.value = new Map(editTypesByRevId.value).set(revId, summary)
-			editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value)
-			editTypesErrorByRevId.value.delete(revId)
-			loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
-			loadingEditTypesIds.value.delete(revId)
-		})
-		.catch(e => {
-			const msg = e instanceof Error ? e.message : String(e)
-			editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value).set(revId, msg)
-			editTypesByRevId.value = new Map(editTypesByRevId.value).set(revId, null)
-			loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
-			loadingEditTypesIds.value.delete(revId)
-		})
-}
+const initialRelativeDetailLevelEnabled = loadRelativeDetailLevelEnabled()
 
 function detailsSectionKey(revId: number, sectionKey: string): string {
 	return `${revId}-${sectionKey}`
@@ -1258,7 +952,7 @@ void _legacyDetailsHelpers
 function loadEditTypesDetails(revId: number): void {
 	if (editTypesDetailsByRevId.value.has(revId) || detailsErrorByRevId.value.has(revId)) return
 	loadingDetailsIds.value = new Set(loadingDetailsIds.value).add(revId)
-	wiki.getEditTypesDiffDetails(revId)
+	wiki.getEditTypesDetails(revId)
 		.then(details => {
 			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(
 				revId,
@@ -1288,9 +982,7 @@ function loadEditTypesDetails(revId: number): void {
 }
 
 function resetEditTypesState(): void {
-	editTypesByRevId.value = new Map()
-	editTypesErrorByRevId.value = new Map()
-	loadingEditTypesIds.value = new Set()
+	resetStructuredDeltaState()
 	editTypesDetailsByRevId.value = new Map()
 	detailsErrorByRevId.value = new Map()
 	loadingDetailsIds.value = new Set()
@@ -1354,6 +1046,28 @@ const {
 	handleHistoryItemClick,
 } = watchlist
 
+const revisionIds = computed(() => allRevisionsData.value.map(revision => revision.id))
+const {
+	highlightCount,
+	improvedDeltaEnabled,
+	relativeDetailLevelEnabled,
+	smartFilteringEnabled,
+	loadEditTypesSummary,
+	resetStructuredDeltaState,
+	getMostSignificantSegments,
+	isMostSignificantLoading,
+	getDeltaClassForRevision,
+} = useStructuredDeltas({
+	wiki,
+	revisionIds,
+	initialSettings: {
+		highlightCount: initialHighlightCount,
+		improvedDeltaEnabled: initialImprovedDeltaEnabled,
+		relativeDetailLevelEnabled: initialRelativeDetailLevelEnabled,
+		smartFilteringEnabled: initialSmartFilteringEnabled,
+	},
+})
+
 function formatDeltaWithCharacters(delta: number | null | undefined): string {
 	return formatDelta(delta ?? null)
 }
@@ -1362,17 +1076,9 @@ function getRawDeltaClass(delta: number | null | undefined): string {
 	return wiki.getDeltaClass(delta ?? 0, false)
 }
 
-/** Feed-wide summary fetch so inline labels show without expanding. */
-watch(
-	() => allRevisionsData.value,
-	revisions => {
-		if (!revisions || revisions.length === 0) return
-		for (const rev of revisions) {
-			loadEditTypesSummary(rev.id)
-		}
-	},
-	{ immediate: true }
-)
+function getDeltaClassForChange(change: FWRevision): string {
+	return getDeltaClassForRevision(change.id, change.delta)
+}
 
 watch(
 	() => highlightCount.value,

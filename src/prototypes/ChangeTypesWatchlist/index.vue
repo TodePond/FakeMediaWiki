@@ -507,7 +507,7 @@ const loadingEditTypesIds = ref<Set<number>>(new Set())
 function loadEditTypesSummary(revId: number): void {
 	if (editTypesByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) return
 	loadingEditTypesIds.value = new Set(loadingEditTypesIds.value).add(revId)
-	wiki.getEditTypesDiffSummary(revId)
+	wiki.getEditTypesSummary(revId)
 		.then(summary => {
 			editTypesByRevId.value = new Map(editTypesByRevId.value).set(revId, summary)
 			editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value)

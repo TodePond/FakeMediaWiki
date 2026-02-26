@@ -5,8 +5,8 @@ import type {
 	FWCompareResponse,
 	FWDiffLine,
 	FWDiffSegment,
-	FWEditTypesDiffDetails,
 	FWEditTypesDiffDebug,
+	FWEditTypesDiffDetails,
 	FWEditTypesDiffSummary,
 	FWFeaturedPage,
 	FWHistoryCacheEntitySnapshot,
@@ -33,6 +33,12 @@ import type {
 	FWRevision,
 	FWRevisionPredictions,
 	FWRevisionWithLinkType,
+	FWStructuredDeltaCandidate,
+	FWStructuredDeltaCanonicalType,
+	FWStructuredDeltaResult,
+	FWStructuredDeltaRevisionOptions,
+	FWStructuredDeltaSettings,
+	FWStructuredDeltasOptions,
 	FWToolbarComment,
 	FWTopRelatedChange,
 	FWTopRelatedOptions,
@@ -45,8 +51,8 @@ import type {
 	FWUserTypeConfig,
 } from "./types"
 
-import { cdxIconHeart, cdxIconUnStar } from "@wikimedia/codex-icons"
 import type { Icon } from "@wikimedia/codex-icons"
+import { cdxIconHeart, cdxIconUnStar } from "@wikimedia/codex-icons"
 
 /** MediaWiki REST API page history returns this many revisions per request; used as default and max for getPageHistory and getCombinedFeed. */
 const PAGE_HISTORY_REVISIONS_PER_REQUEST = 20
@@ -124,6 +130,54 @@ export class FakeWiki {
 
 	/** Base URL for the edit-types API (edit-types.wmcloud.org). */
 	private readonly editTypesBase = "https://edit-types.wmcloud.org"
+
+	/** Significance levels used for structured delta ranking (most significant first). */
+	private readonly STRUCTURED_DELTA_SIGNIFICANCE_LEVELS: readonly (readonly FWStructuredDeltaCanonicalType[])[] =
+		[
+			["Section"],
+			["Table"],
+			["Paragraph"],
+			["Sentence"],
+			["Heading"],
+			["Word", "Reference", "Comment"],
+			["List"],
+			["Wikilink", "ExternalLink"],
+			["Template"],
+			["Punctuation"],
+			["Text Formatting"],
+			["Whitespace"],
+		]
+
+	/** Structured-delta labels for inline display. */
+	private readonly STRUCTURED_DELTA_DISPLAY_LABELS: Record<string, string> = {
+		ExternalLink: "link",
+		Wikilink: "wikilink",
+		Reference: "reference",
+		Template: "template",
+		Paragraph: "paragraph",
+		Section: "section",
+		Heading: "heading",
+		Sentence: "sentence",
+		List: "list",
+		Table: "table",
+		Word: "word",
+		"Text Formatting": "formatting",
+		TextFormatting: "formatting",
+		Whitespace: "whitespace",
+		Punctuation: "punctuation",
+		Comment: "comment",
+	}
+
+	/** Default settings for structured-delta computation. */
+	readonly DEFAULT_STRUCTURED_DELTA_SETTINGS: FWStructuredDeltaSettings = {
+		highlightCount: 1,
+		improvedDeltaEnabled: true,
+		relativeDetailLevelEnabled: true,
+		smartFilteringEnabled: true,
+	}
+
+	/** Maximum allowed highlightCount for structured-delta settings. */
+	readonly STRUCTURED_DELTA_MAX_HIGHLIGHT_COUNT = this.STRUCTURED_DELTA_SIGNIFICANCE_LEVELS.length
 
 	/**
 	 * Create a new FakeWiki instance
@@ -484,7 +538,7 @@ export class FakeWiki {
 	 * @param slug - Page title
 	 * @returns URL-encoded title
 	 */
-	encode(slug: string): string {
+	encodeForUrl(slug: string): string {
 		return encodeURIComponent(slug.replace(/ /g, "_"))
 	}
 
@@ -496,7 +550,7 @@ export class FakeWiki {
 	async getPageSummary(pageName: string): Promise<FWPageSummary> {
 		return (await this.request({
 			api: "wikimedia",
-			path: `page/summary/${this.encode(pageName)}`,
+			path: `page/summary/${this.encodeForUrl(pageName)}`,
 		})) as FWPageSummary
 	}
 
@@ -508,7 +562,7 @@ export class FakeWiki {
 	async getPageHtml(pageName: string): Promise<string> {
 		return (await this.request({
 			api: "mediawiki",
-			path: `page/${this.encode(pageName)}/html`,
+			path: `page/${this.encodeForUrl(pageName)}/html`,
 			type: "text",
 		})) as string
 	}
@@ -521,7 +575,7 @@ export class FakeWiki {
 	async getPageSource(pageName: string): Promise<string> {
 		const page = (await this.request({
 			api: "mediawiki",
-			path: `page/${this.encode(pageName)}`,
+			path: `page/${this.encodeForUrl(pageName)}`,
 		})) as { source: string }
 		return page.source
 	}
@@ -534,7 +588,7 @@ export class FakeWiki {
 	async getPage(pageName: string): Promise<FWPageMetadata> {
 		return (await this.request({
 			api: "mediawiki",
-			path: `page/${this.encode(pageName)}`,
+			path: `page/${this.encodeForUrl(pageName)}`,
 		})) as FWPageMetadata
 	}
 
@@ -669,7 +723,7 @@ export class FakeWiki {
 		if (newer_than) params.append("newer_than", newer_than)
 
 		const query = params.toString()
-		const path = `page/${this.encode(pageName)}/history${query ? `?${query}` : ""}`
+		const path = `page/${this.encodeForUrl(pageName)}/history${query ? `?${query}` : ""}`
 		const response = (await this.request({
 			api: "mediawiki",
 			path,
@@ -1134,7 +1188,7 @@ export class FakeWiki {
 
 	/**
 	 * Get featured page for a specific date
-	 * @param date - Date object or YYYY/MM/DD string
+	 * @param date - Date object or YYYY/MM/DD string (leave blank for today's featured page)
 	 * @returns Featured page data
 	 */
 	async getFeaturedPage(date: Date | string = new Date()): Promise<FWFeaturedPage> {
@@ -1188,7 +1242,7 @@ export class FakeWiki {
 	async getPageMedia(pageName: string): Promise<FWPageMediaResponse> {
 		return (await this.request({
 			api: "wikimedia",
-			path: `page/media-list/${this.encode(pageName)}`,
+			path: `page/media-list/${this.encodeForUrl(pageName)}`,
 		})) as FWPageMediaResponse
 	}
 
@@ -1583,8 +1637,8 @@ export class FakeWiki {
 				// Bidirectional if feed said "both" or if we saw both outgoing and backlink (treat as bidir)
 				const isBidir = hasBidir || (hasOut && hasBack)
 				const cb = isBidir ? 1 : 0
-				const co = isBidir ? 0 : (hasOut ? 1 : 0)
-				const cl = isBidir ? 0 : (hasBack ? 1 : 0)
+				const co = isBidir ? 0 : hasOut ? 1 : 0
+				const cl = isBidir ? 0 : hasBack ? 1 : 0
 				r.feedCountBidirectional = cb
 				r.feedCountOutgoing = co
 				r.feedCountBacklink = cl
@@ -1631,16 +1685,17 @@ export class FakeWiki {
 			}
 		}
 
-		const merged: (FWTopRelatedChange & { seedToType?: Map<string, SeedLinkType> })[] =
-			[...byKey.values()].map(({ rev, seedToType }) => ({
-				...rev,
-				feedCountBidirectional: 0,
-				feedCountOutgoing: 0,
-				feedCountBacklink: 0,
-				score: 0,
-				sourcePageNames: [...seedToType.keys()],
-				seedToType,
-			}))
+		const merged: (FWTopRelatedChange & { seedToType?: Map<string, SeedLinkType> })[] = [
+			...byKey.values(),
+		].map(({ rev, seedToType }) => ({
+			...rev,
+			feedCountBidirectional: 0,
+			feedCountOutgoing: 0,
+			feedCountBacklink: 0,
+			score: 0,
+			sourcePageNames: [...seedToType.keys()],
+			seedToType,
+		}))
 		merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
 		// Page-level counts and score: which feeds this page appears in (any revision); same counts on every revision
@@ -1693,7 +1748,11 @@ export class FakeWiki {
 		const pageSourceNamesBidir = new Map<string, string[]>()
 		const pageSourceNamesOut = new Map<string, string[]>()
 		const pageSourceNamesBack = new Map<string, string[]>()
-		for (const key of new Set([...pageSeedsBidir.keys(), ...pageSeedsOut.keys(), ...pageSeedsBack.keys()])) {
+		for (const key of new Set([
+			...pageSeedsBidir.keys(),
+			...pageSeedsOut.keys(),
+			...pageSeedsBack.keys(),
+		])) {
 			const bidir = pageSeedsBidir.get(key) ?? new Set<string>()
 			const out = pageSeedsOut.get(key) ?? new Set<string>()
 			const back = pageSeedsBack.get(key) ?? new Set<string>()
@@ -2148,7 +2207,7 @@ export class FakeWiki {
 	async transformWikitextToHtml(wikitext: string, pageTitle = "Main_Page"): Promise<string> {
 		const html = (await this.request({
 			api: "mediawiki",
-			path: `transform/wikitext/to/html/${this.encode(pageTitle)}`,
+			path: `transform/wikitext/to/html/${this.encodeForUrl(pageTitle)}`,
 			body: { wikitext },
 			type: "text",
 		})) as string
@@ -2191,7 +2250,7 @@ export class FakeWiki {
 	async getPageMobileHtml(pageName: string): Promise<string> {
 		return (await this.request({
 			api: "wikimedia",
-			path: `page/mobile-html/${this.encode(pageName)}`,
+			path: `page/mobile-html/${this.encodeForUrl(pageName)}`,
 			type: "text",
 		})) as string
 	}
@@ -2851,7 +2910,7 @@ export class FakeWiki {
 	 * @returns URL to revision diff
 	 */
 	getRevisionUrl(id: number, pageName: string): string {
-		return `${this.base}w/index.php?title=${this.encode(pageName)}&diff=${id}`
+		return `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&diff=${id}`
 	}
 
 	/**
@@ -2860,7 +2919,7 @@ export class FakeWiki {
 	 * @returns URL to page
 	 */
 	getPageUrl(pageName: string): string {
-		return `${this.base}wiki/${this.encode(pageName)}`
+		return `${this.base}wiki/${this.encodeForUrl(pageName)}`
 	}
 
 	/**
@@ -2869,7 +2928,7 @@ export class FakeWiki {
 	 * @returns URL to page history
 	 */
 	getHistoryUrl(pageName: string): string {
-		return `${this.base}w/index.php?title=${this.encode(pageName)}&action=history`
+		return `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&action=history`
 	}
 
 	/**
@@ -2896,7 +2955,7 @@ export class FakeWiki {
 	 * @returns URL to edit page
 	 */
 	getEditUrl(pageName: string): string {
-		return `${this.base}w/index.php?title=${this.encode(pageName)}&action=edit`
+		return `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&action=edit`
 	}
 
 	/**
@@ -2911,7 +2970,7 @@ export class FakeWiki {
 	/**
 	 * Get file page URL from an upload URL
 	 * Extracts the filename from a Wikimedia Commons upload URL and returns a link to the file page
-	 * @param uploadUrl - Upload URL (e.g., https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/File.jpg/640px-File.jpg)
+	 * @param uploadUrl - Upload URL
 	 * @param pageName - Page name where the file is used
 	 * @returns URL to the file page with media fragment (e.g., https://en.wikipedia.org/wiki/Page#/media/File:File.jpg)
 	 */
@@ -3325,13 +3384,14 @@ export class FakeWiki {
 
 	/**
 	 * Get simple diff summary from edit-types API (counts per change type per action).
+	 * @category Structured deltas
 	 * @param revisionId - Revision ID
 	 * @param options - Optional lang and content_type (default wikitext)
 	 * @returns Summary e.g. { Template: { change: 1 }, Wikilink: { insert: 1 } }
 	 * @see https://edit-types.wmcloud.org/docs
 	 * @see https://github.com/geohci/edit-types
 	 */
-	async getEditTypesDiffSummary(
+	async getEditTypesSummary(
 		revisionId: number,
 		options?: { lang?: string; content_type?: "wikitext" | "html" }
 	): Promise<FWEditTypesDiffSummary> {
@@ -3344,13 +3404,41 @@ export class FakeWiki {
 	}
 
 	/**
+	 * Get computed structured-delta output for a revision ID in one call.
+	 * Fetches edit-types summary, then computes inline segments with configurable settings.
+	 * @category Structured deltas
+	 *
+	 * @param revisionId - Revision ID
+	 * @param options - Optional edit-types API options (`lang`, `content_type`) and structured-delta settings
+	 * @returns Structured delta result (segments + candidates), or null if no summary output
+	 */
+	async getStructuredDeltasFromRevision(
+		revisionId: number,
+		options?: FWStructuredDeltaRevisionOptions
+	): Promise<FWStructuredDeltaResult | null> {
+		const summary = await this.getEditTypesSummary(revisionId, {
+			lang: options?.lang,
+			content_type: options?.content_type,
+		})
+		const defaults = this.DEFAULT_STRUCTURED_DELTA_SETTINGS
+		return this.getStructuredDeltasFromSummary(summary, {
+			highlightCount: options?.highlightCount ?? defaults.highlightCount,
+			improvedDeltaEnabled: options?.improvedDeltaEnabled ?? defaults.improvedDeltaEnabled,
+			relativeDetailLevelEnabled:
+				options?.relativeDetailLevelEnabled ?? defaults.relativeDetailLevelEnabled,
+			smartFilteringEnabled: options?.smartFilteringEnabled ?? defaults.smartFilteringEnabled,
+		})
+	}
+
+	/**
 	 * Get structured diff details from edit-types API (context, node-edits, text-edits).
+	 * @category Structured deltas
 	 * @param revisionId - Revision ID
 	 * @param options - Optional lang and content_type (default wikitext)
 	 * @returns Structured details
 	 * @see https://edit-types.wmcloud.org/docs
 	 */
-	async getEditTypesDiffDetails(
+	async getEditTypesDetails(
 		revisionId: number,
 		options?: { lang?: string; content_type?: "wikitext" | "html" }
 	): Promise<FWEditTypesDiffDetails> {
@@ -3364,12 +3452,13 @@ export class FakeWiki {
 
 	/**
 	 * Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).
+	 * @category Structured deltas
 	 * @param revisionId - Revision ID
 	 * @param options - Optional lang and content_type (default wikitext)
 	 * @returns Debug payload
 	 * @see https://edit-types.wmcloud.org/docs
 	 */
-	async getEditTypesDiffDebug(
+	async getEditTypesDebug(
 		revisionId: number,
 		options?: { lang?: string; content_type?: "wikitext" | "html" }
 	): Promise<FWEditTypesDiffDebug> {
@@ -3379,6 +3468,250 @@ export class FakeWiki {
 			revid: revisionId,
 			content_type: options?.content_type,
 		})
+	}
+
+	/**
+	 * Normalize edit-types response into summary shape used for structured-delta computation.
+	 * Accepts either root summary object or payload containing a `summary` property.
+	 * @category Structured deltas
+	 */
+	normalizeStructuredDeltaSummary(
+		raw: Record<string, unknown> | null | undefined
+	): FWEditTypesDiffSummary | null {
+		if (!raw || typeof raw !== "object") return null
+		const nested = (raw as { summary?: unknown }).summary
+		if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+			const nestedObj = nested as Record<string, unknown>
+			const normalizedNested = this.normalizeStructuredDeltaSummary(nestedObj)
+			if (normalizedNested) return normalizedNested
+		}
+		const result: FWEditTypesDiffSummary = {}
+		for (const [typeName, value] of Object.entries(raw)) {
+			if (!value || typeof value !== "object" || Array.isArray(value)) continue
+			const entries = Object.entries(value as Record<string, unknown>).filter(
+				([, count]) => typeof count === "number"
+			)
+			if (entries.length === 0) continue
+			result[typeName] = Object.fromEntries(entries) as Record<string, number>
+		}
+		return Object.keys(result).length > 0 ? result : null
+	}
+
+	/**
+	 * Compute structured-delta output (segments + candidates) from a normalized summary.
+	 * Returns null when summary is empty or disabled via `improvedDeltaEnabled`.
+	 * @category Structured deltas
+	 *
+	 * @param summary - Pre-normalized summary (type -> action -> count)
+	 * @param options - Optional structured-delta settings overrides
+	 */
+	getStructuredDeltasFromSummary(
+		summary: FWEditTypesDiffSummary,
+		options?: FWStructuredDeltasOptions
+	): FWStructuredDeltaResult | null {
+		const normalizedSummary = this.normalizeStructuredDeltaSummary(
+			summary as Record<string, unknown>
+		)
+		if (!normalizedSummary) return null
+		const settings = {
+			...this.DEFAULT_STRUCTURED_DELTA_SETTINGS,
+			...options,
+		}
+		if (!settings.improvedDeltaEnabled) return null
+
+		const maxHighlightCount = this.STRUCTURED_DELTA_MAX_HIGHLIGHT_COUNT
+		const highlightCount = Math.max(
+			1,
+			Math.min(maxHighlightCount, Math.round(settings.highlightCount))
+		)
+		const candidates = this.getStructuredDeltaCandidates(normalizedSummary)
+		if (candidates.length === 0) return null
+
+		const postProcessedCandidates = settings.smartFilteringEnabled
+			? this.filterStructuredDeltaImpliedTopCandidates(candidates)
+			: candidates
+		if (postProcessedCandidates.length === 0) return null
+
+		const highlightedCandidates = this.getStructuredDeltaHighlightedCandidates(
+			postProcessedCandidates,
+			{
+				highlightCount,
+				relativeDetailLevelEnabled: settings.relativeDetailLevelEnabled,
+			}
+		)
+		return {
+			segments: highlightedCandidates.map(candidate => ({
+				text: candidate.text,
+				deltaClass: candidate.deltaClass,
+			})),
+			candidates: postProcessedCandidates,
+		}
+	}
+
+	private getStructuredDeltaCandidates(
+		summary: FWEditTypesDiffSummary
+	): FWStructuredDeltaCandidate[] {
+		const candidates: FWStructuredDeltaCandidate[] = []
+		const deltaClasses = {
+			insert: "change-types-delta-add",
+			remove: "change-types-delta-remove",
+			change: "change-types-delta-change",
+		}
+		const actionSymbols = { insert: "+", remove: "-", change: "↻" }
+		for (const level of this.STRUCTURED_DELTA_SIGNIFICANCE_LEVELS) {
+			for (const canonical of level) {
+				const typeKey = this.getStructuredDeltaMatchingTypeKey(summary, canonical)
+				if (!typeKey) continue
+				const actions = summary[typeKey]
+				if (!actions || typeof actions !== "object") continue
+				let insertCount = 0
+				let removeCount = 0
+				let changeCount = 0
+				for (const [action, count] of Object.entries(actions)) {
+					if (typeof count !== "number" || count <= 0) continue
+					const lower = action.toLowerCase()
+					if (lower === "insert" || lower === "add") insertCount += count
+					else if (lower === "remove" || lower === "delete") removeCount += count
+					else if (lower === "change" || lower === "move") changeCount += count
+				}
+				const total = insertCount + removeCount + changeCount
+				if (total === 0) continue
+				if (insertCount > 0) {
+					candidates.push({
+						text: this.formatStructuredDeltaInlineMetric(
+							typeKey,
+							actionSymbols.insert,
+							insertCount
+						),
+						deltaClass: deltaClasses.insert,
+						kind: "insert",
+						count: insertCount,
+						canonicalType: canonical,
+					})
+				}
+				if (removeCount > 0) {
+					candidates.push({
+						text: this.formatStructuredDeltaInlineMetric(
+							typeKey,
+							actionSymbols.remove,
+							removeCount
+						),
+						deltaClass: deltaClasses.remove,
+						kind: "remove",
+						count: removeCount,
+						canonicalType: canonical,
+					})
+				}
+				if (changeCount > 0) {
+					candidates.push({
+						text: this.formatStructuredDeltaInlineMetric(
+							typeKey,
+							actionSymbols.change,
+							changeCount
+						),
+						deltaClass: deltaClasses.change,
+						kind: "change",
+						count: changeCount,
+						canonicalType: canonical,
+					})
+				}
+			}
+		}
+		return candidates
+	}
+
+	private getStructuredDeltaHighlightedCandidates(
+		candidates: FWStructuredDeltaCandidate[],
+		options: { highlightCount: number; relativeDetailLevelEnabled: boolean }
+	): FWStructuredDeltaCandidate[] {
+		if (candidates.length === 0) return []
+		if (options.relativeDetailLevelEnabled) {
+			const presentLevelsInOrder: number[] = []
+			const seenLevels = new Set<number>()
+			for (const candidate of candidates) {
+				const level = this.getStructuredDeltaLevel(candidate.canonicalType)
+				if (seenLevels.has(level)) continue
+				seenLevels.add(level)
+				presentLevelsInOrder.push(level)
+			}
+			const includedLevels = new Set(presentLevelsInOrder.slice(0, options.highlightCount))
+			return candidates.filter(candidate =>
+				includedLevels.has(this.getStructuredDeltaLevel(candidate.canonicalType))
+			)
+		}
+		const topLevel = this.getStructuredDeltaLevel(candidates[0].canonicalType)
+		const maxIncludedLevel = topLevel + options.highlightCount - 1
+		return candidates.filter(
+			candidate => this.getStructuredDeltaLevel(candidate.canonicalType) <= maxIncludedLevel
+		)
+	}
+
+	private filterStructuredDeltaImpliedTopCandidates(
+		candidates: FWStructuredDeltaCandidate[]
+	): FWStructuredDeltaCandidate[] {
+		const filterableImpliedTypes = new Set<FWStructuredDeltaCanonicalType>([
+			"Section",
+			"Table",
+			"Paragraph",
+			"Sentence",
+			"Comment",
+		])
+		const output = [...candidates]
+		while (
+			output.length > 1 &&
+			output[0].kind === "change" &&
+			output[0].count === 1 &&
+			filterableImpliedTypes.has(output[0].canonicalType)
+		) {
+			output.shift()
+		}
+		return output
+	}
+
+	private getStructuredDeltaMatchingTypeKey(
+		summary: FWEditTypesDiffSummary,
+		canonical: FWStructuredDeltaCanonicalType
+	): string | null {
+		const normalizedCanonical = this.canonicalizeStructuredDeltaTypeName(canonical)
+		const found = Object.keys(summary).find(
+			key => this.canonicalizeStructuredDeltaTypeName(key) === normalizedCanonical
+		)
+		return found ?? null
+	}
+
+	private canonicalizeStructuredDeltaTypeName(value: string): string {
+		return value.toLowerCase().replace(/[\s_-]+/g, "")
+	}
+
+	private getStructuredDeltaLevel(type: FWStructuredDeltaCanonicalType): number {
+		for (let i = 0; i < this.STRUCTURED_DELTA_SIGNIFICANCE_LEVELS.length; i++) {
+			if (this.STRUCTURED_DELTA_SIGNIFICANCE_LEVELS[i].includes(type)) return i
+		}
+		return Number.MAX_SAFE_INTEGER
+	}
+
+	private formatStructuredDeltaInlineMetric(
+		typeKey: string,
+		symbol: string,
+		count: number
+	): string {
+		const label = this.getStructuredDeltaDisplayLabel(typeKey, count)
+		const normalizedType = this.canonicalizeStructuredDeltaTypeName(typeKey)
+		if (normalizedType === "whitespace")
+			return `${symbol}${this.STRUCTURED_DELTA_DISPLAY_LABELS.Whitespace}`
+		if (normalizedType === "punctuation")
+			return `${symbol}${this.STRUCTURED_DELTA_DISPLAY_LABELS.Punctuation}`
+		if (normalizedType === "textformatting")
+			return `${symbol}${this.STRUCTURED_DELTA_DISPLAY_LABELS["Text Formatting"]}`
+		return `${symbol}${count} ${label}`
+	}
+
+	private getStructuredDeltaDisplayLabel(typeKey: string, count: number): string {
+		const base =
+			this.STRUCTURED_DELTA_DISPLAY_LABELS[typeKey] ??
+			typeKey.toLowerCase().replace(/\s+/g, " ")
+		if (count === 1) return base
+		return base.endsWith("s") ? `${base}es` : `${base}s`
 	}
 
 	/**

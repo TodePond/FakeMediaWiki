@@ -32,20 +32,27 @@
 					/>
 				</div>
 				<nav class="method-list" aria-label="API methods">
-					<button
-						v-for="method in filteredMethods"
-						:key="method.name"
-						type="button"
-						class="method-item"
-						:class="{ 'method-item--selected': selectedMethod?.name === method.name }"
-						:ref="el => setMethodButtonRef(method.name, el)"
-						@click="onSelectMethod(method)"
+					<section
+						v-for="group in groupedFilteredMethods"
+						:key="group.category"
+						class="method-group"
 					>
-						<span class="method-item__name">{{ method.name }}</span>
-						<span v-if="method.description" class="method-item__desc">{{
-							method.description.split("\n")[0]
-						}}</span>
-					</button>
+						<h3 class="method-group__title">{{ group.category }}</h3>
+						<button
+							v-for="method in group.methods"
+							:key="method.name"
+							type="button"
+							class="method-item"
+							:class="{ 'method-item--selected': selectedMethod?.name === method.name }"
+							:ref="el => setMethodButtonRef(method.name, el)"
+							@click="onSelectMethod(method)"
+						>
+							<span class="method-item__name">{{ method.name }}</span>
+							<span v-if="method.description" class="method-item__desc">{{
+								method.description.split("\n")[0]
+							}}</span>
+						</button>
+					</section>
 				</nav>
 			</aside>
 			<main class="main">
@@ -75,17 +82,20 @@
 								v-for="param in selectedMethod.params"
 								:key="param.key"
 								class="field-row"
+								:class="{ 'field-row--boolean': param.type === 'boolean' }"
 							>
 								<CdxLabel :input-id="`param-${param.key}`">
 									{{ param.label ?? param.key }}
 								</CdxLabel>
 								<CdxTextInput
-									v-if="param.type === 'string' || param.type === 'date'"
+									v-if="
+										param.type === 'string' ||
+										param.type === 'date' ||
+										param.type === 'json'
+									"
 									:id="`param-${param.key}`"
 									v-model="paramValues[param.key] as string"
-									:placeholder="
-										param.type === 'date' ? 'YYYY/MM/DD or MM/DD' : ''
-									"
+									:placeholder="param.type === 'json' ? 'JSON object' : ''"
 								/>
 								<CdxTextInput
 									v-else-if="param.type === 'number'"
@@ -192,6 +202,42 @@ const filteredMethods = computed(() => {
 	)
 })
 
+const CATEGORY_ORDER = [
+	"Pages and content",
+	"Revisions and diffs",
+	"Structured deltas",
+	"Search",
+	"Users",
+	"Recommendations",
+	"Predictions",
+	"Formatting",
+	"URLs",
+	"Prototyping",
+	"Utilities",
+	"Cache and diagnostics",
+] as const
+
+const CATEGORY_ORDER_INDEX = new Map(CATEGORY_ORDER.map((name, index) => [name, index]))
+
+const groupedFilteredMethods = computed(() => {
+	const groups = new Map<string, MethodDescriptor[]>()
+	for (const method of filteredMethods.value) {
+		const category = method.category || "Prototyping"
+		if (!groups.has(category)) groups.set(category, [])
+		groups.get(category)!.push(method)
+	}
+	return Array.from(groups.entries())
+		.sort(([a], [b]) => {
+			const ia = CATEGORY_ORDER_INDEX.get(a)
+			const ib = CATEGORY_ORDER_INDEX.get(b)
+			if (ia !== undefined && ib !== undefined) return ia - ib
+			if (ia !== undefined) return -1
+			if (ib !== undefined) return 1
+			return a.localeCompare(b)
+		})
+		.map(([category, methods]) => ({ category, methods }))
+})
+
 function selectMethod(method: MethodDescriptor): void {
 	selectedMethod.value = method
 	isLoading.value = false
@@ -221,7 +267,11 @@ function parseParamValue(
 	param: MethodDescriptor["params"][0],
 	raw: string | number | boolean
 ): unknown {
-	if (param.type === "number") return Number(raw)
+	if (param.type === "number") {
+		if (raw === "" || raw === null || raw === undefined) return undefined
+		const value = Number(raw)
+		return Number.isNaN(value) ? undefined : value
+	}
 	if (param.type === "boolean") return Boolean(raw)
 	if (param.type === "stringArray") {
 		const s = String(raw).trim()
@@ -248,6 +298,15 @@ function parseParamValue(
 		if (/^\d{1,2}\/\d{1,2}$/.test(s)) return s
 		if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) return s
 		return s as string
+	}
+	if (param.type === "json") {
+		const s = String(raw).trim()
+		if (!s) return undefined
+		try {
+			return JSON.parse(s) as unknown
+		} catch {
+			throw new Error(`Invalid JSON for parameter "${param.key}"`)
+		}
 	}
 	return raw
 }
@@ -396,11 +455,14 @@ function methodNameFromQuery(): string | undefined {
 }
 
 watch(
-	filteredMethods,
-	list => {
-		if (list.length === 0) return
+	groupedFilteredMethods,
+	groups => {
+		const orderedList = groups.flatMap(group => group.methods)
+		if (orderedList.length === 0) return
 		const nameFromQuery = methodNameFromQuery()
-		const toSelect = nameFromQuery ? list.find(m => m.name === nameFromQuery) : list[0]
+		const toSelect = nameFromQuery
+			? orderedList.find(m => m.name === nameFromQuery)
+			: orderedList[0]
 		if (toSelect && (!selectedMethod.value || selectedMethod.value.name !== toSelect.name)) {
 			selectedMethod.value = toSelect
 			isLoading.value = false

@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "prebuild": "npm run generate:playground -w fakewiki",
+    "prebuild": "npm run playground",
+    "playground": "npm run generate:playground -w fakewiki",
     "preview": "vite preview",
     "lint": "eslint . --fix --cache && npm run type-check",
     "type-check": "vue-tsc --noEmit",

@@ -350,7 +350,7 @@ export type FWEditTypesDiffSummary = Record<string, Record<string, number>>
 /** Edit-types API: optional content type for diff-summary/details/debug. */
 export type FWEditTypesContentType = "wikitext" | "html"
 
-/** Options for getEditTypesDiffSummary, getEditTypesDiffDetails, getEditTypesDiffDebug. */
+/** Options for getEditTypesSummary, getEditTypesDetails, getEditTypesDebug. */
 export interface FWEditTypesOptions {
 	/** Language code (e.g. "en"). If not set, derived from FakeWiki base URL. */
 	lang?: string
@@ -368,6 +368,68 @@ export interface FWEditTypesDiffDetails {
 
 /** Edit-types API: debug response (full diff, tree diff, simple diff for comparison). */
 export type FWEditTypesDiffDebug = Record<string, unknown>
+
+/** Structured-delta candidate action type. */
+export type FWStructuredDeltaKind = "insert" | "remove" | "change"
+
+/** Canonical change types used for significance ranking in structured deltas. */
+export type FWStructuredDeltaCanonicalType =
+	| "Section"
+	| "Table"
+	| "Paragraph"
+	| "Sentence"
+	| "Heading"
+	| "Word"
+	| "Reference"
+	| "Comment"
+	| "List"
+	| "Wikilink"
+	| "ExternalLink"
+	| "Template"
+	| "Punctuation"
+	| "Text Formatting"
+	| "Whitespace"
+
+/** User-configurable settings for structured-delta display behavior. */
+export interface FWStructuredDeltaSettings {
+	/** Number of significance levels to include in inline labels. */
+	highlightCount: number
+	/** Whether to use structured-delta labels instead of raw byte delta fallback. */
+	improvedDeltaEnabled: boolean
+	/** Whether highlightCount applies to relative levels present in a revision. */
+	relativeDetailLevelEnabled: boolean
+	/** Whether to filter implied top-level change labels. */
+	smartFilteringEnabled: boolean
+}
+
+/** One inline text segment rendered in the delta label with an associated CSS class. */
+export interface FWStructuredDeltaSegment {
+	text: string
+	deltaClass: string
+}
+
+/** Intermediate structured-delta candidate before final highlighting/filtering. */
+export interface FWStructuredDeltaCandidate {
+	text: string
+	deltaClass: string
+	kind: FWStructuredDeltaKind
+	count: number
+	canonicalType: FWStructuredDeltaCanonicalType
+}
+
+/** Computed structured-delta output for a revision. */
+export interface FWStructuredDeltaResult {
+	segments: FWStructuredDeltaSegment[]
+	candidates: FWStructuredDeltaCandidate[]
+}
+
+/** Options for computing structured-delta labels from edit-types summaries. */
+export type FWStructuredDeltasOptions = Partial<FWStructuredDeltaSettings>
+
+/** Options for computing structured-delta output directly from a revision ID. */
+export interface FWStructuredDeltaRevisionOptions
+	extends FWEditTypesOptions,
+		Partial<FWStructuredDeltaSettings> {}
 
 export interface FWPageSummary {
 	title?: string
