@@ -535,6 +535,7 @@ import { useChangeTypesWatchlist } from "../ChangeTypesWatchlist/useChangeTypesW
 
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ChangeTypesWatchlistInline"
+const highlightCountStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "highlightCount")
 const DEFAULT_PAGE_QUERIES = ["Wikipedia", "Wet Leg", "Water", "Confidence Man (band)", "Algorave"]
 const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
 const DEFAULT_HIGHLIGHT_COUNT = 1
@@ -563,23 +564,31 @@ const displaySummaryByRevId = computed(() => {
 
 /** Significance order for inline label: first type in this list with any action is shown. */
 const SIGNIFICANCE_ORDER = [
-	"Paragraph",
 	"Section",
-	"Sentence",
-	"Comment",
-	"List",
 	"Table",
+	"Paragraph",
+	"Sentence",
+	"Word",
+	"Comment",
 	"Reference",
+	"List",
 	"Wikilink",
 	"ExternalLink",
 	"Template",
-	"Word",
 	"Punctuation",
 	"Whitespace",
 ] as const
 const MAX_HIGHLIGHT_COUNT = SIGNIFICANCE_ORDER.length
 const highlightCountSliderId = "highlight-count-slider"
-const highlightCount = ref(DEFAULT_HIGHLIGHT_COUNT)
+function loadHighlightCount(): number {
+	const raw = localStorage.getItem(highlightCountStorageKey)
+	if (raw === null) return DEFAULT_HIGHLIGHT_COUNT
+	const n = Number(raw)
+	return Number.isFinite(n)
+		? Math.max(1, Math.min(MAX_HIGHLIGHT_COUNT, Math.round(n)))
+		: DEFAULT_HIGHLIGHT_COUNT
+}
+const highlightCount = ref(loadHighlightCount())
 
 /** Short display label for phrase (e.g. "removed 3 links"). Fallback: type name lowercased. */
 const DISPLAY_LABELS: Record<string, string> = {
@@ -670,18 +679,18 @@ function getMostSignificantChange(
 		const total = insertC + removeC + changeC
 		if (total === 0) continue
 		// Avoid noisy section mentions for pure change/move updates.
-		if (canonical === "Section" && insertC === 0 && removeC === 0) continue
+		// if (canonical === "Section" && insertC === 0 && removeC === 0) continue
 		// Lone high-level change-only signals often accompany simple punctuation/word edits.
 		// In those cases, prefer the specific low-level signal.
-		if (
-			(canonical === "Paragraph" || canonical === "Sentence") &&
-			insertC === 0 &&
-			removeC === 0 &&
-			changeC === 1 &&
-			hasSimpleInlineSignal
-		) {
-			continue
-		}
+		// if (
+		// 	(canonical === "Paragraph" || canonical === "Sentence") &&
+		// 	insertC === 0 &&
+		// 	removeC === 0 &&
+		// 	changeC === 1 &&
+		// 	hasSimpleInlineSignal
+		// ) {
+		// 	continue
+		// }
 		if (insertC > 0 && removeC === 0 && changeC === 0) {
 			const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
 			candidates.push({ text, deltaClass: deltaClasses.insert, kind: "insert" })
@@ -695,10 +704,12 @@ function getMostSignificantChange(
 			if (insertC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
 				candidates.push({ text, deltaClass: deltaClasses.insert, kind: "insert" })
-			} else if (removeC > 0) {
+			}
+			if (removeC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
 				candidates.push({ text, deltaClass: deltaClasses.remove, kind: "remove" })
-			} else {
+			}
+			if (changeC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
 				candidates.push({ text, deltaClass: deltaClasses.change, kind: "change" })
 			}
@@ -1175,6 +1186,13 @@ watch(
 		}
 	},
 	{ immediate: true }
+)
+
+watch(
+	() => highlightCount.value,
+	value => {
+		localStorage.setItem(highlightCountStorageKey, String(value))
+	}
 )
 
 onMounted(search)
