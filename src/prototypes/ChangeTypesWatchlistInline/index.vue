@@ -3,7 +3,7 @@
 		class="change-types-watchlist change-types-watchlist-details change-types-watchlist-inline"
 	>
 		<div class="watchlist-container">
-			<h1>Change types watchlist (inline labels)</h1>
+			<h1>Structured deltas</h1>
 			<form
 				@submit.prevent="search"
 				class="recommendation-watchlist-form watchlist-search-form"
