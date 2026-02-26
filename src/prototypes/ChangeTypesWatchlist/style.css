@@ -829,9 +829,18 @@ form footer {
 	justify-content: flex-end;
 }
 
-@media (max-width: 900px) {
+h1 {
+	line-height: 1.2;
+}
+
+@media (max-width: 850px) {
 	main {
 		flex-direction: column;
+	}
+
+	.watchlist-container {
+		width: 100% !important;
+		max-width: 100% !important;
 	}
 
 	form {
@@ -849,22 +858,20 @@ form footer {
 		justify-content: flex-start;
 	}
 
-	.change-types-watchlist .watchlist-container > h1 {
-		padding-left: 0.5rem;
-		padding-right: 0.5rem;
-		box-sizing: border-box;
-	}
-
 	.watchlist-date-header {
-		padding-left: 0.5rem;
-		padding-right: 0.5rem;
+		margin-left: 0.5rem;
+		margin-right: 0.5rem;
 	}
-}
-
-@media (max-width: 640px) {
 	.change-types-watchlist .watchlist-container > h1 {
-		padding-left: 0.5rem;
-		padding-right: 0.5rem;
+		margin-left: 0.5rem;
+		margin-right: 0.5rem;
+		box-sizing: border-box;
+		width: calc(100% - 1rem);
+	}
+
+	.inline-highlight-slider-row {
+		padding-left: 0.5rem !important;
+		padding-right: 0.5rem !important;
 		box-sizing: border-box;
 	}
 

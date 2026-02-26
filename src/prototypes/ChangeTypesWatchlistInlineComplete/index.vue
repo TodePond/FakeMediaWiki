@@ -30,25 +30,6 @@
 					<CdxButton type="submit" :disabled="isLoading">Refresh feed</CdxButton>
 				</footer>
 			</form>
-			<div class="inline-highlight-slider-row" role="group" aria-label="Inline label density">
-				<CdxLabel :input-id="highlightCountSliderId">
-					Highlight top {{ highlightCount }} change types
-				</CdxLabel>
-				<div class="inline-highlight-slider-line">
-					<input
-						:id="highlightCountSliderId"
-						v-model.number="highlightCount"
-						type="range"
-						min="1"
-						:max="MAX_HIGHLIGHT_COUNT"
-						step="1"
-						class="inline-highlight-slider"
-					/>
-					<span class="inline-highlight-slider-value" aria-hidden="true">{{
-						highlightCount
-					}}</span>
-				</div>
-			</div>
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
@@ -537,7 +518,6 @@ const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ChangeTypesWatchlistInline"
 const DEFAULT_PAGE_QUERIES = ["Wikipedia", "Wet Leg", "Water", "Confidence Man (band)", "Algorave"]
 const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
-const DEFAULT_HIGHLIGHT_COUNT = 3
 const MAX_VALUE_LENGTH = 120
 /** Summary (same as summary variant) */
 const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
@@ -566,20 +546,17 @@ const SIGNIFICANCE_ORDER = [
 	"Paragraph",
 	"Section",
 	"Sentence",
-	"Comment",
 	"List",
 	"Table",
-	"Reference",
 	"Wikilink",
 	"ExternalLink",
 	"Template",
-	"Word",
+	"Reference",
 	"Punctuation",
+	"Word",
 	"Whitespace",
+	"Comment",
 ] as const
-const MAX_HIGHLIGHT_COUNT = SIGNIFICANCE_ORDER.length
-const highlightCountSliderId = "highlight-count-slider"
-const highlightCount = ref(DEFAULT_HIGHLIGHT_COUNT)
 
 /** Short display label for phrase (e.g. "removed 3 links"). Fallback: type name lowercased. */
 const DISPLAY_LABELS: Record<string, string> = {
@@ -670,18 +647,18 @@ function getMostSignificantChange(
 		const total = insertC + removeC + changeC
 		if (total === 0) continue
 		// Avoid noisy section mentions for pure change/move updates.
-		if (canonical === "Section" && insertC === 0 && removeC === 0) continue
+		// if (canonical === "Section" && insertC === 0 && removeC === 0) continue
 		// Lone high-level change-only signals often accompany simple punctuation/word edits.
 		// In those cases, prefer the specific low-level signal.
-		if (
-			(canonical === "Paragraph" || canonical === "Sentence") &&
-			insertC === 0 &&
-			removeC === 0 &&
-			changeC === 1 &&
-			hasSimpleInlineSignal
-		) {
-			continue
-		}
+		// if (
+		// 	(canonical === "Paragraph" || canonical === "Sentence") &&
+		// 	insertC === 0 &&
+		// 	removeC === 0 &&
+		// 	changeC === 1 &&
+		// 	hasSimpleInlineSignal
+		// ) {
+		// 	continue
+		// }
 		if (insertC > 0 && removeC === 0 && changeC === 0) {
 			const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
 			candidates.push({ text, deltaClass: deltaClasses.insert, kind: "insert" })
@@ -695,10 +672,12 @@ function getMostSignificantChange(
 			if (insertC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
 				candidates.push({ text, deltaClass: deltaClasses.insert, kind: "insert" })
-			} else if (removeC > 0) {
+			}
+			if (removeC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
 				candidates.push({ text, deltaClass: deltaClasses.remove, kind: "remove" })
-			} else {
+			}
+			if (changeC > 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
 				candidates.push({ text, deltaClass: deltaClasses.change, kind: "change" })
 			}
@@ -706,15 +685,18 @@ function getMostSignificantChange(
 	}
 	if (candidates.length === 0) return null
 
-	const highlightCandidates = candidates.slice(0, highlightCount.value)
+	// Keep the inline summary to a single top metric to avoid noisy mixed signals
+	// in complex edits (e.g. "↻2 paragraphs, +1 word").
+	// const primary = candidates[0]
+	// const segments: Array<{ text: string; deltaClass: string }> = [
+	// 	{ text: primary.text, deltaClass: primary.deltaClass },
+	// ]
 
 	// Combine all candidates into a single segment
-	const segments: Array<{ text: string; deltaClass: string }> = highlightCandidates.map(
-		candidate => ({
-			text: candidate.text,
-			deltaClass: candidate.deltaClass,
-		})
-	)
+	const segments: Array<{ text: string; deltaClass: string }> = candidates.map(candidate => ({
+		text: candidate.text,
+		deltaClass: candidate.deltaClass,
+	}))
 
 	return { segments }
 }
