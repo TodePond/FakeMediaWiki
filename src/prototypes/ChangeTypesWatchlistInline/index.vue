@@ -53,7 +53,7 @@
 						v-model="improvedDeltaEnabled"
 						type="checkbox"
 					/>
-					Smart deltas
+					Structured deltas
 				</label>
 				<br />
 				<label class="inline-smart-filtering-toggle" :for="relativeDetailLevelCheckboxId">
@@ -576,7 +576,10 @@ const PROTOTYPE_NAME = "ChangeTypesWatchlistInline"
 const highlightCountStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "highlightCount")
 const smartFilteringStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "smartFilteringEnabled")
 const improvedDeltaStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "improvedDeltaEnabled")
-const relativeDetailLevelStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "relativeDetailLevelEnabled")
+const relativeDetailLevelStorageKey = wiki.getStorageKey(
+	PROTOTYPE_NAME,
+	"relativeDetailLevelEnabled"
+)
 const DEFAULT_PAGE_QUERIES = [
 	"Confidence Man (band)",
 	"Algorave",

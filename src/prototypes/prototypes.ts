@@ -75,8 +75,7 @@ export const categories: CategoryDefinition[] = [
 	{
 		id: "changeTypes",
 		name: "Change types",
-		description:
-			"Watchlist-style feeds enriched with edit-type detection (template, wikilink, etc.) per revision.",
+		description: "Feeds enriched with structured change information.",
 	},
 	{
 		id: "flagging",
@@ -318,42 +317,24 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		],
 	},
 	{
-		type: "variants",
-		id: "ChangeTypesWatchlist",
-		name: "Change types watchlist",
-		description:
-			"Expanding watchlist feed with edit-type detection (templates, wikilinks, etc.) per revision.",
+		type: "prototype",
+		id: "ChangeTypesWatchlistInline",
+		title: "Structured deltas",
+		name: "Structured deltas",
+		description: "A watchlist with more helpful deltas.",
 		category: "changeTypes",
-		variants: [
-			// TODO: Add support for hidden prototypes
-			// {
-			// 	type: "variant",
-			// 	id: "ChangeTypesWatchlist",
-			// 	title: "Change types (summary)",
-			// 	name: "Change types watchlist (summary)",
-			// 	description: "Edit-type counts per revision (diff-summary API).",
-			// 	wrapper: "Fullscreen",
-			// 	featured: true,
-			// },
-			{
-				type: "variant",
-				id: "ChangeTypesWatchlistDetails",
-				title: "Change types",
-				name: "Change types",
-				description: "A watchlist that shows information about changes when clicked on.",
-				wrapper: "Fullscreen",
-				featured: true,
-			},
-			{
-				type: "variant",
-				id: "ChangeTypesWatchlistInline",
-				title: "Smart deltas",
-				name: "Smart deltas",
-				description: "A watchlist with more helpful deltas.",
-				wrapper: "Fullscreen",
-				featured: true,
-			},
-		],
+		wrapper: "Fullscreen",
+		featured: true,
+	},
+	{
+		type: "prototype",
+		id: "ChangeTypesWatchlistDetails",
+		title: "Change types",
+		name: "Change types",
+		description: "A watchlist that shows information about changes when clicked on.",
+		category: "changeTypes",
+		wrapper: "Fullscreen",
+		featured: true,
 	},
 	{
 		type: "variants",
