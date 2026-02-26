@@ -53,8 +53,20 @@
 						v-model="improvedDeltaEnabled"
 						type="checkbox"
 					/>
-					Smart deltas</label
-				><br /><label class="inline-smart-filtering-toggle" :for="smartFilteringCheckboxId">
+					Smart deltas
+				</label>
+				<br />
+				<label class="inline-smart-filtering-toggle" :for="relativeDetailLevelCheckboxId">
+					<input
+						:id="relativeDetailLevelCheckboxId"
+						v-model="relativeDetailLevelEnabled"
+						type="checkbox"
+						:disabled="!improvedDeltaEnabled"
+					/>
+					Relative level of detail
+				</label>
+				<br />
+				<label class="inline-smart-filtering-toggle" :for="smartFilteringCheckboxId">
 					<input
 						:id="smartFilteringCheckboxId"
 						v-model="smartFilteringEnabled"
@@ -564,6 +576,7 @@ const PROTOTYPE_NAME = "ChangeTypesWatchlistInline"
 const highlightCountStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "highlightCount")
 const smartFilteringStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "smartFilteringEnabled")
 const improvedDeltaStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "improvedDeltaEnabled")
+const relativeDetailLevelStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "relativeDetailLevelEnabled")
 const DEFAULT_PAGE_QUERIES = [
 	"Confidence Man (band)",
 	"Algorave",
@@ -576,6 +589,7 @@ const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
 const DEFAULT_HIGHLIGHT_COUNT = 1
 const DEFAULT_SMART_FILTERING_ENABLED = true
 const DEFAULT_IMPROVED_DELTA_ENABLED = true
+const DEFAULT_RELATIVE_DETAIL_LEVEL_ENABLED = true
 const MAX_VALUE_LENGTH = 120
 /** Summary (same as summary variant) */
 const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
@@ -626,6 +640,7 @@ const MAX_HIGHLIGHT_COUNT = SIGNIFICANCE_LEVELS.length
 const highlightCountSliderId = "highlight-count-slider"
 const smartFilteringCheckboxId = "smart-filtering-checkbox"
 const improvedDeltaCheckboxId = "improved-delta-checkbox"
+const relativeDetailLevelCheckboxId = "relative-detail-level-checkbox"
 function loadHighlightCount(): number {
 	const raw = localStorage.getItem(highlightCountStorageKey)
 	if (raw === null) return DEFAULT_HIGHLIGHT_COUNT
@@ -647,6 +662,12 @@ function loadImprovedDeltaEnabled(): boolean {
 	return raw === "true"
 }
 const improvedDeltaEnabled = ref(loadImprovedDeltaEnabled())
+function loadRelativeDetailLevelEnabled(): boolean {
+	const raw = localStorage.getItem(relativeDetailLevelStorageKey)
+	if (raw === null) return DEFAULT_RELATIVE_DETAIL_LEVEL_ENABLED
+	return raw === "true"
+}
+const relativeDetailLevelEnabled = ref(loadRelativeDetailLevelEnabled())
 
 /** Short display label for phrase (e.g. "removed 3 links"). Fallback: type name lowercased. */
 const DISPLAY_LABELS: Record<string, string> = {
@@ -713,12 +734,24 @@ function getHighlightedCandidatesBySignificanceLevel(
 	candidates: InlineCandidate[]
 ): InlineCandidate[] {
 	if (candidates.length === 0) return []
-	const topLevel = SIGNIFICANCE_LEVEL_BY_TYPE.get(candidates[0].canonicalType) ?? 0
+	const getLevel = (candidate: InlineCandidate): number => {
+		return SIGNIFICANCE_LEVEL_BY_TYPE.get(candidate.canonicalType) ?? Number.MAX_SAFE_INTEGER
+	}
+	if (relativeDetailLevelEnabled.value) {
+		const presentLevelsInOrder: number[] = []
+		const seenLevels = new Set<number>()
+		for (const candidate of candidates) {
+			const level = getLevel(candidate)
+			if (seenLevels.has(level)) continue
+			seenLevels.add(level)
+			presentLevelsInOrder.push(level)
+		}
+		const includedLevels = new Set(presentLevelsInOrder.slice(0, highlightCount.value))
+		return candidates.filter(candidate => includedLevels.has(getLevel(candidate)))
+	}
+	const topLevel = getLevel(candidates[0])
 	const maxIncludedLevel = topLevel + highlightCount.value - 1
-	return candidates.filter(candidate => {
-		const candidateLevel = SIGNIFICANCE_LEVEL_BY_TYPE.get(candidate.canonicalType) ?? topLevel
-		return candidateLevel <= maxIncludedLevel
-	})
+	return candidates.filter(candidate => getLevel(candidate) <= maxIncludedLevel)
 }
 
 function getMostSignificantChanges(revId: number): MostSignificantChangesResult | null {
@@ -1356,6 +1389,13 @@ watch(
 	() => improvedDeltaEnabled.value,
 	value => {
 		localStorage.setItem(improvedDeltaStorageKey, String(value))
+	}
+)
+
+watch(
+	() => relativeDetailLevelEnabled.value,
+	value => {
+		localStorage.setItem(relativeDetailLevelStorageKey, String(value))
 	}
 )
 
