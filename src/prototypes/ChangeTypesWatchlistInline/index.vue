@@ -31,9 +31,7 @@
 				</footer>
 			</form>
 			<div class="inline-highlight-slider-row" role="group" aria-label="Inline label density">
-				<CdxLabel :input-id="highlightCountSliderId">
-					Highlight top {{ highlightCount }} change types
-				</CdxLabel>
+				<CdxLabel :input-id="highlightCountSliderId">Level of detail</CdxLabel>
 				<div class="inline-highlight-slider-line">
 					<input
 						:id="highlightCountSliderId"
@@ -54,7 +52,7 @@
 						v-model="smartFilteringEnabled"
 						type="checkbox"
 					/>
-					Smart filtering
+					Filter out implied changes
 				</label>
 			</div>
 			<div v-if="errors.length > 0" class="error">
@@ -572,23 +570,29 @@ const displaySummaryByRevId = computed(() => {
 	return map
 })
 
-/** Significance order for inline label: first type in this list with any action is shown. */
-const SIGNIFICANCE_ORDER = [
-	"Section",
-	"Table",
-	"Paragraph",
-	"Sentence",
-	"Word",
-	"Reference",
-	"Comment",
-	"List",
-	"Wikilink",
-	"ExternalLink",
-	"Template",
-	"Punctuation",
-	"Whitespace",
+const SIGNIFICANCE_LEVELS = [
+	["Section"],
+	["Table"],
+	["Paragraph"],
+	["Sentence"],
+	["Word"],
+	["Reference", "Comment"],
+	["List"],
+	["Wikilink", "ExternalLink"],
+	["Template"],
+	["Punctuation"],
+	["Whitespace"],
 ] as const
-const MAX_HIGHLIGHT_COUNT = SIGNIFICANCE_ORDER.length
+type SignificanceType = (typeof SIGNIFICANCE_LEVELS)[number][number]
+
+const SIGNIFICANCE_LEVEL_BY_TYPE = new Map<SignificanceType, number>()
+SIGNIFICANCE_LEVELS.forEach((level, levelIdx) => {
+	for (const type of level) {
+		SIGNIFICANCE_LEVEL_BY_TYPE.set(type, levelIdx)
+	}
+})
+
+const MAX_HIGHLIGHT_COUNT = SIGNIFICANCE_LEVELS.length
 const highlightCountSliderId = "highlight-count-slider"
 const smartFilteringCheckboxId = "smart-filtering-checkbox"
 function loadHighlightCount(): number {
@@ -653,11 +657,23 @@ type InlineCandidate = {
 	deltaClass: string
 	kind: "insert" | "remove" | "change"
 	count: number
-	canonicalType: (typeof SIGNIFICANCE_ORDER)[number]
+	canonicalType: SignificanceType
 }
 type MostSignificantChangesResult = {
 	segments: Array<{ text: string; deltaClass: string }>
 	candidates: InlineCandidate[]
+}
+
+function getHighlightedCandidatesBySignificanceLevel(
+	candidates: InlineCandidate[]
+): InlineCandidate[] {
+	if (candidates.length === 0) return []
+	const topLevel = SIGNIFICANCE_LEVEL_BY_TYPE.get(candidates[0].canonicalType) ?? 0
+	const maxIncludedLevel = topLevel + highlightCount.value - 1
+	return candidates.filter(candidate => {
+		const candidateLevel = SIGNIFICANCE_LEVEL_BY_TYPE.get(candidate.canonicalType) ?? topLevel
+		return candidateLevel <= maxIncludedLevel
+	})
 }
 
 function getMostSignificantChanges(revId: number): MostSignificantChangesResult | null {
@@ -672,53 +688,26 @@ function getMostSignificantChanges(revId: number): MostSignificantChangesResult 
 		move: "change-types-delta-change",
 	}
 	const actionSymbols = { insert: "+", remove: "-", change: "↻", move: "↻" }
-	for (const canonical of SIGNIFICANCE_ORDER) {
-		const typeKey = normalizeTypeKey(summary, canonical)
-		if (!typeKey) continue
-		const actions = summary[typeKey]
-		if (!actions || typeof actions !== "object") continue
-		let insertC = 0,
-			removeC = 0,
-			changeC = 0
-		for (const [action, count] of Object.entries(actions)) {
-			if (typeof count !== "number" || count <= 0) continue
-			const a = action.toLowerCase()
-			if (a === "insert" || a === "add") insertC += count
-			else if (a === "remove" || a === "delete") removeC += count
-			else if (a === "change" || a === "move") changeC += count
-		}
-		const total = insertC + removeC + changeC
-		if (total === 0) continue
+	for (const level of SIGNIFICANCE_LEVELS) {
+		for (const canonical of level) {
+			const typeKey = normalizeTypeKey(summary, canonical)
+			if (!typeKey) continue
+			const actions = summary[typeKey]
+			if (!actions || typeof actions !== "object") continue
+			let insertC = 0,
+				removeC = 0,
+				changeC = 0
+			for (const [action, count] of Object.entries(actions)) {
+				if (typeof count !== "number" || count <= 0) continue
+				const a = action.toLowerCase()
+				if (a === "insert" || a === "add") insertC += count
+				else if (a === "remove" || a === "delete") removeC += count
+				else if (a === "change" || a === "move") changeC += count
+			}
+			const total = insertC + removeC + changeC
+			if (total === 0) continue
 
-		if (insertC > 0 && removeC === 0 && changeC === 0) {
-			const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
-			candidates.push({
-				text,
-				deltaClass: deltaClasses.insert,
-				kind: "insert",
-				count: insertC,
-				canonicalType: canonical,
-			})
-		} else if (removeC > 0 && insertC === 0 && changeC === 0) {
-			const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
-			candidates.push({
-				text,
-				deltaClass: deltaClasses.remove,
-				kind: "remove",
-				count: removeC,
-				canonicalType: canonical,
-			})
-		} else if (changeC > 0 && insertC === 0 && removeC === 0) {
-			const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
-			candidates.push({
-				text,
-				deltaClass: deltaClasses.change,
-				kind: "change",
-				count: changeC,
-				canonicalType: canonical,
-			})
-		} else {
-			if (insertC > 0) {
+			if (insertC > 0 && removeC === 0 && changeC === 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
 				candidates.push({
 					text,
@@ -727,8 +716,7 @@ function getMostSignificantChanges(revId: number): MostSignificantChangesResult 
 					count: insertC,
 					canonicalType: canonical,
 				})
-			}
-			if (removeC > 0) {
+			} else if (removeC > 0 && insertC === 0 && changeC === 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
 				candidates.push({
 					text,
@@ -737,8 +725,7 @@ function getMostSignificantChanges(revId: number): MostSignificantChangesResult 
 					count: removeC,
 					canonicalType: canonical,
 				})
-			}
-			if (changeC > 0) {
+			} else if (changeC > 0 && insertC === 0 && removeC === 0) {
 				const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
 				candidates.push({
 					text,
@@ -747,12 +734,43 @@ function getMostSignificantChanges(revId: number): MostSignificantChangesResult 
 					count: changeC,
 					canonicalType: canonical,
 				})
+			} else {
+				if (insertC > 0) {
+					const text = formatInlineMetric(typeKey, actionSymbols.insert, insertC)
+					candidates.push({
+						text,
+						deltaClass: deltaClasses.insert,
+						kind: "insert",
+						count: insertC,
+						canonicalType: canonical,
+					})
+				}
+				if (removeC > 0) {
+					const text = formatInlineMetric(typeKey, actionSymbols.remove, removeC)
+					candidates.push({
+						text,
+						deltaClass: deltaClasses.remove,
+						kind: "remove",
+						count: removeC,
+						canonicalType: canonical,
+					})
+				}
+				if (changeC > 0) {
+					const text = formatInlineMetric(typeKey, actionSymbols.change, changeC)
+					candidates.push({
+						text,
+						deltaClass: deltaClasses.change,
+						kind: "change",
+						count: changeC,
+						canonicalType: canonical,
+					})
+				}
 			}
 		}
 	}
 	if (candidates.length === 0) return null
 
-	const highlightCandidates = candidates.slice(0, highlightCount.value)
+	const highlightCandidates = getHighlightedCandidatesBySignificanceLevel(candidates)
 
 	// Combine all candidates into a single segment
 	const segments: Array<{ text: string; deltaClass: string }> = highlightCandidates.map(
@@ -766,7 +784,7 @@ function getMostSignificantChanges(revId: number): MostSignificantChangesResult 
 }
 
 function shouldFilterImpliedTopCandidate(candidate: InlineCandidate): boolean {
-	const filterableImpliedTypes = new Set<(typeof SIGNIFICANCE_ORDER)[number]>([
+	const filterableImpliedTypes = new Set<SignificanceType>([
 		"Section",
 		"Table",
 		"Paragraph",
@@ -788,7 +806,7 @@ function postProcessMostSignificantChanges(
 	while (candidates.length > 1 && shouldFilterImpliedTopCandidate(candidates[0])) {
 		candidates.shift()
 	}
-	const highlightCandidates = candidates.slice(0, highlightCount.value)
+	const highlightCandidates = getHighlightedCandidatesBySignificanceLevel(candidates)
 	const segments = highlightCandidates.map(candidate => ({
 		text: candidate.text,
 		deltaClass: candidate.deltaClass,

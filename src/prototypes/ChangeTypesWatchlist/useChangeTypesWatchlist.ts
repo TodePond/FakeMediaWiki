@@ -224,9 +224,9 @@ export function useChangeTypesWatchlist(options: UseChangeTypesWatchlistOptions)
 	}
 
 	async function search(): Promise<void> {
+		clearExpandState()
 		await loadFeed(undefined, false)
 		saveSearchQueries()
-		clearExpandState()
 	}
 
 	async function loadMore(): Promise<void> {
