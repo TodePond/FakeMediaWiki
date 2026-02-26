@@ -41,16 +41,25 @@
 						:max="MAX_HIGHLIGHT_COUNT"
 						step="1"
 						class="inline-highlight-slider"
+						:disabled="!improvedDeltaEnabled"
 					/>
 					<span class="inline-highlight-slider-value" aria-hidden="true">{{
 						highlightCount
 					}}</span>
 				</div>
-				<label class="inline-smart-filtering-toggle" :for="smartFilteringCheckboxId">
+				<label class="inline-smart-filtering-toggle" :for="improvedDeltaCheckboxId">
+					<input
+						:id="improvedDeltaCheckboxId"
+						v-model="improvedDeltaEnabled"
+						type="checkbox"
+					/>
+					Smart deltas</label
+				><br /><label class="inline-smart-filtering-toggle" :for="smartFilteringCheckboxId">
 					<input
 						:id="smartFilteringCheckboxId"
 						v-model="smartFilteringEnabled"
 						type="checkbox"
+						:disabled="!improvedDeltaEnabled"
 					/>
 					Filter out implied changes
 				</label>
@@ -97,12 +106,7 @@
 								><span
 									:class="[
 										'history-delta',
-										!mostSignificantByRevId.get(change.id) &&
-										!loadingEditTypesIds.has(change.id)
-											? wiki.getDeltaClass(change.delta ?? 0, false)
-											: '',
-										mostSignificantByRevId.get(change.id)?.segments?.[0]
-											?.deltaClass ?? '',
+										getDeltaClassForChange(change),
 										{
 											'history-delta-expanded': expandedDiffIds.has(
 												change.id
@@ -111,11 +115,11 @@
 									]"
 								>
 									<span class="history-delta-inline-info"
-										><template v-if="mostSignificantByRevId.get(change.id)"
+										><template v-if="getMostSignificantSegments(change.id)"
 											>(<template
-												v-for="(seg, i) in mostSignificantByRevId.get(
+												v-for="(seg, i) in getMostSignificantSegments(
 													change.id
-												)!.segments"
+												)"
 												:key="i"
 											>
 												<span :class="['history-delta', seg.deltaClass]">{{
@@ -124,15 +128,26 @@
 												><span
 													v-if="
 														i <
-														mostSignificantByRevId.get(change.id)!
-															.segments.length -
+														getMostSignificantSegments(change.id)!
+															.length -
 															1
 													"
 													>,
 												</span> </template
 											>)</template
 										>
-										<template v-else>(...)</template></span
+										<template v-else-if="isMostSignificantLoading(change.id)"
+											>(...)</template
+										>
+										<template v-else
+											><span
+												:class="[
+													'history-delta',
+													getRawDeltaClass(change.delta),
+												]"
+												>{{ formatDeltaWithCharacters(change.delta) }}</span
+											></template
+										></span
 									>
 								</span>
 								<br /><a
@@ -158,12 +173,7 @@
 										type="button"
 										:class="[
 											'history-delta',
-											!mostSignificantByRevId.get(change.id) &&
-											!loadingEditTypesIds.has(change.id)
-												? wiki.getDeltaClass(change.delta ?? 0, false)
-												: '',
-											mostSignificantByRevId.get(change.id)?.segments?.[0]
-												?.deltaClass ?? '',
+											getDeltaClassForChange(change),
 											{
 												'history-delta-expanded': expandedDiffIds.has(
 													change.id
@@ -173,11 +183,11 @@
 										@click.stop="toggleDiff(change)"
 									>
 										<span class="history-delta-inline-info"
-											><template v-if="mostSignificantByRevId.get(change.id)"
+											><template v-if="getMostSignificantSegments(change.id)"
 												>(<template
-													v-for="(seg, i) in mostSignificantByRevId.get(
+													v-for="(seg, i) in getMostSignificantSegments(
 														change.id
-													)!.segments"
+													)"
 													:key="i"
 												>
 													<span
@@ -186,19 +196,29 @@
 													><span
 														v-if="
 															i <
-															mostSignificantByRevId.get(change.id)!
-																.segments.length -
+															getMostSignificantSegments(change.id)!
+																.length -
 																1
 														"
 														>,
 													</span> </template
 												>)</template
 											>
-											<template v-else>{{
-												loadingEditTypesIds.has(change.id)
-													? "(...)"
-													: formatDeltaWithCharacters(change.delta)
-											}}</template></span
+											<template
+												v-else-if="isMostSignificantLoading(change.id)"
+												>(...)</template
+											>
+											<template v-else
+												><span
+													:class="[
+														'history-delta',
+														getRawDeltaClass(change.delta),
+													]"
+													>{{
+														formatDeltaWithCharacters(change.delta)
+													}}</span
+												></template
+											></span
 										>
 									</button>
 									<button
@@ -543,10 +563,18 @@ const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "ChangeTypesWatchlistInline"
 const highlightCountStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "highlightCount")
 const smartFilteringStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "smartFilteringEnabled")
-const DEFAULT_PAGE_QUERIES = ["Wikipedia", "Wet Leg", "Water", "Confidence Man (band)", "Algorave"]
+const improvedDeltaStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "improvedDeltaEnabled")
+const DEFAULT_PAGE_QUERIES = [
+	"Confidence Man (band)",
+	"Algorave",
+	"Little Mix",
+	"Gorillaz",
+	"Jade Thirlwall",
+]
 const DEFAULT_USER_QUERIES = ["Todepond", "Samwalton9"]
 const DEFAULT_HIGHLIGHT_COUNT = 1
 const DEFAULT_SMART_FILTERING_ENABLED = true
+const DEFAULT_IMPROVED_DELTA_ENABLED = true
 const MAX_VALUE_LENGTH = 120
 /** Summary (same as summary variant) */
 const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
@@ -575,8 +603,7 @@ const SIGNIFICANCE_LEVELS = [
 	["Table"],
 	["Paragraph"],
 	["Sentence"],
-	["Word"],
-	["Reference", "Comment"],
+	["Word", "Reference", "Comment"],
 	["List"],
 	["Wikilink", "ExternalLink"],
 	["Template"],
@@ -595,6 +622,7 @@ SIGNIFICANCE_LEVELS.forEach((level, levelIdx) => {
 const MAX_HIGHLIGHT_COUNT = SIGNIFICANCE_LEVELS.length
 const highlightCountSliderId = "highlight-count-slider"
 const smartFilteringCheckboxId = "smart-filtering-checkbox"
+const improvedDeltaCheckboxId = "improved-delta-checkbox"
 function loadHighlightCount(): number {
 	const raw = localStorage.getItem(highlightCountStorageKey)
 	if (raw === null) return DEFAULT_HIGHLIGHT_COUNT
@@ -610,6 +638,12 @@ function loadSmartFilteringEnabled(): boolean {
 	return raw === "true"
 }
 const smartFilteringEnabled = ref(loadSmartFilteringEnabled())
+function loadImprovedDeltaEnabled(): boolean {
+	const raw = localStorage.getItem(improvedDeltaStorageKey)
+	if (raw === null) return DEFAULT_IMPROVED_DELTA_ENABLED
+	return raw === "true"
+}
+const improvedDeltaEnabled = ref(loadImprovedDeltaEnabled())
 
 /** Short display label for phrase (e.g. "removed 3 links"). Fallback: type name lowercased. */
 const DISPLAY_LABELS: Record<string, string> = {
@@ -821,6 +855,24 @@ const mostSignificantByRevId = computed(() => {
 	}
 	return map
 })
+
+function getMostSignificantSegments(
+	revId: number
+): Array<{ text: string; deltaClass: string }> | null {
+	if (!improvedDeltaEnabled.value) return null
+	return mostSignificantByRevId.value.get(revId)?.segments ?? null
+}
+
+function isMostSignificantLoading(revId: number): boolean {
+	return improvedDeltaEnabled.value && loadingEditTypesIds.value.has(revId)
+}
+
+function getDeltaClassForChange(change: FWRevision): string {
+	const segments = getMostSignificantSegments(change.id)
+	if (segments?.length) return segments[0].deltaClass
+	if (isMostSignificantLoading(change.id)) return ""
+	return wiki.getDeltaClass(change.delta ?? 0, false)
+}
 
 function loadEditTypesSummary(revId: number): void {
 	if (editTypesByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) return
@@ -1256,8 +1308,11 @@ const {
 } = watchlist
 
 function formatDeltaWithCharacters(delta: number | null | undefined): string {
-	const formatted = formatDelta(delta ?? null)
-	return formatted.replace(/\)$/, " characters)")
+	return formatDelta(delta ?? null)
+}
+
+function getRawDeltaClass(delta: number | null | undefined): string {
+	return wiki.getDeltaClass(delta ?? 0, false)
 }
 
 /** Feed-wide summary fetch so inline labels show without expanding. */
@@ -1283,6 +1338,13 @@ watch(
 	() => smartFilteringEnabled.value,
 	value => {
 		localStorage.setItem(smartFilteringStorageKey, String(value))
+	}
+)
+
+watch(
+	() => improvedDeltaEnabled.value,
+	value => {
+		localStorage.setItem(improvedDeltaStorageKey, String(value))
 	}
 )
 
