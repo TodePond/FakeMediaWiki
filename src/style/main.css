@@ -8,6 +8,10 @@
 	box-sizing: border-box;
 }
 
+a {
+	color: var(--color-progressive);
+}
+
 html {
 	/* background-color: var(--background-color-neutral); */
 	background-color: var(--background-color-base);
@@ -98,4 +102,8 @@ p {
 	background-color: var(--background-color-neutral, #eaecf0);
 	color: var(--color-base, #202122);
 	text-align: center;
+}
+
+.history-comment a {
+	color: var(--color-progressive) !important;
 }
