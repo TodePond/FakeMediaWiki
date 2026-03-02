@@ -4,7 +4,11 @@
 			<div class="inputs-group">
 				<div class="inputs">
 					<CdxLabel :input-id="getPageInputId(0)">Followed pages</CdxLabel>
-					<div class="input-group" v-for="(_, index) in pageSearchQueries" :key="`page-${index}`">
+					<div
+						class="input-group"
+						v-for="(_, index) in pageSearchQueries"
+						:key="`page-${index}`"
+					>
 						<CdxTextInput
 							autocomplete="off"
 							v-model="pageSearchQueries[index]"
@@ -14,14 +18,22 @@
 					</div>
 					<div class="input-list-actions">
 						<CdxButton type="button" @click="addPage">Add page</CdxButton>
-						<CdxButton type="button" @click="removePage" :disabled="pageSearchQueries.length === 0">
+						<CdxButton
+							type="button"
+							@click="removePage"
+							:disabled="pageSearchQueries.length === 0"
+						>
 							Remove page
 						</CdxButton>
 					</div>
 				</div>
 				<div class="inputs">
 					<CdxLabel :input-id="getUserInputId(0)">Followed users</CdxLabel>
-					<div class="input-group" v-for="(_, index) in userSearchQueries" :key="`user-${index}`">
+					<div
+						class="input-group"
+						v-for="(_, index) in userSearchQueries"
+						:key="`user-${index}`"
+					>
 						<CdxTextInput
 							autocomplete="off"
 							v-model="userSearchQueries[index]"
@@ -31,7 +43,11 @@
 					</div>
 					<div class="input-list-actions">
 						<CdxButton type="button" @click="addUser">Add user</CdxButton>
-						<CdxButton type="button" @click="removeUser" :disabled="userSearchQueries.length === 0">
+						<CdxButton
+							type="button"
+							@click="removeUser"
+							:disabled="userSearchQueries.length === 0"
+						>
 							Remove user
 						</CdxButton>
 					</div>
@@ -392,7 +408,6 @@
 
 <script setup lang="ts">
 import { CdxButton, CdxLabel, CdxTextInput } from "@wikimedia/codex"
-import { computed, onMounted, ref, type Ref } from "vue"
 import { FakeWiki } from "fakewiki"
 import type {
 	FWCompareResponse,
@@ -402,6 +417,7 @@ import type {
 	FWResult,
 	FWRevision,
 } from "fakewiki/types"
+import { computed, onMounted, ref, type Ref } from "vue"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
@@ -413,7 +429,13 @@ const PROTOTYPE_NAME = "SmoothWatchlistInlineDiff"
 
 const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
 const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
-const defaultPageSearchQueries = ["Wikipedia", "Wet Leg", "Water"]
+const defaultPageSearchQueries = [
+	"Gorillaz",
+	"Little Mix",
+	"Wet Leg",
+	"Jade Thirlwall",
+	"Confidence Man (band)",
+]
 const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
 const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))

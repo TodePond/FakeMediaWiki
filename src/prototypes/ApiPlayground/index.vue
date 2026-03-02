@@ -217,7 +217,9 @@ const CATEGORY_ORDER = [
 	"Cache and diagnostics",
 ] as const
 
-const CATEGORY_ORDER_INDEX = new Map(CATEGORY_ORDER.map((name, index) => [name, index]))
+const CATEGORY_ORDER_INDEX = new Map<string, number>(
+	CATEGORY_ORDER.map((name, index) => [name, index])
+)
 
 const groupedFilteredMethods = computed(() => {
 	const groups = new Map<string, MethodDescriptor[]>()

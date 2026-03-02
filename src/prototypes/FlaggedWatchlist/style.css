@@ -107,8 +107,9 @@
 
 .prediction-card {
 	display: flex;
-	align-items: center;
-	gap: 0.5rem;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.35rem;
 	margin-top: 0.75rem;
 	padding: 0.5rem 0.75rem;
 	background-color: var(--background-color-subtle, #f8f9fa);
@@ -118,8 +119,16 @@
 	line-height: 1.4;
 }
 
+.prediction-card-point {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+
 .prediction-card-icon {
 	flex-shrink: 0;
+	position: relative;
+	top: 0.15rem;
 }
 
 .prediction-card-text {
@@ -852,6 +861,15 @@ form {
 
 form .cdx-label {
 	padding-top: 0.5rem;
+}
+
+.prediction-debug-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-top: 0.65rem;
+	font-size: 0.8125rem;
+	color: var(--color-subtle);
 }
 
 form footer {

@@ -1,16 +1,11 @@
 import type { Icon } from "@wikimedia/codex-icons"
 import { cdxIconAlert, cdxIconEllipsis, cdxIconError, cdxIconSuccess } from "@wikimedia/codex-icons"
 import type { FakeWiki } from "fakewiki"
-import type { FWLiftWingPrediction } from "fakewiki/types"
-import { ref } from "vue"
+import type { FWLiftWingPrediction, FWPredictionByModel, FWPredictionModel } from "fakewiki/types"
+import type { Ref } from "vue"
+import { ref, unref } from "vue"
 
-type PredictionMap = Map<
-	number,
-	{
-		damaging?: FWLiftWingPrediction
-		goodfaith?: FWLiftWingPrediction
-	}
->
+type PredictionMap = Map<number, FWPredictionByModel>
 
 export interface PredictionIconState {
 	icon: Icon | null
@@ -21,15 +16,48 @@ export interface PredictionIconState {
 
 export type PredictionSource = "liftwing" | "ores"
 
-export interface UsePredictionsOptions {
-	source?: PredictionSource
-	/** Threshold above which we show success (default 0.9). */
-	successThreshold?: number
-	/** Threshold above which we show warning (default 0.3). */
-	warningThreshold?: number
+export interface PredictionThresholdConfig {
+	/** Lower bound for strongest "good" signal (green). */
+	lowerTight: number
+	/** Lower bound for softer "good" signal (blue). */
+	lowerLoose: number
+	/** Upper bound for softer "problem" signal (yellow). */
+	upperLoose: number
+	/** Upper bound for strongest "problem" signal (red). */
+	upperTight: number
 }
 
-export type PredictionModel = "damaging" | "goodfaith"
+export interface PredictionThresholdOverride {
+	lowerTight?: number
+	lowerLoose?: number
+	upperLoose?: number
+	upperTight?: number
+	/** Back-compat alias for lowerTight (legacy symmetric thresholds). */
+	tightThreshold?: number
+	/** Back-compat alias for lowerLoose (legacy symmetric thresholds). */
+	looseThreshold?: number
+}
+
+export interface UsePredictionsOptions {
+	source?: PredictionSource
+	models?: FWPredictionModel[]
+	/** Legacy/global thresholds used for aggregate (non-model-specific) states. */
+	tightThreshold?: number
+	looseThreshold?: number
+	/** Optional explicit global upper thresholds (asymmetric support). */
+	upperLooseThreshold?: number
+	upperTightThreshold?: number
+	/** Debug mode: show percentages + unclear items in combined points. */
+	debug?: boolean | Ref<boolean>
+	/** Per-model threshold overrides. Falls back to per-model defaults. */
+	thresholdOverrides?: Partial<Record<FWPredictionModel, PredictionThresholdOverride>>
+}
+
+export type PredictionModel = FWPredictionModel
+export interface CombinedPredictionPoint {
+	model: PredictionModel
+	text: string
+}
 
 export interface PredictionPercentages {
 	/** P(damaging) */
@@ -38,13 +66,54 @@ export interface PredictionPercentages {
 	goodfaith: number
 }
 
-const DEFAULT_SUCCESS_THRESHOLD = 0.9
-const DEFAULT_WARNING_THRESHOLD = 0.3
+const DEFAULT_MODELS: FWPredictionModel[] = ["damaging", "goodfaith"]
+const DEFAULT_GLOBAL_THRESHOLDS: PredictionThresholdConfig = {
+	lowerTight: 0.1,
+	lowerLoose: 0.3,
+	upperLoose: 0.7,
+	upperTight: 0.9,
+}
+const DEFAULT_MODEL_THRESHOLDS: Record<FWPredictionModel, PredictionThresholdConfig> = {
+	damaging: { ...DEFAULT_GLOBAL_THRESHOLDS },
+	goodfaith: { ...DEFAULT_GLOBAL_THRESHOLDS },
+	revertrisk: {
+		lowerTight: 0.4,
+		lowerLoose: 0.6,
+		upperLoose: 0.9,
+		upperTight: 0.95,
+	},
+}
+
+type PredictionBand = "error" | "loading" | "high" | "mediumHigh" | "mediumLow" | "low" | "neutral"
+
+function getBestProbability(prediction: FWLiftWingPrediction): number {
+	const trueProbability = prediction.probability.true
+	if (typeof trueProbability === "number") {
+		return trueProbability
+	}
+	const values = Object.values(prediction.probability).filter(
+		(value): value is number => typeof value === "number"
+	)
+	if (values.length === 0) {
+		return 0
+	}
+	return Math.max(...values)
+}
+
+function getRiskForModel(model: PredictionModel, prediction: FWLiftWingPrediction): number {
+	if (model === "goodfaith") {
+		return prediction.probability.false ?? 0
+	}
+	return getBestProbability(prediction)
+}
 
 export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) {
 	const source = options?.source ?? "liftwing"
-	const successThreshold = options?.successThreshold ?? DEFAULT_SUCCESS_THRESHOLD
-	const warningThreshold = options?.warningThreshold ?? DEFAULT_WARNING_THRESHOLD
+	const models = options?.models ?? DEFAULT_MODELS
+	const thresholdOverrides = options?.thresholdOverrides ?? {}
+	const isDebugEnabled = (): boolean => Boolean(unref(options?.debug))
+	const canUseOres =
+		source === "ores" && models.every(model => model === "damaging" || model === "goodfaith")
 
 	/** Cache of revision predictions (damaging and goodfaith) */
 	const revisionPredictions = ref<PredictionMap>(new Map())
@@ -66,12 +135,11 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 		loadingPredictions.value.add(revisionId)
 
 		try {
-			const predictions =
-				source === "ores"
-					? await wiki.getRevisionPredictionsFromOres([revisionId])
-					: await wiki.getRevisionPredictions([revisionId])
+			const predictions = canUseOres
+				? await wiki.getRevisionPredictionsFromOres([revisionId])
+				: await wiki.getRevisionPredictions([revisionId], models)
 			const pred = predictions[revisionId]
-			if (pred && (pred.damaging ?? pred.goodfaith)) {
+			if (pred && Object.values(pred).some(Boolean)) {
 				revisionPredictions.value.set(revisionId, pred)
 			} else {
 				failedPredictions.value.add(revisionId)
@@ -84,8 +152,54 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 		}
 	}
 
-	function getPredictionIcon(revisionId: number): PredictionIconState {
-		if (failedPredictions.value.has(revisionId)) {
+	function getThresholds(model: PredictionModel): {
+		lowerTight: number
+		lowerLoose: number
+		upperLoose: number
+		upperTight: number
+	} {
+		const defaults = DEFAULT_MODEL_THRESHOLDS[model] ?? DEFAULT_GLOBAL_THRESHOLDS
+		const overrides = thresholdOverrides[model]
+		const lowerTight =
+			overrides?.lowerTight ??
+			overrides?.tightThreshold ??
+			options?.tightThreshold ??
+			defaults.lowerTight
+		const lowerLoose =
+			overrides?.lowerLoose ??
+			overrides?.looseThreshold ??
+			options?.looseThreshold ??
+			defaults.lowerLoose
+		const upperLoose =
+			overrides?.upperLoose ?? options?.upperLooseThreshold ?? defaults.upperLoose
+		const upperTight =
+			overrides?.upperTight ?? options?.upperTightThreshold ?? defaults.upperTight
+		return {
+			lowerTight,
+			lowerLoose,
+			upperLoose,
+			upperTight,
+		}
+	}
+
+	function getRiskBand(
+		risk: number,
+		thresholds: {
+			lowerTight: number
+			lowerLoose: number
+			upperLoose: number
+			upperTight: number
+		}
+	): PredictionBand {
+		if (risk > thresholds.upperTight) return "high"
+		if (risk > thresholds.upperLoose) return "mediumHigh"
+		if (risk < thresholds.lowerTight) return "low"
+		if (risk < thresholds.lowerLoose) return "mediumLow"
+		return "neutral"
+	}
+
+	function getPredictionIconFromBand(band: PredictionBand): PredictionIconState {
+		if (band === "error") {
 			return {
 				icon: cdxIconError,
 				color: "var(--color-subtle)",
@@ -93,72 +207,41 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 				isError: true,
 			}
 		}
-
-		if (loadingPredictions.value.has(revisionId)) {
+		if (band === "loading") {
 			return {
 				icon: cdxIconEllipsis,
 				color: "var(--color-subtle)",
 				isLoading: true,
 			}
 		}
-
-		const predictions = revisionPredictions.value.get(revisionId)
-		if (!predictions) {
-			void loadPrediction(revisionId)
-			return {
-				icon: cdxIconEllipsis,
-				color: "var(--color-subtle)",
-				isLoading: true,
-			}
-		}
-
-		if (!predictions.damaging && !predictions.goodfaith) {
-			return {
-				icon: cdxIconError,
-				color: "var(--color-subtle)",
-				isLoading: false,
-				isError: true,
-			}
-		}
-
-		const damaging = predictions.damaging
-		const goodfaith = predictions.goodfaith
-		const damagingProb = damaging?.probability?.true ?? 0
-		const badFaithProb = goodfaith?.probability?.false ?? 0
-		const risk = Math.max(damagingProb, badFaithProb)
-
-		if (risk > successThreshold) {
+		if (band === "high") {
 			return {
 				icon: cdxIconAlert,
 				color: "var(--color-destructive)",
 				isLoading: false,
 			}
 		}
-
-		if (risk > warningThreshold) {
+		if (band === "mediumHigh") {
 			return {
 				icon: cdxIconAlert,
 				color: "var(--color-warning)",
 				isLoading: false,
 			}
 		}
-
-		if (risk < 1 - successThreshold) {
+		if (band === "low") {
 			return {
 				icon: cdxIconSuccess,
 				color: "var(--color-success)",
 				isLoading: false,
 			}
 		}
-
-		if (risk < 1 - warningThreshold) {
+		if (band === "mediumLow") {
 			return {
 				icon: cdxIconSuccess,
 				color: "var(--color-progressive)",
 				isLoading: false,
 			}
 		}
-
 		return {
 			icon: cdxIconSuccess,
 			color: "var(--color-subtle)",
@@ -166,9 +249,81 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 		}
 	}
 
-	function getPredictionText(revisionId: number): string | null {
+	function getWorstBand(bands: PredictionBand[]): PredictionBand {
+		if (bands.length === 0) {
+			return "error"
+		}
+		const severity: Record<PredictionBand, number> = {
+			error: 5,
+			loading: 4,
+			high: 4,
+			mediumHigh: 3,
+			neutral: 2,
+			mediumLow: 1,
+			low: 0,
+		}
+		return bands.reduce((worst, current) =>
+			severity[current] > severity[worst] ? current : worst
+		)
+	}
+
+	function getAvailableModelBands(
+		predictions: FWPredictionByModel
+	): Partial<Record<PredictionModel, PredictionBand>> {
+		const result: Partial<Record<PredictionModel, PredictionBand>> = {}
+		for (const predictionModel of models) {
+			const prediction = predictions[predictionModel]
+			if (!prediction) continue
+			const risk = getRiskForModel(predictionModel, prediction)
+			result[predictionModel] = getRiskBand(risk, getThresholds(predictionModel))
+		}
+		return result
+	}
+
+	function getPredictionIcon(revisionId: number, model?: PredictionModel): PredictionIconState {
 		if (failedPredictions.value.has(revisionId)) {
-			return "There was an error when getting a prediction for this change."
+			return getPredictionIconFromBand("error")
+		}
+
+		if (loadingPredictions.value.has(revisionId)) {
+			return getPredictionIconFromBand("loading")
+		}
+
+		const predictions = revisionPredictions.value.get(revisionId)
+		if (!predictions) {
+			void loadPrediction(revisionId)
+			return getPredictionIconFromBand("loading")
+		}
+
+		if (model) {
+			const modelPrediction = predictions[model]
+			if (!modelPrediction) {
+				return getPredictionIconFromBand("error")
+			}
+			return getPredictionIconFromBand(
+				getRiskBand(getRiskForModel(model, modelPrediction), getThresholds(model))
+			)
+		}
+
+		const bands = Object.values(getAvailableModelBands(predictions))
+		return getPredictionIconFromBand(getWorstBand(bands))
+	}
+
+	function getCombinedPredictionText(revisionId: number): string | null {
+		const points = getCombinedPredictionPoints(revisionId)
+		if (!points) return null
+		if (points.length === 0) return "This change might be okay."
+		return points.map(point => point.text).join("\n")
+	}
+
+	function getCombinedPredictionPoints(revisionId: number): CombinedPredictionPoint[] | null {
+		if (failedPredictions.value.has(revisionId)) {
+			return [
+				{
+					model: "damaging",
+					text: "There was an error when getting a prediction for this change.",
+				},
+			]
 		}
 
 		const predictions = revisionPredictions.value.get(revisionId)
@@ -176,120 +331,109 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 			return null
 		}
 
-		if (!predictions.damaging && !predictions.goodfaith) {
-			return "There was an error when getting a prediction for this change."
+		const byModel = getAvailableModelBands(predictions)
+		const bands = Object.values(byModel)
+		if (bands.length === 0) {
+			return [
+				{
+					model: "damaging",
+					text: "There was an error when getting a prediction for this change.",
+				},
+			]
 		}
 
-		const damaging = predictions.damaging
-		const goodfaith = predictions.goodfaith
-		const damagingProb = damaging?.probability?.true ?? 0
-		const badFaithProb = goodfaith?.probability?.false ?? 0
-		const risk = Math.max(damagingProb, badFaithProb)
-
-		if (risk > successThreshold) {
-			return "This change probably has a problem."
+		const points: CombinedPredictionPoint[] = []
+		const withPercent = (model: PredictionModel, sentence: string): string => {
+			if (!isDebugEnabled()) return sentence
+			const prediction = predictions[model]
+			if (!prediction) return sentence
+			return `${sentence} (${Math.round(getBestProbability(prediction) * 100)}%)`
 		}
 
-		if (risk > warningThreshold) {
-			return "This change might have a problem."
+		const goodfaithBand = byModel.goodfaith
+		if (goodfaithBand === "high" || goodfaithBand === "mediumHigh") {
+			points.push({
+				model: "goodfaith",
+				text: withPercent("goodfaith", "This change is probably done in bad faith."),
+			})
+		} else if (goodfaithBand === "low") {
+			points.push({
+				model: "goodfaith",
+				text: withPercent("goodfaith", "This change is probably done in good faith."),
+			})
+		} else if (goodfaithBand === "mediumLow") {
+			points.push({
+				model: "goodfaith",
+				text: withPercent("goodfaith", "This change might be done in good faith."),
+			})
+		} else if (goodfaithBand === "neutral" && isDebugEnabled()) {
+			points.push({
+				model: "goodfaith",
+				text: withPercent("goodfaith", "This change has unclear good-faith signals."),
+			})
 		}
 
-		if (risk < 1 - successThreshold) {
-			return "This change is probably okay."
+		const damagingBand = byModel.damaging
+		if (damagingBand === "high") {
+			points.push({
+				model: "damaging",
+				text: withPercent("damaging", "This change is probably damaging."),
+			})
+		} else if (damagingBand === "mediumHigh") {
+			points.push({
+				model: "damaging",
+				text: withPercent("damaging", "This change might be damaging."),
+			})
+		} else if (damagingBand === "low") {
+			points.push({
+				model: "damaging",
+				text: withPercent("damaging", "This change is probably constructive."),
+			})
+		} else if (damagingBand === "mediumLow") {
+			points.push({
+				model: "damaging",
+				text: withPercent("damaging", "This change might be constructive."),
+			})
+		} else if (damagingBand === "neutral" && isDebugEnabled()) {
+			points.push({
+				model: "damaging",
+				text: withPercent("damaging", "This change has unclear damaging signals."),
+			})
 		}
 
-		if (risk < 1 - warningThreshold) {
-			return "This change is probably okay."
+		const revertriskBand = byModel.revertrisk
+		if (revertriskBand === "high") {
+			points.push({
+				model: "revertrisk",
+				text: withPercent("revertrisk", "This change will probably get reverted."),
+			})
+		} else if (revertriskBand === "mediumHigh") {
+			points.push({
+				model: "revertrisk",
+				text: withPercent("revertrisk", "This change might get reverted."),
+			})
+		} else if (revertriskBand === "low") {
+			points.push({
+				model: "revertrisk",
+				text: withPercent("revertrisk", "This change probably won't get reverted."),
+			})
+		} else if (revertriskBand === "mediumLow") {
+			points.push({
+				model: "revertrisk",
+				text: withPercent("revertrisk", "This change might not get reverted."),
+			})
+		} else if (revertriskBand === "neutral" && isDebugEnabled()) {
+			points.push({
+				model: "revertrisk",
+				text: withPercent("revertrisk", "This change has an unclear revert risk."),
+			})
 		}
 
-		return "This change might be okay."
+		return points
 	}
 
-	function getPredictionIconForModel(
-		revisionId: number,
-		model: PredictionModel
-	): PredictionIconState {
-		if (failedPredictions.value.has(revisionId)) {
-			return {
-				icon: cdxIconError,
-				color: "var(--color-subtle)",
-				isLoading: false,
-				isError: true,
-			}
-		}
-
-		if (loadingPredictions.value.has(revisionId)) {
-			return {
-				icon: cdxIconEllipsis,
-				color: "var(--color-subtle)",
-				isLoading: true,
-			}
-		}
-
-		const predictions = revisionPredictions.value.get(revisionId)
-		if (!predictions) {
-			void loadPrediction(revisionId)
-			return {
-				icon: cdxIconEllipsis,
-				color: "var(--color-subtle)",
-				isLoading: true,
-			}
-		}
-
-		if (
-			(model === "damaging" && !predictions.damaging) ||
-			(model === "goodfaith" && !predictions.goodfaith)
-		) {
-			return {
-				icon: cdxIconError,
-				color: "var(--color-subtle)",
-				isLoading: false,
-				isError: true,
-			}
-		}
-
-		const risk =
-			model === "damaging"
-				? (predictions.damaging?.probability?.true ?? 0)
-				: (predictions.goodfaith?.probability?.false ?? 0)
-
-		if (risk > successThreshold) {
-			return {
-				icon: cdxIconAlert,
-				color: "var(--color-destructive)",
-				isLoading: false,
-			}
-		}
-
-		if (risk > warningThreshold) {
-			return {
-				icon: cdxIconAlert,
-				color: "var(--color-warning)",
-				isLoading: false,
-			}
-		}
-
-		if (risk < 1 - successThreshold) {
-			return {
-				icon: cdxIconSuccess,
-				color: "var(--color-success)",
-				isLoading: false,
-			}
-		}
-
-		if (risk < 1 - warningThreshold) {
-			return {
-				icon: cdxIconSuccess,
-				color: "var(--color-progressive)",
-				isLoading: false,
-			}
-		}
-
-		return {
-			icon: cdxIconSuccess,
-			color: "var(--color-subtle)",
-			isLoading: false,
-		}
+	function getPredictionText(revisionId: number): string | null {
+		return getCombinedPredictionText(revisionId)
 	}
 
 	function getPredictionPercentages(revisionId: number): PredictionPercentages | null {
@@ -308,12 +452,41 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 		}
 	}
 
+	function getPrediction(
+		revisionId: number,
+		model: PredictionModel
+	): FWLiftWingPrediction | null {
+		if (failedPredictions.value.has(revisionId)) {
+			return null
+		}
+		const predictions = revisionPredictions.value.get(revisionId)
+		if (!predictions) {
+			void loadPrediction(revisionId)
+			return null
+		}
+		return predictions[model] ?? null
+	}
+
+	function getPredictionDisplayProbabilityForModel(
+		revisionId: number,
+		model: PredictionModel
+	): number | null {
+		const prediction = getPrediction(revisionId, model)
+		if (!prediction) {
+			return null
+		}
+		return getBestProbability(prediction)
+	}
+
 	return {
 		revisionPredictions,
 		loadingPredictions,
 		getPredictionIcon,
 		getPredictionText,
-		getPredictionIconForModel,
+		getCombinedPredictionText,
+		getCombinedPredictionPoints,
 		getPredictionPercentages,
+		getPrediction,
+		getPredictionDisplayProbabilityForModel,
 	}
 }

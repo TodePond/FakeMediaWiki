@@ -80,14 +80,15 @@ const avatar = await wiki.getUserAvatar("Todepond")
 const display = await wiki.getUserCategoryDisplay("Todepond")
 ```
 
-**ML predictions** – damaging/goodfaith per revision or batch (Lift Wing or ORES):
+**ML predictions** – damaging/goodfaith plus `revertrisk`:
 
 ```typescript
 const damaging = await wiki.getDamagingPrediction(revId)
 const goodfaith = await wiki.getGoodfaithPrediction(revId)
 const damagingMap = await wiki.getDamagingPredictions([revId1, revId2])
 const goodfaithMap = await wiki.getGoodFaithPredictions([revId1, revId2])
-const predictions = await wiki.getRevisionPredictions([revId1, revId2])
+const predictions = await wiki.getRevisionPredictions([revId1, revId2]) // defaults to damaging+goodfaith
+const revertriskScores = await wiki.getRevisionPredictions([revId1, revId2], ["revertrisk"])
 const predictionsOres = await wiki.getRevisionPredictionsFromOres([revId1, revId2])
 ```
 

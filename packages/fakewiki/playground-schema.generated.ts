@@ -273,6 +273,11 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "delta", description: "Change size (positive, negative, or zero)" },
       { key: "withSign" }
   ] },
+  { name: "getRevisionPredictions", description: "Get predictions for multiple revisions and one/many Lift Wing models.", category: undefined, params: [
+      { key: "revisionIds", description: "Array of revision IDs" },
+      { key: "models", description: "Lift Wing model slug(s). Defaults to damaging+goodfaith." },
+      { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
+  ] },
   { name: "getDamagingPrediction", description: "Get damaging prediction for a single revision from Lift Wing API", category: undefined, params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
@@ -286,10 +291,6 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },
   { name: "getGoodFaithPredictions", description: "Get goodfaith predictions for multiple revisions in parallel", category: undefined, params: [
-      { key: "revisionIds", description: "Array of revision IDs" },
-      { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
-  ] },
-  { name: "getRevisionPredictions", description: "Get both damaging and goodfaith predictions for multiple revisions in parallel", category: undefined, params: [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
   ] },

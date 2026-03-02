@@ -2,7 +2,10 @@
 	<main class="flagged-watchlist">
 		<div class="watchlist-container">
 			<h1>Flagged watchlist</h1>
-			<form @submit.prevent="search" class="recommendation-watchlist-form watchlist-search-form">
+			<form
+				@submit.prevent="search"
+				class="recommendation-watchlist-form watchlist-search-form"
+			>
 				<CdxLabel for="page-queries-input">Page queries (comma-separated)</CdxLabel>
 				<CdxTextInput
 					id="page-queries-input"
@@ -24,6 +27,10 @@
 				<footer>
 					<CdxButton type="submit" :disabled="isLoading">Refresh feed</CdxButton>
 				</footer>
+				<label class="prediction-debug-toggle">
+					<input v-model="showPredictionDebug" type="checkbox" />
+					Show debug info
+				</label>
 			</form>
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
@@ -99,15 +106,26 @@
 										>{{ change.user.name }}</a
 									>
 									<CdxIcon
-										v-if="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.icon"
+										v-if="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})?.icon
+										"
 										:class="[
 											'user-type-icon',
 											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.color,
+											color: wiki.getCachedUserCategoryDisplay(
+												change.user.name,
+												{ userTypeConfig }
+											)?.color,
 										}"
-										:icon="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })!.icon!"
+										:icon="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})!.icon!
+										"
 										size="x-small" /></span
 								><span
 									class="history-comment"
@@ -176,15 +194,26 @@
 										class="history-user-expanded"
 										>{{ change.user.name }}</a
 									><CdxIcon
-										v-if="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.icon"
-										:icon="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })!.icon!"
+										v-if="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})?.icon
+										"
+										:icon="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})!.icon!
+										"
 										:class="[
 											'user-type-icon',
 											'user-type-icon-expanded',
 											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.color,
+											color: wiki.getCachedUserCategoryDisplay(
+												change.user.name,
+												{ userTypeConfig }
+											)?.color,
 										}"
 								/></span>
 								<button
@@ -206,25 +235,35 @@
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
-								<div v-if="getPredictionText(change.id)" class="prediction-card">
-									<CdxIcon
-										v-if="getPredictionIcon(change.id).icon"
-										:icon="getPredictionIcon(change.id).icon!"
-										:style="{ color: getPredictionIcon(change.id).color }"
-										:class="[
-											'prediction-card-icon',
-											{
-												'prediction-icon-loading': getPredictionIcon(
-													change.id
-												).isLoading,
-											},
-										]"
-										size="small"
-										:title="getPredictionText(change.id) ?? undefined"
-									/>
-									<span class="prediction-card-text">{{
-										getPredictionText(change.id)
-									}}</span>
+								<div
+									v-if="getCombinedPredictionPoints(change.id)?.length"
+									class="prediction-card"
+								>
+									<div
+										v-for="point in getCombinedPredictionPoints(change.id)"
+										:key="`${change.id}-${point.model}-${point.text}`"
+										class="prediction-card-point"
+									>
+										<CdxIcon
+											v-if="getPredictionIcon(change.id, point.model).icon"
+											:icon="getPredictionIcon(change.id, point.model).icon!"
+											:style="{
+												color: getPredictionIcon(change.id, point.model)
+													.color,
+											}"
+											:class="[
+												'prediction-card-icon',
+												{
+													'prediction-icon-loading': getPredictionIcon(
+														change.id,
+														point.model
+													).isLoading,
+												},
+											]"
+											size="small"
+										/>
+										<span class="prediction-card-text">{{ point.text }}</span>
+									</div>
 								</div>
 								<footer class="history-expanded-footer">
 									<button
@@ -427,15 +466,26 @@
 											class="history-user"
 											>{{ rev.user.name }}</a
 										><CdxIcon
-											v-if="wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })?.icon"
-											:icon="wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })!.icon!"
+											v-if="
+												wiki.getCachedUserCategoryDisplay(rev.user.name, {
+													userTypeConfig,
+												})?.icon
+											"
+											:icon="
+												wiki.getCachedUserCategoryDisplay(rev.user.name, {
+													userTypeConfig,
+												})!.icon!
+											"
 											size="x-small"
 											:class="[
 												'user-type-icon',
 												`user-type-icon-${wiki.getCachedUserCategory(rev.user.name) || ''}`,
 											]"
 											:style="{
-												color: wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })?.color,
+												color: wiki.getCachedUserCategoryDisplay(
+													rev.user.name,
+													{ userTypeConfig }
+												)?.color,
 											}"
 										/><span
 											class="history-comment"
@@ -628,7 +678,12 @@ const talkPageText = ref<Map<number, string>>(new Map())
 /** Current editor mode: 'visual' or 'source' */
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
-const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
+const showPredictionDebug = ref(false)
+
+const { getPredictionIcon, getPredictionText, getCombinedPredictionPoints } = usePredictions(wiki, {
+	models: ["damaging", "goodfaith", "revertrisk"],
+	debug: showPredictionDebug,
+})
 
 onMounted(() => {
 	search()

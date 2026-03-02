@@ -5,7 +5,8 @@ export const PROTOTYPE_NAME = "FlaggedWatchlist"
 export const HEART_RISE_DURATION_MS = 2500
 
 export const defaultPageSearchQueries = [
-	"Wikipedia",
+	"Gorillaz",
+	"Little Mix",
 	"Wet Leg",
 	"Jade Thirlwall",
 	"Jools Holland",

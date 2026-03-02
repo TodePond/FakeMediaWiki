@@ -318,6 +318,15 @@ export interface FWLiftWingPrediction {
 	}
 }
 
+/** Supported Lift Wing prediction model slugs used by watchlist prototypes. */
+export type FWPredictionModel =
+	| "damaging"
+	| "goodfaith"
+	| "revertrisk"
+
+/** Prediction shape keyed by model slug (allows partial data per revision). */
+export type FWPredictionByModel = Partial<Record<FWPredictionModel, FWLiftWingPrediction>>
+
 /** Lift Wing API response structure */
 export interface FWLiftWingResponse {
 	[wiki: string]: {
@@ -338,10 +347,7 @@ export interface FWLiftWingResponse {
 
 /** Map of revision ID to prediction score */
 export interface FWRevisionPredictions {
-	[revisionId: number]: {
-		damaging?: FWLiftWingPrediction
-		goodfaith?: FWLiftWingPrediction
-	}
+	[revisionId: number]: FWPredictionByModel
 }
 
 /** Edit-types API: simple diff summary (counts per change type per action, e.g. Template: { change: 1 }, Wikilink: { insert: 1 }). */

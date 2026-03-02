@@ -445,8 +445,10 @@ const PROTOTYPE_NAME = "SmoothWatchlistStyledVariant"
 const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries")
 const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries")
 const defaultPageSearchQueries = [
-	"Wikipedia",
+	"Gorillaz",
+	"Little Mix",
 	"Wet Leg",
+	"Jade Thirlwall",
 	"Water",
 	"Confidence Man (band)",
 	"Algorave",

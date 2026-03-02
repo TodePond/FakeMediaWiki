@@ -1,8 +1,11 @@
 <template>
 	<main class="flagged-watchlist">
 		<div class="watchlist-container">
-			<h1>Multiple flag watchlist</h1>
-			<form @submit.prevent="search" class="recommendation-watchlist-form watchlist-search-form">
+			<h1>{{ heading }}</h1>
+			<form
+				@submit.prevent="search"
+				class="recommendation-watchlist-form watchlist-search-form"
+			>
 				<CdxLabel for="page-queries-input">Page queries (comma-separated)</CdxLabel>
 				<CdxTextInput
 					id="page-queries-input"
@@ -50,46 +53,29 @@
 							<div class="history-row">
 								<span
 									v-if="
-										getPredictionIconForModel(change.id, 'damaging').icon ||
-										getPredictionIconForModel(change.id, 'goodfaith').icon
+										predictorModels.some(
+											model => getPredictionIcon(change.id, model).icon
+										)
 									"
 									class="prediction-icons-dual"
 								>
 									<CdxIcon
-										v-if="getPredictionIconForModel(change.id, 'damaging').icon"
-										:icon="getPredictionIconForModel(change.id, 'damaging').icon!"
+										v-for="model in predictorModels"
+										:key="`${change.id}-${model}`"
+										v-show="getPredictionIcon(change.id, model).icon"
+										:icon="getPredictionIcon(change.id, model).icon!"
 										:style="{
-											color: getPredictionIconForModel(change.id, 'damaging').color,
+											color: getPredictionIcon(change.id, model).color,
 										}"
 										:class="[
 											'prediction-icon',
 											{
-												'prediction-icon-loading': getPredictionIconForModel(
-													change.id,
-													'damaging'
-												).isLoading,
+												'prediction-icon-loading':
+													getPredictionIcon(change.id, model).isLoading,
 											},
 										]"
 										size="small"
-										title="Damaging prediction"
-									/>
-									<CdxIcon
-										v-if="getPredictionIconForModel(change.id, 'goodfaith').icon"
-										:icon="getPredictionIconForModel(change.id, 'goodfaith').icon!"
-										:style="{
-											color: getPredictionIconForModel(change.id, 'goodfaith').color,
-										}"
-										:class="[
-											'prediction-icon',
-											{
-												'prediction-icon-loading': getPredictionIconForModel(
-													change.id,
-													'goodfaith'
-												).isLoading,
-											},
-										]"
-										size="small"
-										title="Good faith prediction"
+										:title="`${formatPredictionModelLabel(model)} prediction`"
 									/>
 								</span>
 								<a
@@ -129,15 +115,26 @@
 										>{{ change.user.name }}</a
 									>
 									<CdxIcon
-										v-if="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.icon"
+										v-if="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})?.icon
+										"
 										:class="[
 											'user-type-icon',
 											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.color,
+											color: wiki.getCachedUserCategoryDisplay(
+												change.user.name,
+												{ userTypeConfig }
+											)?.color,
 										}"
-										:icon="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })!.icon!"
+										:icon="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})!.icon!
+										"
 										size="x-small" /></span
 								><span
 									class="history-comment"
@@ -206,15 +203,26 @@
 										class="history-user-expanded"
 										>{{ change.user.name }}</a
 									><CdxIcon
-										v-if="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.icon"
-										:icon="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })!.icon!"
+										v-if="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})?.icon
+										"
+										:icon="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})!.icon!
+										"
 										:class="[
 											'user-type-icon',
 											'user-type-icon-expanded',
 											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.color,
+											color: wiki.getCachedUserCategoryDisplay(
+												change.user.name,
+												{ userTypeConfig }
+											)?.color,
 										}"
 								/></span>
 								<button
@@ -236,28 +244,32 @@
 									class="history-comment-expanded"
 									v-html="change?.summary?.comment ?? ''"
 								></div>
-								<div
-									v-if="getPredictionPercentages(change.id)"
-									class="prediction-percentages"
-								>
-									<span class="prediction-percentages-item">
-										<span class="prediction-percentages-label">Damaging:</span>
-										<span class="prediction-percentages-value">{{
-											Math.round(
-												(getPredictionPercentages(change.id)!.damaging ?? 0) *
-													100
-											)
-										}}%</span>
-									</span>
-									<span class="prediction-percentages-item">
-										<span class="prediction-percentages-label">Good faith:</span>
-										<span class="prediction-percentages-value">{{
-											Math.round(
-												(getPredictionPercentages(change.id)!.goodfaith ?? 0) *
-													100
-											)
-										}}%</span>
-									</span>
+								<div class="prediction-cards">
+									<div
+										v-for="model in predictorModels"
+										:key="`${change.id}-card-${model}`"
+										class="prediction-card"
+									>
+										<CdxIcon
+											v-if="getPredictionIcon(change.id, model).icon"
+											:icon="getPredictionIcon(change.id, model).icon!"
+											:style="{
+												color: getPredictionIcon(change.id, model).color,
+											}"
+											:class="[
+												'prediction-card-icon',
+												{
+													'prediction-icon-loading':
+														getPredictionIcon(change.id, model).isLoading,
+												},
+											]"
+											size="small"
+											:title="getPredictionCardText(change.id, model)"
+										/>
+										<span class="prediction-card-text">{{
+											getPredictionCardText(change.id, model)
+										}}</span>
+									</div>
 								</div>
 								<footer class="history-expanded-footer">
 									<button
@@ -453,15 +465,26 @@
 											class="history-user"
 											>{{ rev.user.name }}</a
 										><CdxIcon
-											v-if="wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })?.icon"
-											:icon="wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })!.icon!"
+											v-if="
+												wiki.getCachedUserCategoryDisplay(rev.user.name, {
+													userTypeConfig,
+												})?.icon
+											"
+											:icon="
+												wiki.getCachedUserCategoryDisplay(rev.user.name, {
+													userTypeConfig,
+												})!.icon!
+											"
 											size="x-small"
 											:class="[
 												'user-type-icon',
 												`user-type-icon-${wiki.getCachedUserCategory(rev.user.name) || ''}`,
 											]"
 											:style="{
-												color: wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })?.color,
+												color: wiki.getCachedUserCategoryDisplay(
+													rev.user.name,
+													{ userTypeConfig }
+												)?.color,
 											}"
 										/><span
 											class="history-comment"
@@ -570,7 +593,12 @@
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { cdxIconArrowNext, cdxIconArrowPrevious } from "@wikimedia/codex-icons"
 import { FakeWiki, useFeed, usePredictions } from "fakewiki"
-import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
+import type {
+	FWCompareResponse,
+	FWPageHistoryResponse,
+	FWPredictionModel,
+	FWRevision,
+} from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import { isInteractiveClickTarget } from "./clickTargets"
 import {
@@ -584,10 +612,24 @@ import { loadQueries } from "./queries"
 import type { HistoryRevisionWithHtml, RisingHeart } from "./types"
 import { getRevisionItemZIndex } from "./zIndex"
 
+interface Props {
+	predictorModels?: FWPredictionModel[]
+	prototypeName?: string
+	heading?: string
+}
+
+const props = defineProps<Props>()
+const predictorModels =
+	props.predictorModels && props.predictorModels.length > 0
+		? props.predictorModels
+		: (["damaging", "goodfaith"] as FWPredictionModel[])
+const heading = props.heading ?? "Multiple flag watchlist"
+const activePrototypeName = props.prototypeName ?? PROTOTYPE_NAME
+
 const wiki = new FakeWiki()
 
-const pageStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "pageQueries2")
-const userStorageKey = wiki.getStorageKey(PROTOTYPE_NAME, "userQueries2")
+const pageStorageKey = wiki.getStorageKey(activePrototypeName, "pageQueries2")
+const userStorageKey = wiki.getStorageKey(activePrototypeName, "userQueries2")
 const pageSearchQueries = ref<string[]>(loadQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadQueries(userStorageKey, defaultUserSearchQueries))
 /** Comma-separated string for the page queries input; kept in sync with pageSearchQueries. */
@@ -654,10 +696,28 @@ const talkPageText = ref<Map<number, string>>(new Map())
 /** Current editor mode: 'visual' or 'source' */
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 
-const {
-	getPredictionIconForModel,
-	getPredictionPercentages,
-} = usePredictions(wiki)
+const { getPredictionIcon, getPredictionDisplayProbabilityForModel } = usePredictions(wiki, {
+	models: predictorModels,
+})
+
+function formatPredictionModelLabel(model: FWPredictionModel): string {
+	if (model === "goodfaith") return "Good faith"
+	if (model === "revertrisk") return "Revert risk"
+	return model.charAt(0).toUpperCase() + model.slice(1)
+}
+
+function getPredictionCardText(revisionId: number, model: FWPredictionModel): string {
+	const iconState = getPredictionIcon(revisionId, model)
+	const modelLabel = formatPredictionModelLabel(model)
+	if (iconState.isLoading) {
+		return `Loading ${modelLabel.toLowerCase()} prediction.`
+	}
+	const probability = getPredictionDisplayProbabilityForModel(revisionId, model)
+	if (probability === null) {
+		return `${modelLabel} prediction is unavailable for this change.`
+	}
+	return `${modelLabel} prediction: ${Math.round(probability * 100)}%`
+}
 
 onMounted(() => {
 	search()

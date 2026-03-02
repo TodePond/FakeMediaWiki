@@ -25,6 +25,7 @@ import type {
 	FWPageMetadata,
 	FWPageSearchResult,
 	FWPageSummary,
+	FWPredictionModel,
 	FWRandomPageResult,
 	FWRandomPageSummary,
 	FWRelativeTimestampOptions,
@@ -3070,14 +3071,148 @@ export class FakeWiki {
 		const fallback = `${apiName} API error: ${response.status}`
 		try {
 			const text = await response.text()
-			const body = text ? (JSON.parse(text) as { error?: string }) : null
+			const body = text ? (JSON.parse(text) as { error?: string; detail?: string }) : null
 			if (body && typeof body.error === "string" && body.error.trim()) {
 				return body.error.trim()
+			}
+			if (body && typeof body.detail === "string" && body.detail.trim()) {
+				return body.detail.trim()
 			}
 		} catch {
 			// ignore parse errors
 		}
 		return fallback
+	}
+
+	/**
+	 * Normalize prediction model names for Lift Wing endpoint URLs.
+	 */
+	private normalizePredictionModel(model: FWPredictionModel): FWPredictionModel {
+		return model.toLowerCase() as FWPredictionModel
+	}
+
+	private getPredictionEndpointModel(model: FWPredictionModel): string {
+		const normalizedModel = this.normalizePredictionModel(model)
+		if (normalizedModel === "revertrisk") {
+			return "revertrisk-language-agnostic"
+		}
+		return normalizedModel
+	}
+
+	/**
+	 * Fetch a single Lift Wing prediction for one revision + model.
+	 */
+	private async fetchRevisionPrediction(
+		revisionId: number,
+		model: FWPredictionModel,
+		wiki?: string
+	): Promise<FWLiftWingPrediction | null> {
+		const wikiCode = wiki || this.getWikiCode()
+		const normalizedModel = this.normalizePredictionModel(model)
+		const endpointModel = this.getPredictionEndpointModel(normalizedModel)
+		const modelName =
+			endpointModel.startsWith("revertrisk-") ? endpointModel : `${wikiCode}-${endpointModel}`
+		const requestBody: Record<string, unknown> = { rev_id: revisionId }
+		if (endpointModel.startsWith("revertrisk-")) {
+			requestBody.lang = this.getEditTypesLang(wikiCode)
+		}
+		const url = `https://api.wikimedia.org/service/lw/inference/v1/models/${modelName}:predict`
+
+		try {
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
+				},
+				body: JSON.stringify(requestBody),
+			})
+
+			if (!response.ok) {
+				const message = await this.getPredictionApiErrorMessage(response)
+				// Revertrisk can return 422 for revisions without a usable parent revision.
+				// Treat it as unavailable prediction rather than noisy console warning.
+				if (response.status === 422) {
+					return null
+				}
+				console.warn(
+					`Lift Wing ${normalizedModel} prediction unavailable for revision ${revisionId}: ${message}`
+				)
+				return null
+			}
+
+			const data = (await response.json()) as
+				| FWLiftWingResponse
+				| {
+						output?: {
+							prediction?: boolean | string
+							probabilities?: Record<string, number | undefined>
+						}
+				  }
+			const wikiData = data[wikiCode]
+			const scoreEntry =
+				wikiData?.scores?.[String(revisionId)]?.[endpointModel] ??
+				wikiData?.scores?.[String(revisionId)]?.[normalizedModel] ??
+				wikiData?.scores?.[String(revisionId)]?.[model]
+			if (scoreEntry?.score) {
+				return scoreEntry.score
+			}
+			const output = (data as { output?: { prediction?: boolean | string; probabilities?: Record<string, number | undefined> } }).output
+			if (output?.prediction !== undefined && output.probabilities) {
+				return {
+					prediction: output.prediction,
+					probability: output.probabilities,
+				}
+			}
+			return null
+		} catch (error) {
+			console.error(
+				`Failed to get ${normalizedModel} prediction for revision ${revisionId}:`,
+				error
+			)
+			return null
+		}
+	}
+
+	/**
+	 * Get predictions for multiple revisions and one/many Lift Wing models.
+	 * @param revisionIds - Array of revision IDs
+	 * @param models - Lift Wing model slug(s). Defaults to damaging+goodfaith.
+	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
+	 * @returns Map of revision ID to predictions keyed by model
+	 */
+	async getRevisionPredictions(
+		revisionIds: number[],
+		models: FWPredictionModel[] = ["damaging", "goodfaith"],
+		wiki?: string
+	): Promise<FWRevisionPredictions> {
+		const combined: FWRevisionPredictions = {}
+		const normalizedModels = [...new Set(models.map(model => this.normalizePredictionModel(model)))]
+		if (revisionIds.length === 0 || normalizedModels.length === 0) {
+			return combined
+		}
+
+		const modelResults = await Promise.all(
+			normalizedModels.map(async model => {
+				const byRevision = await Promise.all(
+					revisionIds.map(async revId => ({
+						revId,
+						prediction: await this.fetchRevisionPrediction(revId, model, wiki),
+					}))
+				)
+				return { model, byRevision }
+			})
+		)
+
+		for (const { model, byRevision } of modelResults) {
+			for (const { revId, prediction } of byRevision) {
+				if (!prediction) continue
+				if (!combined[revId]) combined[revId] = {}
+				combined[revId][model] = prediction
+			}
+		}
+
+		return combined
 	}
 
 	/**
@@ -3090,36 +3225,8 @@ export class FakeWiki {
 		revisionId: number,
 		wiki?: string
 	): Promise<FWLiftWingPrediction | null> {
-		const wikiCode = wiki || this.getWikiCode()
-		const url = `https://api.wikimedia.org/service/lw/inference/v1/models/${wikiCode}-damaging:predict`
-
-		try {
-			const response = await fetch(url, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
-				},
-				body: JSON.stringify({ rev_id: revisionId }),
-			})
-
-			if (!response.ok) {
-				const message = await this.getPredictionApiErrorMessage(response)
-				throw new Error(message)
-			}
-
-			const data = (await response.json()) as FWLiftWingResponse
-			const wikiData = data[wikiCode]
-			if (!wikiData?.scores?.[String(revisionId)]?.damaging) {
-				return null
-			}
-
-			return wikiData.scores[String(revisionId)].damaging.score
-		} catch (error) {
-			if (error instanceof Error) throw error
-			console.error(`Failed to get damaging prediction for revision ${revisionId}:`, error)
-			return null
-		}
+		const predictions = await this.getRevisionPredictions([revisionId], ["damaging"], wiki)
+		return predictions[revisionId]?.damaging ?? null
 	}
 
 	/**
@@ -3132,36 +3239,8 @@ export class FakeWiki {
 		revisionId: number,
 		wiki?: string
 	): Promise<FWLiftWingPrediction | null> {
-		const wikiCode = wiki || this.getWikiCode()
-		const url = `https://api.wikimedia.org/service/lw/inference/v1/models/${wikiCode}-goodfaith:predict`
-
-		try {
-			const response = await fetch(url, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
-				},
-				body: JSON.stringify({ rev_id: revisionId }),
-			})
-
-			if (!response.ok) {
-				const message = await this.getPredictionApiErrorMessage(response)
-				throw new Error(message)
-			}
-
-			const data = (await response.json()) as FWLiftWingResponse
-			const wikiData = data[wikiCode]
-			if (!wikiData?.scores?.[String(revisionId)]?.goodfaith) {
-				return null
-			}
-
-			return wikiData.scores[String(revisionId)].goodfaith.score
-		} catch (error) {
-			if (error instanceof Error) throw error
-			console.error(`Failed to get goodfaith prediction for revision ${revisionId}:`, error)
-			return null
-		}
+		const predictions = await this.getRevisionPredictions([revisionId], ["goodfaith"], wiki)
+		return predictions[revisionId]?.goodfaith ?? null
 	}
 
 	/**
@@ -3174,29 +3253,12 @@ export class FakeWiki {
 		revisionIds: number[],
 		wiki?: string
 	): Promise<Map<number, FWLiftWingPrediction>> {
+		const predictions = await this.getRevisionPredictions(revisionIds, ["damaging"], wiki)
 		const results = new Map<number, FWLiftWingPrediction>()
-
-		// Make requests in parallel
-		const predictions = await Promise.allSettled(
-			revisionIds.map(async revId => {
-				const prediction = await this.getDamagingPrediction(revId, wiki)
-				return { revId, prediction }
-			})
-		)
-
-		// Surface first API error so callers (e.g. playground) can show the service message
-		const rejected = predictions.find(
-			(r): r is PromiseRejectedResult => r.status === "rejected"
-		)
-		if (rejected) throw rejected.reason
-
-		// Collect successful results
-		for (const result of predictions) {
-			if (result.status === "fulfilled" && result.value.prediction) {
-				results.set(result.value.revId, result.value.prediction)
-			}
+		for (const revId of revisionIds) {
+			const prediction = predictions[revId]?.damaging
+			if (prediction) results.set(revId, prediction)
 		}
-
 		return results
 	}
 
@@ -3210,63 +3272,13 @@ export class FakeWiki {
 		revisionIds: number[],
 		wiki?: string
 	): Promise<Map<number, FWLiftWingPrediction>> {
+		const predictions = await this.getRevisionPredictions(revisionIds, ["goodfaith"], wiki)
 		const results = new Map<number, FWLiftWingPrediction>()
-
-		// Make requests in parallel
-		const predictions = await Promise.allSettled(
-			revisionIds.map(async revId => {
-				const prediction = await this.getGoodfaithPrediction(revId, wiki)
-				return { revId, prediction }
-			})
-		)
-
-		// Surface first API error so callers (e.g. playground) can show the service message
-		const rejected = predictions.find(
-			(r): r is PromiseRejectedResult => r.status === "rejected"
-		)
-		if (rejected) throw rejected.reason
-
-		// Collect successful results
-		for (const result of predictions) {
-			if (result.status === "fulfilled" && result.value.prediction) {
-				results.set(result.value.revId, result.value.prediction)
-			}
+		for (const revId of revisionIds) {
+			const prediction = predictions[revId]?.goodfaith
+			if (prediction) results.set(revId, prediction)
 		}
-
 		return results
-	}
-
-	/**
-	 * Get both damaging and goodfaith predictions for multiple revisions in parallel
-	 * @param revisionIds - Array of revision IDs
-	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
-	 * @returns Map of revision ID to both prediction scores
-	 */
-	async getRevisionPredictions(
-		revisionIds: number[],
-		wiki?: string
-	): Promise<FWRevisionPredictions> {
-		// Fetch both predictions in parallel
-		const [damagingResults, goodfaithResults] = await Promise.all([
-			this.getDamagingPredictions(revisionIds, wiki),
-			this.getGoodFaithPredictions(revisionIds, wiki),
-		])
-
-		// Combine results
-		const combined: FWRevisionPredictions = {}
-		const allIds = new Set([...damagingResults.keys(), ...goodfaithResults.keys()])
-
-		for (const revId of allIds) {
-			combined[revId] = {}
-			if (damagingResults.has(revId)) {
-				combined[revId].damaging = damagingResults.get(revId)!
-			}
-			if (goodfaithResults.has(revId)) {
-				combined[revId].goodfaith = goodfaithResults.get(revId)!
-			}
-		}
-
-		return combined
 	}
 
 	/**
