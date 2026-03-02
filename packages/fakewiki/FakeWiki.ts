@@ -141,8 +141,8 @@ export class FakeWiki {
 			["Heading"],
 			["Word", "Reference", "Comment"],
 			["List"],
-			["Wikilink", "ExternalLink"],
 			["Template"],
+			["Wikilink", "ExternalLink", "Media"],
 			["Punctuation"],
 			["Text Formatting"],
 			["Whitespace"],
@@ -166,6 +166,7 @@ export class FakeWiki {
 		Whitespace: "whitespace",
 		Punctuation: "punctuation",
 		Comment: "comment",
+		Media: "media",
 	}
 
 	/** Default settings for structured-delta computation. */

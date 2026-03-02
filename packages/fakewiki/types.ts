@@ -385,6 +385,7 @@ export type FWStructuredDeltaCanonicalType =
 	| "List"
 	| "Wikilink"
 	| "ExternalLink"
+	| "Media"
 	| "Template"
 	| "Punctuation"
 	| "Text Formatting"
@@ -428,8 +429,7 @@ export type FWStructuredDeltasOptions = Partial<FWStructuredDeltaSettings>
 
 /** Options for computing structured-delta output directly from a revision ID. */
 export interface FWStructuredDeltaRevisionOptions
-	extends FWEditTypesOptions,
-		Partial<FWStructuredDeltaSettings> {}
+	extends FWEditTypesOptions, Partial<FWStructuredDeltaSettings> {}
 
 export interface FWPageSummary {
 	title?: string

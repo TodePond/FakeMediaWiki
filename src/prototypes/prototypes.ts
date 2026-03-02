@@ -1,57 +1,19 @@
-export type PrototypeDefinitionType = "prototype" | "variants" | "variant"
+import type * as PrototypeTypes from "./types.ts"
 
-export type PrototypeStatus = "new" | "updated" | "wip"
-
-export type PrototypeDefinitionBase = {
-	id: string
-	/** Component folder name to load; defaults to id when omitted */
-	component?: string
-	name: string
-	description: string
-	status?: PrototypeStatus
-	featured?: boolean
-}
-
-export type PrototypeDefinitionPrototype = PrototypeDefinitionBase & {
-	type: "prototype"
-	title: string
-	category: string
-	wrapper: string
-}
-
-export type PrototypeDefinitionVariants = PrototypeDefinitionBase & {
-	type: "variants"
-	category: string
-	variants: PrototypeDefinition<"variant">[]
-}
-
-export type PrototypeDefinitionVariant = PrototypeDefinitionBase & {
-	type: "variant"
-	title: string
-	wrapper: string
-}
-
-export type PrototypeDefinition<T extends PrototypeDefinitionType = PrototypeDefinitionType> = (
-	| PrototypeDefinitionPrototype
-	| PrototypeDefinitionVariants
-	| PrototypeDefinitionVariant
-) & {
-	type: T
-}
-
-export type CategoryDefinition = {
-	id: string
-	name: string
-	description: string
-}
-
-export type WrapperDefinition = {
-	id: string
-	name: string
-}
+export type {
+	CategoryDefinition,
+	PrototypeDefinition,
+	PrototypeDefinitionBase,
+	PrototypeDefinitionPrototype,
+	PrototypeDefinitionType,
+	PrototypeDefinitionVariant,
+	PrototypeDefinitionVariants,
+	PrototypeStatus,
+	WrapperDefinition,
+} from "./types.ts"
 
 // Define wrappers with their display names
-export const wrappers: WrapperDefinition[] = [
+export const wrappers: PrototypeTypes.WrapperDefinition[] = [
 	{
 		id: "Special",
 		name: "Special page",
@@ -71,7 +33,7 @@ export const wrappers: WrapperDefinition[] = [
 ]
 
 // Define categories with their descriptions in display order
-export const categories: CategoryDefinition[] = [
+export const categories: PrototypeTypes.CategoryDefinition[] = [
 	{
 		id: "changeTypes",
 		name: "Change types",
@@ -124,7 +86,7 @@ export const categories: CategoryDefinition[] = [
 	},
 ]
 
-export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] = [
+export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "prototype",
 		id: "ApiPlayground",
@@ -133,7 +95,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "api",
 		wrapper: "Fullscreen",
 		title: "API Playground",
-		status: "new",
+		status: "updated",
 		featured: true,
 	},
 	{
@@ -180,7 +142,6 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 				description: "Combine related changes from multiple pages.",
 				wrapper: "Fullscreen",
 				featured: true,
-				status: "new",
 			},
 			{
 				type: "variant",
@@ -262,6 +223,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		wrapper: "Fullscreen",
 		title: "Multiple flag watchlist",
 		featured: true,
+		status: "new",
 	},
 	{
 		type: "prototype",
@@ -325,6 +287,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "changeTypes",
 		wrapper: "Fullscreen",
 		featured: true,
+		status: "new",
 	},
 	{
 		type: "prototype",
@@ -335,6 +298,7 @@ export const prototypeMetadata: PrototypeDefinition<"prototype" | "variants">[] 
 		category: "changeTypes",
 		wrapper: "Fullscreen",
 		featured: true,
+		status: "new",
 	},
 	{
 		type: "variants",

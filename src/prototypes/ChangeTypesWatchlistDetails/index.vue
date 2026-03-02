@@ -1,7 +1,7 @@
 <template>
 	<main class="change-types-watchlist change-types-watchlist-details">
 		<div class="watchlist-container">
-			<h1>Change types)</h1>
+			<h1>Change types</h1>
 			<form
 				@submit.prevent="search"
 				class="recommendation-watchlist-form watchlist-search-form"
