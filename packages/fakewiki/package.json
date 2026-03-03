@@ -48,7 +48,7 @@
 		"scripts"
 	],
 	"scripts": {
-		"generate:playground": "tsx scripts/generate-playground-schema.ts"
+		"generate:playground": "npx tsx scripts/generate-playground-schema.ts"
 	},
 	"peerDependencies": {
 		"vue": "^3.5.0",

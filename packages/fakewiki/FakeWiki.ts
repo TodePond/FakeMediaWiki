@@ -36,6 +36,7 @@ import type {
 	FWRevisionWithLinkType,
 	FWStructuredDeltaCandidate,
 	FWStructuredDeltaCanonicalType,
+	FWStructuredDeltaKind,
 	FWStructuredDeltaResult,
 	FWStructuredDeltaRevisionOptions,
 	FWStructuredDeltaSettings,
@@ -3620,6 +3621,7 @@ export class FakeWiki {
 				deltaClass: candidate.deltaClass,
 			})),
 			candidates: postProcessedCandidates,
+			highlightedCandidates,
 		}
 	}
 
@@ -3731,6 +3733,12 @@ export class FakeWiki {
 			"Sentence",
 			"Comment",
 		])
+		/** Child level index for "don't filter parent if children have mixed kinds" rule. */
+		const childLevelForFilterable: Partial<Record<FWStructuredDeltaCanonicalType, number>> = {
+			Sentence: this.getStructuredDeltaLevel("Word"),
+			Paragraph: this.getStructuredDeltaLevel("Sentence"),
+			Section: this.getStructuredDeltaLevel("Paragraph"),
+		}
 		const output = [...candidates]
 		while (
 			output.length > 1 &&
@@ -3738,6 +3746,16 @@ export class FakeWiki {
 			output[0].count === 1 &&
 			filterableImpliedTypes.has(output[0].canonicalType)
 		) {
+			const childLevel = childLevelForFilterable[output[0].canonicalType]
+			if (childLevel !== undefined) {
+				const childKinds = new Set<FWStructuredDeltaKind>()
+				for (let i = 1; i < output.length; i++) {
+					if (this.getStructuredDeltaLevel(output[i].canonicalType) === childLevel) {
+						childKinds.add(output[i].kind)
+					}
+				}
+				if (childKinds.size >= 2) break
+			}
 			output.shift()
 		}
 		return output
@@ -3763,6 +3781,11 @@ export class FakeWiki {
 			if (this.STRUCTURED_DELTA_SIGNIFICANCE_LEVELS[i].includes(type)) return i
 		}
 		return Number.MAX_SAFE_INTEGER
+	}
+
+	/** Public for snippet logic: significance level index (0 = most significant). */
+	getStructuredDeltaLevelIndex(type: FWStructuredDeltaCanonicalType): number {
+		return this.getStructuredDeltaLevel(type)
 	}
 
 	private formatStructuredDeltaInlineMetric(

@@ -429,6 +429,8 @@ export interface FWStructuredDeltaCandidate {
 export interface FWStructuredDeltaResult {
 	segments: FWStructuredDeltaSegment[]
 	candidates: FWStructuredDeltaCandidate[]
+	/** Highlighted candidates (subset that produced segments), for snippet lookup. */
+	highlightedCandidates?: FWStructuredDeltaCandidate[]
 }
 
 /** Options for computing structured-delta labels from edit-types summaries. */

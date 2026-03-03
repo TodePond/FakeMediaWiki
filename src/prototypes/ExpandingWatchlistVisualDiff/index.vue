@@ -1,6 +1,33 @@
 <template>
 	<main class="expanding-watchlist-visual-diff">
 		<div class="watchlist-container">
+			<h1>Visual diff watchlist</h1>
+			<form
+				@submit.prevent="search"
+				class="recommendation-watchlist-form watchlist-search-form"
+			>
+				<CdxLabel for="page-queries-input">Page queries (comma-separated)</CdxLabel>
+				<CdxTextInput
+					id="page-queries-input"
+					v-model="pageQueriesInput"
+					input-type="text"
+					class="recommendation-watchlist-input"
+					autocomplete="off"
+					@input="syncPageQueriesFromInput"
+				/>
+				<CdxLabel for="user-queries-input">User queries (comma-separated)</CdxLabel>
+				<CdxTextInput
+					id="user-queries-input"
+					v-model="userQueriesInput"
+					input-type="text"
+					class="recommendation-watchlist-input"
+					autocomplete="off"
+					@input="syncUserQueriesFromInput"
+				/>
+				<footer>
+					<CdxButton type="submit" :disabled="isLoading">Refresh feed</CdxButton>
+				</footer>
+			</form>
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
@@ -348,7 +375,7 @@
 </template>
 
 <script setup lang="ts">
-import { CdxButton, CdxProgressBar } from "@wikimedia/codex"
+import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
 import type {
 	FWPageHistoryResponse,
@@ -381,6 +408,24 @@ const defaultPageSearchQueries = [
 const defaultUserSearchQueries = ["Todepond", "Samwalton9"]
 const pageSearchQueries = ref<string[]>(loadSearchQueries(pageStorageKey, defaultPageSearchQueries))
 const userSearchQueries = ref<string[]>(loadSearchQueries(userStorageKey, defaultUserSearchQueries))
+/** Comma-separated string for the page queries input; kept in sync with pageSearchQueries. */
+const pageQueriesInput = ref(pageSearchQueries.value.join(", "))
+/** Comma-separated string for the user queries input; kept in sync with userSearchQueries. */
+const userQueriesInput = ref(userSearchQueries.value.join(", "))
+
+function syncPageQueriesFromInput(): void {
+	pageSearchQueries.value = pageQueriesInput.value
+		.split(",")
+		.map(s => s.trim())
+		.filter(Boolean)
+}
+
+function syncUserQueriesFromInput(): void {
+	userSearchQueries.value = userQueriesInput.value
+		.split(",")
+		.map(s => s.trim())
+		.filter(Boolean)
+}
 
 // Combined feed results
 const allRevisionsData = ref<FWRevision[]>([])

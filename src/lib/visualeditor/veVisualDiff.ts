@@ -45,8 +45,50 @@ function normalizeHtmlForVisualDiff(html: string): string {
 				// leave href as-is if not parseable
 			}
 		}
+		// Normalize map/static image URLs: Kartographer and similar embed revid in img src/srcset,
+		// so the same map shows as changed when comparing revisions. Strip revid and parser params.
+		if (el.tagName === "IMG") {
+			const src = el.getAttribute("src")
+			if (src) {
+				const normalized = normalizeMapOrStaticImageUrl(src)
+				if (normalized !== src) el.setAttribute("src", normalized)
+			}
+			const srcset = el.getAttribute("srcset")
+			if (srcset) {
+				el.setAttribute(
+					"srcset",
+					srcset
+						.split(",")
+						.map(part => {
+							const s = part.trim().split(/\s+/)[0]
+							if (!s) return part.trim()
+							const n = normalizeMapOrStaticImageUrl(s)
+							return part.trim().replace(s, n)
+						})
+						.join(", ")
+				)
+			}
+		}
 	})
 	return doc.documentElement.outerHTML
+}
+
+/**
+ * Strip revision-specific query params from map/static image URLs (e.g. Kartographer)
+ * so the same map compares equal across revisions.
+ */
+function normalizeMapOrStaticImageUrl(urlString: string): string {
+	try {
+		const url = new URL(urlString, "https://en.wikipedia.org")
+		// Kartographer static map tiles include revid= and parser=parsoid; revid differs per revision
+		if (url.hostname === "maps.wikimedia.org") {
+			url.searchParams.delete("revid")
+			url.searchParams.delete("parser")
+		}
+		return url.toString()
+	} catch {
+		return urlString
+	}
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { FakeWiki } from "fakewiki"
 import type {
 	FWEditTypesDiffSummary,
+	FWStructuredDeltaCandidate,
 	FWStructuredDeltaResult,
 	FWStructuredDeltaSettings,
 } from "fakewiki/types"
@@ -105,6 +106,15 @@ export function useStructuredDeltas({
 		return structuredDeltasByRevId.value.get(revId)?.segments ?? null
 	}
 
+	function getHighlightedCandidates(revId: number): FWStructuredDeltaCandidate[] | null {
+		return structuredDeltasByRevId.value.get(revId)?.highlightedCandidates ?? null
+	}
+
+	/** All candidates (not limited by slider). Use for snippet lookup when snippets are enabled. */
+	function getCandidatesForSnippets(revId: number): FWStructuredDeltaCandidate[] | null {
+		return structuredDeltasByRevId.value.get(revId)?.candidates ?? null
+	}
+
 	function isMostSignificantLoading(revId: number): boolean {
 		return improvedDeltaEnabled.value && loadingEditTypesIds.value.has(revId)
 	}
@@ -141,6 +151,8 @@ export function useStructuredDeltas({
 		loadEditTypesSummaries,
 		resetStructuredDeltaState,
 		getMostSignificantSegments,
+		getHighlightedCandidates,
+		getCandidatesForSnippets,
 		isMostSignificantLoading,
 		getDeltaClassForRevision,
 	}
