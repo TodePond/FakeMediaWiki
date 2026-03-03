@@ -10,5 +10,10 @@
 import type { FWPredictionModel } from "fakewiki/types"
 import FlaggedWatchlistDualPredictions from "../FlaggedWatchlistDualPredictions/index.vue"
 
-const predictorModels: FWPredictionModel[] = ["damaging", "goodfaith", "revertrisk"]
+const predictorModels: FWPredictionModel[] = [
+	"damaging",
+	"goodfaith",
+	"revertrisk",
+	"revertrisk-multilingual",
+]
 </script>

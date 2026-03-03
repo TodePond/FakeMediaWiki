@@ -89,6 +89,10 @@ const damagingMap = await wiki.getDamagingPredictions([revId1, revId2])
 const goodfaithMap = await wiki.getGoodFaithPredictions([revId1, revId2])
 const predictions = await wiki.getRevisionPredictions([revId1, revId2]) // defaults to damaging+goodfaith
 const revertriskScores = await wiki.getRevisionPredictions([revId1, revId2], ["revertrisk"])
+const revertriskScoresMultilingual = await wiki.getRevisionPredictions(
+	[revId1, revId2],
+	["revertrisk-multilingual"]
+)
 const predictionsOres = await wiki.getRevisionPredictionsFromOres([revId1, revId2])
 ```
 

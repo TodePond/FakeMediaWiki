@@ -84,6 +84,12 @@ const DEFAULT_MODEL_THRESHOLDS: Record<FWPredictionModel, PredictionThresholdCon
 		upperLoose: 0.9,
 		upperTight: 0.95,
 	},
+	"revertrisk-multilingual": {
+		lowerTight: 0.3,
+		lowerLoose: 0.5,
+		upperLoose: 0.8,
+		upperTight: 0.9,
+	},
 }
 
 type PredictionBand = "error" | "loading" | "high" | "mediumHigh" | "mediumLow" | "low" | "neutral"
@@ -403,32 +409,73 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 			})
 		}
 
-		const revertriskBand = byModel.revertrisk
-		if (revertriskBand === "high") {
-			points.push({
-				model: "revertrisk",
-				text: withPercent("revertrisk", "This change has very high revert risk."),
-			})
-		} else if (revertriskBand === "mediumHigh") {
-			points.push({
-				model: "revertrisk",
-				text: withPercent("revertrisk", "This change has high revert risk."),
-			})
-		} else if (revertriskBand === "low") {
-			points.push({
-				model: "revertrisk",
-				text: withPercent("revertrisk", "This change has very low revert risk."),
-			})
-		} else if (revertriskBand === "mediumLow") {
-			points.push({
-				model: "revertrisk",
-				text: withPercent("revertrisk", "This change has low revert risk."),
-			})
-		} else if (revertriskBand === "neutral" && isDebugEnabled()) {
-			points.push({
-				model: "revertrisk",
-				text: withPercent("revertrisk", "This change has an unclear revert risk."),
-			})
+		const pushRevertRiskPoint = (
+			model: "revertrisk" | "revertrisk-multilingual",
+			band: PredictionBand,
+			labelPrefix?: string
+		): void => {
+			const prefix = labelPrefix ? `${labelPrefix} ` : "This change has "
+			if (band === "high") {
+				points.push({
+					model,
+					text: withPercent(model, `${prefix}very high revert risk.`),
+				})
+			} else if (band === "mediumHigh") {
+				points.push({
+					model,
+					text: withPercent(model, `${prefix}high revert risk.`),
+				})
+			} else if (band === "low") {
+				points.push({
+					model,
+					text: withPercent(model, `${prefix}very low revert risk.`),
+				})
+			} else if (band === "mediumLow") {
+				points.push({
+					model,
+					text: withPercent(model, `${prefix}low revert risk.`),
+				})
+			} else if (band === "neutral" && isDebugEnabled()) {
+				points.push({
+					model,
+					text: withPercent(model, `${prefix}an unclear revert risk.`),
+				})
+			}
+		}
+
+		const languageAgnosticBand = byModel.revertrisk
+		const multilingualBand = byModel["revertrisk-multilingual"]
+		if (isDebugEnabled()) {
+			if (languageAgnosticBand) {
+				pushRevertRiskPoint("revertrisk", languageAgnosticBand, "Language-agnostic model:")
+			}
+			if (multilingualBand) {
+				pushRevertRiskPoint(
+					"revertrisk-multilingual",
+					multilingualBand,
+					"Multilingual model:"
+				)
+			}
+		} else {
+			const availableBands: Array<{
+				model: "revertrisk" | "revertrisk-multilingual"
+				band: PredictionBand
+			}> = []
+			if (languageAgnosticBand) {
+				availableBands.push({ model: "revertrisk", band: languageAgnosticBand })
+			}
+			if (multilingualBand) {
+				availableBands.push({
+					model: "revertrisk-multilingual",
+					band: multilingualBand,
+				})
+			}
+			if (availableBands.length > 0) {
+				const worstBand = getWorstBand(availableBands.map(item => item.band))
+				const worstModel =
+					availableBands.find(item => item.band === worstBand)?.model ?? availableBands[0].model
+				pushRevertRiskPoint(worstModel, worstBand)
+			}
 		}
 
 		return points

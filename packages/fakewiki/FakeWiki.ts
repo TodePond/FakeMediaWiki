@@ -3106,6 +3106,9 @@ export class FakeWiki {
 		if (normalizedModel === "revertrisk") {
 			return "revertrisk-language-agnostic"
 		}
+		if (normalizedModel === "revertrisk-multilingual") {
+			return "revertrisk-multilingual"
+		}
 		return normalizedModel
 	}
 

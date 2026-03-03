@@ -70,8 +70,10 @@
 										:class="[
 											'prediction-icon',
 											{
-												'prediction-icon-loading':
-													getPredictionIcon(change.id, model).isLoading,
+												'prediction-icon-loading': getPredictionIcon(
+													change.id,
+													model
+												).isLoading,
 											},
 										]"
 										size="small"
@@ -259,8 +261,10 @@
 											:class="[
 												'prediction-card-icon',
 												{
-													'prediction-icon-loading':
-														getPredictionIcon(change.id, model).isLoading,
+													'prediction-icon-loading': getPredictionIcon(
+														change.id,
+														model
+													).isLoading,
 												},
 											]"
 											size="small"
@@ -702,7 +706,8 @@ const { getPredictionIcon, getPredictionDisplayProbabilityForModel } = usePredic
 
 function formatPredictionModelLabel(model: FWPredictionModel): string {
 	if (model === "goodfaith") return "Good faith"
-	if (model === "revertrisk") return "Revert risk"
+	if (model === "revertrisk") return "Revert risk (language-agnostic)"
+	if (model === "revertrisk-multilingual") return "Revert risk (multilingual)"
 	return model.charAt(0).toUpperCase() + model.slice(1)
 }
 

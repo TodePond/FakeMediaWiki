@@ -323,6 +323,7 @@ export type FWPredictionModel =
 	| "damaging"
 	| "goodfaith"
 	| "revertrisk"
+	| "revertrisk-multilingual"
 
 /** Prediction shape keyed by model slug (allows partial data per revision). */
 export type FWPredictionByModel = Partial<Record<FWPredictionModel, FWLiftWingPrediction>>

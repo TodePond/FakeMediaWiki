@@ -1,7 +1,7 @@
 <template>
 	<main class="flagged-watchlist">
 		<div class="watchlist-container">
-			<h1>Flagged watchlist</h1>
+			<h1>Flag watchlist</h1>
 			<form
 				@submit.prevent="search"
 				class="recommendation-watchlist-form watchlist-search-form"
@@ -56,14 +56,15 @@
 						<template v-if="!expandedItemIds.has(change.id)">
 							<div class="history-row">
 								<CdxIcon
-									v-if="getPredictionIcon(change.id).icon"
-									:icon="getPredictionIcon(change.id).icon!"
-									:style="{ color: getPredictionIcon(change.id).color }"
+									v-if="getWatchlistPredictionIcon(change.id).icon"
+									:icon="getWatchlistPredictionIcon(change.id).icon!"
+									:style="{ color: getWatchlistPredictionIcon(change.id).color }"
 									:class="[
 										'prediction-icon',
 										{
-											'prediction-icon-loading': getPredictionIcon(change.id)
-												.isLoading,
+											'prediction-icon-loading': getWatchlistPredictionIcon(
+												change.id
+											).isLoading,
 										},
 									]"
 									size="small"
@@ -239,6 +240,20 @@
 									v-if="getCombinedPredictionPoints(change.id)?.length"
 									class="prediction-card"
 								>
+									<div
+										v-if="shouldShowHelpMessage(change.id)"
+										class="prediction-card-point"
+									>
+										<CdxIcon
+											:icon="cdxIconHeart"
+											:style="{ color: 'var(--color-destructive)' }"
+											class="prediction-card-icon"
+											size="small"
+										/>
+										<span class="prediction-card-text">
+											The user might need help with this change
+										</span>
+									</div>
 									<div
 										v-for="point in getCombinedPredictionPoints(change.id)"
 										:key="`${change.id}-${point.model}-${point.text}`"
@@ -592,7 +607,13 @@
 
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
-import { cdxIconArrowNext, cdxIconArrowPrevious } from "@wikimedia/codex-icons"
+import {
+	cdxIconAlert,
+	cdxIconArrowNext,
+	cdxIconArrowPrevious,
+	cdxIconHeart,
+	cdxIconSuccess,
+} from "@wikimedia/codex-icons"
 import { FakeWiki, useFeed, usePredictions } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
@@ -681,9 +702,46 @@ const editorMode = ref<Map<number, "visual" | "source">>(new Map())
 const showPredictionDebug = ref(false)
 
 const { getPredictionIcon, getPredictionText, getCombinedPredictionPoints } = usePredictions(wiki, {
-	models: ["damaging", "goodfaith", "revertrisk"],
+	models: ["damaging", "goodfaith", "revertrisk", "revertrisk-multilingual"],
 	debug: showPredictionDebug,
 })
+
+function isGoodFaithForWatchlist(revisionId: number): boolean {
+	const goodfaithIcon = getPredictionIcon(revisionId, "goodfaith")
+	return (
+		!goodfaithIcon.isLoading &&
+		!goodfaithIcon.isError &&
+		goodfaithIcon.icon === cdxIconSuccess &&
+		goodfaithIcon.color === "var(--color-success)"
+	)
+}
+
+function isHighRevertRiskForWatchlist(revisionId: number): boolean {
+	const languageAgnosticIcon = getPredictionIcon(revisionId, "revertrisk")
+	const multilingualIcon = getPredictionIcon(revisionId, "revertrisk-multilingual")
+	const isHighBand = (iconState: {
+		isLoading: boolean
+		isError?: boolean
+		icon: unknown
+	}): boolean => !iconState.isLoading && !iconState.isError && iconState.icon === cdxIconAlert
+	return isHighBand(languageAgnosticIcon) || isHighBand(multilingualIcon)
+}
+
+function getWatchlistPredictionIcon(revisionId: number) {
+	const defaultIcon = getPredictionIcon(revisionId)
+	if (shouldShowHelpMessage(revisionId)) {
+		return {
+			icon: cdxIconHeart,
+			color: "var(--color-destructive)",
+			isLoading: false,
+		}
+	}
+	return defaultIcon
+}
+
+function shouldShowHelpMessage(revisionId: number): boolean {
+	return isGoodFaithForWatchlist(revisionId) && isHighRevertRiskForWatchlist(revisionId)
+}
 
 onMounted(() => {
 	search()

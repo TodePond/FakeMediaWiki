@@ -112,6 +112,7 @@
 	gap: 0.35rem;
 	margin-top: 0.75rem;
 	padding: 0.5rem 0.75rem;
+	padding-left: 0.65rem;
 	background-color: var(--background-color-subtle, #f8f9fa);
 	border: 1px solid var(--border-color-subtle);
 	border-radius: 2px;
