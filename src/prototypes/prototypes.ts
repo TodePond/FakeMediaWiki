@@ -540,7 +540,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		description: "Embedded visual editor.",
 		category: "editor",
 		wrapper: "Fullscreen",
-		title: "VisualEditor sandbox",
+		title: "Visual editor",
 		status: "new",
 	},
 	{
@@ -556,12 +556,11 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 	{
 		type: "prototype",
 		id: "ExpandingWatchlistVisualDiff",
-		name: "Expanding watchlist (visual diff)",
-		description:
-			"Expandable feed that shows VisualEditor-style visual diffs instead of wikitext diffs.",
+		name: "Visual diff feed",
+		description: "A feed of changes that shows visual inline diffs instead of wikitext diffs.",
 		category: "editor",
-		wrapper: "Special",
-		title: "Expanding watchlist (visual diff)",
+		wrapper: "Fullscreen",
+		title: "Visual diff feed",
 		status: "new",
 	},
 	{

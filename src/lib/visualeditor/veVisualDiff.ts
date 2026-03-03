@@ -26,9 +26,9 @@ function normalizeHtmlForVisualDiff(html: string): string {
 		"data-mw",
 		"data-ve-attributes",
 		"id",
-		"about",   // Parsoid template/node ids (#mwt1, etc.) can differ between revisions
-		"rel",     // RDFa; ordering or values can vary
-		"typeof",  // RDFa type; can vary by revision
+		"about", // Parsoid template/node ids (#mwt1, etc.) can differ between revisions
+		"rel", // RDFa; ordering or values can vary
+		"typeof", // RDFa type; can vary by revision
 		"resource", // RDFa resource URI; often revision-specific
 	]
 	doc.querySelectorAll("*").forEach(el => {
@@ -54,19 +54,11 @@ function normalizeHtmlForVisualDiff(html: string): string {
  * Normalizes both HTML strings before diffing to reduce spurious "all links changed" noise.
  * Accepts empty string for one side (e.g. first revision = all add, or all remove).
  *
- * Note: The "Template parameters changed" sidebar (template changes listed on the right) is
- * implemented by the MediaWiki VisualEditor extension, not core VE. Our vendored bundle is
- * core-only, so template changes appear as full old/new blocks. To get the sidebar behavior,
- * use a VE build that includes the MediaWiki extension (see public/ve/README.md).
- *
  * @param oldHtml - HTML of the older revision (or removed content); may be empty
  * @param newHtml - HTML of the newer revision (or added content); may be empty
  * @returns HTML string of the visual diff (suitable for v-html or dynamic placement)
  */
-export async function renderVisualDiffToHtml(
-	oldHtml: string,
-	newHtml: string
-): Promise<string> {
+export async function renderVisualDiffToHtml(oldHtml: string, newHtml: string): Promise<string> {
 	await whenVePlatformReady()
 	const ve = window.ve
 	if (!ve) return ""
