@@ -81,6 +81,7 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 	getPageHero: { resultHint: "image" },
 	getUserAvatar: { resultHint: "image" },
 	getPageHtml: { resultHint: "code" },
+	getRevisionHtml: { resultHint: "code" },
 	getPageSource: { resultHint: "code" },
 	getPageMobileHtml: { resultHint: "code" },
 	getRevisionSource: { resultHint: "code" },

@@ -129,6 +129,12 @@ export class FakeWiki {
 	 */
 	private topRelatedChangesCache = new Map<string, FWTopRelatedChange[]>()
 
+	/**
+	 * Cache for revision HTML by page and revision id.
+	 * key = `${pageName}|${revId}`, value = HTML string
+	 */
+	private revisionHtmlCache = new Map<string, string>()
+
 	/** Base URL for the edit-types API (edit-types.wmcloud.org). */
 	private readonly editTypesBase = "https://edit-types.wmcloud.org"
 
@@ -567,6 +573,39 @@ export class FakeWiki {
 			path: `page/${this.encodeForUrl(pageName)}/html`,
 			type: "text",
 		})) as string
+	}
+
+	/**
+	 * Get HTML for a specific revision.
+	 * Uses the MediaWiki REST API endpoint: GET revision/{id}/html.
+	 * Falls back to the Wikimedia REST API page/html/{title}/{revision} if the first request fails.
+	 * Uses caching to avoid re-fetching the same revision.
+	 * @param pageName - Page title (used for Wikimedia fallback and for API compatibility)
+	 * @param revId - Revision ID
+	 * @returns HTML content for that revision
+	 */
+	async getRevisionHtml(pageName: string, revId: number): Promise<string> {
+		const key = String(revId)
+		const cached = this.revisionHtmlCache.get(key)
+		if (cached !== undefined) return cached
+		try {
+			const html = (await this.request({
+				api: "mediawiki",
+				path: `revision/${revId}/html`,
+				type: "text",
+			})) as string
+			this.revisionHtmlCache.set(key, html)
+			return html
+		} catch {
+			// Fallback: Wikimedia REST API page/html/{title}/{revision} (same Parsoid HTML)
+			const html = (await this.request({
+				api: "wikimedia",
+				path: `page/html/${this.encodeForUrl(pageName)}/${revId}`,
+				type: "text",
+			})) as string
+			this.revisionHtmlCache.set(key, html)
+			return html
+		}
 	}
 
 	/**

@@ -1,0 +1,29 @@
+/* Unscoped: comment content and visual diff (scoped to this prototype) */
+.expanding-watchlist-visual-diff .history-comment p {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.expanding-watchlist-visual-diff .history-comment section {
+	display: inline;
+	line-height: var(--line-height-content);
+}
+
+.expanding-watchlist-visual-diff .history-comment-expanded p {
+	display: block;
+	line-height: var(--line-height-content);
+	margin: 0;
+}
+
+.expanding-watchlist-visual-diff .history-comment-expanded section {
+	display: block;
+	line-height: var(--line-height-content);
+}
+
+.expanding-watchlist-visual-diff [data-diff-action="none"] {
+	display: none;
+}
+
+.expanding-watchlist-visual-diff .ve-ui-diffElement-spacer {
+	display: none;
+}

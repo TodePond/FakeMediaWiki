@@ -36,11 +36,11 @@ export const wrappers: PrototypeTypes.WrapperDefinition[] = [
 export const categories: PrototypeTypes.CategoryDefinition[] = [
 	{
 		id: "editor",
-		name: "Editor",
-		description: "VisualEditor and diff prototypes for rich editing and comparison.",
+		name: "Visual editor",
+		description: "Prototypes experimenting with the visual editor.",
 	},
 	{
-		id: "changeTypes",
+		id: "changetypes",
 		name: "Change types",
 		description: "Feeds enriched with structured change information.",
 	},
@@ -301,7 +301,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		title: "Structured deltas",
 		name: "Structured deltas",
 		description: "A watchlist with more helpful deltas.",
-		category: "changeTypes",
+		category: "changetypes",
 		wrapper: "Fullscreen",
 		featured: true,
 		status: "new",
@@ -312,7 +312,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		title: "Change types",
 		name: "Change types",
 		description: "A watchlist that shows information about changes when clicked on.",
-		category: "changeTypes",
+		category: "changetypes",
 		wrapper: "Fullscreen",
 		featured: true,
 		status: "new",
@@ -551,6 +551,17 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		category: "editor",
 		wrapper: "Fullscreen",
 		title: "Visual diff",
+		status: "new",
+	},
+	{
+		type: "prototype",
+		id: "ExpandingWatchlistVisualDiff",
+		name: "Expanding watchlist (visual diff)",
+		description:
+			"Expandable feed that shows VisualEditor-style visual diffs instead of wikitext diffs.",
+		category: "editor",
+		wrapper: "Special",
+		title: "Expanding watchlist (visual diff)",
 		status: "new",
 	},
 	{

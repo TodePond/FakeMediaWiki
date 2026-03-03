@@ -46,3 +46,9 @@ npm run update-ve -- /path/to/VisualEditor
 4. Commit the updated `public/ve/` contents.
 
 After this, the app will load `/ve/dist/visualEditor.js`, `/ve/lib/...`, etc. from this tree. No dependency on a local VisualEditor clone.
+
+## Template diff sidebar ("Template parameters changed")
+
+The right-hand sidebar that lists template parameter changes (instead of showing full old/new template blocks) is implemented by the **MediaWiki VisualEditor extension**, not by core VisualEditor. The extension registers a handler with `ve.ui.metaListDiffRegistry` and provides node types that put templates in the document's meta list.
+
+The build from the VisualEditor repo (steps above) is core-only, so template changes appear as full blocks. To get the sidebar behavior you would need a bundle that includes the MediaWiki extension (e.g. building from a MediaWiki installation's `extensions/VisualEditor` and its dependencies, or a custom combined build). The core diff component supports it; the missing piece is the extension code that registers the handler and populates the meta list for templates.

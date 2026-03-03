@@ -23,6 +23,10 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getPageHtml", description: "Get page content as HTML", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
+  { name: "getRevisionHtml", description: "Get HTML for a specific revision of a page.\nUses caching to avoid re-fetching the same revision.", category: undefined, params: [
+      { key: "pageName", description: "Page title" },
+      { key: "revId", description: "Revision ID" }
+  ] },
   { name: "getPageSource", description: "Get page content as wikitext source", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
@@ -67,16 +71,16 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID (we want the revision immediately older than this)" }
   ] },
-  { name: "compareRevisions", description: "Compare two revisions", category: undefined, params: [
-      { key: "fromRevId", description: "Source revision ID (older)" },
-      { key: "toRevId", description: "Target revision ID (newer)" }
-  ] },
   { name: "getRevisionSource", description: "Get wikitext source for a revision by ID.", category: undefined, params: [
       { key: "revId", description: "Revision ID" }
   ] },
-  { name: "getRevisionDiff", description: "Get diff for a revision by comparing it with its parent (previous) revision.\nWhen there is no parent (e.g. first revision), returns a synthetic diff where\nevery line is shown as added.", category: undefined, params: [
+  { name: "getDiffSource", description: "Get source diff for a revision by comparing it with its parent (previous) revision.\nWhen there is no parent (e.g. first revision), returns a synthetic diff where\nevery line is shown as added.", category: undefined, params: [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID to diff" }
+  ] },
+  { name: "getRevisionDiff", description: undefined, category: undefined, params: [
+      { key: "pageName" },
+      { key: "revId" }
   ] },
   { name: "getDiffLineSegments", description: "Split a diff line into character-level highlight segments.\nConverts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.", category: undefined, params: [
       { key: "line", description: "Diff line from compare API" }
