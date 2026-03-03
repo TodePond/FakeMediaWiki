@@ -252,7 +252,7 @@ export function useChangeTypesWatchlist(options: UseChangeTypesWatchlistOptions)
 		const pageName = change.pageName
 		if (!pageName) return
 		loadingDiffIds.value = new Set(loadingDiffIds.value).add(id)
-		wiki.getRevisionDiff(pageName, id)
+		wiki.getDiffSource(pageName, id)
 			.then(response => {
 				loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
 				loadingDiffIds.value = new Set(loadingDiffIds.value)
@@ -312,7 +312,7 @@ export function useChangeTypesWatchlist(options: UseChangeTypesWatchlistOptions)
 		if (expanded) return
 		if (loadedDiffs.value.has(id)) return
 		loadingDiffIds.value = new Set(loadingDiffIds.value).add(id)
-		wiki.getRevisionDiff(pageName, id)
+		wiki.getDiffSource(pageName, id)
 			.then(response => {
 				loadedDiffs.value = new Map(loadedDiffs.value).set(id, response)
 				loadingDiffIds.value = new Set(loadingDiffIds.value)

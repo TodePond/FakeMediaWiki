@@ -1178,7 +1178,7 @@ function ensureDiffLoaded(change: Pick<FWRevision, "id" | "pageName">): void {
 	const page = change.pageName
 	if (!page) return
 	loadingDiffIds.value = new Set(loadingDiffIds.value).add(change.id)
-	wiki.getRevisionDiff(page, change.id)
+	wiki.getDiffSource(page, change.id)
 		.then(response => {
 			loadedDiffs.value = new Map(loadedDiffs.value).set(change.id, response)
 			loadingDiffIds.value = new Set(loadingDiffIds.value)

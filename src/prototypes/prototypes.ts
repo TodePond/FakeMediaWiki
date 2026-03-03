@@ -217,7 +217,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		type: "prototype",
 		id: "MaximalistFlagWatchlist",
 		name: "Multiple flag watchlist",
-		description: "A feed with flags for seven LiftWing prediction models.",
+		description: "A feed with flags from multiple prediction models.",
 		category: "flagging",
 		wrapper: "Fullscreen",
 		title: "Multiple flag watchlist",

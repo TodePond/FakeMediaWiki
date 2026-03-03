@@ -454,7 +454,7 @@ async function loadDiffForRevision(
 ): Promise<void> {
 	if (!revision.pageName) return
 	try {
-		const response = await wiki.getRevisionDiff(revision.pageName, revision.id)
+		const response = await wiki.getDiffSource(revision.pageName, revision.id)
 		const revIndex = resultRef.value.data.findIndex(r => r.id === revision.id)
 		if (revIndex !== -1 && resultRef.value.data[revIndex]) {
 			resultRef.value.data[revIndex]!.diff = response

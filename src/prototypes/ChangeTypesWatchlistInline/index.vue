@@ -949,38 +949,6 @@ const _legacyDetailsHelpers = [
 ]
 void _legacyDetailsHelpers
 
-function loadEditTypesDetails(revId: number): void {
-	if (editTypesDetailsByRevId.value.has(revId) || detailsErrorByRevId.value.has(revId)) return
-	loadingDetailsIds.value = new Set(loadingDetailsIds.value).add(revId)
-	wiki.getEditTypesDetails(revId)
-		.then(details => {
-			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(
-				revId,
-				details
-			)
-			detailsErrorByRevId.value = new Map(detailsErrorByRevId.value)
-			detailsErrorByRevId.value.delete(revId)
-			loadingDetailsIds.value = new Set(loadingDetailsIds.value)
-			loadingDetailsIds.value.delete(revId)
-			const sections = getDetailsSections(details)
-			collapsedDetailsSectionKeys.value = new Set(collapsedDetailsSectionKeys.value)
-			collapsedDetailsItemKeys.value = new Set(collapsedDetailsItemKeys.value)
-			for (const section of sections) {
-				collapsedDetailsSectionKeys.value.add(detailsSectionKey(revId, section.key))
-				section.items.forEach((_, idx) =>
-					collapsedDetailsItemKeys.value.add(detailsItemKey(revId, section.key, idx))
-				)
-			}
-		})
-		.catch(e => {
-			const msg = e instanceof Error ? e.message : String(e)
-			detailsErrorByRevId.value = new Map(detailsErrorByRevId.value).set(revId, msg)
-			editTypesDetailsByRevId.value = new Map(editTypesDetailsByRevId.value).set(revId, null)
-			loadingDetailsIds.value = new Set(loadingDetailsIds.value)
-			loadingDetailsIds.value.delete(revId)
-		})
-}
-
 function resetEditTypesState(): void {
 	resetStructuredDeltaState()
 	editTypesDetailsByRevId.value = new Map()
@@ -993,7 +961,6 @@ function resetEditTypesState(): void {
 
 function onExpandItem(change: FWRevision): void {
 	loadEditTypesSummary(change.id)
-	loadEditTypesDetails(change.id)
 }
 
 const watchlist = useChangeTypesWatchlist({

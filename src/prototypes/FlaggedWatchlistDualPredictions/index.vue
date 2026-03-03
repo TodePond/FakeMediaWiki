@@ -993,7 +993,7 @@ function ensureDiffLoaded(change: Pick<FWRevision, "id" | "pageName">): void {
 	}
 	loadingDiffIds.value = new Set(loadingDiffIds.value)
 	loadingDiffIds.value.add(change.id)
-	wiki.getRevisionDiff(pageName, change.id)
+	wiki.getDiffSource(pageName, change.id)
 		.then(response => {
 			loadedDiffs.value = new Map(loadedDiffs.value).set(change.id, response)
 			loadingDiffIds.value = new Set(loadingDiffIds.value)

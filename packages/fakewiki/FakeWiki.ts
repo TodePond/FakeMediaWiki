@@ -1037,12 +1037,15 @@ export class FakeWiki {
 	}
 
 	/**
-	 * Compare two revisions
+	 * Compare two revisions via REST API and return source/line diff data.
 	 * @param fromRevId - Source revision ID (older)
 	 * @param toRevId - Target revision ID (newer)
-	 * @returns Diff between revisions
+	 * @returns Source diff between revisions
 	 */
-	async compareRevisions(fromRevId: number, toRevId: number): Promise<FWCompareResponse> {
+	private async getDiffSourceBetweenRevisions(
+		fromRevId: number,
+		toRevId: number
+	): Promise<FWCompareResponse> {
 		return (await this.request({
 			api: "mediawiki",
 			path: `revision/${fromRevId}/compare/${toRevId}`,
@@ -1063,16 +1066,16 @@ export class FakeWiki {
 	}
 
 	/**
-	 * Get diff for a revision by comparing it with its parent (previous) revision.
+	 * Get source diff for a revision by comparing it with its parent (previous) revision.
 	 * When there is no parent (e.g. first revision), returns a synthetic diff where
 	 * every line is shown as added.
 	 * @param pageName - Page title
 	 * @param revId - Revision ID to diff
-	 * @returns Diff from parent to this revision, or a full-content "all added" diff when there is no parent
+	 * @returns Source diff from parent to this revision, or a full-content "all added" diff when there is no parent
 	 */
-	async getRevisionDiff(pageName: string, revId: number): Promise<FWCompareResponse> {
+	async getDiffSource(pageName: string, revId: number): Promise<FWCompareResponse> {
 		const parentId = await this.getParentRevisionId(pageName, revId)
-		if (parentId != null) return this.compareRevisions(parentId, revId)
+		if (parentId != null) return this.getDiffSourceBetweenRevisions(parentId, revId)
 		// No parent: treat as first revision and show entire content as added.
 		const source = await this.getRevisionSource(revId)
 		const lines = source.split(/\n/)
@@ -1086,6 +1089,13 @@ export class FakeWiki {
 			to: { id: revId },
 			diff,
 		}
+	}
+
+	/**
+	 * @deprecated Use getDiffSource(pageName, revId) instead.
+	 */
+	async getRevisionDiff(pageName: string, revId: number): Promise<FWCompareResponse> {
+		return this.getDiffSource(pageName, revId)
 	}
 
 	/**
@@ -3110,8 +3120,9 @@ export class FakeWiki {
 		const wikiCode = wiki || this.getWikiCode()
 		const normalizedModel = this.normalizePredictionModel(model)
 		const endpointModel = this.getPredictionEndpointModel(normalizedModel)
-		const modelName =
-			endpointModel.startsWith("revertrisk-") ? endpointModel : `${wikiCode}-${endpointModel}`
+		const modelName = endpointModel.startsWith("revertrisk-")
+			? endpointModel
+			: `${wikiCode}-${endpointModel}`
 		const requestBody: Record<string, unknown> = { rev_id: revisionId }
 		if (endpointModel.startsWith("revertrisk-")) {
 			requestBody.lang = this.getEditTypesLang(wikiCode)
@@ -3157,7 +3168,14 @@ export class FakeWiki {
 			if (scoreEntry?.score) {
 				return scoreEntry.score
 			}
-			const output = (data as { output?: { prediction?: boolean | string; probabilities?: Record<string, number | undefined> } }).output
+			const output = (
+				data as {
+					output?: {
+						prediction?: boolean | string
+						probabilities?: Record<string, number | undefined>
+					}
+				}
+			).output
 			if (output?.prediction !== undefined && output.probabilities) {
 				return {
 					prediction: output.prediction,
@@ -3187,7 +3205,9 @@ export class FakeWiki {
 		wiki?: string
 	): Promise<FWRevisionPredictions> {
 		const combined: FWRevisionPredictions = {}
-		const normalizedModels = [...new Set(models.map(model => this.normalizePredictionModel(model)))]
+		const normalizedModels = [
+			...new Set(models.map(model => this.normalizePredictionModel(model))),
+		]
 		if (revisionIds.length === 0 || normalizedModels.length === 0) {
 			return combined
 		}

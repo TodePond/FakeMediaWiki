@@ -77,8 +77,10 @@ const DEFAULT_MODEL_THRESHOLDS: Record<FWPredictionModel, PredictionThresholdCon
 	damaging: { ...DEFAULT_GLOBAL_THRESHOLDS },
 	goodfaith: { ...DEFAULT_GLOBAL_THRESHOLDS },
 	revertrisk: {
-		lowerTight: 0.4,
-		lowerLoose: 0.6,
+		// lowerTight: 0.4,
+		// lowerLoose: 0.6,
+		lowerTight: 0.5,
+		lowerLoose: 0.8,
 		upperLoose: 0.9,
 		upperTight: 0.95,
 	},
@@ -405,22 +407,22 @@ export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) 
 		if (revertriskBand === "high") {
 			points.push({
 				model: "revertrisk",
-				text: withPercent("revertrisk", "This change will probably get reverted."),
+				text: withPercent("revertrisk", "This change has very high revert risk."),
 			})
 		} else if (revertriskBand === "mediumHigh") {
 			points.push({
 				model: "revertrisk",
-				text: withPercent("revertrisk", "This change might get reverted."),
+				text: withPercent("revertrisk", "This change has high revert risk."),
 			})
 		} else if (revertriskBand === "low") {
 			points.push({
 				model: "revertrisk",
-				text: withPercent("revertrisk", "This change probably won't get reverted."),
+				text: withPercent("revertrisk", "This change has very low revert risk."),
 			})
 		} else if (revertriskBand === "mediumLow") {
 			points.push({
 				model: "revertrisk",
-				text: withPercent("revertrisk", "This change might not get reverted."),
+				text: withPercent("revertrisk", "This change has low revert risk."),
 			})
 		} else if (revertriskBand === "neutral" && isDebugEnabled()) {
 			points.push({
