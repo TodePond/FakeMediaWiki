@@ -35,6 +35,11 @@ export const wrappers: PrototypeTypes.WrapperDefinition[] = [
 // Define categories with their descriptions in display order
 export const categories: PrototypeTypes.CategoryDefinition[] = [
 	{
+		id: "editor",
+		name: "Editor",
+		description: "VisualEditor and diff prototypes for rich editing and comparison.",
+	},
+	{
 		id: "changeTypes",
 		name: "Change types",
 		description: "Feeds enriched with structured change information.",
@@ -527,6 +532,26 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		category: "api",
 		wrapper: "Component",
 		title: "Wikitext transform",
+	},
+	{
+		type: "prototype",
+		id: "VisualEditorSandbox",
+		name: "Visual editor",
+		description: "Embedded visual editor.",
+		category: "editor",
+		wrapper: "Fullscreen",
+		title: "VisualEditor sandbox",
+		status: "new",
+	},
+	{
+		type: "prototype",
+		id: "VisualDiff",
+		name: "Visual diff",
+		description: "Compare two snippets with the visual editor's diff view.",
+		category: "editor",
+		wrapper: "Fullscreen",
+		title: "Visual diff",
+		status: "new",
 	},
 	{
 		type: "prototype",

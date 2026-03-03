@@ -107,3 +107,7 @@ p {
 .history-comment a {
 	color: var(--color-progressive) !important;
 }
+
+ins {
+	font-weight: bold;
+}

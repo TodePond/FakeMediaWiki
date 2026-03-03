@@ -18,6 +18,7 @@
     "lint": "eslint . --fix --cache && npm run type-check",
     "type-check": "vue-tsc --noEmit",
     "format": "prettier --write src/",
+    "update-ve": "bash scripts/update-ve.sh",
     "publish": "npm publish -w fakewiki --access public"
   },
   "dependencies": {

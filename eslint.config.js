@@ -28,7 +28,7 @@ export default defineConfig([
 		},
 	},
 
-	globalIgnores(["**/dist/**", "**/dist-ssr/**", "**/coverage/**"]),
+	globalIgnores(["**/dist/**", "**/dist-ssr/**", "**/coverage/**", "public/ve/**"]),
 
 	{
 		files: ["**/*.{js,mjs,jsx}"],

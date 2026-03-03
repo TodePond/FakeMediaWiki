@@ -1,0 +1,5 @@
+/* VisualEditor sandbox - additional styles if needed */
+.visualeditor-sandbox .error {
+	color: var(--color-destructive, #b32424);
+	margin-top: 0.5rem;
+}
