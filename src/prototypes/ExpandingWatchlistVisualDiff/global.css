@@ -64,3 +64,44 @@
 .source-diff-raw .ve-ui-diffElement-spacer {
 	display: block;
 }
+
+/* Hide only the alien-node annotation (puzzle icon + "source mode" text), not the content it labels. */
+.expanding-watchlist-visual-diff .history-inline-edit .ve-ce-focusableNode-invisibleIcon {
+	display: none !important;
+}
+.expanding-watchlist-visual-diff
+	.history-inline-edit
+	.ve-ce-focusableNode-invisibleIcon
+	.oo-ui-labelElement-label {
+	display: none !important;
+}
+
+/* Prevent image captions from collapsing into a thin column in the VE: give the figure a minimum width so the caption has room to flow, without forcing full-width layout. */
+.expanding-watchlist-visual-diff .history-inline-edit figure {
+	/* width: ; */
+	/* display: flex !important; */
+	/* flex-direction: column !important; */
+	/* align-items: center !important; */
+	max-width: 260px;
+	/* align-items: center; */
+}
+
+.expanding-watchlist-visual-diff .history-inline-edit figure img {
+	/* max-width: calc(100% - 6px) !important; */
+}
+
+.expanding-watchlist-visual-diff .history-inline-edit figcaption {
+	/* min-width: 256px; */
+	/* width: 100% !important; */
+	/* max-width: 50% !important; */
+	/* max-width: 50%; */
+	/* display: inline-block; */
+	/* flex-grow: 1; */
+	/* min-width: 0; */
+	width: 260px;
+	/* width: 0px; */
+}
+
+.expanding-watchlist-visual-diff .history-inline-edit figure {
+	width: fit-content;
+}

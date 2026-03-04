@@ -481,6 +481,20 @@ a.history-delta.neutral:active {
 	margin-top: 0;
 }
 
+.history-inline-edit {
+	margin-top: 0;
+}
+
+.history-inline-edit-editor {
+	margin-top: 0.5rem;
+	min-height: 12rem;
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	overflow: hidden;
+	/* max-height: 25rem; */
+	background-color: var(--background-color-base);
+}
+
 .talk-editor {
 	margin-top: 0.5rem;
 	border-radius: 2px;

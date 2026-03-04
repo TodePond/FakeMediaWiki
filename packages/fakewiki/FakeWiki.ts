@@ -3038,10 +3038,19 @@ export class FakeWiki {
 	/**
 	 * Get URL for editing a page
 	 * @param pageName - Page title
+	 * @param sectionTitle - Optional section name (e.g. from edit summary like \/* Section *\/); appended as fragment #Section_title so the editor can open at that section
 	 * @returns URL to edit page
 	 */
-	getEditUrl(pageName: string): string {
-		return `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&action=edit`
+	getEditUrl(pageName: string, sectionTitle?: string): string {
+		const url = `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&action=edit`
+		if (sectionTitle?.trim()) {
+			// MediaWiki-style section fragment: heading "Foo bar" -> #Foo_bar
+			const fragment = sectionTitle
+				.trim()
+				.replace(/\s+/g, "_")
+			return `${url}#${encodeURIComponent(fragment)}`
+		}
+		return url
 	}
 
 	/**

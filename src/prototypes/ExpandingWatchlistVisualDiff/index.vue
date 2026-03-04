@@ -191,6 +191,17 @@
 													: "(thank)"
 											}}
 										</button>
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-active':
+													expandedEditIds.has(change.id),
+											}"
+											@click.stop="toggleEdit(change)"
+										>
+											(edit)
+										</button>
 									</div>
 									<div class="history-action-buttons-right">
 										<button
@@ -298,6 +309,23 @@
 										Add topic
 									</CdxButton>
 								</div>
+							</div>
+						</div>
+						<div
+							v-if="expandedEditIds.has(change.id)"
+							class="history-inline-edit"
+						>
+							<div
+								v-if="loadingEditIds.has(change.id)"
+								class="history-diff-loading"
+							>
+								<CdxProgressBar inline />
+							</div>
+							<div
+								v-else-if="loadedEditHtml.has(change.id)"
+								class="history-inline-edit-editor"
+							>
+								<VisualEditor :initial-html="loadedEditHtml.get(change.id)!" />
 							</div>
 						</div>
 						<div
@@ -433,6 +461,7 @@
 
 <script setup lang="ts">
 import VisualDiff from "@/components/VisualDiff/VisualDiff.vue"
+import VisualEditor from "@/components/VisualEditor/VisualEditor.vue"
 import { whenVePlatformReady } from "@/lib/visualeditor/loadVe"
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
@@ -531,6 +560,13 @@ const expandedTalkIds = ref<Set<number>>(new Set())
 const talkPageText = ref<Map<number, string>>(new Map())
 /** Current editor mode: 'visual' or 'source' */
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
+
+/** Which revision ids have the inline edit panel expanded */
+const expandedEditIds = ref<Set<number>>(new Set())
+/** Revision ids currently loading edit content */
+const loadingEditIds = ref<Set<number>>(new Set())
+/** Loaded HTML for inline edit (full page or section) keyed by revision id */
+const loadedEditHtml = ref<Map<number, string>>(new Map())
 
 /** Revision ids that have been "thanked" (mock) */
 const thankedRevisionIds = ref<Set<number>>(new Set())
@@ -1147,6 +1183,7 @@ function collapseItem(id: number): void {
 	expandedSourceDiffIds.value.delete(id)
 	expandedHistoryIds.value.delete(id)
 	expandedTalkIds.value.delete(id)
+	expandedEditIds.value.delete(id)
 }
 
 function handleItemClick(change: FWRevision, event: MouseEvent): void {
@@ -1173,6 +1210,8 @@ function toggleDiff(change: FWRevision): void {
 	expandedHistoryIds.value.delete(id)
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
 	expandedTalkIds.value.delete(id)
+	expandedEditIds.value = new Set(expandedEditIds.value)
+	expandedEditIds.value.delete(id)
 	if (loadedVisualDiffs.value.has(id) || firstRevisionIds.value.has(id)) return
 	const pageName = change.pageName
 	if (!pageName) return
@@ -1222,6 +1261,8 @@ function toggleSourceDiff(change: FWRevision): void {
 	expandedHistoryIds.value.delete(id)
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
 	expandedTalkIds.value.delete(id)
+	expandedEditIds.value = new Set(expandedEditIds.value)
+	expandedEditIds.value.delete(id)
 	if (loadedSourceDiffHtml.value.has(id)) return
 	const pageName = change.pageName
 	if (!pageName) return
@@ -1340,6 +1381,8 @@ function toggleHistory(change: FWRevision): void {
 	expandedSourceDiffIds.value.delete(id)
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
 	expandedTalkIds.value.delete(id)
+	expandedEditIds.value = new Set(expandedEditIds.value)
+	expandedEditIds.value.delete(id)
 	if (loadedHistories.value.has(pageName)) return
 	loadingHistoryPageNames.value = new Set(loadingHistoryPageNames.value)
 	loadingHistoryPageNames.value.add(pageName)
@@ -1401,6 +1444,81 @@ function getItemZIndex(dateKey: string, changeIndex: number): number {
 	return 10 + cumulativeIndex + changeIndex
 }
 
+/** Extract section name from edit summary, e.g. "slash-star Foo slash-star" -> "Foo". Returns undefined if not present. */
+function sectionFromEditSummary(comment: string | undefined | null): string | undefined {
+	if (!comment?.trim()) return undefined
+	const match = comment.match(/\/\*\s*([^*]+)\s*\*\//)
+	return match ? match[1].trim() || undefined : undefined
+}
+
+/** Split wikitext into sections by level-2 headers (== Title ==). Lead is first with title "". */
+function parseSections(wikitext: string): { title: string; wikitext: string }[] {
+	const sections: { title: string; wikitext: string }[] = []
+	const parts = wikitext.split(/(\n==\s*.+?\s*==\s*$)/gm)
+	const lead = parts[0]?.trim() ?? ""
+	if (lead) sections.push({ title: "", wikitext: lead })
+	for (let i = 1; i < parts.length; i += 2) {
+		const headerLine = parts[i]
+		const content = parts[i + 1]?.trim() ?? ""
+		if (!headerLine) continue
+		const match = headerLine.match(/==\s*(.+?)\s*==\s*$/)
+		const title = match ? match[1].trim() : ""
+		if (title || content) sections.push({ title, wikitext: content })
+	}
+	return sections
+}
+
+async function getEditContentHtml(change: FWRevision): Promise<string> {
+	const sectionTitle = sectionFromEditSummary(change.comment)
+	const pageName = change.pageName!
+	if (!sectionTitle) {
+		return wiki.getRevisionHtml(pageName, change.id)
+	}
+	const source = await wiki.getRevisionSource(change.id)
+	const sections = parseSections(source)
+	const want = sectionTitle.trim().toLowerCase()
+	const matched = sections.find(
+		s => s.title.trim().toLowerCase() === want
+	)
+	if (matched) {
+		return wiki.transformWikitextToHtml(matched.wikitext, pageName)
+	}
+	return wiki.getRevisionHtml(pageName, change.id)
+}
+
+function toggleEdit(change: FWRevision): void {
+	const id = change.id
+	const expanded = expandedEditIds.value.has(id)
+	if (expanded) {
+		expandedEditIds.value = new Set(expandedEditIds.value)
+		expandedEditIds.value.delete(id)
+		return
+	}
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.delete(id)
+	expandedSourceDiffIds.value = new Set(expandedSourceDiffIds.value)
+	expandedSourceDiffIds.value.delete(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.delete(id)
+	expandedEditIds.value = new Set(expandedEditIds.value)
+	expandedEditIds.value.add(id)
+	if (loadedEditHtml.value.has(id)) return
+	loadingEditIds.value = new Set(loadingEditIds.value).add(id)
+	getEditContentHtml(change)
+		.then(html => {
+			loadedEditHtml.value = new Map(loadedEditHtml.value).set(id, html)
+		})
+		.finally(() => {
+			loadingEditIds.value = new Set(loadingEditIds.value)
+			loadingEditIds.value.delete(id)
+		})
+		.catch(e => {
+			console.error("Failed to load edit content", e)
+		})
+}
+
 function toggleTalk(change: FWRevision): void {
 	const id = change.id
 	const expanded = expandedTalkIds.value.has(id)
@@ -1417,6 +1535,8 @@ function toggleTalk(change: FWRevision): void {
 	expandedSourceDiffIds.value.delete(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
+	expandedEditIds.value = new Set(expandedEditIds.value)
+	expandedEditIds.value.delete(id)
 	// Initialize text content and editor mode if not already set
 	if (!talkPageText.value.has(id)) {
 		talkPageText.value = new Map(talkPageText.value).set(id, "")
