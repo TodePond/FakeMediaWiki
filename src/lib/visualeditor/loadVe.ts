@@ -3,7 +3,17 @@
  * Injects script/link tags when first needed and returns a promise when window.ve is ready.
  */
 
-const VE_BASE = "/ve"
+function getVeBase(): string {
+	const rawBaseUrl = import.meta.env.BASE_URL ?? "/"
+	const withLeadingSlash = rawBaseUrl.startsWith("/") ? rawBaseUrl : `/${rawBaseUrl}`
+	const normalizedBaseUrl = withLeadingSlash.endsWith("/")
+		? withLeadingSlash.slice(0, -1)
+		: withLeadingSlash
+
+	return `${normalizedBaseUrl}/ve`
+}
+
+const VE_BASE = getVeBase()
 
 const STYLES = [
 	`${VE_BASE}/lib/oojs-ui/oojs-ui-wikimediaui.css`,
@@ -45,7 +55,8 @@ let platformPromise: Promise<void> | null = null
 
 function loadStyles(): Promise<void> {
 	return new Promise((resolve, reject) => {
-		if (document.querySelector('link[href*="/ve/dist/visualEditor-wikimediaui.css"]')) {
+		const visualEditorStylesHref = `${VE_BASE}/dist/visualEditor-wikimediaui.css`
+		if (document.querySelector(`link[href*="${visualEditorStylesHref}"]`)) {
 			resolve()
 			return
 		}
