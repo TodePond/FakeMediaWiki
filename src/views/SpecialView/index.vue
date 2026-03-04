@@ -63,7 +63,7 @@
 				</a>
 			</span>
 			</header>
-			<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+			<component v-if="PrototypeComponent" :is="PrototypeComponent" :key="prototypeName" />
 			<p v-else>Prototype "{{ prototypeName }}" not found</p>
 		</div>
 	</div>
@@ -82,23 +82,15 @@ import {
 	cdxIconUserAvatar,
 	cdxIconWatchlist,
 } from "@wikimedia/codex-icons"
-import type { Component } from "vue"
-import { computed, ref, shallowRef, watch } from "vue"
+import { computed } from "vue"
 import { useRoute } from "vue-router"
 import { getPrototype, getPrototypeComponent } from "../../prototypes/registry"
 
 const route = useRoute()
 const prototypeName = computed(() => route.params.name as string)
-const PrototypeComponent = shallowRef<Component | undefined>(undefined)
-const prototype = ref<PrototypeDefinition<"prototype" | "variant"> | undefined>(undefined)
-
-watch(
-	prototypeName,
-	async newName => {
-		PrototypeComponent.value = getPrototypeComponent(newName)
-		prototype.value = getPrototype(newName)
-	},
-	{ immediate: true }
+const PrototypeComponent = computed(() => getPrototypeComponent(prototypeName.value))
+const prototype = computed<PrototypeDefinition<"prototype" | "variant"> | undefined>(() =>
+	getPrototype(prototypeName.value)
 )
 </script>
 

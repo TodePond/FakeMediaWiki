@@ -2,7 +2,7 @@
 	<main class="mobile-view">
 		<!-- When viewport is small: fullscreen like FullscreenView -->
 		<div class="mobile-view__fullscreen view">
-			<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+			<component v-if="PrototypeComponent" :is="PrototypeComponent" :key="prototypeName" />
 			<p v-else>Prototype "{{ prototypeName }}" not found</p>
 		</div>
 		<!-- When viewport is large: prototype inside phone outline (412×892px, 20:9 ratio) -->
@@ -20,7 +20,11 @@
 						</div>
 					</div>
 					<div class="mobile-view__screen view">
-						<component v-if="PrototypeComponent" :is="PrototypeComponent" />
+						<component
+							v-if="PrototypeComponent"
+							:is="PrototypeComponent"
+							:key="`${prototypeName}-framed`"
+						/>
 						<p v-else>Prototype "{{ prototypeName }}" not found</p>
 					</div>
 					<div class="mobile-view__chrome-bottom" />
@@ -32,8 +36,7 @@
 
 <script setup lang="ts">
 import { CdxButton } from "@wikimedia/codex"
-import type { Component } from "vue"
-import { computed, onMounted, ref, shallowRef, watch } from "vue"
+import { computed, onMounted, ref } from "vue"
 import { useRoute } from "vue-router"
 import { getPrototypeComponent } from "../../prototypes/registry"
 
@@ -43,7 +46,7 @@ const FRAME_PADDING = 32 // 1rem each side
 
 const route = useRoute()
 const prototypeName = computed(() => route.params.name as string)
-const PrototypeComponent = shallowRef<Component | undefined>(undefined)
+const PrototypeComponent = computed(() => getPrototypeComponent(prototypeName.value))
 
 const appliedScale = ref(1)
 
@@ -69,14 +72,6 @@ const phoneWrapperStyle = computed(() => ({
 const phoneTransformStyle = computed(() => ({
 	transform: `scale(${appliedScale.value})`,
 }))
-
-watch(
-	prototypeName,
-	async newName => {
-		PrototypeComponent.value = getPrototypeComponent(newName)
-	},
-	{ immediate: true }
-)
 
 onMounted(() => {
 	applyScaleToFit()

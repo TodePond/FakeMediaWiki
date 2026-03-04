@@ -1,6 +1,6 @@
 <template>
 	<section class="visualeditor-sandbox">
-		<h1 class="visualeditor-sandbox__title">VisualEditor Sandbox</h1>
+		<h1 class="visualeditor-sandbox__title">Visual editor</h1>
 
 		<p v-if="loadState === 'failed'" class="visualeditor-sandbox__setup">
 			To use this prototype:

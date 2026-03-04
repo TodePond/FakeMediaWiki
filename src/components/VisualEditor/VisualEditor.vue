@@ -1,9 +1,9 @@
 <template>
-	<div ref="containerRef" class="visual-editor-container" />
+	<div ref="containerRef" class="visual-editor-container" v-once />
 </template>
 
 <script setup lang="ts">
-import { whenVeReady } from "@/lib/visualeditor/loadVe"
+import { whenVePlatformReady } from "@/lib/visualeditor/loadVe"
 import type { VeDocument, VeTarget } from "@/lib/visualeditor/veTypes"
 import { nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 
@@ -46,18 +46,9 @@ function getModel(): VeDocument | null {
 
 onMounted(async () => {
 	const token = ++mountToken
-	await whenVeReady()
+	await whenVePlatformReady()
 	const ve = window.ve
 	if (!ve || !containerRef.value || isDisposed || token !== mountToken) return
-
-	const platform = new ve.init.sa.Platform(ve.messagePaths ?? [])
-	await platform.getInitializedPromise().catch(() => {
-		if (containerRef.value && !isDisposed) {
-			containerRef.value.textContent = "VisualEditor could not be initialized."
-		}
-		return Promise.reject()
-	})
-	if (!containerRef.value || isDisposed || token !== mountToken) return
 
 	const nextTarget = new ve.init.sa.Target()
 	const htmlDoc = ve.createDocumentFromHtml(props.initialHtml)

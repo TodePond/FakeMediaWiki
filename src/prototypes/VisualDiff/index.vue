@@ -1,6 +1,6 @@
 <template>
 	<section class="visual-diff-prototype">
-		<h1 class="visual-diff-prototype__title">Visual Diff</h1>
+		<h1 class="visual-diff-prototype__title">Visual diff</h1>
 		<p v-if="loadState === 'failed'" class="visual-diff-prototype__setup">
 			To use this prototype, ensure VisualEditor assets are in <code>public/ve/</code>. Run
 			<code>npm run update-ve</code>.

@@ -1,5 +1,5 @@
 <template>
-	<div ref="containerRef" class="visual-diff-container" />
+	<div ref="containerRef" class="visual-diff-container" v-once />
 </template>
 
 <script setup lang="ts">
