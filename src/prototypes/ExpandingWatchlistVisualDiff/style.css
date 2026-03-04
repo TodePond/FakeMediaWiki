@@ -217,6 +217,13 @@ a.history-date-expanded:hover {
 	align-self: stretch;
 }
 
+.history-action-buttons-left {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2rem;
+	align-items: center;
+}
+
 .history-action-buttons-right {
 	display: flex;
 	flex-wrap: wrap;

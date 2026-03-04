@@ -162,18 +162,36 @@
 									v-html="change?.summary?.comment ?? ''"
 								></div>
 								<footer class="history-expanded-footer">
-									<button
-										type="button"
-										class="history-action-button history-action-button-left"
-										:class="{
-											'history-action-button-active': expandedTalkIds.has(
-												change.id
-											),
-										}"
-										@click.stop="toggleTalk(change)"
-									>
-										(talk)
-									</button>
+									<div class="history-action-buttons-left">
+										<button
+											type="button"
+											class="history-action-button history-action-button-left"
+											:class="{
+												'history-action-button-active': expandedTalkIds.has(
+													change.id
+												),
+											}"
+											@click.stop="toggleTalk(change)"
+										>
+											(talk)
+										</button>
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-thanked':
+													thankedRevisionIds.has(change.id),
+											}"
+											:disabled="thankedRevisionIds.has(change.id)"
+											@click.stop="onThankClick(change, $event)"
+										>
+											{{
+												thankedRevisionIds.has(change.id)
+													? "(thanked)"
+													: "(thank)"
+											}}
+										</button>
+									</div>
 									<div class="history-action-buttons-right">
 										<button
 											type="button"
@@ -208,22 +226,6 @@
 											@click.stop="toggleHistory(change)"
 										>
 											(history)
-										</button>
-										<button
-											type="button"
-											class="history-action-button"
-											:class="{
-												'history-action-button-thanked':
-													thankedRevisionIds.has(change.id),
-											}"
-											:disabled="thankedRevisionIds.has(change.id)"
-											@click.stop="onThankClick(change, $event)"
-										>
-											{{
-												thankedRevisionIds.has(change.id)
-													? "(thanked)"
-													: "(thanks)"
-											}}
 										</button>
 									</div>
 								</footer>

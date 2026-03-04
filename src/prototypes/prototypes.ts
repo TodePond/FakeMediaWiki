@@ -299,10 +299,10 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		name: "Structured deltas",
 		description: "A watchlist with more helpful deltas.",
 		category: "changetypes",
-		featured: true,
 		status: "new",
 		variants: [
 			{
+				featured: true,
 				type: "variant",
 				id: "ChangeTypesWatchlistInline",
 				component: "ChangeTypesWatchlistInline",
@@ -312,6 +312,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 				wrapper: "Fullscreen",
 			},
 			{
+				featured: true,
 				type: "variant",
 				id: "DeltaSnippets",
 				component: "DeltaSnippets",

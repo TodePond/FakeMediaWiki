@@ -195,15 +195,26 @@
 										>{{ change.user.name }}</a
 									>
 									<CdxIcon
-										v-if="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.icon"
+										v-if="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})?.icon
+										"
 										:class="[
 											'user-type-icon',
 											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.color,
+											color: wiki.getCachedUserCategoryDisplay(
+												change.user.name,
+												{ userTypeConfig }
+											)?.color,
 										}"
-										:icon="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })!.icon!"
+										:icon="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})!.icon!
+										"
 										size="x-small" /></span
 								><span
 									class="history-comment"
@@ -272,15 +283,26 @@
 										class="history-user-expanded"
 										>{{ change.user.name }}</a
 									><CdxIcon
-										v-if="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.icon"
-										:icon="wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })!.icon!"
+										v-if="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})?.icon
+										"
+										:icon="
+											wiki.getCachedUserCategoryDisplay(change.user.name, {
+												userTypeConfig,
+											})!.icon!
+										"
 										:class="[
 											'user-type-icon',
 											'user-type-icon-expanded',
 											`user-type-icon-${wiki.getCachedUserCategory(change.user.name) || ''}`,
 										]"
 										:style="{
-											color: wiki.getCachedUserCategoryDisplay(change.user.name, { userTypeConfig })?.color,
+											color: wiki.getCachedUserCategoryDisplay(
+												change.user.name,
+												{ userTypeConfig }
+											)?.color,
 										}"
 								/></span>
 								<button
@@ -475,7 +497,7 @@
 											{{
 												thankedRevisionIds.has(change.id)
 													? "(thanked)"
-													: "(thanks)"
+													: "(thank)"
 											}}
 										</button>
 									</div>
@@ -626,15 +648,26 @@
 											class="history-user"
 											>{{ rev.user.name }}</a
 										><CdxIcon
-											v-if="wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })?.icon"
-											:icon="wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })!.icon!"
+											v-if="
+												wiki.getCachedUserCategoryDisplay(rev.user.name, {
+													userTypeConfig,
+												})?.icon
+											"
+											:icon="
+												wiki.getCachedUserCategoryDisplay(rev.user.name, {
+													userTypeConfig,
+												})!.icon!
+											"
 											size="x-small"
 											:class="[
 												'user-type-icon',
 												`user-type-icon-${wiki.getCachedUserCategory(rev.user.name) || ''}`,
 											]"
 											:style="{
-												color: wiki.getCachedUserCategoryDisplay(rev.user.name, { userTypeConfig })?.color,
+												color: wiki.getCachedUserCategoryDisplay(
+													rev.user.name,
+													{ userTypeConfig }
+												)?.color,
 											}"
 										/><span
 											class="history-comment"

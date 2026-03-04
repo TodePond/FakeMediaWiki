@@ -642,7 +642,7 @@
 											{{
 												thankedRevisionIds.has(change.id)
 													? "(thanked)"
-													: "(thanks)"
+													: "(thank)"
 											}}
 										</button>
 									</div>
