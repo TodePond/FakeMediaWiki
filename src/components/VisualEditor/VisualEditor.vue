@@ -25,6 +25,8 @@ const props = withDefaults(
 
 const containerRef = ref<HTMLDivElement | null>(null)
 let target: VeTarget | null = null
+let isDisposed = false
+let mountToken = 0
 
 function getTarget(): VeTarget | null {
 	return target
@@ -43,35 +45,50 @@ function getModel(): VeDocument | null {
 }
 
 onMounted(async () => {
+	const token = ++mountToken
 	await whenVeReady()
 	const ve = window.ve
-	if (!ve || !containerRef.value) return
+	if (!ve || !containerRef.value || isDisposed || token !== mountToken) return
 
 	const platform = new ve.init.sa.Platform(ve.messagePaths ?? [])
 	await platform.getInitializedPromise().catch(() => {
-		containerRef.value!.textContent = "VisualEditor could not be initialized."
+		if (containerRef.value && !isDisposed) {
+			containerRef.value.textContent = "VisualEditor could not be initialized."
+		}
 		return Promise.reject()
 	})
+	if (!containerRef.value || isDisposed || token !== mountToken) return
 
-	target = new ve.init.sa.Target()
+	const nextTarget = new ve.init.sa.Target()
 	const htmlDoc = ve.createDocumentFromHtml(props.initialHtml)
 	const model = ve.dm.converter.getModelFromDom(htmlDoc, {
 		lang: props.lang,
 		dir: props.dir,
 	})
-	target.addSurface(model)
-	const el = target.$element?.[0]
+	nextTarget.addSurface(model)
+	const el = nextTarget.$element?.[0]
 	if (el) {
 		await nextTick()
-		containerRef.value?.appendChild(el)
+		if (!containerRef.value || isDisposed || token !== mountToken) {
+			nextTarget.destroy?.()
+			return
+		}
+		containerRef.value.textContent = ""
+		containerRef.value.appendChild(el)
+		target = nextTarget
+	} else {
+		nextTarget.destroy?.()
 	}
 })
 
 onUnmounted(() => {
-	if (target?.destroy) {
-		target.destroy()
-	}
+	isDisposed = true
+	mountToken += 1
+	target?.destroy?.()
 	target = null
+	if (containerRef.value) {
+		containerRef.value.textContent = ""
+	}
 })
 
 watch(
@@ -89,51 +106,9 @@ defineExpose({
 </script>
 
 <style scoped>
-.visual-editor-container {
-	/* width: 100%; */
-	/* min-height: 200px; */
-	/* Give a defined height so flex children can fill it (otherwise they collapse to content size) */
-	/* min-height: 280px; */
-	/* display: flex; */
-	/* flex-direction: column; */
-}
-
-/* Let the VE target fill the container so the surface can expand */
-.visual-editor-container > * {
-	/* flex: 1;
-	display: flex;
-	flex-direction: column;
-	min-height: 0; */
-}
 </style>
 
 <style>
-/* Standalone target wraps the surface in this div – let it grow */
-.visual-editor-container .ve-init-sa-target-surfaceWrapper {
-	/* flex: 1;
-	display: flex;
-	flex-direction: column;
-	min-height: 0; */
-	/* min-height: 100%; */
-}
-
-/* Surface takes remaining space below the toolbar */
-.visual-editor-container .ve-ui-surface {
-	/* flex: 1; */
-	/* min-height: 0; */
-	/* min-height: 100%; */
-	/* height: 100%; */
-}
-
-.visual-editor-container .ve-init-target-visual {
-	/* height: 100%; */
-}
-
-.visual-editor-container .ve-ce-documentNode {
-	/* min-height: 100%; */
-	/* overflow: auto; */
-}
-
 .visual-editor-container .ve-ce-contentBranchNode {
 	margin-left: 0.6rem;
 	margin-right: 0.6rem;
