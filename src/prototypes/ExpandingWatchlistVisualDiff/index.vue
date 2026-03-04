@@ -1444,46 +1444,8 @@ function getItemZIndex(dateKey: string, changeIndex: number): number {
 	return 10 + cumulativeIndex + changeIndex
 }
 
-/** Extract section name from edit summary, e.g. "slash-star Foo slash-star" -> "Foo". Returns undefined if not present. */
-function sectionFromEditSummary(comment: string | undefined | null): string | undefined {
-	if (!comment?.trim()) return undefined
-	const match = comment.match(/\/\*\s*([^*]+)\s*\*\//)
-	return match ? match[1].trim() || undefined : undefined
-}
-
-/** Split wikitext into sections by level-2 headers (== Title ==). Lead is first with title "". */
-function parseSections(wikitext: string): { title: string; wikitext: string }[] {
-	const sections: { title: string; wikitext: string }[] = []
-	const parts = wikitext.split(/(\n==\s*.+?\s*==\s*$)/gm)
-	const lead = parts[0]?.trim() ?? ""
-	if (lead) sections.push({ title: "", wikitext: lead })
-	for (let i = 1; i < parts.length; i += 2) {
-		const headerLine = parts[i]
-		const content = parts[i + 1]?.trim() ?? ""
-		if (!headerLine) continue
-		const match = headerLine.match(/==\s*(.+?)\s*==\s*$/)
-		const title = match ? match[1].trim() : ""
-		if (title || content) sections.push({ title, wikitext: content })
-	}
-	return sections
-}
-
 async function getEditContentHtml(change: FWRevision): Promise<string> {
-	const sectionTitle = sectionFromEditSummary(change.comment)
-	const pageName = change.pageName!
-	if (!sectionTitle) {
-		return wiki.getRevisionHtml(pageName, change.id)
-	}
-	const source = await wiki.getRevisionSource(change.id)
-	const sections = parseSections(source)
-	const want = sectionTitle.trim().toLowerCase()
-	const matched = sections.find(
-		s => s.title.trim().toLowerCase() === want
-	)
-	if (matched) {
-		return wiki.transformWikitextToHtml(matched.wikitext, pageName)
-	}
-	return wiki.getRevisionHtml(pageName, change.id)
+	return wiki.getRevisionHtml(change.pageName!, change.id)
 }
 
 function toggleEdit(change: FWRevision): void {

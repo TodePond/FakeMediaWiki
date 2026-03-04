@@ -2,9 +2,10 @@
 	<main class="personal-dashboard-clone">
 		<div class="dashboard-main">
 			<section class="review-changes">
-				<h3 class="review-changes__title">Review changes</h3>
+				<div class="review-changes__title">Review changes</div>
 				<p class="review-changes__description">
-					Help keep Wikipedia reliable by reviewing the following edits which may need attention.
+					Help keep Wikipedia reliable by reviewing the following edits which may need
+					attention.
 				</p>
 				<div v-if="errors.length > 0" class="review-changes__errors">
 					<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
@@ -13,100 +14,152 @@
 					<CdxProgressBar inline />
 				</div>
 				<ul v-else class="review-changes__feed">
-					<template v-for="dateGroup in revisionsByDate" :key="dateGroup.dateKey">
+					<template v-for="dateGroup in revisionsByDateCapped" :key="dateGroup.dateKey">
 						<li
 							v-for="change in dateGroup.revisions"
 							:key="`${change.pageName}-${change.timestamp}-${change.id}`"
 							class="review-changes__item"
 						>
-							<div class="review-changes__item-header">
+							<a
+								:href="
+									change.pageName
+										? wiki.getRevisionUrl(change.id, change.pageName)
+										: '#'
+								"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="review-changes__item-link"
+								:aria-label="`View diff for ${change.pageName ?? 'page'}`"
+							>
+								<div class="review-changes__item-header">
+									<span class="review-changes__page">{{ change.pageName }}</span>
+									<time :datetime="change.timestamp" class="review-changes__time">
+										{{ formatTime(change.timestamp) }},
+										{{ formatTimeLabel(change.timestamp) }}
+									</time>
+								</div>
+								<div class="review-changes__summary">
+									<span
+										class="review-changes__summary-prefix"
+										:class="wiki.getDeltaClass(change.delta ?? 0, false)"
+										>{{ formatDelta(change.delta) }}</span
+									>
+									<span class="review-changes__summary-sep" aria-hidden="true"
+										>&nbsp;·</span
+									><span
+										v-if="change?.summary?.comment"
+										class="review-changes__comment"
+										v-html="change.summary.comment"
+									></span
+									><span v-else class="review-changes__comment">{{
+										change.comment || ""
+									}}</span>
+								</div>
 								<a
 									target="_blank"
-									:href="wiki.getPageUrl(change.pageName!)"
-									class="review-changes__page"
+									rel="noopener noreferrer"
+									:href="wiki.getUserUrl(change.user.name)"
+									class="review-changes__user"
+									@click.stop
 								>
-									{{ change.pageName }}
+									{{ change.user.name }}
 								</a>
-								<time
-									:datetime="change.timestamp"
-									class="review-changes__time"
-								>
-									{{ formatTime(change.timestamp) }}, {{ formatTimeLabel(change.timestamp) }}
-								</time>
-							</div>
-							<div class="review-changes__summary">
-								<span class="review-changes__summary-prefix">0 ·</span>
-								<span
-									v-if="change?.summary?.comment"
-									class="review-changes__comment"
-									v-html="change.summary.comment"
-								></span>
-								<span v-else class="review-changes__comment">{{
-									change.comment || ""
-								}}</span>
-							</div>
-							<a
-								target="_blank"
-								:href="wiki.getUserUrl(change.user.name)"
-								class="review-changes__user"
-							>
-								{{ change.user.name }}
 							</a>
 						</li>
 					</template>
 				</ul>
-				<div v-if="!isLoading && hasMore && allRevisionsData.length > 0" class="review-changes__load-more">
-					<CdxButton :disabled="isLoadingMore" @click="loadMore">
-						{{ isLoadingMore ? "Loading..." : "Load more" }}
-					</CdxButton>
+				<div v-if="!isLoading" class="review-changes__view-more">
+					View more edits in the
+					<a
+						target="_blank"
+						:href="wiki.getPageUrl('Special:RecentChanges')"
+						class="review-changes__view-more-link"
+						>recent changes</a
+					>
+					page.
 				</div>
 			</section>
 
 			<aside class="dashboard-sidebar">
 				<section class="sidebar-card your-impact">
-					<h2 class="sidebar-card__title">Your impact</h2>
+					<div class="sidebar-card__title">Your impact</div>
 					<div class="your-impact__metrics">
 						<div class="your-impact__metric">
-							<CdxIcon :icon="cdxIconSpeechBubble" class="your-impact__icon" />
-							<span class="your-impact__value">0</span>
+							<div class="your-impact__value-row">
+								<CdxIcon :icon="cdxIconUserTalk" class="your-impact__icon" />
+								<span class="your-impact__value">0</span>
+							</div>
 							<span class="your-impact__label">Thanks sent</span>
 						</div>
+						<div class="your-impact__divider" aria-hidden="true"></div>
 						<div class="your-impact__metric">
-							<CdxIcon :icon="cdxIconArticleCheck" class="your-impact__icon" />
-							<span class="your-impact__value">0</span>
+							<div class="your-impact__value-row">
+								<CdxIcon :icon="cdxIconCheckAll" class="your-impact__icon" />
+								<span class="your-impact__value">0</span>
+							</div>
 							<span class="your-impact__label-row">
 								<span class="your-impact__label">Edits reviewed</span>
-								<CdxIcon :icon="cdxIconInfo" size="small" class="your-impact__info" />
+								<CdxIcon
+									:icon="cdxIconInfo"
+									size="small"
+									class="your-impact__info"
+								/>
 							</span>
 						</div>
 					</div>
 				</section>
 
 				<section class="sidebar-card policies">
-					<h2 class="sidebar-card__title">Policies and guidelines</h2>
-					<p class="policies__intro">Check what is acceptable and expected on Wikipedia.</p>
-					<ul class="policies__list">
-						<li class="policies__item">
-							<strong>Neutral point of view:</strong>
-							Content must represent significant views fairly, proportionately, and without bias.
-							<a href="#" class="policies__examples">Examples</a>
-						</li>
-						<li class="policies__item">
-							<strong>No original research:</strong>
-							Articles should summarise published sources, and not contain users' own interpretation or knowledge.
-							<a href="#" class="policies__examples">Examples</a>
-						</li>
-						<li class="policies__item">
-							<strong>Verifiability:</strong>
-							New additions should include a citation, providing the source of the information.
-							<a href="#" class="policies__examples">Examples</a>
-						</li>
-						<li class="policies__item">
-							<strong>Assume good faith:</strong>
-							Remember that most users are trying to improve Wikipedia and not deliberately reduce its quality.
-							<a href="#" class="policies__examples">Examples</a>
-						</li>
-					</ul>
+					<div class="sidebar-card__title">Policies and guidelines</div>
+					<p class="policies__intro">
+						Check what is acceptable and expected on Wikipedia.
+					</p>
+					<div class="policies__box">
+						<ul class="policies__list">
+							<li class="policies__item">
+								<strong class="policies__item-title">Neutral point of view</strong>
+								<span class="policies__item-desc"
+									>Content must represent significant views fairly,
+									proportionately, and without bias.<a
+										href="#"
+										class="policies__examples"
+										>Examples</a
+									></span
+								>
+							</li>
+							<li class="policies__item">
+								<strong class="policies__item-title">No original research</strong>
+								<span class="policies__item-desc"
+									>Articles should summarise published sources, and not contain
+									users' own interpretation or knowledge.<a
+										href="#"
+										class="policies__examples"
+										>Examples</a
+									></span
+								>
+							</li>
+							<li class="policies__item">
+								<strong class="policies__item-title">Verifiability</strong>
+								<span class="policies__item-desc"
+									>New additions should include a citation, providing the source
+									of the information.<a href="#" class="policies__examples"
+										>Examples</a
+									></span
+								>
+							</li>
+							<li class="policies__item">
+								<strong class="policies__item-title">Assume good faith</strong>
+								<span class="policies__item-desc"
+									>Remember that most users are trying to improve Wikipedia and
+									not deliberately reduce its quality.<a
+										href="#"
+										class="policies__examples"
+										>Examples</a
+									></span
+								>
+							</li>
+						</ul>
+					</div>
 				</section>
 			</aside>
 		</div>
@@ -114,8 +167,8 @@
 </template>
 
 <script setup lang="ts">
-import { CdxButton, CdxIcon, CdxProgressBar } from "@wikimedia/codex"
-import { cdxIconArticleCheck, cdxIconInfo, cdxIconSpeechBubble } from "@wikimedia/codex-icons"
+import { CdxIcon, CdxProgressBar } from "@wikimedia/codex"
+import { cdxIconCheckAll, cdxIconInfo, cdxIconUserTalk } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import type { FWPageHistoryRevision, FWRevision } from "fakewiki/types"
 import { computed, onMounted, ref } from "vue"
@@ -180,6 +233,9 @@ async function loadFeed(after?: Record<string, string>, append = false): Promise
 				summary.comment = commentText
 					? await wiki.transformWikitextToHtml(commentText, pageName)
 					: ""
+				if (summary.comment) {
+					summary.comment = stripLinksFromHtml(summary.comment)
+				}
 				summary.hashtags = Array.isArray(summary.hashtags)
 					? summary.hashtags.join(" ")
 					: summary.hashtags
@@ -221,6 +277,22 @@ async function loadFeed(after?: Record<string, string>, append = false): Promise
 	}
 }
 
+/**
+ * Strip <a> tags from HTML, leaving their text content (and any nested markup) behind.
+ */
+function stripLinksFromHtml(html: string): string {
+	if (typeof document === "undefined") return html
+	const div = document.createElement("div")
+	div.innerHTML = html
+	const links = Array.from(div.querySelectorAll("a"))
+	links.forEach(a => {
+		const span = document.createElement("span")
+		span.innerHTML = a.innerHTML
+		a.parentNode?.replaceChild(span, a)
+	})
+	return div.innerHTML
+}
+
 function getDateKey(timestamp: string): string {
 	const d = new Date(timestamp)
 	const year = d.getFullYear()
@@ -233,8 +305,18 @@ function formatDate(timestamp: string): string {
 	const d = new Date(timestamp)
 	const day = d.getDate()
 	const monthNames = [
-		"January", "February", "March", "April", "May", "June",
-		"July", "August", "September", "October", "November", "December",
+		"January",
+		"February",
+		"March",
+		"April",
+		"May",
+		"June",
+		"July",
+		"August",
+		"September",
+		"October",
+		"November",
+		"December",
 	]
 	const month = monthNames[d.getMonth()]
 	const year = d.getFullYear()
@@ -258,14 +340,61 @@ function formatTime(timestamp: string): string {
 	return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
 }
 
+function daysAgo(timestamp: string): number {
+	const d = new Date(timestamp)
+	const today = new Date()
+	const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+	const pastStart = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+	return Math.floor((todayStart.getTime() - pastStart.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+const RELATIVE_DAYS_CAP = 6
+
 function formatTimeLabel(timestamp: string): string {
-	return isToday(timestamp) ? "Today" : formatDate(timestamp)
+	const days = daysAgo(timestamp)
+	if (days === 0) return "Today"
+	if (days === 1) return "Yesterday"
+	if (days >= 2 && days <= RELATIVE_DAYS_CAP) return `${days} days ago`
+	return formatDate(timestamp)
+}
+
+function formatDelta(delta: number | null | undefined): string {
+	const n = delta != null ? Number(delta) : 0
+	if (Number.isNaN(n)) return "(0)"
+	const sign = n >= 0 ? "+" : ""
+	return `(${sign}${n})`
 }
 
 const revisionsByDate = computed(() => {
 	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
 
 	allRevisionsData.value.forEach(revision => {
+		const dateKey = getDateKey(revision.timestamp)
+		const dateLabel = formatDate(revision.timestamp)
+
+		if (!grouped.has(dateKey)) {
+			grouped.set(dateKey, { dateLabel, revisions: [] })
+		}
+
+		grouped.get(dateKey)!.revisions.push(revision)
+	})
+
+	return Array.from(grouped.entries())
+		.sort((a, b) => b[0].localeCompare(a[0]))
+		.map(([dateKey, data]) => ({
+			dateKey,
+			dateLabel: data.dateLabel,
+			revisions: data.revisions,
+		}))
+})
+
+const FEED_CAP = 6
+
+const revisionsByDateCapped = computed(() => {
+	const capped = allRevisionsData.value.slice(0, FEED_CAP)
+	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
+
+	capped.forEach(revision => {
 		const dateKey = getDateKey(revision.timestamp)
 		const dateLabel = formatDate(revision.timestamp)
 
