@@ -579,7 +579,7 @@ export class FakeWiki {
 	/**
 	 * Get HTML for a specific revision.
 	 * Uses the MediaWiki REST API endpoint: GET revision/{id}/html.
-	 * Falls back to the Wikimedia REST API page/html/{title}/{revision} if the first request fails.
+	 * Falls back to the Wikimedia REST API page/html/{title}/{revision} if needed.
 	 * Uses caching to avoid re-fetching the same revision.
 	 * @param pageName - Page title (used for Wikimedia fallback and for API compatibility)
 	 * @param revId - Revision ID
@@ -598,6 +598,13 @@ export class FakeWiki {
 			this.revisionHtmlCache.set(key, html)
 			return html
 		} catch {
+			console.error(
+				"Failed to get revision HTML from MediaWiki REST API, falling back to Wikimedia REST API",
+				{
+					pageName,
+					revId,
+				}
+			)
 			// Fallback: Wikimedia REST API page/html/{title}/{revision} (same Parsoid HTML)
 			const html = (await this.request({
 				api: "wikimedia",
@@ -1060,6 +1067,22 @@ export class FakeWiki {
 			this.pageHistoryCache.clear()
 			this.pageHistoryCoverage.clear()
 		}
+	}
+
+	/**
+	 * Get the parent (previous) revision ID for a revision on a page from cache only.
+	 * Does not trigger any network request.
+	 * @param pageName - Page title
+	 * @param revId - Revision ID to look up in the cached page history
+	 * @returns Parent revision ID, null if this is oldest cached revision, or undefined if revId is not cached
+	 */
+	getParentRevisionIdFromCache(pageName: string, revId: number): number | null | undefined {
+		const revisions = this.pageHistoryCache.get(pageName)
+		if (!revisions || revisions.length === 0) return undefined
+		const index = revisions.findIndex(rev => rev.id === revId)
+		if (index === -1) return undefined
+		const parent = revisions[index + 1]
+		return parent?.id ?? null
 	}
 
 	/**

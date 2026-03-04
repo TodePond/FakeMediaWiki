@@ -756,6 +756,14 @@ function formatDelta(delta: number | null): string {
 	return `(${sign}${n})`
 }
 
+function getParentRevisionIdCachedFirst(pageName: string, revId: number): Promise<number | null> {
+	const cachedParentId = wiki.getParentRevisionIdFromCache(pageName, revId)
+	if (cachedParentId !== undefined) {
+		return Promise.resolve(cachedParentId)
+	}
+	return wiki.getParentRevisionId(pageName, revId)
+}
+
 function expandItem(change: FWRevision, event: MouseEvent): void {
 	// Don't expand if clicking on links or buttons
 	const target = event.target as HTMLElement
@@ -781,7 +789,7 @@ function expandItem(change: FWRevision, event: MouseEvent): void {
 		if (!pageName) return
 		loadingDiffIds.value = new Set(loadingDiffIds.value)
 		loadingDiffIds.value.add(id)
-		wiki.getParentRevisionId(pageName, id)
+		getParentRevisionIdCachedFirst(pageName, id)
 			.then(parentId => {
 				if (parentId == null) {
 					firstRevisionIds.value = new Set(firstRevisionIds.value).add(id)
@@ -842,7 +850,7 @@ function toggleDiff(change: FWRevision): void {
 	if (!pageName) return
 	loadingDiffIds.value = new Set(loadingDiffIds.value)
 	loadingDiffIds.value.add(id)
-	wiki.getParentRevisionId(pageName, id)
+	getParentRevisionIdCachedFirst(pageName, id)
 		.then(parentId => {
 			if (parentId == null) {
 				firstRevisionIds.value = new Set(firstRevisionIds.value).add(id)
@@ -885,7 +893,7 @@ function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: stri
 	if (loadedVisualDiffs.value.has(id) || firstRevisionIds.value.has(id)) return
 	loadingDiffIds.value = new Set(loadingDiffIds.value)
 	loadingDiffIds.value.add(id)
-	wiki.getParentRevisionId(pageName, id)
+	getParentRevisionIdCachedFirst(pageName, id)
 		.then(parentId => {
 			if (parentId == null) {
 				firstRevisionIds.value = new Set(firstRevisionIds.value).add(id)
