@@ -7,23 +7,33 @@
 				class="recommendation-watchlist-form watchlist-search-form"
 			>
 				<CdxLabel for="page-queries-input">Page queries (comma-separated)</CdxLabel>
-				<CdxTextInput
-					id="page-queries-input"
-					v-model="pageQueriesInput"
-					input-type="text"
-					class="recommendation-watchlist-input"
-					autocomplete="off"
-					@input="syncPageQueriesFromInput"
-				/>
+				<div class="input-with-reset">
+					<CdxTextInput
+						id="page-queries-input"
+						v-model="pageQueriesInput"
+						input-type="text"
+						class="recommendation-watchlist-input"
+						autocomplete="off"
+						@input="syncPageQueriesFromInput"
+					/>
+					<CdxButton type="button" @click="resetPageQueriesToDefault">
+						Reset to default
+					</CdxButton>
+				</div>
 				<CdxLabel for="user-queries-input">User queries (comma-separated)</CdxLabel>
-				<CdxTextInput
-					id="user-queries-input"
-					v-model="userQueriesInput"
-					input-type="text"
-					class="recommendation-watchlist-input"
-					autocomplete="off"
-					@input="syncUserQueriesFromInput"
-				/>
+				<div class="input-with-reset">
+					<CdxTextInput
+						id="user-queries-input"
+						v-model="userQueriesInput"
+						input-type="text"
+						class="recommendation-watchlist-input"
+						autocomplete="off"
+						@input="syncUserQueriesFromInput"
+					/>
+					<CdxButton type="button" @click="resetUserQueriesToDefault">
+						Reset to default
+					</CdxButton>
+				</div>
 				<footer>
 					<CdxButton type="submit" :disabled="isLoading">Refresh feed</CdxButton>
 				</footer>
@@ -782,6 +792,20 @@ onUnmounted(() => {
 function saveSearchQueries(): void {
 	localStorage.setItem(pageStorageKey, JSON.stringify(pageSearchQueries.value))
 	localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
+}
+
+function resetPageQueriesToDefault(): void {
+	localStorage.removeItem(pageStorageKey)
+	pageSearchQueries.value = [...defaultPageSearchQueries]
+	pageQueriesInput.value = defaultPageSearchQueries.join(", ")
+	saveSearchQueries()
+}
+
+function resetUserQueriesToDefault(): void {
+	localStorage.removeItem(userStorageKey)
+	userSearchQueries.value = [...defaultUserSearchQueries]
+	userQueriesInput.value = defaultUserSearchQueries.join(", ")
+	saveSearchQueries()
 }
 
 async function search(): Promise<void> {

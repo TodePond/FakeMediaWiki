@@ -3,13 +3,14 @@
 		<form @submit.prevent="search">
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
 
-			<span>
+			<span class="input-with-reset">
 				<CdxTextInput
 					autocomplete="off"
 					v-model="searchQuery"
 					input-type="search"
 					id="page-name"
 				/>
+				<CdxButton type="button" @click="resetToDefault">Reset to default</CdxButton>
 				<CdxButton>Load changes</CdxButton>
 				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
 			</span>
@@ -50,9 +51,9 @@ import type { FWPageHistoryResponse, FWPageHistoryRevision } from "fakewiki/type
 const wiki = new FakeWiki()
 const PROTOTYPE_NAME = "PageChanges"
 
-const searchQuery = ref(
-	localStorage.getItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")) || "Wet Leg"
-)
+const storageKey = wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery")
+const DEFAULT_QUERY = "Wet Leg"
+const searchQuery = ref(localStorage.getItem(storageKey) || DEFAULT_QUERY)
 const history = ref<{
 	revisions?: Array<FWPageHistoryRevision & { html?: string }>
 }>({})
@@ -62,7 +63,13 @@ const error = ref<string | null>(null)
 onMounted(search)
 
 function saveSearchQuery(query: string): void {
-	localStorage.setItem(wiki.getStorageKey(PROTOTYPE_NAME, "searchQuery"), query)
+	localStorage.setItem(storageKey, query)
+}
+
+function resetToDefault(): void {
+	localStorage.removeItem(storageKey)
+	searchQuery.value = DEFAULT_QUERY
+	saveSearchQuery(DEFAULT_QUERY)
 }
 
 // If a comment begins with a /* comment block */

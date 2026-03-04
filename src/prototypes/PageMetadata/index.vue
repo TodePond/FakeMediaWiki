@@ -2,13 +2,14 @@
 	<section>
 		<form @submit.prevent="loadPage" class="input-container">
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
-			<span>
+			<span class="input-with-reset">
 				<CdxTextInput
 					autocomplete="off"
 					v-model="pageName"
 					input-type="search"
 					id="page-name"
 				/>
+				<CdxButton type="button" @click="resetToDefault">Reset to default</CdxButton>
 				<CdxButton>Load metadata</CdxButton>
 				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
 			</span>
@@ -30,6 +31,7 @@ const pageName = ref(localStorage.getItem("pageMetadataQuery") || "Wet Leg")
 const metadata = ref<FWPageMetadata | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+const DEFAULT_QUERY = "Wet Leg"
 
 const loadPage = async (): Promise<void> => {
 	isLoading.value = true
@@ -45,6 +47,12 @@ const loadPage = async (): Promise<void> => {
 	} finally {
 		isLoading.value = false
 	}
+}
+
+function resetToDefault(): void {
+	localStorage.removeItem("pageMetadataQuery")
+	pageName.value = DEFAULT_QUERY
+	localStorage.setItem("pageMetadataQuery", DEFAULT_QUERY)
 }
 
 onMounted(loadPage)

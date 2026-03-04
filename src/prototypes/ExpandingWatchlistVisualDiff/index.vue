@@ -1,29 +1,39 @@
 <template>
 	<main class="expanding-watchlist-visual-diff">
 		<div class="watchlist-container">
-			<h1>Visual diff watchlist</h1>
+			<h1>Visual diff feed</h1>
 			<form
 				@submit.prevent="search"
 				class="recommendation-watchlist-form watchlist-search-form"
 			>
 				<CdxLabel for="page-queries-input">Page queries (comma-separated)</CdxLabel>
-				<CdxTextInput
-					id="page-queries-input"
-					v-model="pageQueriesInput"
-					input-type="text"
-					class="recommendation-watchlist-input"
-					autocomplete="off"
-					@input="syncPageQueriesFromInput"
-				/>
+				<div class="input-with-reset">
+					<CdxTextInput
+						id="page-queries-input"
+						v-model="pageQueriesInput"
+						input-type="text"
+						class="recommendation-watchlist-input"
+						autocomplete="off"
+						@input="syncPageQueriesFromInput"
+					/>
+					<CdxButton type="button" @click="resetPageQueriesToDefault">
+						Reset to default
+					</CdxButton>
+				</div>
 				<CdxLabel for="user-queries-input">User queries (comma-separated)</CdxLabel>
-				<CdxTextInput
-					id="user-queries-input"
-					v-model="userQueriesInput"
-					input-type="text"
-					class="recommendation-watchlist-input"
-					autocomplete="off"
-					@input="syncUserQueriesFromInput"
-				/>
+				<div class="input-with-reset">
+					<CdxTextInput
+						id="user-queries-input"
+						v-model="userQueriesInput"
+						input-type="text"
+						class="recommendation-watchlist-input"
+						autocomplete="off"
+						@input="syncUserQueriesFromInput"
+					/>
+					<CdxButton type="button" @click="resetUserQueriesToDefault">
+						Reset to default
+					</CdxButton>
+				</div>
 				<footer>
 					<CdxButton type="submit" :disabled="isLoading">Refresh feed</CdxButton>
 				</footer>
@@ -205,10 +215,7 @@
 							</div>
 						</template>
 						<div v-if="expandedDiffIds.has(change.id)" class="history-inline-diff">
-							<div
-								v-if="loadedVisualDiffs.has(change.id)"
-								class="change-diff-visual"
-							>
+							<div v-if="loadedVisualDiffs.has(change.id)" class="change-diff-visual">
 								<VisualDiff
 									:old-html="loadedVisualDiffs.get(change.id)!.oldHtml"
 									:new-html="loadedVisualDiffs.get(change.id)!.newHtml"
@@ -375,16 +382,12 @@
 </template>
 
 <script setup lang="ts">
+import VisualDiff from "@/components/VisualDiff/VisualDiff.vue"
+import { whenVePlatformReady } from "@/lib/visualeditor/loadVe"
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
-import type {
-	FWPageHistoryResponse,
-	FWPageHistoryRevision,
-	FWRevision,
-} from "fakewiki/types"
-import { whenVePlatformReady } from "@/lib/visualeditor/loadVe"
+import type { FWPageHistoryResponse, FWPageHistoryRevision, FWRevision } from "fakewiki/types"
 import { computed, onMounted, ref } from "vue"
-import VisualDiff from "@/components/VisualDiff/VisualDiff.vue"
 
 /** History revision with edit summary rendered as HTML */
 interface HistoryRevisionWithHtml extends FWPageHistoryRevision {
@@ -498,6 +501,20 @@ function loadSearchQueries(key: string, defaultValues: string[]): string[] {
 		// Ignore invalid stored values and fallback.
 	}
 	return defaultValues
+}
+
+function resetPageQueriesToDefault(): void {
+	localStorage.removeItem(pageStorageKey)
+	pageSearchQueries.value = [...defaultPageSearchQueries]
+	pageQueriesInput.value = defaultPageSearchQueries.join(", ")
+	saveSearchQueries()
+}
+
+function resetUserQueriesToDefault(): void {
+	localStorage.removeItem(userStorageKey)
+	userSearchQueries.value = [...defaultUserSearchQueries]
+	userQueriesInput.value = defaultUserSearchQueries.join(", ")
+	saveSearchQueries()
 }
 
 async function loadFeed(after?: Record<string, string>, append = false): Promise<void> {
@@ -764,8 +781,7 @@ function expandItem(change: FWRevision, event: MouseEvent): void {
 		if (!pageName) return
 		loadingDiffIds.value = new Set(loadingDiffIds.value)
 		loadingDiffIds.value.add(id)
-		wiki
-			.getParentRevisionId(pageName, id)
+		wiki.getParentRevisionId(pageName, id)
 			.then(parentId => {
 				if (parentId == null) {
 					firstRevisionIds.value = new Set(firstRevisionIds.value).add(id)
@@ -826,8 +842,7 @@ function toggleDiff(change: FWRevision): void {
 	if (!pageName) return
 	loadingDiffIds.value = new Set(loadingDiffIds.value)
 	loadingDiffIds.value.add(id)
-	wiki
-		.getParentRevisionId(pageName, id)
+	wiki.getParentRevisionId(pageName, id)
 		.then(parentId => {
 			if (parentId == null) {
 				firstRevisionIds.value = new Set(firstRevisionIds.value).add(id)
@@ -870,8 +885,7 @@ function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: stri
 	if (loadedVisualDiffs.value.has(id) || firstRevisionIds.value.has(id)) return
 	loadingDiffIds.value = new Set(loadingDiffIds.value)
 	loadingDiffIds.value.add(id)
-	wiki
-		.getParentRevisionId(pageName, id)
+	wiki.getParentRevisionId(pageName, id)
 		.then(parentId => {
 			if (parentId == null) {
 				firstRevisionIds.value = new Set(firstRevisionIds.value).add(id)

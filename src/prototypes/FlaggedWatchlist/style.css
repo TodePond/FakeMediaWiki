@@ -849,6 +849,18 @@ form {
 	gap: 0.25rem;
 }
 
+.input-with-reset {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	width: 100%;
+}
+
+.input-with-reset .recommendation-watchlist-input {
+	flex: 1;
+	min-width: 0;
+}
+
 .cdx-text-input {
 	max-width: 100%;
 	min-width: 0;

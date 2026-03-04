@@ -2,7 +2,7 @@
 	<section>
 		<form @submit.prevent="search">
 			<CdxLabel input-id="search-query">Search titles</CdxLabel>
-			<span>
+			<span class="input-with-reset">
 				<CdxTextInput
 					autocomplete="off"
 					v-model="searchQuery"
@@ -11,6 +11,7 @@
 					placeholder="Type to search..."
 					@input="search"
 				/>
+				<CdxButton type="button" @click="resetToDefault">Reset to default</CdxButton>
 				<CdxProgressIndicator v-if="isLoading" aria-label="Searching" />
 			</span>
 		</form>
@@ -45,6 +46,7 @@ const searchQuery = ref(localStorage.getItem("searchTitlesQuery") || "")
 const results = ref<FWPageSearchResult[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+const DEFAULT_QUERY = ""
 
 let searchId = 0
 const search = async (): Promise<void> => {
@@ -71,6 +73,12 @@ const search = async (): Promise<void> => {
 
 const getThumbnail = (thumbnail?: { url: string } | null): { url: string } | undefined => {
 	return thumbnail ? { url: thumbnail.url } : undefined
+}
+
+function resetToDefault(): void {
+	localStorage.removeItem("searchTitlesQuery")
+	searchQuery.value = DEFAULT_QUERY
+	localStorage.setItem("searchTitlesQuery", DEFAULT_QUERY)
 }
 
 onMounted(() => {

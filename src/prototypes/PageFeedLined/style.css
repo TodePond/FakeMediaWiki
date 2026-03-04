@@ -31,6 +31,19 @@ form > span {
 	flex-wrap: wrap;
 }
 
+.input-with-reset {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+.input-with-reset .cdx-text-input {
+	flex: 1;
+	min-width: 120px;
+}
+
 .change-header {
 	display: flex;
 	flex-wrap: wrap;

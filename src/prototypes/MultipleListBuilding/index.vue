@@ -4,22 +4,28 @@
 		<form @submit.prevent="buildList">
 			<div class="form-row">
 				<CdxLabel input-id="multiple-list-building-lang">Language code</CdxLabel>
-				<CdxTextInput
-					id="multiple-list-building-lang"
-					v-model="lang"
-					placeholder="en"
-					autocomplete="off"
-				/>
+				<span class="input-with-reset">
+					<CdxTextInput
+						id="multiple-list-building-lang"
+						v-model="lang"
+						placeholder="en"
+						autocomplete="off"
+					/>
+					<CdxButton type="button" @click="resetLangToDefault">Reset to default</CdxButton>
+				</span>
 			</div>
 			<div class="form-row">
 				<CdxLabel input-id="multiple-list-building-titles"
 					>Page titles (comma-separated)</CdxLabel
 				>
-				<CdxTextInput
-					id="multiple-list-building-titles"
-					v-model="pageTitlesInput"
-					autocomplete="off"
-				/>
+				<span class="input-with-reset">
+					<CdxTextInput
+						id="multiple-list-building-titles"
+						v-model="pageTitlesInput"
+						autocomplete="off"
+					/>
+					<CdxButton type="button" @click="resetPageTitlesToDefault">Reset to default</CdxButton>
+				</span>
 			</div>
 			<div class="form-row form-row-weight">
 				<CdxLabel input-id="weight-lists">List count weight</CdxLabel>
@@ -264,6 +270,20 @@ async function buildList(): Promise<void> {
 	} finally {
 		isLoading.value = false
 	}
+}
+
+const DEFAULT_LANG = "en"
+
+function resetLangToDefault(): void {
+	localStorage.removeItem(langKey)
+	lang.value = DEFAULT_LANG
+	localStorage.setItem(langKey, DEFAULT_LANG)
+}
+
+function resetPageTitlesToDefault(): void {
+	localStorage.removeItem(QUERY_STORAGE_KEY)
+	pageTitlesInput.value = DEFAULT_QUERY
+	localStorage.setItem(QUERY_STORAGE_KEY, DEFAULT_QUERY)
 }
 
 onMounted(buildList)

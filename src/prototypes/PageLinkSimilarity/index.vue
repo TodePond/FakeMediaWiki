@@ -3,13 +3,14 @@
 		<h1>Page link similarity</h1>
 		<form @submit.prevent="load">
 			<CdxLabel input-id="page-names">Page names (comma-separated)</CdxLabel>
-			<span>
+			<span class="input-with-reset">
 				<CdxTextInput
 					autocomplete="off"
 					v-model="pageNamesInput"
 					input-type="search"
 					id="page-names"
 				/>
+				<CdxButton type="button" @click="resetToDefault">Reset to default</CdxButton>
 				<span style="display: flex; gap: 0.5rem; flex-wrap: wrap">
 					<CdxButton>Load links</CdxButton>
 					<CdxButton type="button" action="default" @click.prevent="toggleGraphVisible">
@@ -175,6 +176,8 @@ const pageNamesInput = ref(
 	localStorage.getItem("pageLinkSimilarityQuery") ||
 		"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), Rizzle Kicks"
 )
+const DEFAULT_PAGE_NAMES =
+	"Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), Rizzle Kicks"
 const linksMap = ref<Map<string, string[]>>(new Map())
 const backlinksMap = ref<Map<string, string[]>>(new Map())
 /** Outgoing links for each bidirectional page (fetched serially after main load) */
@@ -550,6 +553,12 @@ const load = async (): Promise<void> => {
 			isLoading.value = false
 		}
 	}
+}
+
+function resetToDefault(): void {
+	localStorage.removeItem("pageLinkSimilarityQuery")
+	pageNamesInput.value = DEFAULT_PAGE_NAMES
+	localStorage.setItem("pageLinkSimilarityQuery", DEFAULT_PAGE_NAMES)
 }
 
 onMounted(load)

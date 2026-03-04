@@ -11,35 +11,35 @@
 		<template v-if="loadState === 'ready'">
 			<div class="visual-diff-prototype__inputs">
 				<div class="visual-diff-prototype__input-group">
-					<CdxLabel input-id="ve-diff-old">Old HTML</CdxLabel>
-					<CdxTextArea
-						id="ve-diff-old"
-						v-model="oldHtml"
-						:rows="4"
-						class="visual-diff-prototype__textarea"
-						placeholder="<p>First version</p>"
-					/>
+					<CdxLabel>Old version</CdxLabel>
+					<div class="visual-diff-prototype__editor-wrap">
+						<VisualEditor
+							ref="oldEditorRef"
+							:initial-html="initialOldHtml"
+							class="visual-diff-prototype__editor"
+						/>
+					</div>
 				</div>
 				<div class="visual-diff-prototype__input-group">
-					<CdxLabel input-id="ve-diff-new">New HTML</CdxLabel>
-					<CdxTextArea
-						id="ve-diff-new"
-						v-model="newHtml"
-						:rows="4"
-						class="visual-diff-prototype__textarea"
-						placeholder="<p>Second version</p>"
-					/>
+					<CdxLabel>New version</CdxLabel>
+					<div class="visual-diff-prototype__editor-wrap">
+						<VisualEditor
+							ref="newEditorRef"
+							:initial-html="initialNewHtml"
+							class="visual-diff-prototype__editor"
+						/>
+					</div>
 				</div>
 			</div>
 			<div class="visual-diff-prototype__diff-wrap">
 				<VisualDiff
-					v-if="oldHtml.trim() && newHtml.trim()"
-					:old-html="oldHtml"
-					:new-html="newHtml"
+					v-if="diffOldHtml.trim() && diffNewHtml.trim()"
+					:old-html="diffOldHtml"
+					:new-html="diffNewHtml"
 					class="visual-diff-prototype__diff"
 				/>
 				<p v-else class="visual-diff-prototype__hint">
-					Enter both “Old HTML” and “New HTML” to see the diff.
+					Edit the two versions above to see changes.
 				</p>
 			</div>
 		</template>
@@ -48,27 +48,81 @@
 
 <script setup lang="ts">
 import VisualDiff from "@/components/VisualDiff/VisualDiff.vue"
+import VisualEditor from "@/components/VisualEditor/VisualEditor.vue"
 import { whenVeReady } from "@/lib/visualeditor/loadVe"
-import { CdxLabel, CdxTextArea } from "@wikimedia/codex"
-import { onMounted, ref } from "vue"
+import { CdxLabel } from "@wikimedia/codex"
+import { nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 
-const oldHtml = ref("<p>Hello there, <b>world</b>!</p>")
-const newHtml = ref("<p>Hey there, <i>world</i>!</p>")
+const initialOldHtml = ref("<p>Hello there, <b>world</b>!</p>")
+const initialNewHtml = ref("<p>Hey there, <i>world</i>!</p>")
+/** HTML passed to VisualDiff; synced from editors for instant preview */
+const diffOldHtml = ref(initialOldHtml.value)
+const diffNewHtml = ref(initialNewHtml.value)
+
+const oldEditorRef = ref<InstanceType<typeof VisualEditor> | null>(null)
+const newEditorRef = ref<InstanceType<typeof VisualEditor> | null>(null)
+
 const loadState = ref<"loading" | "ready" | "failed">("loading")
+
+const POLL_INTERVAL_MS = 350
+
+function updateDiff(): void {
+	const oldHtmlFromEditor = oldEditorRef.value?.getHtml?.()
+	const newHtmlFromEditor = newEditorRef.value?.getHtml?.()
+	if (oldHtmlFromEditor !== undefined) diffOldHtml.value = oldHtmlFromEditor
+	if (newHtmlFromEditor !== undefined) diffNewHtml.value = newHtmlFromEditor
+}
+
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
+function startPolling(): void {
+	if (pollTimer) return
+	pollTimer = setInterval(updateDiff, POLL_INTERVAL_MS)
+}
+
+function stopPolling(): void {
+	if (pollTimer) {
+		clearInterval(pollTimer)
+		pollTimer = null
+	}
+}
 
 onMounted(async () => {
 	try {
 		await whenVeReady()
+		await nextTick()
 		loadState.value = typeof window.ve !== "undefined" ? "ready" : "failed"
 	} catch {
 		loadState.value = "failed"
 	}
 })
+
+onUnmounted(stopPolling)
+
+// When both editors are mounted, sync once then poll for instant diff
+let initialSyncScheduled = false
+watch(
+	[oldEditorRef, newEditorRef],
+	([oldRef, newRef]) => {
+		if (oldRef && newRef) {
+			if (!initialSyncScheduled) {
+				initialSyncScheduled = true
+				setTimeout(updateDiff, 1200)
+			}
+			startPolling()
+		} else {
+			stopPolling()
+		}
+	},
+	{ flush: "post" }
+)
 </script>
 
 <style scoped>
 .visual-diff-prototype {
 	padding: 1.5rem;
+	box-sizing: border-box;
+	max-width: 100%;
 }
 
 .visual-diff-prototype__intro {
@@ -94,14 +148,52 @@ onMounted(async () => {
 
 .visual-diff-prototype__inputs {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 	gap: 1rem;
 	margin-bottom: 1rem;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
+	.visual-diff-prototype {
+		padding: 0.75rem;
+		overflow-x: hidden;
+		width: 100%;
+	}
+
 	.visual-diff-prototype__inputs {
 		grid-template-columns: 1fr;
+		gap: 0.75rem;
+	}
+
+	/* Let each editor scroll horizontally instead of overflowing the page */
+	.visual-diff-prototype__editor-wrap {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.visual-diff-prototype__diff-wrap {
+		min-height: 120px;
+		overflow-x: auto;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.visual-diff-prototype__diff-wrap > *,
+	.visual-diff-prototype__diff-wrap :deep(.visual-diff-container),
+	.visual-diff-prototype__diff-wrap :deep(.visual-diff-container > *) {
+		display: flex !important;
+		flex-direction: column !important;
+		gap: 0.5rem;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	.visual-diff-prototype__diff-wrap [class*="ve-"],
+	.visual-diff-prototype__diff-wrap :deep([class*="ve-"]) {
+		min-width: 0;
+		max-width: 100%;
+		overflow-wrap: break-word;
+		word-break: break-word;
 	}
 }
 
@@ -109,6 +201,19 @@ onMounted(async () => {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
+}
+
+.visual-diff-prototype__editor-wrap {
+	border: 1px solid var(--border-color-base, #a2a9b1);
+	border-radius: 2px;
+	overflow: hidden;
+	background: var(--background-color-base, #fff);
+	min-width: 0;
+}
+
+.visual-diff-prototype__editor {
+	display: block;
+	min-width: 0;
 }
 
 .visual-diff-prototype__textarea {
@@ -119,9 +224,10 @@ onMounted(async () => {
 .visual-diff-prototype__diff-wrap {
 	border: 1px solid var(--border-color-base, #a2a9b1);
 	border-radius: 2px;
-	overflow: hidden;
+	overflow: auto;
 	background: var(--background-color-base, #fff);
 	min-height: 160px;
+	min-width: 0;
 }
 
 .visual-diff-prototype__diff {

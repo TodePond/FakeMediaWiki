@@ -64,6 +64,20 @@ export function useChangeTypesWatchlist(options: UseChangeTypesWatchlistOptions)
 		localStorage.setItem(userStorageKey, JSON.stringify(userSearchQueries.value))
 	}
 
+	function resetPageQueriesToDefault(): void {
+		localStorage.removeItem(pageStorageKey)
+		pageSearchQueries.value = [...defaultPageQueries]
+		pageQueriesInput.value = defaultPageQueries.join(", ")
+		saveSearchQueries()
+	}
+
+	function resetUserQueriesToDefault(): void {
+		localStorage.removeItem(userStorageKey)
+		userSearchQueries.value = [...defaultUserQueries]
+		userQueriesInput.value = defaultUserQueries.join(", ")
+		saveSearchQueries()
+	}
+
 	const allRevisionsData = ref<FWRevision[]>([])
 	const isLoading = ref(false)
 	const isLoadingMore = ref(false)
@@ -418,6 +432,8 @@ export function useChangeTypesWatchlist(options: UseChangeTypesWatchlistOptions)
 		userQueriesInput,
 		syncPageQueriesFromInput,
 		syncUserQueriesFromInput,
+		resetPageQueriesToDefault,
+		resetUserQueriesToDefault,
 		allRevisionsData,
 		isLoading,
 		isLoadingMore,

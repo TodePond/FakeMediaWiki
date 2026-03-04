@@ -2,7 +2,7 @@
 	<section class="search-pages">
 		<form @submit.prevent="search">
 			<CdxLabel input-id="search-query">Full-text search</CdxLabel>
-			<span>
+			<span class="input-with-reset">
 				<CdxTextInput
 					autocomplete="off"
 					v-model="searchQuery"
@@ -11,6 +11,7 @@
 					placeholder="Search titles and content..."
 					@input="saveSearchQuery(searchQuery)"
 				/>
+				<CdxButton type="button" @click="resetToDefault">Reset to default</CdxButton>
 				<CdxButton>Search</CdxButton>
 				<CdxProgressIndicator v-if="isLoading" aria-label="Searching" />
 			</span>
@@ -66,6 +67,12 @@ const search = async (): Promise<void> => {
 
 function saveSearchQuery(query: string): void {
 	localStorage.setItem("searchPagesQuery", query)
+}
+
+function resetToDefault(): void {
+	localStorage.removeItem("searchPagesQuery")
+	searchQuery.value = ""
+	saveSearchQuery("")
 }
 
 onMounted(() => {

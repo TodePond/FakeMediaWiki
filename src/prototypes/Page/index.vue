@@ -3,13 +3,14 @@
 		<form @submit.prevent="search">
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
 
-			<span>
+			<span class="input-with-reset">
 				<CdxTextInput
 					autocomplete="off"
 					v-model="searchQuery"
 					input-type="search"
 					id="page-name"
 				/>
+				<CdxButton type="button" @click="resetToDefault">Reset to default</CdxButton>
 				<CdxButton>Load</CdxButton>
 				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
 			</span>
@@ -36,6 +37,7 @@ const wiki = new FakeWiki()
 const summary = ref<FWPageSummary | null>(null)
 const searchQuery = ref(localStorage.getItem("pageSearchQuery") || "Wet Leg")
 const isLoading = ref(false)
+const DEFAULT_QUERY = "Wet Leg"
 
 const search = async (): Promise<void> => {
 	isLoading.value = true
@@ -47,6 +49,12 @@ const search = async (): Promise<void> => {
 
 function saveSearchQuery(query: string): void {
 	localStorage.setItem("pageSearchQuery", query)
+}
+
+function resetToDefault(): void {
+	localStorage.removeItem("pageSearchQuery")
+	searchQuery.value = DEFAULT_QUERY
+	saveSearchQuery(DEFAULT_QUERY)
 }
 
 onMounted(search)

@@ -117,7 +117,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 				name: "Related recommendation feed",
 				description: "Feed with recommendations based on related changes.",
 				wrapper: "Fullscreen",
-				status: "new",
 				featured: true,
 			},
 			{
@@ -127,7 +126,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 				name: "List-building recommendation feed",
 				description: "Feed with recommendations based on list-building.",
 				wrapper: "Fullscreen",
-				status: "new",
 				featured: true,
 			},
 		],
@@ -560,6 +558,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Fullscreen",
 		title: "Visual editor",
 		status: "new",
+		featured: true,
 	},
 	{
 		type: "prototype",
@@ -570,6 +569,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Fullscreen",
 		title: "Visual diff",
 		status: "new",
+		featured: true,
 	},
 	{
 		type: "prototype",
@@ -580,6 +580,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Fullscreen",
 		title: "Visual diff feed",
 		status: "new",
+		featured: true,
 	},
 	{
 		type: "prototype",

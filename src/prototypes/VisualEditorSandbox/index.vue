@@ -43,7 +43,7 @@
 import VisualEditor from "@/components/VisualEditor/VisualEditor.vue"
 import { whenVeReady } from "@/lib/visualeditor/loadVe"
 import { CdxButton, CdxLabel, CdxTextArea } from "@wikimedia/codex"
-import { onMounted, ref } from "vue"
+import { nextTick, onMounted, ref } from "vue"
 
 const editorRef = ref<InstanceType<typeof VisualEditor> | null>(null)
 const htmlOutput = ref("<p><b>Hello,</b> <i>World!</i></p>")
@@ -69,6 +69,7 @@ const editorKey = ref(0)
 onMounted(async () => {
 	try {
 		await whenVeReady()
+		await nextTick()
 		loadState.value = typeof window.ve !== "undefined" ? "ready" : "failed"
 	} catch {
 		loadState.value = "failed"

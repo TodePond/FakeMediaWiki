@@ -23,6 +23,19 @@ form {
 	flex-wrap: wrap;
 }
 
+.form-row .input-with-reset {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+.form-row .input-with-reset .cdx-text-input {
+	flex: 1;
+	min-width: 120px;
+}
+
 .three-columns {
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr;

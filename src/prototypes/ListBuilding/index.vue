@@ -4,21 +4,27 @@
 		<form @submit.prevent="buildList">
 			<div class="form-row">
 				<CdxLabel input-id="list-building-lang">Language code</CdxLabel>
-				<CdxTextInput
-					id="list-building-lang"
-					v-model="lang"
-					placeholder="en"
-					autocomplete="off"
-				/>
+				<span class="input-with-reset">
+					<CdxTextInput
+						id="list-building-lang"
+						v-model="lang"
+						placeholder="en"
+						autocomplete="off"
+					/>
+					<CdxButton type="button" @click="resetLangToDefault">Reset to default</CdxButton>
+				</span>
 			</div>
 			<div class="form-row">
 				<CdxLabel input-id="list-building-title">Page title</CdxLabel>
-				<CdxTextInput
-					id="list-building-title"
-					v-model="pageTitle"
-					placeholder="Douglas Adams"
-					autocomplete="off"
-				/>
+				<span class="input-with-reset">
+					<CdxTextInput
+						id="list-building-title"
+						v-model="pageTitle"
+						placeholder="Douglas Adams"
+						autocomplete="off"
+					/>
+					<CdxButton type="button" @click="resetPageTitleToDefault">Reset to default</CdxButton>
+				</span>
 			</div>
 			<span class="form-actions">
 				<CdxButton>Build list</CdxButton>
@@ -105,6 +111,8 @@ const results = ref<FWListBuildingResult[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 const hasSearched = ref(false)
+const DEFAULT_LANG = "en"
+const DEFAULT_PAGE_TITLE = "Wet Leg"
 
 const resultsByReader = computed(() => results.value.filter(r => r.source === "reader"))
 const resultsByLinks = computed(() => results.value.filter(r => r.source === "links"))
@@ -146,6 +154,18 @@ async function buildList(): Promise<void> {
 	} finally {
 		isLoading.value = false
 	}
+}
+
+function resetLangToDefault(): void {
+	localStorage.removeItem(langKey)
+	lang.value = DEFAULT_LANG
+	localStorage.setItem(langKey, DEFAULT_LANG)
+}
+
+function resetPageTitleToDefault(): void {
+	localStorage.removeItem(titleKey)
+	pageTitle.value = DEFAULT_PAGE_TITLE
+	localStorage.setItem(titleKey, DEFAULT_PAGE_TITLE)
 }
 
 const thumbnails = ref<Record<string, string>>({})

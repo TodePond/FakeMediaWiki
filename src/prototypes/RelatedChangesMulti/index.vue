@@ -3,7 +3,7 @@
 		<form class="page-input-form" @submit.prevent="search">
 			<h1>Multi-page related changes</h1>
 			<CdxLabel input-id="page-name">Page names</CdxLabel>
-			<div class="page-input-row">
+			<div class="page-input-row input-with-reset">
 				<CdxTextInput
 					id="page-name"
 					v-model="pageName"
@@ -11,6 +11,7 @@
 					input-type="search"
 					placeholder="e.g. Wikipedia, Wikidata"
 				/>
+				<CdxButton type="button" @click="resetPageNameToDefault">Reset to default</CdxButton>
 				<CdxButton type="submit">Load related changes</CdxButton>
 			</div>
 			<div
@@ -959,6 +960,15 @@ async function search(): Promise<void> {
 	loadingHistoryPageNames.value = new Set()
 	expandedItemIds.value = new Set()
 	expandedTalkIds.value = new Set()
+}
+
+const DEFAULT_PAGE_NAME =
+	"Little Mix, Wet Leg, Wolf Alice, Jade Thirlwall, Confidence Man (band), Rizzle Kicks"
+
+function resetPageNameToDefault(): void {
+	localStorage.removeItem(pageStorageKey)
+	pageName.value = DEFAULT_PAGE_NAME
+	localStorage.setItem(pageStorageKey, DEFAULT_PAGE_NAME)
 }
 
 const filteredRevisions = computed(() => {

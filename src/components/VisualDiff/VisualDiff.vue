@@ -38,8 +38,8 @@ watch(
 </script>
 
 <style scoped>
-/* .visual-diff-container {
-	width: 100%;
-	min-height: 120px;
-} */
+.visual-diff-container {
+	min-width: 0;
+	max-width: 100%;
+}
 </style>

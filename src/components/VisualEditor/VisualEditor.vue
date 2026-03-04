@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { whenVeReady } from "@/lib/visualeditor/loadVe"
 import type { VeDocument, VeTarget } from "@/lib/visualeditor/veTypes"
-import { onMounted, onUnmounted, ref, watch } from "vue"
+import { nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 
 const props = withDefaults(
 	defineProps<{
@@ -61,7 +61,10 @@ onMounted(async () => {
 	})
 	target.addSurface(model)
 	const el = target.$element?.[0]
-	if (el) containerRef.value.appendChild(el)
+	if (el) {
+		await nextTick()
+		containerRef.value?.appendChild(el)
+	}
 })
 
 onUnmounted(() => {

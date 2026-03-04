@@ -2,13 +2,14 @@
 	<main class="page-feed">
 		<form @submit.prevent="search">
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
-			<span>
+			<span class="input-with-reset">
 				<CdxTextInput
 					autocomplete="off"
 					v-model="searchQuery"
 					input-type="search"
 					id="page-name"
 				/>
+				<CdxButton type="button" @click="resetToDefault">Reset to default</CdxButton>
 				<CdxButton>Load changes</CdxButton>
 				<CdxProgressIndicator v-if="isLoading" aria-label="Loading page" />
 			</span>
@@ -81,7 +82,15 @@ const history = ref<{ revisions?: FWRevision[] }>({})
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 
+const DEFAULT_QUERY = "Wikipedia"
+
 onMounted(search)
+
+function resetToDefault(): void {
+	localStorage.removeItem(storageKey)
+	searchQuery.value = DEFAULT_QUERY
+	saveSearchQuery(DEFAULT_QUERY)
+}
 
 function saveSearchQuery(query: string): void {
 	localStorage.setItem(storageKey, query)

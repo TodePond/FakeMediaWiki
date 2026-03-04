@@ -3,7 +3,7 @@
 		<form class="page-input-form" @submit.prevent="search">
 			<h1>Related changes</h1>
 			<CdxLabel input-id="page-name">Page name</CdxLabel>
-			<div class="page-input-row">
+			<div class="page-input-row input-with-reset">
 				<CdxTextInput
 					id="page-name"
 					v-model="pageName"
@@ -11,6 +11,7 @@
 					input-type="search"
 					placeholder="e.g. Wikipedia"
 				/>
+				<CdxButton type="button" @click="resetPageNameToDefault">Reset to default</CdxButton>
 				<CdxButton type="submit">Load related changes</CdxButton>
 			</div>
 			<div
@@ -782,6 +783,13 @@ async function search(): Promise<void> {
 	loadingHistoryPageNames.value = new Set()
 	expandedItemIds.value = new Set()
 	expandedTalkIds.value = new Set()
+}
+
+function resetPageNameToDefault(): void {
+	const defaultPageName = "Wikipedia"
+	localStorage.removeItem(pageStorageKey)
+	pageName.value = defaultPageName
+	localStorage.setItem(pageStorageKey, defaultPageName)
 }
 
 const filteredRevisions = computed(() => {
