@@ -547,7 +547,6 @@ a.history-delta.neutral:active {
 .change-diff-visual {
 	margin-top: 0.5rem;
 	overflow: hidden;
-	max-height: 20rem;
 	overflow-y: auto;
 	border: 1px solid var(--border-color-subtle);
 	border-radius: 2px;
@@ -561,7 +560,8 @@ a.history-delta.neutral:active {
 	padding-top: 0rem;
 	padding-bottom: 0rem;
 	margin-top: 0.5rem;
-	max-height: 20rem;
+	/* max-height: 20rem; */
+	max-height: 25rem;
 }
 
 /* Raw source diff: one <p> per source line for line-by-line layout */
