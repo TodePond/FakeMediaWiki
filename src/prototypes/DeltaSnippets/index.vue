@@ -973,32 +973,27 @@ function getSnippetEntries(revId: number): SnippetEntry[] {
 	const payload = getDetailsPayload(details)
 	const allItems = getAllDetailItems(payload)
 
-	// Only consider levels at or above (same or more significant than) the delta's level — never deeper
 	const highlighted = getHighlightedCandidates(revId)
-	const startingLevelIndex =
-		highlighted?.length && highlighted[0]
-			? wiki.getStructuredDeltaLevelIndex(highlighted[0].canonicalType)
-			: Math.max(
-					0,
-					...candidates
-						.map(c => wiki.getStructuredDeltaLevelIndex(c.canonicalType))
-						.filter(l => l !== Number.MAX_SAFE_INTEGER)
-				)
-	const candidatesAtOrAbove = candidates.filter(
-		c => wiki.getStructuredDeltaLevelIndex(c.canonicalType) <= startingLevelIndex
-	)
-	if (candidatesAtOrAbove.length === 0) return []
+	if (!highlighted?.length) {
+		return []
+	}
 
-	// Try delta level first, then climb up (more significant) until we find a snippet set
-	for (let levelIndex = startingLevelIndex; levelIndex >= 0; levelIndex--) {
-		const atLevel = candidatesAtOrAbove.filter(
+	// Show snippets for all visible (highlighted) structured deltas, by level (most significant first)
+	const levelIndices = highlighted
+		.map(c => wiki.getStructuredDeltaLevelIndex(c.canonicalType))
+		.filter(l => l !== Number.MAX_SAFE_INTEGER)
+	const maxLevel = levelIndices.length > 0 ? Math.max(...levelIndices) : -1
+	const allEntries: SnippetEntry[] = []
+
+	for (let levelIndex = 0; levelIndex <= maxLevel; levelIndex++) {
+		const atLevel = highlighted.filter(
 			c => wiki.getStructuredDeltaLevelIndex(c.canonicalType) === levelIndex
 		)
 		if (atLevel.length === 0) continue
 		const result = tryBuildEntriesForCandidates(atLevel, allItems)
-		if (result.length > 0) return result
+		allEntries.push(...result)
 	}
-	return []
+	return allEntries
 }
 
 export type FlattenedSnippet =

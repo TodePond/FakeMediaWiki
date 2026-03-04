@@ -120,8 +120,8 @@
 											wiki.getDeltaClass(change.delta ?? 0, false),
 											{
 												'history-delta-expanded':
-												expandedDiffIds.has(change.id) ||
-												expandedSourceDiffIds.has(change.id),
+													expandedDiffIds.has(change.id) ||
+													expandedSourceDiffIds.has(change.id),
 											},
 										]"
 									>
@@ -325,13 +325,15 @@
 									<div class="history-row">
 										<a
 											target="_blank"
-											:href="wiki.getRevisionViewUrl(rev.id, change.pageName!)"
+											:href="
+												wiki.getRevisionViewUrl(rev.id, change.pageName!)
+											"
 											class="history-time"
-										>{{
-											isToday(rev.timestamp)
-												? formatTime(rev.timestamp)
-												: formatDateShort(rev.timestamp)
-										}}</a
+											>{{
+												isToday(rev.timestamp)
+													? formatTime(rev.timestamp)
+													: formatDateShort(rev.timestamp)
+											}}</a
 										><a
 											target="_blank"
 											:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
@@ -376,8 +378,12 @@
 											class="change-diff-visual"
 										>
 											<VisualDiff
-												:old-html="loadedSourceDiffHtml.get(rev.id)!.oldHtml"
-												:new-html="loadedSourceDiffHtml.get(rev.id)!.newHtml"
+												:old-html="
+													loadedSourceDiffHtml.get(rev.id)!.oldHtml
+												"
+												:new-html="
+													loadedSourceDiffHtml.get(rev.id)!.newHtml
+												"
 											/>
 										</div>
 										<div
@@ -893,8 +899,7 @@ function applyDiffToSourceByOffsets(oldSource: string, diff: FWDiffLine[]): stri
 		const text = line.text ?? ""
 		const from = line.offset?.from
 		// Use next *following* line that has offset.from (add lines often have no from)
-		const nextFrom =
-			diff.slice(i + 1).find(l => l.offset?.from != null)?.offset?.from ?? null
+		const nextFrom = diff.slice(i + 1).find(l => l.offset?.from != null)?.offset?.from ?? null
 		const nextLine = diff[i + 1]
 
 		switch (line.type) {
@@ -927,10 +932,7 @@ function applyDiffToSourceByOffsets(oldSource: string, diff: FWDiffLine[]): stri
 				break
 			case 2: // remove: skip segment in old
 				if (from != null) {
-					const fromEnd =
-						nextFrom != null
-							? nextFrom
-							: from + utf8ByteLength(text)
+					const fromEnd = nextFrom != null ? nextFrom : from + utf8ByteLength(text)
 					lastFromEndByte = fromEnd
 				}
 				break
@@ -939,10 +941,7 @@ function applyDiffToSourceByOffsets(oldSource: string, diff: FWDiffLine[]): stri
 			case 5: // move
 				if (from != null) {
 					// Skip old segment: use next segment's from in old; fallback to from+len(new) when last
-					const fromEnd =
-						nextFrom != null
-							? nextFrom
-							: from + utf8ByteLength(text)
+					const fromEnd = nextFrom != null ? nextFrom : from + utf8ByteLength(text)
 					lastFromEndByte = fromEnd
 				}
 				parts.push(ensureTrailingNewline(getAfterTextFromLine(line)))
@@ -954,9 +953,7 @@ function applyDiffToSourceByOffsets(oldSource: string, diff: FWDiffLine[]): stri
 
 	// Append content from old that is after the last diff segment
 	if (lastFromEndByte != null && lastFromEndByte < oldSourceBytes) {
-		parts.push(
-			oldSource.slice(byteOffsetToCharIndex(oldSource, lastFromEndByte))
-		)
+		parts.push(oldSource.slice(byteOffsetToCharIndex(oldSource, lastFromEndByte)))
 	}
 
 	return parts.join("")
@@ -975,9 +972,7 @@ function ensureTrailingNewline(text: string): string {
 function applyDiffToSource(oldSource: string, response: FWCompareResponse): string {
 	const diff = response.diff ?? []
 	const normalizedOld = oldSource.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
-	const hasOffsets = diff.some(
-		l => l.offset?.from != null || l.offset?.to != null
-	)
+	const hasOffsets = diff.some(l => l.offset?.from != null || l.offset?.to != null)
 	if (hasOffsets) {
 		return applyDiffToSourceByOffsets(normalizedOld, diff)
 	}
@@ -993,12 +988,7 @@ function applyDiffToSourceByLines(oldSource: string, diff: FWDiffLine[]): string
 	let oldIndex = 0
 
 	const firstConsuming = diff.find(
-		l =>
-			l.type === 0 ||
-			l.type === 2 ||
-			l.type === 3 ||
-			l.type === 4 ||
-			l.type === 5
+		l => l.type === 0 || l.type === 2 || l.type === 3 || l.type === 4 || l.type === 5
 	)
 	if (firstConsuming?.type === 2 && oldLines.length > 0) {
 		newParts.push(oldLines[0])
@@ -1049,7 +1039,13 @@ function reconstructNewSourceFromDiff(response: FWCompareResponse): string {
 	const lines = response.diff ?? []
 	const parts: string[] = []
 	for (const line of lines) {
-		if (line.type === 0 || line.type === 1 || line.type === 3 || line.type === 4 || line.type === 5) {
+		if (
+			line.type === 0 ||
+			line.type === 1 ||
+			line.type === 3 ||
+			line.type === 4 ||
+			line.type === 5
+		) {
 			parts.push(getAfterTextFromLine(line))
 		}
 	}
@@ -1067,7 +1063,7 @@ function wikitextToHtmlForDiff(wikitext: string): string {
 		.replace(/>/g, "&gt;")
 		.replace(/"/g, "&quot;")
 	const lines = escaped.split(/\n/)
-	return `<div class="source-diff-raw">${lines.map((line) => `<p>${line}</p>`).join("")}</div>`
+	return `<div class="source-diff-raw">${lines.map(line => `<p>${line}</p>`).join("")}</div>`
 }
 
 /** Signed delta for watchlist, e.g. (+120) or (-412). */
@@ -1117,7 +1113,10 @@ function expandItem(change: FWRevision, event: MouseEvent): void {
 				const fromId = response.from?.id
 				if (fromId == null || fromId === 0) {
 					const newSource = reconstructNewSourceFromDiff(response)
-					return { oldHtml: wikitextToHtmlForDiff(""), newHtml: wikitextToHtmlForDiff(newSource) }
+					return {
+						oldHtml: wikitextToHtmlForDiff(""),
+						newHtml: wikitextToHtmlForDiff(newSource),
+					}
 				}
 				return wiki.getRevisionSource(fromId).then(oldSource => {
 					const newSource = applyDiffToSource(oldSource, response)
@@ -1231,7 +1230,10 @@ function toggleSourceDiff(change: FWRevision): void {
 			const fromId = response.from?.id
 			if (fromId == null || fromId === 0) {
 				const newSource = reconstructNewSourceFromDiff(response)
-				return { oldHtml: wikitextToHtmlForDiff(""), newHtml: wikitextToHtmlForDiff(newSource) }
+				return {
+					oldHtml: wikitextToHtmlForDiff(""),
+					newHtml: wikitextToHtmlForDiff(newSource),
+				}
 			}
 			return wiki.getRevisionSource(fromId).then(oldSource => {
 				const newSource = applyDiffToSource(oldSource, response)
