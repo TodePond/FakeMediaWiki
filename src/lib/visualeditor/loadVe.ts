@@ -85,11 +85,18 @@ function loadScripts(): Promise<void> {
 		let index = 0
 		function loadNext() {
 			if (index >= SCRIPTS.length) {
-				// Set message paths before any code uses platform
+				// Set message paths before any code uses platform. Use full URLs so
+				// message files load correctly on deployed subpaths (e.g. GitHub Pages).
 				if (window.ve && !window.ve.messagePaths) {
+					const origin = window.location.origin
+					const basePath = (() => {
+						const raw = import.meta.env.BASE_URL ?? "/"
+						const withLeading = raw.startsWith("/") ? raw : `/${raw}`
+						return withLeading.endsWith("/") ? withLeading.slice(0, -1) : withLeading
+					})()
 					window.ve.messagePaths = [
-						`${VE_BASE}/dist/i18n/`,
-						`${VE_BASE}/lib/oojs-ui/i18n/`,
+						`${origin}${basePath}/ve/dist/i18n/`,
+						`${origin}${basePath}/ve/lib/oojs-ui/i18n/`,
 					]
 				}
 				resolve()
