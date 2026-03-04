@@ -172,7 +172,8 @@
 	line-height: 1.4;
 }
 
-.history-date-expanded[type="button"] {
+.history-date-expanded[type="button"],
+a.history-date-expanded {
 	background: none;
 	border: none;
 	padding: 0;
@@ -180,6 +181,10 @@
 	cursor: pointer;
 	text-decoration: none;
 	text-align: left;
+}
+
+a.history-date-expanded:hover {
+	text-decoration: underline;
 }
 
 .history-date-expanded[type="button"]:hover {
@@ -318,13 +323,59 @@
 }
 
 .history-delta[type="button"],
-.history-time[type="button"] {
+.history-time[type="button"],
+a.history-delta,
+a.history-time {
 	background: none;
 	border: none;
 	padding: 0;
 	font: inherit;
 	cursor: pointer;
 	text-decoration: none;
+}
+
+a.history-time {
+	color: var(--color-base);
+}
+
+a.history-delta:hover,
+a.history-time:hover {
+	text-decoration: underline;
+}
+
+/* Delta link: keep same color when visited (do not use browser default visited color) */
+a.history-delta.positive:visited,
+a.history-delta.positive:visited:hover,
+a.history-delta.positive:visited:active {
+	color: var(--color-content-added);
+}
+
+a.history-delta.negative:visited,
+a.history-delta.negative:visited:hover,
+a.history-delta.negative:visited:active {
+	color: var(--color-content-removed);
+}
+
+a.history-delta.neutral:visited,
+a.history-delta.neutral:visited:hover,
+a.history-delta.neutral:visited:active {
+	color: var(--color-base);
+}
+
+/* Delta link: keep same color on hover and active (do not change to link color) */
+a.history-delta.positive:hover,
+a.history-delta.positive:active {
+	color: var(--color-content-added);
+}
+
+a.history-delta.negative:hover,
+a.history-delta.negative:active {
+	color: var(--color-content-removed);
+}
+
+a.history-delta.neutral:hover,
+a.history-delta.neutral:active {
+	color: var(--color-base);
 }
 
 .history-time[type="button"]:hover,
@@ -352,6 +403,65 @@
 
 .history-inline-diff-nested {
 	margin-left: 0;
+}
+
+/* Source (wikitext) diff lines - same as ExpandingWatchlist */
+.change-diff {
+	margin-top: 0.5rem;
+	border: 1px solid var(--border-color-subtle);
+	border-radius: 2px;
+	overflow: hidden;
+	max-height: 20rem;
+	overflow-y: auto;
+}
+
+.diff-line {
+	display: flex;
+	white-space: pre-wrap;
+	word-break: break-word;
+	padding: 0.125rem 0.5rem;
+}
+
+.diff-line-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.diff-line-context {
+	background-color: var(--background-color-base);
+	color: var(--color-base);
+}
+
+.diff-line-add {
+	background-color: var(--green100);
+	color: var(--color-base);
+}
+
+.diff-line-remove {
+	background-color: var(--red300);
+	color: var(--color-base);
+	text-decoration: line-through;
+}
+
+.diff-line-change {
+	background-color: var(--blue100);
+	color: var(--color-base);
+}
+
+.diff-char-add {
+	background-color: var(--green300);
+	font-weight: bold;
+}
+
+.diff-char-remove {
+	background-color: var(--red300);
+	text-decoration: line-through;
+	margin: 0 0.15rem;
+}
+
+.diff-char-change {
+	background-color: var(--blue300);
+	font-weight: bold;
 }
 
 .history-diff-empty {
@@ -447,8 +557,24 @@
 
 .history-item .change-diff-visual {
 	margin-bottom: 0;
+	margin-top: 0rem;
+	padding-top: 0rem;
+	padding-bottom: 0rem;
 	margin-top: 0.5rem;
 	max-height: 20rem;
+}
+
+/* Raw source diff: one <p> per source line for line-by-line layout */
+.change-diff-visual :deep(.source-diff-raw) {
+	font-family: ui-monospace, monospace;
+	word-break: break-word;
+}
+.change-diff-visual :deep(.source-diff-raw p) {
+	margin: 0.25em 0;
+	margin-bottom: 0.15em;
+}
+.change-diff-visual :deep(.source-diff-raw p:last-child) {
+	/* margin-bottom: 0; */
 }
 
 .history-comment {

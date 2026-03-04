@@ -66,7 +66,9 @@
 									:href="wiki.getPageUrl(change.pageName!)"
 									class="history-page"
 									>{{ change.pageName }}</a
-								><span
+								><a
+									target="_blank"
+									:href="wiki.getRevisionViewUrl(change.id, change.pageName!)"
 									:class="[
 										'history-time',
 										{
@@ -76,8 +78,10 @@
 										},
 									]"
 								>
-									{{ formatTime(change.timestamp) }}</span
-								><span
+									{{ formatTime(change.timestamp) }}</a
+								><a
+									target="_blank"
+									:href="wiki.getRevisionUrl(change.id, change.pageName!)"
 									:class="[
 										'history-delta',
 										wiki.getDeltaClass(change.delta ?? 0, false),
@@ -88,7 +92,7 @@
 										},
 									]"
 								>
-									{{ formatDelta(change.delta) }}</span
+									{{ formatDelta(change.delta) }}</a
 								><a
 									target="_blank"
 									:href="wiki.getUserUrl(change.user.name)"
@@ -108,21 +112,21 @@
 										:href="wiki.getPageUrl(change.pageName!)"
 										class="history-page-expanded"
 										>{{ change.pageName }}</a
-									><button
-										type="button"
+									><a
+										target="_blank"
+										:href="wiki.getRevisionUrl(change.id, change.pageName!)"
 										:class="[
 											'history-delta',
 											wiki.getDeltaClass(change.delta ?? 0, false),
 											{
-												'history-delta-expanded': expandedDiffIds.has(
-													change.id
-												),
+												'history-delta-expanded':
+												expandedDiffIds.has(change.id) ||
+												expandedSourceDiffIds.has(change.id),
 											},
 										]"
-										@click.stop="toggleDiff(change)"
 									>
 										{{ formatDelta(change.delta) }}
-									</button>
+									</a>
 									<button
 										type="button"
 										class="history-collapse-button"
@@ -138,8 +142,9 @@
 									class="history-user-expanded"
 									>{{ change.user.name }}</a
 								>
-								<button
-									type="button"
+								<a
+									target="_blank"
+									:href="wiki.getRevisionViewUrl(change.id, change.pageName!)"
 									:class="[
 										'history-date-expanded',
 										{
@@ -148,10 +153,9 @@
 											),
 										},
 									]"
-									@click.stop="toggleHistory(change)"
 								>
 									{{ formatRelativeDate(change.timestamp) }}
-								</button>
+								</a>
 								<div
 									v-if="change?.summary?.comment"
 									class="history-comment-expanded"
@@ -181,7 +185,18 @@
 											}"
 											@click.stop="toggleDiff(change)"
 										>
-											(diff)
+											(visual diff)
+										</button>
+										<button
+											type="button"
+											class="history-action-button"
+											:class="{
+												'history-action-button-active':
+													expandedSourceDiffIds.has(change.id),
+											}"
+											@click.stop="toggleSourceDiff(change)"
+										>
+											(source diff)
 										</button>
 										<button
 											type="button"
@@ -192,7 +207,7 @@
 											}"
 											@click.stop="toggleHistory(change)"
 										>
-											(hist)
+											(history)
 										</button>
 										<button
 											type="button"
@@ -229,6 +244,27 @@
 							</div>
 							<div
 								v-else-if="loadingDiffIds.has(change.id)"
+								class="history-diff-loading"
+							>
+								<CdxProgressBar inline />
+							</div>
+							<div v-else class="history-diff-empty">No diff</div>
+						</div>
+						<div
+							v-if="expandedSourceDiffIds.has(change.id)"
+							class="history-inline-diff"
+						>
+							<div
+								v-if="loadedSourceDiffHtml.has(change.id)"
+								class="change-diff-visual"
+							>
+								<VisualDiff
+									:old-html="loadedSourceDiffHtml.get(change.id)!.oldHtml"
+									:new-html="loadedSourceDiffHtml.get(change.id)!.newHtml"
+								/>
+							</div>
+							<div
+								v-else-if="loadingSourceDiffIds.has(change.id)"
 								class="history-diff-loading"
 							>
 								<CdxProgressBar inline />
@@ -287,12 +323,18 @@
 									"
 								>
 									<div class="history-row">
-										<span class="history-time">{{
+										<a
+											target="_blank"
+											:href="wiki.getRevisionViewUrl(rev.id, change.pageName!)"
+											class="history-time"
+										>{{
 											isToday(rev.timestamp)
 												? formatTime(rev.timestamp)
 												: formatDateShort(rev.timestamp)
-										}}</span
-										><span
+										}}</a
+										><a
+											target="_blank"
+											:href="wiki.getRevisionUrl(rev.id, change.pageName!)"
 											:class="[
 												'history-delta',
 												wiki.getDeltaClass(
@@ -314,7 +356,7 @@
 														? (change.delta ?? rev.delta)
 														: rev.delta
 												)
-											}}</span
+											}}</a
 										><a
 											target="_blank"
 											:href="wiki.getUserUrl(rev.user.name)"
@@ -330,12 +372,12 @@
 										class="history-inline-diff history-inline-diff-nested"
 									>
 										<div
-											v-if="loadedVisualDiffs.has(rev.id)"
+											v-if="loadedSourceDiffHtml.has(rev.id)"
 											class="change-diff-visual"
 										>
 											<VisualDiff
-												:old-html="loadedVisualDiffs.get(rev.id)!.oldHtml"
-												:new-html="loadedVisualDiffs.get(rev.id)!.newHtml"
+												:old-html="loadedSourceDiffHtml.get(rev.id)!.oldHtml"
+												:new-html="loadedSourceDiffHtml.get(rev.id)!.newHtml"
 											/>
 										</div>
 										<div
@@ -345,7 +387,7 @@
 											First revision (no diff)
 										</div>
 										<div
-											v-else-if="loadingDiffIds.has(rev.id)"
+											v-else-if="loadingSourceDiffIds.has(rev.id)"
 											class="history-diff-loading"
 										>
 											<CdxProgressBar inline />
@@ -386,7 +428,13 @@ import VisualDiff from "@/components/VisualDiff/VisualDiff.vue"
 import { whenVePlatformReady } from "@/lib/visualeditor/loadVe"
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
-import type { FWPageHistoryResponse, FWPageHistoryRevision, FWRevision } from "fakewiki/types"
+import type {
+	FWCompareResponse,
+	FWDiffLine,
+	FWPageHistoryResponse,
+	FWPageHistoryRevision,
+	FWRevision,
+} from "fakewiki/types"
 import { computed, onMounted, ref } from "vue"
 
 /** History revision with edit summary rendered as HTML */
@@ -439,12 +487,18 @@ const hasMore = ref(true) // Whether there are more revisions to load
 
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
+/** Which revision ids have the inline source diff expanded */
+const expandedSourceDiffIds = ref<Set<number>>(new Set())
 /** Loaded visual diff: old and new HTML per revision id so VisualDiff component can render */
 const loadedVisualDiffs = ref<Map<number, { oldHtml: string; newHtml: string }>>(new Map())
+/** Loaded source (wikitext) as HTML for VisualDiff: old/new per revision id */
+const loadedSourceDiffHtml = ref<Map<number, { oldHtml: string; newHtml: string }>>(new Map())
 /** Revision ids that are first revision (no parent, so no diff) */
 const firstRevisionIds = ref<Set<number>>(new Set())
 /** Revision ids currently loading their diff */
 const loadingDiffIds = ref<Set<number>>(new Set())
+/** Revision ids currently loading their source diff */
+const loadingSourceDiffIds = ref<Set<number>>(new Set())
 
 /** Which revision ids have inline history expanded (we use change.id as key) */
 const expandedHistoryIds = ref<Set<number>>(new Set())
@@ -616,9 +670,12 @@ async function search(): Promise<void> {
 	saveSearchQueries()
 	// Clear expanded/loaded diffs and history when feed is refreshed
 	expandedDiffIds.value = new Set()
+	expandedSourceDiffIds.value = new Set()
 	loadedVisualDiffs.value = new Map()
+	loadedSourceDiffHtml.value = new Map()
 	firstRevisionIds.value = new Set()
 	loadingDiffIds.value = new Set()
+	loadingSourceDiffIds.value = new Set()
 	expandedHistoryIds.value = new Set()
 	expandedHistoryDiffIds.value = new Map()
 	loadedHistories.value = new Map()
@@ -748,6 +805,271 @@ function formatRelativeDate(timestamp: string): string {
 	})
 }
 
+/**
+ * UTF-8 byte offset to character index (for MediaWiki API byte offsets).
+ */
+function byteOffsetToCharIndex(str: string, byteOffset: number): number {
+	let bytes = 0
+	let i = 0
+	while (i < str.length) {
+		const c = str.codePointAt(i) ?? 0
+		if (c <= 0x7f) bytes += 1
+		else if (c <= 0x7ff) bytes += 2
+		else if (c <= 0xffff) bytes += 3
+		else bytes += 4
+		if (bytes > byteOffset) return i
+		i += c > 0xffff ? 2 : 1
+	}
+	return str.length
+}
+
+function utf8ByteLength(str: string): number {
+	let bytes = 0
+	for (let i = 0; i < str.length; i++) {
+		const c = str.codePointAt(i) ?? 0
+		if (c <= 0x7f) bytes += 1
+		else if (c <= 0x7ff) bytes += 2
+		else if (c <= 0xffff) bytes += 3
+		else bytes += 4
+		if (c > 0xffff) i++
+	}
+	return bytes
+}
+
+/**
+ * Return the "after" (new) text for a diff line at character level.
+ * Uses highlightRanges: type 0 = add, type 1 = remove. We keep only non-remove segments
+ * so the result is what should appear in the new source (no deleted characters).
+ */
+function getAfterTextFromLine(line: FWDiffLine): string {
+	const text = line.text ?? ""
+	const ranges = line.highlightRanges ?? []
+	if (ranges.length === 0) return text
+	const sorted = [...ranges].sort((a, b) => a.start - b.start)
+	const parts: string[] = []
+	let pos = 0
+	for (const range of sorted) {
+		const { start, length, type } = range
+		const charStart = byteOffsetToCharIndex(text, start)
+		const charEnd = byteOffsetToCharIndex(text, start + length)
+		if (charStart > pos) {
+			parts.push(text.slice(pos, charStart))
+		}
+		// Only include add (0) and context (implicit); exclude remove (1)
+		if (type !== 1) {
+			parts.push(text.slice(charStart, charEnd))
+		}
+		pos = charEnd
+	}
+	if (pos < text.length) {
+		parts.push(text.slice(pos))
+	}
+	return parts.join("")
+}
+
+/**
+ * Apply the compare API diff to the parent source at character (byte-offset) level.
+ * Uses offset.from when present so the correct segment is replaced; prepends/appends
+ * any leading/trailing content from old so the result is complete.
+ * Uses the next following line's offset.from (not just i+1) so context doesn't copy
+ * into a removed/changed segment when add lines have no from.
+ */
+function applyDiffToSourceByOffsets(oldSource: string, diff: FWDiffLine[]): string {
+	if (diff.length === 0) return oldSource
+
+	const oldSourceBytes = utf8ByteLength(oldSource)
+	const parts: string[] = []
+	let lastFromEndByte: number | null = null
+
+	// Prepend content from old that is before the first diff segment
+	const firstWithFrom = diff.find(l => l.offset?.from != null)
+	const firstFrom = firstWithFrom?.offset?.from
+	if (firstFrom != null && firstFrom > 0) {
+		parts.push(oldSource.slice(0, byteOffsetToCharIndex(oldSource, firstFrom)))
+	}
+
+	for (let i = 0; i < diff.length; i++) {
+		const line = diff[i]
+		const text = line.text ?? ""
+		const from = line.offset?.from
+		// Use next *following* line that has offset.from (add lines often have no from)
+		const nextFrom =
+			diff.slice(i + 1).find(l => l.offset?.from != null)?.offset?.from ?? null
+		const nextLine = diff[i + 1]
+
+		switch (line.type) {
+			case 0: // context: copy segment from old (do not copy into remove/change)
+				if (from != null) {
+					let fromEnd: number
+					if (nextFrom != null) {
+						fromEnd = nextFrom
+					} else if (nextLine?.type === 1) {
+						// Next line is add with no from: assume add replaces tail of context (e.g. "Tour" -> "tour")
+						const addLen = utf8ByteLength(nextLine.text ?? "")
+						fromEnd = from + Math.max(0, utf8ByteLength(text) - addLen)
+					} else {
+						fromEnd = from + utf8ByteLength(text)
+					}
+					lastFromEndByte = fromEnd
+					const startChar = byteOffsetToCharIndex(oldSource, from)
+					const endChar = byteOffsetToCharIndex(oldSource, fromEnd)
+					parts.push(oldSource.slice(startChar, endChar))
+				} else {
+					parts.push(ensureTrailingNewline(getAfterTextFromLine(line)))
+				}
+				break
+			case 1: // add: output new text only
+				if (nextFrom != null) {
+					// Skip the segment in old that this add replaces (between previous end and next segment)
+					lastFromEndByte = nextFrom
+				}
+				parts.push(ensureTrailingNewline(getAfterTextFromLine(line)))
+				break
+			case 2: // remove: skip segment in old
+				if (from != null) {
+					const fromEnd =
+						nextFrom != null
+							? nextFrom
+							: from + utf8ByteLength(text)
+					lastFromEndByte = fromEnd
+				}
+				break
+			case 3: // change
+			case 4:
+			case 5: // move
+				if (from != null) {
+					// Skip old segment: use next segment's from in old; fallback to from+len(new) when last
+					const fromEnd =
+						nextFrom != null
+							? nextFrom
+							: from + utf8ByteLength(text)
+					lastFromEndByte = fromEnd
+				}
+				parts.push(ensureTrailingNewline(getAfterTextFromLine(line)))
+				break
+			default:
+				break
+		}
+	}
+
+	// Append content from old that is after the last diff segment
+	if (lastFromEndByte != null && lastFromEndByte < oldSourceBytes) {
+		parts.push(
+			oldSource.slice(byteOffsetToCharIndex(oldSource, lastFromEndByte))
+		)
+	}
+
+	return parts.join("")
+}
+
+/** If text does not end with newline, append one (so source lines don't concatenate). */
+function ensureTrailingNewline(text: string): string {
+	return text.endsWith("\n") ? text : text + "\n"
+}
+
+/**
+ * Apply the compare API diff to the parent (old) source to produce the new source.
+ * Prefers character-level application when the API provides offset.from / offset.to.
+ * Otherwise falls back to line-based application (with normalized line endings).
+ */
+function applyDiffToSource(oldSource: string, response: FWCompareResponse): string {
+	const diff = response.diff ?? []
+	const normalizedOld = oldSource.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+	const hasOffsets = diff.some(
+		l => l.offset?.from != null || l.offset?.to != null
+	)
+	if (hasOffsets) {
+		return applyDiffToSourceByOffsets(normalizedOld, diff)
+	}
+	return applyDiffToSourceByLines(normalizedOld, diff)
+}
+
+/**
+ * Line-based fallback when the API does not return offsets.
+ */
+function applyDiffToSourceByLines(oldSource: string, diff: FWDiffLine[]): string {
+	const oldLines = oldSource.split("\n")
+	const newParts: string[] = []
+	let oldIndex = 0
+
+	const firstConsuming = diff.find(
+		l =>
+			l.type === 0 ||
+			l.type === 2 ||
+			l.type === 3 ||
+			l.type === 4 ||
+			l.type === 5
+	)
+	if (firstConsuming?.type === 2 && oldLines.length > 0) {
+		newParts.push(oldLines[0])
+		oldIndex = 1
+	}
+
+	for (const line of diff) {
+		const afterText = getAfterTextFromLine(line)
+		switch (line.type) {
+			case 0:
+				if (oldIndex < oldLines.length) {
+					newParts.push(oldLines[oldIndex])
+				} else {
+					newParts.push(afterText)
+				}
+				oldIndex++
+				break
+			case 1:
+				newParts.push(afterText)
+				break
+			case 2:
+				oldIndex++
+				break
+			case 3:
+			case 4:
+			case 5:
+				newParts.push(afterText)
+				oldIndex++
+				break
+			default:
+				break
+		}
+	}
+	while (oldIndex < oldLines.length) {
+		newParts.push(oldLines[oldIndex])
+		oldIndex++
+	}
+	return newParts.join("\n")
+}
+
+/**
+ * Reconstruct the full "new" (after) wikitext from the compare API diff.
+ * Used only for first revision (no parent); then diff is synthetic and contains full content.
+ * Diff line types: 0=context, 1=add, 2=remove, 3=change, 4|5=move.
+ * New doc = context + add + change + move (type 2 is remove, so only in old).
+ */
+function reconstructNewSourceFromDiff(response: FWCompareResponse): string {
+	const lines = response.diff ?? []
+	const parts: string[] = []
+	for (const line of lines) {
+		if (line.type === 0 || line.type === 1 || line.type === 3 || line.type === 4 || line.type === 5) {
+			parts.push(getAfterTextFromLine(line))
+		}
+	}
+	return parts.join("\n")
+}
+
+/**
+ * Convert wikitext to minimal HTML for VisualDiff: escape and wrap one <p> per source line
+ * so the visual diff shows line-by-line layout.
+ */
+function wikitextToHtmlForDiff(wikitext: string): string {
+	const escaped = wikitext
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+	const lines = escaped.split(/\n/)
+	return `<div class="source-diff-raw">${lines.map((line) => `<p>${line}</p>`).join("")}</div>`
+}
+
 /** Signed delta for watchlist, e.g. (+120) or (-412). */
 function formatDelta(delta: number | null): string {
 	const n = delta != null ? Number(delta) : 0
@@ -778,41 +1100,42 @@ function expandItem(change: FWRevision, event: MouseEvent): void {
 	const id = change.id
 	// Add this item to the set of expanded items
 	expandedItemIds.value = new Set(expandedItemIds.value).add(id)
-	// Automatically expand diff view
-	expandedDiffIds.value = new Set(expandedDiffIds.value)
-	expandedDiffIds.value.add(id)
+	// Default to source diff tab (mutually exclusive with visual diff)
+	expandedSourceDiffIds.value = new Set(expandedSourceDiffIds.value).add(id)
+	const nextDiff = new Set(expandedDiffIds.value)
+	nextDiff.delete(id)
+	expandedDiffIds.value = nextDiff
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
-	// Load full page HTML for both revisions so VisualDiff component can diff them
-	if (!loadedVisualDiffs.value.has(id) && !firstRevisionIds.value.has(id)) {
+	// Load source diff from compare API; derive new from diff, fetch old only when needed
+	if (!loadedSourceDiffHtml.value.has(id)) {
 		const pageName = change.pageName
 		if (!pageName) return
-		loadingDiffIds.value = new Set(loadingDiffIds.value)
-		loadingDiffIds.value.add(id)
-		getParentRevisionIdCachedFirst(pageName, id)
-			.then(parentId => {
-				if (parentId == null) {
-					firstRevisionIds.value = new Set(firstRevisionIds.value).add(id)
-					loadingDiffIds.value = new Set(loadingDiffIds.value)
-					loadingDiffIds.value.delete(id)
-					return
+		loadingSourceDiffIds.value = new Set(loadingSourceDiffIds.value).add(id)
+		wiki.getDiffSource(pageName, id)
+			.then(response => {
+				const fromId = response.from?.id
+				if (fromId == null || fromId === 0) {
+					const newSource = reconstructNewSourceFromDiff(response)
+					return { oldHtml: wikitextToHtmlForDiff(""), newHtml: wikitextToHtmlForDiff(newSource) }
 				}
-				return Promise.all([
-					wiki.getRevisionHtml(pageName, parentId),
-					wiki.getRevisionHtml(pageName, id),
-				]).then(([oldHtml, newHtml]) => {
-					loadedVisualDiffs.value = new Map(loadedVisualDiffs.value).set(id, {
-						oldHtml,
-						newHtml,
-					})
+				return wiki.getRevisionSource(fromId).then(oldSource => {
+					const newSource = applyDiffToSource(oldSource, response)
+					return {
+						oldHtml: wikitextToHtmlForDiff(oldSource),
+						newHtml: wikitextToHtmlForDiff(newSource),
+					}
 				})
 			})
+			.then(pair => {
+				loadedSourceDiffHtml.value = new Map(loadedSourceDiffHtml.value).set(id, pair)
+			})
 			.finally(() => {
-				loadingDiffIds.value = new Set(loadingDiffIds.value)
-				loadingDiffIds.value.delete(id)
+				loadingSourceDiffIds.value = new Set(loadingSourceDiffIds.value)
+				loadingSourceDiffIds.value.delete(id)
 			})
 			.catch(e => {
-				console.error("Failed to load visual diff", e)
+				console.error("Failed to load source diff", e)
 			})
 	}
 }
@@ -820,6 +1143,7 @@ function expandItem(change: FWRevision, event: MouseEvent): void {
 function collapseItem(id: number): void {
 	expandedItemIds.value.delete(id)
 	expandedDiffIds.value.delete(id)
+	expandedSourceDiffIds.value.delete(id)
 	expandedHistoryIds.value.delete(id)
 	expandedTalkIds.value.delete(id)
 }
@@ -839,6 +1163,9 @@ function toggleDiff(change: FWRevision): void {
 		expandedDiffIds.value.delete(id)
 		return
 	}
+	// Open visual diff; close source diff (tabs are mutually exclusive)
+	expandedSourceDiffIds.value = new Set(expandedSourceDiffIds.value)
+	expandedSourceDiffIds.value.delete(id)
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.add(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
@@ -877,6 +1204,55 @@ function toggleDiff(change: FWRevision): void {
 		})
 }
 
+function toggleSourceDiff(change: FWRevision): void {
+	const id = change.id
+	const expanded = expandedSourceDiffIds.value.has(id)
+	if (expanded) {
+		expandedSourceDiffIds.value = new Set(expandedSourceDiffIds.value)
+		expandedSourceDiffIds.value.delete(id)
+		return
+	}
+	// Open source diff; close visual diff (tabs are mutually exclusive)
+	expandedDiffIds.value = new Set(expandedDiffIds.value)
+	expandedDiffIds.value.delete(id)
+	expandedSourceDiffIds.value = new Set(expandedSourceDiffIds.value)
+	expandedSourceDiffIds.value.add(id)
+	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
+	expandedHistoryIds.value.delete(id)
+	expandedTalkIds.value = new Set(expandedTalkIds.value)
+	expandedTalkIds.value.delete(id)
+	if (loadedSourceDiffHtml.value.has(id)) return
+	const pageName = change.pageName
+	if (!pageName) return
+	loadingSourceDiffIds.value = new Set(loadingSourceDiffIds.value)
+	loadingSourceDiffIds.value.add(id)
+	wiki.getDiffSource(pageName, id)
+		.then(response => {
+			const fromId = response.from?.id
+			if (fromId == null || fromId === 0) {
+				const newSource = reconstructNewSourceFromDiff(response)
+				return { oldHtml: wikitextToHtmlForDiff(""), newHtml: wikitextToHtmlForDiff(newSource) }
+			}
+			return wiki.getRevisionSource(fromId).then(oldSource => {
+				const newSource = applyDiffToSource(oldSource, response)
+				return {
+					oldHtml: wikitextToHtmlForDiff(oldSource),
+					newHtml: wikitextToHtmlForDiff(newSource),
+				}
+			})
+		})
+		.then(pair => {
+			loadedSourceDiffHtml.value = new Map(loadedSourceDiffHtml.value).set(id, pair)
+		})
+		.finally(() => {
+			loadingSourceDiffIds.value = new Set(loadingSourceDiffIds.value)
+			loadingSourceDiffIds.value.delete(id)
+		})
+		.catch(e => {
+			console.error("Failed to load source diff", e)
+		})
+}
+
 function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: string): void {
 	const id = rev.id
 	const set = expandedHistoryDiffIds.value.get(changeId) ?? new Set<number>()
@@ -890,33 +1266,35 @@ function toggleHistoryDiff(changeId: number, rev: { id: number }, pageName: stri
 	}
 	expandedHistoryDiffIds.value = new Map(expandedHistoryDiffIds.value).set(changeId, newSet)
 	if (expanded) return
-	if (loadedVisualDiffs.value.has(id) || firstRevisionIds.value.has(id)) return
-	loadingDiffIds.value = new Set(loadingDiffIds.value)
-	loadingDiffIds.value.add(id)
-	getParentRevisionIdCachedFirst(pageName, id)
-		.then(parentId => {
-			if (parentId == null) {
-				firstRevisionIds.value = new Set(firstRevisionIds.value).add(id)
-				loadingDiffIds.value = new Set(loadingDiffIds.value)
-				loadingDiffIds.value.delete(id)
-				return
+	if (loadedSourceDiffHtml.value.has(id) || firstRevisionIds.value.has(id)) return
+	loadingSourceDiffIds.value = new Set(loadingSourceDiffIds.value).add(id)
+	wiki.getDiffSource(pageName, id)
+		.then(response => {
+			const fromId = response.from?.id
+			if (fromId == null || fromId === 0) {
+				const newSource = reconstructNewSourceFromDiff(response)
+				return {
+					oldHtml: wikitextToHtmlForDiff(""),
+					newHtml: wikitextToHtmlForDiff(newSource),
+				}
 			}
-			return Promise.all([
-				wiki.getRevisionHtml(pageName, parentId),
-				wiki.getRevisionHtml(pageName, id),
-			]).then(([oldHtml, newHtml]) => {
-				loadedVisualDiffs.value = new Map(loadedVisualDiffs.value).set(id, {
-					oldHtml,
-					newHtml,
-				})
+			return wiki.getRevisionSource(fromId).then(oldSource => {
+				const newSource = applyDiffToSource(oldSource, response)
+				return {
+					oldHtml: wikitextToHtmlForDiff(oldSource),
+					newHtml: wikitextToHtmlForDiff(newSource),
+				}
 			})
 		})
+		.then(pair => {
+			loadedSourceDiffHtml.value = new Map(loadedSourceDiffHtml.value).set(id, pair!)
+		})
 		.finally(() => {
-			loadingDiffIds.value = new Set(loadingDiffIds.value)
-			loadingDiffIds.value.delete(id)
+			loadingSourceDiffIds.value = new Set(loadingSourceDiffIds.value)
+			loadingSourceDiffIds.value.delete(id)
 		})
 		.catch(e => {
-			console.error("Failed to load visual diff", e)
+			console.error("Failed to load source diff", e)
 		})
 }
 
@@ -954,6 +1332,8 @@ function toggleHistory(change: FWRevision): void {
 	expandedHistoryIds.value.add(id)
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.delete(id)
+	expandedSourceDiffIds.value = new Set(expandedSourceDiffIds.value)
+	expandedSourceDiffIds.value.delete(id)
 	expandedTalkIds.value = new Set(expandedTalkIds.value)
 	expandedTalkIds.value.delete(id)
 	if (loadedHistories.value.has(pageName)) return
@@ -1029,6 +1409,8 @@ function toggleTalk(change: FWRevision): void {
 	expandedTalkIds.value.add(id)
 	expandedDiffIds.value = new Set(expandedDiffIds.value)
 	expandedDiffIds.value.delete(id)
+	expandedSourceDiffIds.value = new Set(expandedSourceDiffIds.value)
+	expandedSourceDiffIds.value.delete(id)
 	expandedHistoryIds.value = new Set(expandedHistoryIds.value)
 	expandedHistoryIds.value.delete(id)
 	// Initialize text content and editor mode if not already set

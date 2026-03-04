@@ -27,3 +27,39 @@
 .expanding-watchlist-visual-diff .ve-ui-diffElement-spacer {
 	display: none;
 }
+
+/* Injected template-params table: one per template, template name as header */
+.expanding-watchlist-visual-diff .ve-injected-template-params {
+	border-collapse: collapse;
+	clear: both;
+	font-size: 0.7rem;
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	width: 100%;
+}
+.expanding-watchlist-visual-diff .ve-injected-template-params th,
+.expanding-watchlist-visual-diff .ve-injected-template-params td {
+	border: 1px solid var(--border-color-subtle, #a2a9b1);
+	padding: 0.25rem 0.5rem;
+	vertical-align: top;
+}
+.expanding-watchlist-visual-diff .ve-injected-template-params thead th {
+	background-color: var(--background-color-interactive-subtle, #f8f9fa);
+}
+.expanding-watchlist-visual-diff .ve-injected-template-params tbody th {
+	font-weight: normal;
+}
+.expanding-watchlist-visual-diff .ve-injected-template-params td p {
+	margin: 0 0 0.25em 0;
+}
+.expanding-watchlist-visual-diff .ve-injected-template-params td p:last-child {
+	margin-bottom: 0;
+}
+
+.source-diff-raw [data-diff-action="none"] {
+	display: block;
+}
+
+.source-diff-raw .ve-ui-diffElement-spacer {
+	display: block;
+}

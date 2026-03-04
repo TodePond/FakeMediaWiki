@@ -1,7 +1,15 @@
 /**
  * Produce visual diff HTML from two HTML strings using VisualEditor's diff view.
  * Used by the VisualDiff component; prefer using the component rather than calling this directly.
+ * When the HTML contains Parsoid data-mw, template parameter changes are injected into
+ * the before/after HTML so the existing VE diff (and its sidebar) shows them as normal
+ * content changes (e.g. removals in red, additions in green).
  */
+import {
+	extractTemplatesFromHtml,
+	getTemplateParamChanges,
+	injectTemplateParamDiffsIntoHtml,
+} from "./templateParamDiff"
 import { whenVePlatformReady } from "./loadVe"
 import { htmlToModelSync } from "./veConversion"
 
@@ -94,6 +102,9 @@ function normalizeMapOrStaticImageUrl(urlString: string): string {
 /**
  * Build VisualEditor diff from old/new HTML and return the diff element's HTML.
  * Normalizes both HTML strings before diffing to reduce spurious "all links changed" noise.
+ * If the raw HTML contains data-mw template markup, template parameter changes are
+ * injected into both documents so the VE diff shows them as normal content changes
+ * (triggering the usual sidebar and remove/insert styling).
  * Accepts empty string for one side (e.g. first revision = all add, or all remove).
  *
  * @param oldHtml - HTML of the older revision (or removed content); may be empty
@@ -105,8 +116,21 @@ export async function renderVisualDiffToHtml(oldHtml: string, newHtml: string): 
 	const ve = window.ve
 	if (!ve) return ""
 	// Allow empty side (e.g. first revision = all added, or pure deletion)
-	const wrappedOld = wrapFragmentForVe(oldHtml ?? "")
-	const wrappedNew = wrapFragmentForVe(newHtml ?? "")
+	let wrappedOld = wrapFragmentForVe(oldHtml ?? "")
+	let wrappedNew = wrapFragmentForVe(newHtml ?? "")
+	// Extract template param changes from raw HTML (with data-mw), then inject them
+	// so the VE diff treats them as normal content changes (sidebar + remove/insert styling)
+	const oldTemplates = extractTemplatesFromHtml(wrappedOld)
+	const newTemplates = extractTemplatesFromHtml(wrappedNew)
+	const paramChanges = getTemplateParamChanges(oldTemplates, newTemplates)
+	const { oldHtmlInjected, newHtmlInjected } = injectTemplateParamDiffsIntoHtml(
+		wrappedOld,
+		wrappedNew,
+		paramChanges
+	)
+	wrappedOld = oldHtmlInjected
+	wrappedNew = newHtmlInjected
+
 	const normalizedOld = normalizeHtmlForVisualDiff(wrappedOld)
 	const normalizedNew = normalizeHtmlForVisualDiff(wrappedNew)
 	const oldDoc = htmlToModelSync(normalizedOld)

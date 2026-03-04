@@ -23,8 +23,8 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getPageHtml", description: "Get page content as HTML", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
-  { name: "getRevisionHtml", description: "Get HTML for a specific revision of a page.\nUses caching to avoid re-fetching the same revision.", category: undefined, params: [
-      { key: "pageName", description: "Page title" },
+  { name: "getRevisionHtml", description: "Get HTML for a specific revision.\nUses the MediaWiki REST API endpoint: GET revision/{id}/html.\nFalls back to the Wikimedia REST API page/html/{title}/{revision} if needed.\nUses caching to avoid re-fetching the same revision.", category: undefined, params: [
+      { key: "pageName", description: "Page title (used for Wikimedia fallback and for API compatibility)" },
       { key: "revId", description: "Revision ID" }
   ] },
   { name: "getPageSource", description: "Get page content as wikitext source", category: undefined, params: [
@@ -66,6 +66,10 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   ] },
   { name: "clearPageHistoryCache", description: "Clear the page history cache for a page (or all pages if no name given).\nUse when you need fresh data, e.g. when opening the inline history view.", category: undefined, params: [
       { key: "pageName" }
+  ] },
+  { name: "getParentRevisionIdFromCache", description: "Get the parent (previous) revision ID for a revision on a page from cache only.\nDoes not trigger any network request.", category: undefined, params: [
+      { key: "pageName", description: "Page title" },
+      { key: "revId", description: "Revision ID to look up in the cached page history" }
   ] },
   { name: "getParentRevisionId", description: "Get the parent (previous) revision ID for a revision on a page.", category: undefined, params: [
       { key: "pageName", description: "Page title" },
@@ -236,6 +240,10 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "id", description: "Revision ID" },
       { key: "pageName", description: "Page title" }
   ] },
+  { name: "getRevisionViewUrl", description: "Get URL for viewing a specific revision (page content at that revision).\nUses oldid= which shows the revision's content (not the diff).", category: undefined, params: [
+      { key: "id", description: "Revision ID" },
+      { key: "pageName", description: "Page title" }
+  ] },
   { name: "getPageUrl", description: "Get URL for a page", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
@@ -324,6 +332,9 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getStructuredDeltasFromSummary", description: "Compute structured-delta output (segments + candidates) from a normalized summary.\nReturns null when summary is empty or disabled via `improvedDeltaEnabled`.", category: "Structured deltas", params: [
       { key: "summary", description: "Pre-normalized summary (type -> action -> count)" },
       { key: "options", description: "Optional structured-delta settings overrides" }
+  ] },
+  { name: "getStructuredDeltaLevelIndex", description: "Public for snippet logic: significance level index (0 = most significant).", category: undefined, params: [
+      { key: "type" }
   ] },
   { name: "runWithConcurrency", description: "Run async tasks with a concurrency limit; returns results in input order.", category: undefined, params: [
       { key: "items" },

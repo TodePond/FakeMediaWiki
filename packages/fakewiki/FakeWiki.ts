@@ -2989,6 +2989,17 @@ export class FakeWiki {
 	}
 
 	/**
+	 * Get URL for viewing a specific revision (page content at that revision).
+	 * Uses oldid= which shows the revision's content (not the diff).
+	 * @param id - Revision ID
+	 * @param pageName - Page title
+	 * @returns URL to view this revision
+	 */
+	getRevisionViewUrl(id: number, pageName: string): string {
+		return `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&oldid=${id}`
+	}
+
+	/**
 	 * Get URL for a page
 	 * @param pageName - Page title
 	 * @returns URL to page
