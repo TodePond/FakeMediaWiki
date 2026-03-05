@@ -34,3 +34,21 @@
 	color: var(--color-base, #202122);
 	flex-shrink: 0;
 }
+
+.ratio-slider-line {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.ratio-slider {
+	flex: 1;
+	min-width: 80px;
+	max-width: 200px;
+}
+
+.ratio-slider-value {
+	font-size: 0.875rem;
+	font-weight: 500;
+	min-width: 2.5em;
+}

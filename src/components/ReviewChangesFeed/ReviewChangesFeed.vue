@@ -96,17 +96,21 @@
 			</template>
 		</ul>
 		<div
-			v-if="!isLoading && props.source === 'recentChanges'"
+			v-if="
+				!isLoading &&
+				(props.source === 'recentChanges' ||
+					(props.source === 'mixed' && (props.recentChangesRatio ?? 50) > 0))
+			"
 			class="review-changes__view-more"
 		>
 			View more edits in the
 			<a
 				target="_blank"
+				rel="noopener noreferrer"
 				:href="wiki.getPageUrl('Special:RecentChanges')"
 				class="review-changes__view-more-link"
-				>recent changes</a
-			>
-			page.
+				>recent changes page</a
+			>.
 		</div>
 	</section>
 </template>
@@ -122,16 +126,20 @@ import type {
 } from "fakewiki/types"
 import { computed, onMounted, ref, watch } from "vue"
 
-export type ReviewChangesSource = "recentChanges" | "pagesAndUsers"
+export type ReviewChangesSource = "recentChanges" | "pagesAndUsers" | "mixed"
 
 const props = withDefaults(
 	defineProps<{
 		showRevertRisk: boolean
 		source?: ReviewChangesSource
+		/** 0–100, used when source is "mixed". 0 = exclude recent changes. */
+		recentChangesRatio?: number
+		/** 0–100, used when source is "mixed". 0 = exclude pages/users. */
+		pagesAndUsersRatio?: number
 		feedCap?: number
 		title?: string
 	}>(),
-	{ source: "recentChanges", feedCap: 20 }
+	{ source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50, feedCap: 10 }
 )
 
 const wiki = new FakeWiki()
@@ -164,7 +172,7 @@ function getRevertRiskLines(revId: number): Array<{ label: string; pct: number }
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
-	const revs = selectedRevisions.value
+	const revs = selectedRevisionsForDisplay.value
 	if (revs.length === 0) return
 	const revIds = revs.map(r => r.id)
 	isLoadingRevertRisk.value = true
@@ -186,17 +194,57 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 	}
 }
 
+const allRevisionsData = ref<FWRevision[]>([])
+const selectedRevisions = ref<FWRevision[]>([])
+/** Cached data for mixed mode; ratio is applied client-side only */
+const mixedRecentChangesData = ref<FWRevision[]>([])
+const mixedPagesAndUsersData = ref<FWRevision[]>([])
+
+function getSelectedRevisionsForDisplay(): FWRevision[] {
+	if (props.source !== "mixed") return selectedRevisions.value
+	const rc = mixedRecentChangesData.value
+	const pa = mixedPagesAndUsersData.value
+	let rcRatio = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
+	let paRatio = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50))
+	if (rcRatio === 0 && paRatio === 0) return []
+	if (rcRatio === 0) return pa.slice(0, props.feedCap)
+	if (paRatio === 0) return randomPick(rc, props.feedCap)
+	const totalRatio = rcRatio + paRatio
+	const recentCap = Math.round(props.feedCap * rcRatio / totalRatio)
+	const pagesCap = props.feedCap - recentCap
+	const fromRecent = rc.slice(0, recentCap)
+	const fromPages = pa.slice(0, pagesCap)
+	return [...fromRecent, ...fromPages].sort(
+		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+	)
+}
+
+const selectedRevisionsForDisplay = computed(() => getSelectedRevisionsForDisplay())
+
 watch(
 	() => props.showRevertRisk,
 	enabled => {
-		if (enabled && selectedRevisions.value.length > 0) {
+		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
 			fetchRevertRiskForFeed()
 		}
 	}
 )
 
-const allRevisionsData = ref<FWRevision[]>([])
-const selectedRevisions = ref<FWRevision[]>([])
+let revertRiskDebounceId: ReturnType<typeof setTimeout> | null = null
+watch(
+	() => [selectedRevisionsForDisplay.value.map(r => r.id).join(","), props.showRevertRisk],
+	([, enabled]) => {
+		if (!enabled || props.source !== "mixed" || selectedRevisionsForDisplay.value.length === 0) {
+			return
+		}
+		if (revertRiskDebounceId) clearTimeout(revertRiskDebounceId)
+		revertRiskDebounceId = setTimeout(() => {
+			revertRiskDebounceId = null
+			fetchRevertRiskForFeed()
+		}, 300)
+	}
+)
+
 const rccontinue = ref<string | undefined>(undefined)
 const useNeedsReviewFilter = ref(true)
 const isLoading = ref(false)
@@ -298,9 +346,44 @@ async function loadFeed(append = false): Promise<void> {
 			pageName?: string
 		}>
 
+		if (props.source === "mixed") {
+			if (append) {
+				isLoading.value = false
+				return
+			}
+			// Fetch both feeds and store; ratio is applied client-side only
+			const [recentRevisions, pagesRevisions] = await Promise.all([
+				wiki.getRecentChanges({
+					limit: RECENT_CHANGES_LIMIT,
+					onlyNeedsReview: true,
+				}).then(r => r.revisions),
+				wiki.getCombinedFeed({
+					pageNames: HARDCODED_PAGE_NAMES,
+					userNames: HARDCODED_USER_NAMES,
+					limit: Math.max(RECENT_CHANGES_LIMIT, props.feedCap),
+				}),
+			])
+			const [processedRecent, processedPages] = await Promise.all([
+				processRevisions(recentRevisions),
+				processRevisions(pagesRevisions),
+			])
+			mixedRecentChangesData.value = processedRecent.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+			mixedPagesAndUsersData.value = processedPages.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+			allRevisionsData.value = []
+			selectedRevisions.value = []
+			isLoading.value = false
+			if (props.showRevertRisk) {
+				fetchRevertRiskForFeed()
+			}
+			return
+		}
+
 		if (props.source === "pagesAndUsers") {
 			if (append) {
-				// No pagination for hardcoded source
 				isLoading.value = false
 				return
 			}
@@ -325,6 +408,8 @@ async function loadFeed(append = false): Promise<void> {
 		}
 
 		const processed = await processRevisions(revisions)
+		mixedRecentChangesData.value = []
+		mixedPagesAndUsersData.value = []
 
 		if (append && props.source === "recentChanges") {
 			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
@@ -338,7 +423,10 @@ async function loadFeed(append = false): Promise<void> {
 			)
 		}
 
-		selectedRevisions.value = randomPick(allRevisionsData.value, props.feedCap)
+		selectedRevisions.value =
+			props.source === "pagesAndUsers"
+				? allRevisionsData.value.slice(0, props.feedCap)
+				: randomPick(allRevisionsData.value, props.feedCap)
 
 		isLoading.value = false
 		if (props.showRevertRisk) {
@@ -422,7 +510,7 @@ function formatDelta(delta: number | null | undefined): string {
 
 const revisionsByDate = computed(() => {
 	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
-	const source = selectedRevisions.value
+	const source = selectedRevisionsForDisplay.value
 
 	source.forEach(revision => {
 		const dateKey = getDateKey(revision.timestamp)
@@ -448,7 +536,7 @@ const revisionsByDate = computed(() => {
 
 const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
-const sampleRevision = computed(() => selectedRevisions.value[0] ?? null)
+const sampleRevision = computed(() => selectedRevisionsForDisplay.value[0] ?? null)
 
 defineExpose({ sampleRevision, isLoading })
 

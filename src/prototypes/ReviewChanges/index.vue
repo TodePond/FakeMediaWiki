@@ -9,6 +9,38 @@
 					:menu-items="sourceOptions"
 				/>
 			</div>
+			<template v-if="feedSource === 'mixed'">
+				<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
+					<CdxLabel :input-id="recentChangesSliderId">Recent changes %</CdxLabel>
+					<div class="ratio-slider-line">
+						<input
+							:id="recentChangesSliderId"
+							v-model.number="recentChangesRatio"
+							type="range"
+							min="0"
+							max="100"
+							step="1"
+							class="ratio-slider"
+						/>
+						<span class="ratio-slider-value" aria-hidden="true">{{ recentChangesRatio }}%</span>
+					</div>
+				</div>
+				<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
+					<CdxLabel :input-id="pagesAndUsersSliderId">Watchlist %</CdxLabel>
+					<div class="ratio-slider-line">
+						<input
+							:id="pagesAndUsersSliderId"
+							v-model.number="pagesAndUsersRatio"
+							type="range"
+							min="0"
+							max="100"
+							step="1"
+							class="ratio-slider"
+						/>
+						<span class="ratio-slider-value" aria-hidden="true">{{ pagesAndUsersRatio }}%</span>
+					</div>
+				</div>
+			</template>
 			<label class="show-revert-risk-card__label">
 				<input
 					v-model="showRevertRiskInFeed"
@@ -21,7 +53,9 @@
 		<ReviewChangesFeed
 			:show-revert-risk="showRevertRiskInFeed"
 			:source="feedSource"
-			:feed-cap="20"
+			:recent-changes-ratio="recentChangesRatio"
+			:pages-and-users-ratio="pagesAndUsersRatio"
+			:feed-cap="10"
 		/>
 	</section>
 </template>
@@ -34,6 +68,10 @@ import { ref, watch } from "vue"
 
 const SHOW_REVERT_RISK_STORAGE_KEY = "review-changes-show-revert-risk"
 const FEED_SOURCE_STORAGE_KEY = "review-changes-feed-source"
+const RECENT_CHANGES_RATIO_STORAGE_KEY = "review-changes-recent-changes-ratio"
+const PAGES_AND_USERS_RATIO_STORAGE_KEY = "review-changes-pages-and-users-ratio"
+const recentChangesSliderId = "review-changes-recent-slider"
+const pagesAndUsersSliderId = "review-changes-pages-slider"
 
 function getStoredShowRevertRisk(): boolean {
 	try {
@@ -47,7 +85,7 @@ function getStoredShowRevertRisk(): boolean {
 function getStoredFeedSource(): ReviewChangesSource {
 	try {
 		const stored = localStorage.getItem(FEED_SOURCE_STORAGE_KEY)
-		if (stored === "recentChanges" || stored === "pagesAndUsers") {
+		if (stored === "recentChanges" || stored === "pagesAndUsers" || stored === "mixed") {
 			return stored
 		}
 	} catch {
@@ -56,13 +94,29 @@ function getStoredFeedSource(): ReviewChangesSource {
 	return "recentChanges"
 }
 
+function getStoredRatio(key: string, fallback: number): number {
+	try {
+		const stored = localStorage.getItem(key)
+		if (stored !== null) {
+			const n = Number(stored)
+			if (Number.isFinite(n) && n >= 0 && n <= 100) return Math.round(n)
+		}
+	} catch {
+		// ignore
+	}
+	return fallback
+}
+
 const sourceOptions = [
 	{ value: "recentChanges", label: "Recent changes" },
 	{ value: "pagesAndUsers", label: "Watchlist" },
+	{ value: "mixed", label: "Mixed" },
 ]
 
 const showRevertRiskInFeed = ref(getStoredShowRevertRisk())
 const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
+const recentChangesRatio = ref(getStoredRatio(RECENT_CHANGES_RATIO_STORAGE_KEY, 50))
+const pagesAndUsersRatio = ref(getStoredRatio(PAGES_AND_USERS_RATIO_STORAGE_KEY, 50))
 
 watch(showRevertRiskInFeed, enabled => {
 	try {
@@ -75,6 +129,22 @@ watch(showRevertRiskInFeed, enabled => {
 watch(feedSource, source => {
 	try {
 		localStorage.setItem(FEED_SOURCE_STORAGE_KEY, source)
+	} catch {
+		// ignore
+	}
+})
+
+watch(recentChangesRatio, value => {
+	try {
+		localStorage.setItem(RECENT_CHANGES_RATIO_STORAGE_KEY, String(value))
+	} catch {
+		// ignore
+	}
+})
+
+watch(pagesAndUsersRatio, value => {
+	try {
+		localStorage.setItem(PAGES_AND_USERS_RATIO_STORAGE_KEY, String(value))
 	} catch {
 		// ignore
 	}

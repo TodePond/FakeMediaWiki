@@ -73,7 +73,6 @@
 
 .review-changes__revert-risk {
 	display: block;
-	margin-top: 0.25rem;
 	font-size: 0.875em;
 	color: var(--color-base--subtle, #54595d);
 }
@@ -130,6 +129,18 @@
 
 .review-changes__view-more {
 	padding-top: 1.25rem;
-	/* margin-bottom: 0rem; */
 	color: var(--color-base, #202122);
+}
+
+.review-changes__view-more-link {
+	color: var(--color-progressive, #36c);
+	text-decoration: none;
+}
+
+.review-changes__view-more-link:visited {
+	color: var(--color-progressive, #36c);
+}
+
+.review-changes__view-more-link:hover {
+	text-decoration: underline;
 }
