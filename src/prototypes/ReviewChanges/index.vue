@@ -22,7 +22,9 @@
 							step="1"
 							class="ratio-slider"
 						/>
-						<span class="ratio-slider-value" aria-hidden="true">{{ recentChangesRatio }}%</span>
+						<span class="ratio-slider-value" aria-hidden="true"
+							>{{ recentChangesRatio }}%</span
+						>
 					</div>
 				</div>
 				<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
@@ -37,25 +39,19 @@
 							step="1"
 							class="ratio-slider"
 						/>
-						<span class="ratio-slider-value" aria-hidden="true">{{ pagesAndUsersRatio }}%</span>
+						<span class="ratio-slider-value" aria-hidden="true"
+							>{{ pagesAndUsersRatio }}%</span
+						>
 					</div>
 				</div>
 			</template>
-			<label class="show-revert-risk-card__label">
-				<input
-					v-model="showRevertRiskInFeed"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
-				<span class="show-revert-risk-card__text">Debug revert risk</span>
-			</label>
 			<label class="show-revert-risk-card__label">
 				<input
 					v-model="showSourceIcons"
 					type="checkbox"
 					class="show-revert-risk-card__input"
 				/>
-				<span class="show-revert-risk-card__text">Show source icons</span>
+				<span class="show-revert-risk-card__text">Source icons</span>
 			</label>
 			<label class="show-revert-risk-card__label">
 				<input
@@ -63,7 +59,15 @@
 					type="checkbox"
 					class="show-revert-risk-card__input"
 				/>
-				<span class="show-revert-risk-card__text">Show source subtitles</span>
+				<span class="show-revert-risk-card__text">Source subtitles</span>
+			</label>
+			<label class="show-revert-risk-card__label">
+				<input
+					v-model="showRevertRiskInFeed"
+					type="checkbox"
+					class="show-revert-risk-card__input"
+				/>
+				<span class="show-revert-risk-card__text">Debug revert risk</span>
 			</label>
 		</div>
 		<ReviewChangesFeed
