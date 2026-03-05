@@ -1,5 +1,83 @@
 <template>
 	<main class="personal-dashboard-clone">
+		<div class="dashboard-mobile-banner">
+			<a
+				href="#"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="dashboard-mobile-banner__feedback"
+			>
+				Share feedback
+				<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
+			</a>
+		</div>
+		<!-- Mobile: simplified card modules -->
+		<div class="dashboard-mobile-cards">
+			<RouterLink
+				to="/Special/ReviewChanges"
+				class="mobile-card mobile-card--link"
+			>
+				<div class="mobile-card__header">
+					<span class="mobile-card__title">Review changes</span>
+					<CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />
+				</div>
+				<div class="mobile-card__content">
+					<CdxIcon :icon="cdxIconEdit" size="small" class="mobile-card__content-icon" />
+					<span class="mobile-card__content-text">
+						<template v-if="sampleRevision">
+							{{ sampleRevision.user.name }} changed bytes in
+							{{ sampleRevision.pageName ? `the ${sampleRevision.pageName} article` : "an article" }}.
+						</template>
+						<template v-else-if="isLoading">
+							Loading edits…
+						</template>
+						<template v-else>
+							No edits to review right now.
+						</template>
+					</span>
+				</div>
+				<span class="mobile-card__button">View more edits</span>
+			</RouterLink>
+
+			<section class="mobile-card">
+				<div class="mobile-card__header">
+					<span class="mobile-card__title">Your impact</span>
+				</div>
+				<div class="mobile-card__content mobile-card__content--stacked">
+					<div class="mobile-card__stat">
+						<CdxIcon :icon="cdxIconUserTalk" size="small" class="mobile-card__stat-icon" />
+						<a
+							:href="thanksLogUrl"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="mobile-card__stat-link"
+							>0</a
+						>
+						<span>Thanks sent.</span>
+					</div>
+					<div class="mobile-card__stat">
+						<CdxIcon :icon="cdxIconCheckAll" size="small" class="mobile-card__stat-icon" />
+						<span class="mobile-card__stat-value">0</span>
+						<span>Edits reviewed.</span>
+						<CdxIcon :icon="cdxIconInfo" size="small" class="mobile-card__stat-info" />
+					</div>
+				</div>
+			</section>
+
+			<a href="#" class="mobile-card mobile-card--link">
+				<div class="mobile-card__header">
+					<span class="mobile-card__title">Policies and guidelines</span>
+					<CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />
+				</div>
+				<div class="mobile-card__content">
+					<span class="mobile-card__content-text">
+						Review best practices to create a free and reliable encyclopedia.
+					</span>
+				</div>
+			</a>
+		</div>
+
+		<!-- Desktop: full dashboard -->
 		<div class="dashboard-main">
 			<section class="review-changes">
 				<div class="review-changes__title">Review changes</div>
@@ -211,7 +289,14 @@
 
 <script setup lang="ts">
 import { CdxIcon, CdxProgressBar } from "@wikimedia/codex"
-import { cdxIconCheckAll, cdxIconInfo, cdxIconUserTalk } from "@wikimedia/codex-icons"
+import {
+	cdxIconArrowNext,
+	cdxIconCheckAll,
+	cdxIconEdit,
+	cdxIconInfo,
+	cdxIconLinkExternal,
+	cdxIconUserTalk,
+} from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import type {
 	FWLiftWingPrediction,
@@ -220,6 +305,7 @@ import type {
 	FWRevision,
 } from "fakewiki/types"
 import { computed, onMounted, ref, watch } from "vue"
+import { RouterLink } from "vue-router"
 
 const wiki = new FakeWiki()
 
@@ -550,6 +636,8 @@ const revisionsByDate = computed(() => {
 })
 
 const revisionsByDateCapped = computed(() => revisionsByDate.value)
+
+const sampleRevision = computed(() => selectedRevisions.value[0] ?? null)
 
 onMounted(() => {
 	loadFeed()

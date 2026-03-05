@@ -10,7 +10,13 @@
 	height: 12px;
 }
 
-nav {
+/* Mobile nav - shown at small breakpoints */
+.nav-mobile {
+	display: none;
+}
+
+/* Desktop/tablet nav */
+nav.nav-desktop {
 	/* 50px height + 8px padding */
 	height: 66px;
 	padding: 8px 0px;
@@ -18,8 +24,6 @@ nav {
 	gap: 16px;
 	flex-wrap: wrap;
 	min-height: fit-content;
-	/* align-items: center; */
-	/* justify-content: space-between; */
 }
 
 .nav-item {
@@ -123,6 +127,10 @@ header {
 	justify-content: space-between;
 }
 
+.special-view--review-changes header {
+	margin-bottom: 0.5rem;
+}
+
 .header-item {
 	display: flex;
 	margin-bottom: 0px;
@@ -162,6 +170,79 @@ h1 {
 }
 
 @media (max-width: 640px) {
+	.nav-desktop {
+		display: none !important;
+	}
+
+	.nav-mobile {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		height: 50px;
+		margin-left: -1.5rem;
+		margin-right: -1.5rem;
+		padding: 8px 12px;
+		background-color: #f5f5f5;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		gap: 8px;
+	}
+
+	.nav-mobile__wordmark {
+		flex: 1;
+		text-align: left;
+		font-family: "Linux Libertine", "Georgia", "Times", serif;
+		font-size: 1.25rem;
+		font-weight: 400;
+		color: #555;
+		letter-spacing: 0.05em;
+	}
+
+	.nav-mobile__wordmark::first-letter {
+		font-size: 1.4em;
+	}
+
+	.nav-mobile__actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.nav-mobile__actions .cdx-button {
+		min-width: var(--size-icon-medium);
+		height: var(--size-icon-medium);
+		padding: 0.5rem;
+		color: #555;
+	}
+
+	.nav-mobile__actions .nav-button-bell {
+		position: relative;
+	}
+
+	.nav-mobile__actions .nav-button-bell .nav-badge {
+		position: absolute;
+		bottom: 2px;
+		right: 0;
+		background-color: var(--background-color-progressive);
+		color: var(--color-inverted);
+		font-size: 0.75rem;
+		font-weight: var(--font-weight-bold);
+		line-height: 1;
+		border-radius: 2px;
+		min-width: 16px;
+		border: 1px solid var(--color-inverted);
+		text-align: center;
+	}
+
+	.header-item-help {
+		display: none;
+	}
+
+	header {
+		border-bottom: none;
+	}
+}
+
+@media (max-width: 640px) {
 	.nav-button-desktop {
 		display: none;
 	}
@@ -193,5 +274,12 @@ h1 {
 	.nav-item-right .nav-button-bell .nav-badge {
 		bottom: 8px;
 		right: 4px;
+	}
+}
+
+/* Intermediate breakpoint: hide text link and watchlist, keep logo and menu */
+@media (min-width: 641px) and (max-width: 768px) {
+	.nav-button-desktop {
+		display: none;
 	}
 }

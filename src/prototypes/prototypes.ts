@@ -601,6 +601,16 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 	},
 	{
 		type: "prototype",
+		id: "ReviewChanges",
+		name: "Review changes",
+		description: "The review changes feed, standalone.",
+		category: "dashboard",
+		wrapper: "Special",
+		title: "Review changes",
+		status: "new",
+	},
+	{
+		type: "prototype",
 		id: "PageMetadata",
 		name: "Page metadata",
 		description: "How to get a page's metadata from the API.",

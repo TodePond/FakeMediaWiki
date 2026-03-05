@@ -1,7 +1,8 @@
 <template>
 	<div class="view">
-		<div class="special-view">
-			<nav>
+		<div class="special-view" :class="{ 'special-view--review-changes': prototypeName === 'ReviewChanges' }">
+			<!-- Desktop/tablet nav -->
+			<nav class="nav-desktop">
 				<div class="nav-item">
 				<CdxIcon :icon="cdxIconMenu" />
 				<a class="nav-wordmark">
@@ -47,13 +48,29 @@
 				</CdxButton>
 			</div>
 		</nav>
+			<!-- Mobile nav -->
+			<nav class="nav-mobile">
+				<CdxButton weight="quiet" aria-label="Menu">
+					<CdxIcon :icon="cdxIconMenu" />
+				</CdxButton>
+				<span class="nav-mobile__wordmark">WIKIPEDIA</span>
+				<div class="nav-mobile__actions">
+					<CdxButton weight="quiet" aria-label="Search">
+						<CdxIcon :icon="cdxIconSearch" />
+					</CdxButton>
+					<CdxButton weight="quiet" class="nav-button-bell" aria-label="Notifications">
+						<CdxIcon :icon="cdxIconBell" />
+						<span class="nav-badge">1</span>
+					</CdxButton>
+				</div>
+			</nav>
 		<div class="notice-container"></div>
 		<header>
 			<span class="header-item">
 				<!-- <CdxIcon :icon="cdxIconListBullet" /> -->
 				<h1>{{ prototype?.title }}</h1>
 			</span>
-			<span class="header-item">
+			<span class="header-item header-item-help">
 				<a
 					class="header-link"
 					href="https://doc.wikimedia.org/codex/latest/components/overview.html"
