@@ -13,10 +13,7 @@
 		</div>
 		<!-- Mobile: simplified card modules -->
 		<div class="dashboard-mobile-cards">
-			<RouterLink
-				to="/Special/ReviewChanges"
-				class="mobile-card mobile-card--link"
-			>
+			<RouterLink to="/Special/ReviewChanges" class="mobile-card mobile-card--link">
 				<div class="mobile-card__header">
 					<span class="mobile-card__title">Review changes</span>
 					<CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />
@@ -26,14 +23,14 @@
 					<span class="mobile-card__content-text">
 						<template v-if="sampleRevision">
 							{{ sampleRevision.user.name }} changed bytes in
-							{{ sampleRevision.pageName ? `the ${sampleRevision.pageName} article` : "an article" }}.
+							{{
+								sampleRevision.pageName
+									? `the ${sampleRevision.pageName} article`
+									: "an article"
+							}}.
 						</template>
-						<template v-else-if="isLoading">
-							Loading edits…
-						</template>
-						<template v-else>
-							No edits to review right now.
-						</template>
+						<template v-else-if="isLoading"> Loading edits… </template>
+						<template v-else> No edits to review right now. </template>
 					</span>
 				</div>
 				<span class="mobile-card__button">View more edits</span>
@@ -45,7 +42,11 @@
 				</div>
 				<div class="mobile-card__content mobile-card__content--stacked">
 					<div class="mobile-card__stat">
-						<CdxIcon :icon="cdxIconUserTalk" size="small" class="mobile-card__stat-icon" />
+						<CdxIcon
+							:icon="cdxIconUserTalk"
+							size="small"
+							class="mobile-card__stat-icon"
+						/>
 						<a
 							:href="thanksLogUrl"
 							target="_blank"
@@ -56,7 +57,11 @@
 						<span>Thanks sent.</span>
 					</div>
 					<div class="mobile-card__stat">
-						<CdxIcon :icon="cdxIconCheckAll" size="small" class="mobile-card__stat-icon" />
+						<CdxIcon
+							:icon="cdxIconCheckAll"
+							size="small"
+							class="mobile-card__stat-icon"
+						/>
 						<span class="mobile-card__stat-value">0</span>
 						<span>Edits reviewed.</span>
 						<CdxIcon :icon="cdxIconInfo" size="small" class="mobile-card__stat-info" />
@@ -82,6 +87,7 @@
 			<ReviewChangesFeed
 				ref="reviewChangesFeedRef"
 				:show-revert-risk="showRevertRiskInFeed"
+				:source="feedSource"
 				:feed-cap="6"
 				title="Review changes"
 			/>
@@ -121,15 +127,25 @@
 					</div>
 				</section>
 
-				<section class="sidebar-card show-revert-risk-card">
-					<label class="show-revert-risk-card__label">
-						<input
-							v-model="showRevertRiskInFeed"
-							type="checkbox"
-							class="show-revert-risk-card__input"
-						/>
-						<span class="show-revert-risk-card__text">Debug revert risk</span>
-					</label>
+				<section class="sidebar-card review-changes-controls-card">
+					<div class="review-changes-controls">
+						<div class="review-changes-controls__row">
+							<CdxLabel input-id="review-changes-source">Feed source</CdxLabel>
+							<CdxSelect
+								id="review-changes-source"
+								v-model:selected="feedSource"
+								:menu-items="sourceOptions"
+							/>
+						</div>
+						<label class="show-revert-risk-card__label">
+							<input
+								v-model="showRevertRiskInFeed"
+								type="checkbox"
+								class="show-revert-risk-card__input"
+							/>
+							<span class="show-revert-risk-card__text">Debug revert risk</span>
+						</label>
+					</div>
 				</section>
 
 				<section class="sidebar-card policies">
@@ -190,8 +206,9 @@
 </template>
 
 <script setup lang="ts">
+import type { ReviewChangesSource } from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
-import { CdxIcon } from "@wikimedia/codex"
+import { CdxIcon, CdxLabel, CdxSelect } from "@wikimedia/codex"
 import {
 	cdxIconArrowNext,
 	cdxIconCheckAll,
@@ -213,6 +230,7 @@ const thanksLogUrl = computed(
 )
 
 const SHOW_REVERT_RISK_STORAGE_KEY = "personal-dashboard-clone-show-revert-risk"
+const FEED_SOURCE_STORAGE_KEY = "personal-dashboard-clone-feed-source"
 
 function getStoredShowRevertRisk(): boolean {
 	try {
@@ -223,7 +241,25 @@ function getStoredShowRevertRisk(): boolean {
 	}
 }
 
+function getStoredFeedSource(): ReviewChangesSource {
+	try {
+		const stored = localStorage.getItem(FEED_SOURCE_STORAGE_KEY)
+		if (stored === "recentChanges" || stored === "pagesAndUsers") {
+			return stored
+		}
+	} catch {
+		// ignore
+	}
+	return "recentChanges"
+}
+
+const sourceOptions = [
+	{ value: "recentChanges", label: "Recent changes" },
+	{ value: "pagesAndUsers", label: "Pages and users" },
+]
+
 const showRevertRiskInFeed = ref(getStoredShowRevertRisk())
+const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 
 watch(showRevertRiskInFeed, enabled => {
 	try {
@@ -233,12 +269,18 @@ watch(showRevertRiskInFeed, enabled => {
 	}
 })
 
+watch(feedSource, source => {
+	try {
+		localStorage.setItem(FEED_SOURCE_STORAGE_KEY, source)
+	} catch {
+		// ignore
+	}
+})
+
 const reviewChangesFeedRef = ref<InstanceType<typeof ReviewChangesFeed> | null>(null)
 
 const sampleRevision = computed(() => {
-	const inst = reviewChangesFeedRef.value as
-		| { sampleRevision?: { value: unknown } }
-		| null
+	const inst = reviewChangesFeedRef.value as { sampleRevision?: { value: unknown } } | null
 	return (inst?.sampleRevision?.value ?? null) as import("fakewiki/types").FWRevision | null
 })
 const isLoading = computed(() => {

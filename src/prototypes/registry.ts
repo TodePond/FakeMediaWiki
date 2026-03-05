@@ -76,6 +76,8 @@ export function getPrototype(id: string): PrototypeDefinition<"prototype" | "var
 export const prototypeGroups: PrototypeDefinition<"prototype" | "variants">[] = []
 for (const meta of prototypeMetadata) {
 	if (meta.type === "prototype") {
+		// Skip hidden prototypes (still routable, just not on home page)
+		if (meta.hidden) continue
 		// Only include if component exists
 		const component = meta.component ?? meta.id
 		if (componentLoaderMap[component] !== undefined) {
@@ -93,9 +95,13 @@ for (const meta of prototypeMetadata) {
 			})
 		}
 	} else if (meta.type === "variants") {
-		// Only include if at least one variant component exists
+		// Skip hidden variant groups
+		if (meta.hidden) continue
+		// Only include if at least one non-hidden variant component exists
 		const validVariants = meta.variants.filter(
-			v => componentLoaderMap[v.component ?? v.id] !== undefined
+			v =>
+				!v.hidden &&
+				componentLoaderMap[v.component ?? v.id] !== undefined
 		)
 		if (validVariants.length > 0) {
 			prototypeGroups.push({

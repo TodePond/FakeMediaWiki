@@ -608,6 +608,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Special",
 		title: "Review changes",
 		status: "new",
+		hidden: true,
 	},
 	{
 		type: "prototype",

@@ -304,7 +304,19 @@
 	color: var(--color-base--subtle, #54595d);
 }
 
-/* Show revert risk in feed */
+/* Review changes controls: source select + checkbox */
+.review-changes-controls {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.review-changes-controls__row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
 .show-revert-risk-card__label {
 	display: flex;
 	align-items: center;

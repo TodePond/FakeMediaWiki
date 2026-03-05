@@ -95,7 +95,10 @@
 				</li>
 			</template>
 		</ul>
-		<div v-if="!isLoading" class="review-changes__view-more">
+		<div
+			v-if="!isLoading && props.source === 'recentChanges'"
+			class="review-changes__view-more"
+		>
 			View more edits in the
 			<a
 				target="_blank"
@@ -119,13 +122,16 @@ import type {
 } from "fakewiki/types"
 import { computed, onMounted, ref, watch } from "vue"
 
+export type ReviewChangesSource = "recentChanges" | "pagesAndUsers"
+
 const props = withDefaults(
 	defineProps<{
 		showRevertRisk: boolean
+		source?: ReviewChangesSource
 		feedCap?: number
 		title?: string
 	}>(),
-	{ feedCap: 20 }
+	{ source: "recentChanges", feedCap: 20 }
 )
 
 const wiki = new FakeWiki()
@@ -197,6 +203,17 @@ const isLoading = ref(false)
 const errors = ref<string[]>([])
 
 const RECENT_CHANGES_LIMIT = 50
+
+/** Hardcoded pages and users for source="pagesAndUsers" (matches DeltaSnippets / Structured deltas) */
+const HARDCODED_PAGE_NAMES = [
+	"Confidence Man (band)",
+	"Algorave",
+	"Little Mix",
+	"Gorillaz",
+	"Jade Thirlwall",
+	"Wet Leg",
+]
+const HARDCODED_USER_NAMES = ["Todepond", "Samwalton9"]
 
 function randomPick<T>(array: T[], n: number): T[] {
 	if (array.length <= n) return [...array]
@@ -272,22 +289,44 @@ async function loadFeed(append = false): Promise<void> {
 	}
 
 	try {
-		const onlyNeedsReview = append ? useNeedsReviewFilter.value : true
-		const result = await wiki.getRecentChanges({
-			limit: RECENT_CHANGES_LIMIT,
-			onlyNeedsReview,
-			rccontinue: append ? rccontinue.value : undefined,
-		})
+		let revisions: Array<{
+			id: number
+			timestamp: string
+			comment: string
+			user: { name: string }
+			delta: number | null
+			pageName?: string
+		}>
 
-		let revisions = result.revisions
-		if (revisions.length === 0 && !append && onlyNeedsReview) {
-			throw new Error("No edits that need review were returned. Try again later.")
+		if (props.source === "pagesAndUsers") {
+			if (append) {
+				// No pagination for hardcoded source
+				isLoading.value = false
+				return
+			}
+			revisions = await wiki.getCombinedFeed({
+				pageNames: HARDCODED_PAGE_NAMES,
+				userNames: HARDCODED_USER_NAMES,
+				limit: Math.max(RECENT_CHANGES_LIMIT, props.feedCap),
+			})
+		} else {
+			const onlyNeedsReview = append ? useNeedsReviewFilter.value : true
+			const result = await wiki.getRecentChanges({
+				limit: RECENT_CHANGES_LIMIT,
+				onlyNeedsReview,
+				rccontinue: append ? rccontinue.value : undefined,
+			})
+
+			revisions = result.revisions
+			if (revisions.length === 0 && !append && onlyNeedsReview) {
+				throw new Error("No edits that need review were returned. Try again later.")
+			}
+			rccontinue.value = result.rccontinue
 		}
-		rccontinue.value = result.rccontinue
 
 		const processed = await processRevisions(revisions)
 
-		if (append) {
+		if (append && props.source === "recentChanges") {
 			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
 			const newRevisions = processed.filter(r => !existingIds.has(r.id))
 			allRevisionsData.value = [...allRevisionsData.value, ...newRevisions].sort(
@@ -416,6 +455,13 @@ defineExpose({ sampleRevision, isLoading })
 onMounted(() => {
 	loadFeed()
 })
+
+watch(
+	() => props.source,
+	() => {
+		loadFeed()
+	}
+)
 </script>
 
 <style scoped>

@@ -1,4 +1,10 @@
 /* Unscoped: v-html comment content */
+.review-changes .review-changes__comment {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
 .review-changes .review-changes__comment p {
 	display: inline;
 	line-height: var(--line-height-content);

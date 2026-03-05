@@ -10,6 +10,8 @@ export type PrototypeDefinitionBase = {
 	description: string
 	status?: PrototypeStatus
 	featured?: boolean
+	/** When true, hide from the home page (still accessible via direct URL) */
+	hidden?: boolean
 }
 
 export type PrototypeDefinitionPrototype = PrototypeDefinitionBase & {
