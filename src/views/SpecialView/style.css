@@ -251,6 +251,7 @@ h1 {
 @media (max-width: 1120px) {
 	.special-view {
 		padding: 0rem 16px;
+		padding-bottom: 1rem;
 	}
 
 	.header-button-search {
