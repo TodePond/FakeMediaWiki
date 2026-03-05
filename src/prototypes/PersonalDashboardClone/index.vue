@@ -51,10 +51,13 @@
 										class="review-changes__comment"
 										v-html="change.summary.comment"
 									></span
-									><span v-else-if="change?.comment" class="review-changes__comment">{{
-										change.comment
-									}}</span
-									><em v-else class="review-changes__comment review-changes__comment--empty"
+									><span
+										v-else-if="change?.comment"
+										class="review-changes__comment"
+										>{{ change.comment }}</span
+									><em
+										v-else
+										class="review-changes__comment review-changes__comment--empty"
 										>No edit summary</em
 									>
 								</div>
@@ -67,6 +70,26 @@
 								>
 									{{ change.user.name }}
 								</a>
+								<span
+									v-if="
+										showRevertRiskInFeed &&
+										getRevertRiskLines(change.id).length > 0
+									"
+									class="review-changes__revert-risk"
+								>
+									<template
+										v-for="(line, idx) in getRevertRiskLines(change.id)"
+										:key="line.label"
+									>
+										<span v-if="idx > 0"> · </span
+										><span>{{ line.label }}: {{ line.pct }}%</span>
+									</template>
+								</span>
+								<span
+									v-else-if="showRevertRiskInFeed && isLoadingRevertRisk"
+									class="review-changes__revert-risk review-changes__revert-risk--loading"
+									>Revert risk: loading…</span
+								>
 							</a>
 						</li>
 					</template>
@@ -95,7 +118,8 @@
 									target="_blank"
 									rel="noopener noreferrer"
 									class="your-impact__value your-impact__value-link"
-								>0</a>
+									>0</a
+								>
 							</div>
 							<span class="your-impact__label">Thanks sent</span>
 						</div>
@@ -115,6 +139,17 @@
 							</span>
 						</div>
 					</div>
+				</section>
+
+				<section class="sidebar-card show-revert-risk-card">
+					<label class="show-revert-risk-card__label">
+						<input
+							v-model="showRevertRiskInFeed"
+							type="checkbox"
+							class="show-revert-risk-card__input"
+						/>
+						<span class="show-revert-risk-card__text">Debug revert risk</span>
+					</label>
 				</section>
 
 				<section class="sidebar-card policies">
@@ -178,8 +213,13 @@
 import { CdxIcon, CdxProgressBar } from "@wikimedia/codex"
 import { cdxIconCheckAll, cdxIconInfo, cdxIconUserTalk } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
-import type { FWPageHistoryRevision, FWRevision } from "fakewiki/types"
-import { computed, onMounted, ref } from "vue"
+import type {
+	FWLiftWingPrediction,
+	FWPageHistoryRevision,
+	FWPredictionByModel,
+	FWRevision,
+} from "fakewiki/types"
+import { computed, onMounted, ref, watch } from "vue"
 
 const wiki = new FakeWiki()
 
@@ -188,6 +228,81 @@ const thanksLogUrl = computed(
 	() =>
 		`${wiki.base}w/index.php?title=${wiki.encodeForUrl("Special:Log")}&type=thanks&user=${encodeURIComponent(THANKS_LOG_USER)}`
 )
+
+const SHOW_REVERT_RISK_STORAGE_KEY = "personal-dashboard-clone-show-revert-risk"
+
+function getStoredShowRevertRisk(): boolean {
+	try {
+		const stored = localStorage.getItem(SHOW_REVERT_RISK_STORAGE_KEY)
+		return stored === "true"
+	} catch {
+		return false
+	}
+}
+
+const showRevertRiskInFeed = ref(getStoredShowRevertRisk())
+
+watch(showRevertRiskInFeed, enabled => {
+	try {
+		localStorage.setItem(SHOW_REVERT_RISK_STORAGE_KEY, String(enabled))
+	} catch {
+		// ignore
+	}
+	if (enabled && selectedRevisions.value.length > 0) {
+		fetchRevertRiskForFeed()
+	}
+})
+
+const revertRiskByRevId = ref<Map<number, FWPredictionByModel>>(new Map())
+const isLoadingRevertRisk = ref(false)
+
+function formatRevertRiskPercent(prediction: FWLiftWingPrediction): number {
+	const p = prediction.probability?.true
+	return typeof p === "number" ? Math.round(p * 100) : 0
+}
+
+/** Returns display lines for revert risk (language-agnostic and multilingual) when present. */
+function getRevertRiskLines(revId: number): Array<{ label: string; pct: number }> {
+	const byModel = revertRiskByRevId.value.get(revId)
+	if (!byModel) return []
+	const lines: Array<{ label: string; pct: number }> = []
+	if (byModel.revertrisk) {
+		lines.push({
+			label: "Revert risk (language-agnostic)",
+			pct: formatRevertRiskPercent(byModel.revertrisk),
+		})
+	}
+	if (byModel["revertrisk-multilingual"]) {
+		lines.push({
+			label: "Revert risk (multilingual)",
+			pct: formatRevertRiskPercent(byModel["revertrisk-multilingual"]),
+		})
+	}
+	return lines
+}
+
+async function fetchRevertRiskForFeed(): Promise<void> {
+	const revs = selectedRevisions.value
+	if (revs.length === 0) return
+	const revIds = revs.map(r => r.id)
+	isLoadingRevertRisk.value = true
+	try {
+		const predictions = await wiki.getRevisionPredictions(revIds, [
+			"revertrisk",
+			"revertrisk-multilingual",
+		])
+		const next = new Map<number, FWPredictionByModel>()
+		for (const revId of revIds) {
+			const byModel = predictions[revId]
+			if (byModel && (byModel.revertrisk || byModel["revertrisk-multilingual"])) {
+				next.set(revId, byModel)
+			}
+		}
+		revertRiskByRevId.value = next
+	} finally {
+		isLoadingRevertRisk.value = false
+	}
+}
 
 const allRevisionsData = ref<FWRevision[]>([])
 const selectedRevisions = ref<FWRevision[]>([])
@@ -206,14 +321,21 @@ function randomPick<T>(array: T[], n: number): T[] {
 	if (array.length <= n) return [...array]
 	const shuffled = [...array]
 	for (let i = shuffled.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+		const j = Math.floor(Math.random() * (i + 1))
+		;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
 	}
 	return shuffled.slice(0, n)
 }
 
 async function processRevisions(
-	revisions: Array<{ id: number; timestamp: string; comment: string; user: { name: string }; delta: number | null; pageName?: string }>
+	revisions: Array<{
+		id: number
+		timestamp: string
+		comment: string
+		user: { name: string }
+		delta: number | null
+		pageName?: string
+	}>
 ): Promise<FWRevision[]> {
 	return Promise.all(
 		revisions.map(async revision => {
@@ -277,17 +399,10 @@ async function loadFeed(append = false): Promise<void> {
 		})
 
 		let revisions = result.revisions
-		if (revisions.length === 0 && !append) {
-			useNeedsReviewFilter.value = false
-			const fallback = await wiki.getRecentChanges({
-				limit: RECENT_CHANGES_LIMIT,
-				onlyNeedsReview: false,
-			})
-			revisions = fallback.revisions
-			rccontinue.value = fallback.rccontinue
-		} else {
-			rccontinue.value = result.rccontinue
+		if (revisions.length === 0 && !append && onlyNeedsReview) {
+			throw new Error("No edits that need review were returned. Try again later.")
 		}
+		rccontinue.value = result.rccontinue
 
 		const processed = await processRevisions(revisions)
 
@@ -306,6 +421,9 @@ async function loadFeed(append = false): Promise<void> {
 		selectedRevisions.value = randomPick(allRevisionsData.value, FEED_CAP)
 
 		isLoading.value = false
+		if (showRevertRiskInFeed.value) {
+			fetchRevertRiskForFeed()
+		}
 	} catch (e) {
 		isLoading.value = false
 		const errorObj = e as Error
