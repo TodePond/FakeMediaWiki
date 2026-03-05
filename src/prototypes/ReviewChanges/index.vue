@@ -49,9 +49,18 @@
 				/>
 				<span class="show-revert-risk-card__text">Debug revert risk</span>
 			</label>
+			<label class="show-revert-risk-card__label">
+				<input
+					v-model="showSourceIcons"
+					type="checkbox"
+					class="show-revert-risk-card__input"
+				/>
+				<span class="show-revert-risk-card__text">Show source icons</span>
+			</label>
 		</div>
 		<ReviewChangesFeed
 			:show-revert-risk="showRevertRiskInFeed"
+			:show-source-icons="showSourceIcons"
 			:source="feedSource"
 			:recent-changes-ratio="recentChangesRatio"
 			:pages-and-users-ratio="pagesAndUsersRatio"
@@ -67,6 +76,7 @@ import { CdxLabel, CdxSelect } from "@wikimedia/codex"
 import { ref, watch } from "vue"
 
 const SHOW_REVERT_RISK_STORAGE_KEY = "review-changes-show-revert-risk"
+const SHOW_SOURCE_ICONS_STORAGE_KEY = "review-changes-show-source-icons"
 const FEED_SOURCE_STORAGE_KEY = "review-changes-feed-source"
 const RECENT_CHANGES_RATIO_STORAGE_KEY = "review-changes-recent-changes-ratio"
 const PAGES_AND_USERS_RATIO_STORAGE_KEY = "review-changes-pages-and-users-ratio"
@@ -76,6 +86,15 @@ const pagesAndUsersSliderId = "review-changes-pages-slider"
 function getStoredShowRevertRisk(): boolean {
 	try {
 		const stored = localStorage.getItem(SHOW_REVERT_RISK_STORAGE_KEY)
+		return stored === "true"
+	} catch {
+		return false
+	}
+}
+
+function getStoredShowSourceIcons(): boolean {
+	try {
+		const stored = localStorage.getItem(SHOW_SOURCE_ICONS_STORAGE_KEY)
 		return stored === "true"
 	} catch {
 		return false
@@ -114,6 +133,7 @@ const sourceOptions = [
 ]
 
 const showRevertRiskInFeed = ref(getStoredShowRevertRisk())
+const showSourceIcons = ref(getStoredShowSourceIcons())
 const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 const recentChangesRatio = ref(getStoredRatio(RECENT_CHANGES_RATIO_STORAGE_KEY, 50))
 const pagesAndUsersRatio = ref(getStoredRatio(PAGES_AND_USERS_RATIO_STORAGE_KEY, 50))
@@ -121,6 +141,14 @@ const pagesAndUsersRatio = ref(getStoredRatio(PAGES_AND_USERS_RATIO_STORAGE_KEY,
 watch(showRevertRiskInFeed, enabled => {
 	try {
 		localStorage.setItem(SHOW_REVERT_RISK_STORAGE_KEY, String(enabled))
+	} catch {
+		// ignore
+	}
+})
+
+watch(showSourceIcons, enabled => {
+	try {
+		localStorage.setItem(SHOW_SOURCE_ICONS_STORAGE_KEY, String(enabled))
 	} catch {
 		// ignore
 	}

@@ -33,7 +33,19 @@
 						:aria-label="`View diff for ${change.pageName ?? 'page'}`"
 					>
 						<div class="review-changes__item-header">
-							<span class="review-changes__page">{{ change.pageName }}</span>
+							<span class="review-changes__page-cell">
+								<CdxIcon
+									v-if="showSourceIcons && getItemSource(change)"
+									:icon="getItemSource(change) === 'pagesAndUsers' ? cdxIconUnStar : cdxIconClock"
+									size="x-small"
+									:class="[
+										'review-changes__source-icon',
+										`review-changes__source-icon--${getItemSource(change)}`,
+									]"
+									:aria-label="getItemSource(change) === 'pagesAndUsers' ? 'Watchlist' : 'Recent changes'"
+								/>
+								<span class="review-changes__page">{{ change.pageName }}</span>
+							</span>
 							<time :datetime="change.timestamp" class="review-changes__time">
 								{{ formatTime(change.timestamp) }},
 								{{ formatTimeLabel(change.timestamp) }}
@@ -111,7 +123,8 @@
 </template>
 
 <script setup lang="ts">
-import { CdxProgressBar } from "@wikimedia/codex"
+import { CdxIcon, CdxProgressBar } from "@wikimedia/codex"
+import { cdxIconClock, cdxIconUnStar } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import type {
 	FWLiftWingPrediction,
@@ -123,9 +136,12 @@ import { computed, onMounted, ref, watch } from "vue"
 
 export type ReviewChangesSource = "recentChanges" | "pagesAndUsers" | "mixed"
 
+export type ItemSource = "recentChanges" | "pagesAndUsers"
+
 const props = withDefaults(
 	defineProps<{
 		showRevertRisk: boolean
+		showSourceIcons?: boolean
 		source?: ReviewChangesSource
 		/** 0–100, used when source is "mixed". 0 = exclude recent changes. */
 		recentChangesRatio?: number
@@ -134,7 +150,7 @@ const props = withDefaults(
 		feedCap?: number
 		title?: string
 	}>(),
-	{ source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50, feedCap: 10 }
+	{ showSourceIcons: false, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50, feedCap: 10 }
 )
 
 const wiki = new FakeWiki()
@@ -207,23 +223,31 @@ const selectedRevisions = ref<FWRevision[]>([])
 const mixedRecentChangesData = ref<FWRevision[]>([])
 const mixedPagesAndUsersData = ref<FWRevision[]>([])
 
-function getSelectedRevisionsForDisplay(): FWRevision[] {
-	if (props.source !== "mixed") return selectedRevisions.value
+type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
+
+function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
+	if (props.source !== "mixed") {
+		return selectedRevisions.value.map(r => ({ ...r, itemSource: props.source as ItemSource }))
+	}
 	const rc = mixedRecentChangesData.value
 	const pa = mixedPagesAndUsersData.value
 	let rcRatio = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
 	let paRatio = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50))
 	if (rcRatio === 0 && paRatio === 0) return []
-	if (rcRatio === 0) return pa.slice(0, props.feedCap)
-	if (paRatio === 0) return randomPick(rc, props.feedCap)
+	if (rcRatio === 0) return pa.slice(0, props.feedCap).map(r => ({ ...r, itemSource: "pagesAndUsers" as const }))
+	if (paRatio === 0) return randomPick(rc, props.feedCap).map(r => ({ ...r, itemSource: "recentChanges" as const }))
 	const totalRatio = rcRatio + paRatio
 	const recentCap = Math.round(props.feedCap * rcRatio / totalRatio)
 	const pagesCap = props.feedCap - recentCap
-	const fromRecent = rc.slice(0, recentCap)
-	const fromPages = pa.slice(0, pagesCap)
+	const fromRecent = rc.slice(0, recentCap).map(r => ({ ...r, itemSource: "recentChanges" as const }))
+	const fromPages = pa.slice(0, pagesCap).map(r => ({ ...r, itemSource: "pagesAndUsers" as const }))
 	return [...fromRecent, ...fromPages].sort(
 		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 	)
+}
+
+function getItemSource(change: RevisionWithSource): ItemSource | undefined {
+	return change.itemSource
 }
 
 const selectedRevisionsForDisplay = computed(() => getSelectedRevisionsForDisplay())

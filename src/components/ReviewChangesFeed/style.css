@@ -104,6 +104,24 @@
 	width: 100%;
 }
 
+.review-changes__page-cell {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.review-changes__source-icon {
+	flex-shrink: 0;
+}
+
+.review-changes__source-icon--pagesAndUsers {
+	color: #202122;
+}
+
+.review-changes__source-icon--recentChanges {
+	color: #202122;
+}
+
 .review-changes__page {
 	font-weight: 700;
 	color: var(--color-base, #202122);
