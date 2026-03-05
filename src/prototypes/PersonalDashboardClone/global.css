@@ -1,14 +1,1 @@
-/* Unscoped: v-html comment content (scoped to this prototype) */
-.personal-dashboard-clone .review-changes__comment p {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.personal-dashboard-clone .review-changes__comment section {
-	display: inline;
-	line-height: var(--line-height-content);
-}
-
-.personal-dashboard-clone .review-changes__comment table {
-	display: inline;
-}
+/* Comment content styles are provided by ReviewChangesFeed component */

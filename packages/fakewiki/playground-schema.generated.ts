@@ -64,7 +64,7 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getCombinedFeed", description: "Get a combined feed of revisions from multiple users and/or pages.\nReturns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.\nCaching is handled internally by getUserHistory and getPageHistory.", category: undefined, params: [
       { key: "options", description: "Configuration object" }
   ] },
-  { name: "getRecentChanges", description: "Get global recent changes from the wiki (any pages) via Action API list=recentchanges.\nOptionally restrict to changes that \"need review\" (high revert risk) with rcshow=oresreview.", category: undefined, params: [
+  { name: "getRecentChanges", description: "Get global recent changes from the wiki (any pages) via Action API list=recentchanges.\nOptionally restrict to changes that \"need review\" (high revert risk) with rcshow=oresreview.\nUses rctoponly so only the latest revision of each page is returned.", category: undefined, params: [
       { key: "options", description: "Configuration object" }
   ] },
   { name: "clearPageHistoryCache", description: "Clear the page history cache for a page (or all pages if no name given).\nUse when you need fresh data, e.g. when opening the inline history view.", category: undefined, params: [
