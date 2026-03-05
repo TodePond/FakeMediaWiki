@@ -23,7 +23,7 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 		paramOverrides: { after: { inputType: "json" } },
 	},
 	getRecentChanges: {
-		optionsParamKeys: ["limit", "rccontinue", "onlyNeedsReview"],
+		optionsParamKeys: ["limit", "rccontinue", "onlyNeedsReview", "rcstart", "rcend"],
 		resultHint: "json",
 	},
 	getPagesLinks: { optionsParamKeys: ["namespace"] },

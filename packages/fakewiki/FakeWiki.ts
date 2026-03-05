@@ -1064,14 +1064,18 @@ export class FakeWiki {
 	 * @param options.limit - Maximum number of changes to return (default 50, max 500)
 	 * @param options.rccontinue - Continuation token from a previous response for pagination
 	 * @param options.onlyNeedsReview - If true, pass rcshow=oresreview so the server returns only high revert risk / "needs review" edits (default false)
+	 * @param options.rcstart - Timestamp to start enumerating from (with rcdir=older, must be later than rcend)
+	 * @param options.rcend - Timestamp to end enumerating (with rcdir=older, must be earlier than rcstart)
 	 * @returns Revisions (revision-like) and optional rccontinue for pagination
 	 */
 	async getRecentChanges(options: {
 		limit?: number
 		rccontinue?: string
 		onlyNeedsReview?: boolean
+		rcstart?: string
+		rcend?: string
 	} = {}): Promise<FWRecentChangesResult> {
-		const { limit = 50, rccontinue, onlyNeedsReview = false } = options
+		const { limit = 50, rccontinue, onlyNeedsReview = false, rcstart, rcend } = options
 		const rclimit = Math.min(Math.max(limit, 1), 500)
 
 		const params: Record<string, unknown> = {
@@ -1087,6 +1091,12 @@ export class FakeWiki {
 		}
 		if (rccontinue) {
 			params.rccontinue = rccontinue
+		}
+		if (rcstart) {
+			params.rcstart = rcstart
+		}
+		if (rcend) {
+			params.rcend = rcend
 		}
 
 		const data = (await this.request({

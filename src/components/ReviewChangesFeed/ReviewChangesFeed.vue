@@ -51,6 +51,12 @@
 								{{ formatTimeLabel(change.timestamp) }}
 							</time>
 						</div>
+						<div
+							v-if="showSourceSubtitles && getItemSource(change)"
+							class="review-changes__source-subtitle"
+						>
+							{{ getItemSource(change) === 'pagesAndUsers' ? 'From your watchlist' : 'From recent changes' }}
+						</div>
 						<div class="review-changes__summary">
 							<span
 								class="review-changes__summary-prefix"
@@ -142,15 +148,15 @@ const props = withDefaults(
 	defineProps<{
 		showRevertRisk: boolean
 		showSourceIcons?: boolean
+		showSourceSubtitles?: boolean
 		source?: ReviewChangesSource
 		/** 0–100, used when source is "mixed". 0 = exclude recent changes. */
 		recentChangesRatio?: number
 		/** 0–100, used when source is "mixed". 0 = exclude pages/users. */
 		pagesAndUsersRatio?: number
-		feedCap?: number
 		title?: string
 	}>(),
-	{ showSourceIcons: false, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50, feedCap: 10 }
+	{ showSourceIcons: false, showSourceSubtitles: false, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50 }
 )
 
 const wiki = new FakeWiki()
@@ -220,30 +226,49 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 const allRevisionsData = ref<FWRevision[]>([])
 const selectedRevisions = ref<FWRevision[]>([])
 /** Cached data for mixed mode; ratio is applied client-side only */
-const mixedRecentChangesData = ref<FWRevision[]>([])
+/** Recent changes split into 4 segments across the watchlist time range; we slice from these in parallel when displaying */
+const mixedRecentChangesBySegment = ref<FWRevision[][]>([])
 const mixedPagesAndUsersData = ref<FWRevision[]>([])
 
 type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
+
+const NUM_RC_SEGMENTS = 4
 
 function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	if (props.source !== "mixed") {
 		return selectedRevisions.value.map(r => ({ ...r, itemSource: props.source as ItemSource }))
 	}
-	const rc = mixedRecentChangesData.value
-	const pa = mixedPagesAndUsersData.value
-	let rcRatio = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
-	let paRatio = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50))
-	if (rcRatio === 0 && paRatio === 0) return []
-	if (rcRatio === 0) return pa.slice(0, props.feedCap).map(r => ({ ...r, itemSource: "pagesAndUsers" as const }))
-	if (paRatio === 0) return randomPick(rc, props.feedCap).map(r => ({ ...r, itemSource: "recentChanges" as const }))
-	const totalRatio = rcRatio + paRatio
-	const recentCap = Math.round(props.feedCap * rcRatio / totalRatio)
-	const pagesCap = props.feedCap - recentCap
-	const fromRecent = rc.slice(0, recentCap).map(r => ({ ...r, itemSource: "recentChanges" as const }))
-	const fromPages = pa.slice(0, pagesCap).map(r => ({ ...r, itemSource: "pagesAndUsers" as const }))
-	return [...fromRecent, ...fromPages].sort(
-		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-	)
+	const rcSegments = mixedRecentChangesBySegment.value // RC0, RC1, RC2, RC3
+	const wl = mixedPagesAndUsersData.value
+	const rcRatio = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50)) / 100
+	const wlRatio = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50)) / 100
+
+	// 0% / 0%: show nothing
+	if (rcRatio === 0 && wlRatio === 0) return []
+
+	// Take fraction of each pool: RC0, RC1, RC2, RC3 each get rcRatio; WL gets wlRatio
+	const rc0 = (rcSegments[0] ?? []).slice(0, Math.floor((rcSegments[0]?.length ?? 0) * rcRatio))
+	const rc1 = (rcSegments[1] ?? []).slice(0, Math.floor((rcSegments[1]?.length ?? 0) * rcRatio))
+	const rc2 = (rcSegments[2] ?? []).slice(0, Math.floor((rcSegments[2]?.length ?? 0) * rcRatio))
+	const rc3 = (rcSegments[3] ?? []).slice(0, Math.floor((rcSegments[3]?.length ?? 0) * rcRatio))
+	const wlSliced = wl.slice(0, Math.floor(wl.length * wlRatio))
+
+	// Round-robin across 5 pools: RC0[0], RC1[0], RC2[0], RC3[0], WL[0], RC0[1], ...
+	const pools = [
+		rc0.map(r => ({ ...r, itemSource: "recentChanges" as const })),
+		rc1.map(r => ({ ...r, itemSource: "recentChanges" as const })),
+		rc2.map(r => ({ ...r, itemSource: "recentChanges" as const })),
+		rc3.map(r => ({ ...r, itemSource: "recentChanges" as const })),
+		wlSliced.map(r => ({ ...r, itemSource: "pagesAndUsers" as const })),
+	]
+	const maxLen = Math.max(...pools.map(p => p.length))
+	const merged: RevisionWithSource[] = []
+	for (let i = 0; i < maxLen; i++) {
+		for (const pool of pools) {
+			if (pool[i]) merged.push(pool[i])
+		}
+	}
+	return merged
 }
 
 function getItemSource(change: RevisionWithSource): ItemSource | undefined {
@@ -281,7 +306,7 @@ const useNeedsReviewFilter = ref(true)
 const isLoading = ref(false)
 const errors = ref<string[]>([])
 
-const RECENT_CHANGES_LIMIT = 50
+const RECENT_CHANGES_LIMIT = 10
 
 /** Hardcoded pages and users for source="pagesAndUsers" (matches DeltaSnippets / Structured deltas) */
 const HARDCODED_PAGE_NAMES = [
@@ -293,16 +318,6 @@ const HARDCODED_PAGE_NAMES = [
 	"Wet Leg",
 ]
 const HARDCODED_USER_NAMES = ["Todepond", "Samwalton9"]
-
-function randomPick<T>(array: T[], n: number): T[] {
-	if (array.length <= n) return [...array]
-	const shuffled = [...array]
-	for (let i = shuffled.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1))
-		;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-	}
-	return shuffled.slice(0, n)
-}
 
 async function processRevisions(
 	revisions: Array<{
@@ -382,28 +397,64 @@ async function loadFeed(append = false): Promise<void> {
 				isLoading.value = false
 				return
 			}
-			// Fetch both feeds and store; ratio is applied client-side only
-			const [recentRevisions, pagesRevisions] = await Promise.all([
-				wiki.getRecentChanges({
-					limit: RECENT_CHANGES_LIMIT,
-					onlyNeedsReview: true,
-				}).then(r => r.revisions),
-				wiki.getCombinedFeed({
-					pageNames: HARDCODED_PAGE_NAMES,
-					userNames: HARDCODED_USER_NAMES,
-					limit: Math.max(RECENT_CHANGES_LIMIT, props.feedCap),
-				}),
-			])
-			const [processedRecent, processedPages] = await Promise.all([
-				processRevisions(recentRevisions),
-				processRevisions(pagesRevisions),
-			])
-			mixedRecentChangesData.value = processedRecent.sort(
+			// Fetch watchlist first to get its time range, then fetch recent changes from that same period
+			const pagesRevisions = await wiki.getCombinedFeed({
+				pageNames: HARDCODED_PAGE_NAMES,
+				userNames: HARDCODED_USER_NAMES,
+				limit: RECENT_CHANGES_LIMIT,
+			})
+			const processedPages = await processRevisions(pagesRevisions)
+			const sortedPages = processedPages.sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 			)
-			mixedPagesAndUsersData.value = processedPages.sort(
-				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			mixedPagesAndUsersData.value = sortedPages
+
+			// Divide time range into 4 segments, query each in parallel
+			const LIMIT_PER_QUERY = Math.ceil(RECENT_CHANGES_LIMIT / NUM_RC_SEGMENTS)
+			let processedBySegment: FWRevision[][] = []
+			let rangeStart: number
+			let rangeEnd: number
+			if (sortedPages.length > 0) {
+				const timestamps = sortedPages.map(r => new Date(r.timestamp).getTime())
+				const earliest = Math.min(...timestamps)
+				const latest = Math.max(...timestamps)
+				const bufferMs = 12 * 60 * 60 * 1000 // 12 hours each direction
+				rangeStart = earliest - bufferMs
+				rangeEnd = latest + bufferMs
+			} else {
+				// Watchlist empty: use default range (last 7 days) so we still get 4 segments of RC
+				const now = Date.now()
+				const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+				rangeEnd = now
+				rangeStart = now - sevenDaysMs
+			}
+			const rangeMs = rangeEnd - rangeStart
+			const segmentDuration = rangeMs / NUM_RC_SEGMENTS
+			const queries = Array.from({ length: NUM_RC_SEGMENTS }, (_, i) => {
+				const segEnd = rangeStart + (i + 1) * segmentDuration
+				const segStart = rangeStart + i * segmentDuration
+				return {
+					rcstart: new Date(segEnd).toISOString(),
+					rcend: new Date(segStart).toISOString(),
+				}
+			})
+			const results = await Promise.all(
+				queries.map(q =>
+					wiki.getRecentChanges({
+						limit: LIMIT_PER_QUERY,
+						onlyNeedsReview: true,
+						rcstart: q.rcstart,
+						rcend: q.rcend,
+					})
+				)
 			)
+			processedBySegment = await Promise.all(
+				results.map(r => processRevisions(r.revisions))
+			)
+			processedBySegment = processedBySegment.map(seg =>
+				seg.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+			)
+			mixedRecentChangesBySegment.value = processedBySegment
 			allRevisionsData.value = []
 			selectedRevisions.value = []
 			isLoading.value = false
@@ -421,7 +472,7 @@ async function loadFeed(append = false): Promise<void> {
 			revisions = await wiki.getCombinedFeed({
 				pageNames: HARDCODED_PAGE_NAMES,
 				userNames: HARDCODED_USER_NAMES,
-				limit: Math.max(RECENT_CHANGES_LIMIT, props.feedCap),
+				limit: RECENT_CHANGES_LIMIT,
 			})
 		} else {
 			const onlyNeedsReview = append ? useNeedsReviewFilter.value : true
@@ -439,7 +490,7 @@ async function loadFeed(append = false): Promise<void> {
 		}
 
 		const processed = await processRevisions(revisions)
-		mixedRecentChangesData.value = []
+		mixedRecentChangesBySegment.value = []
 		mixedPagesAndUsersData.value = []
 
 		if (append && props.source === "recentChanges") {
@@ -454,10 +505,7 @@ async function loadFeed(append = false): Promise<void> {
 			)
 		}
 
-		selectedRevisions.value =
-			props.source === "pagesAndUsers"
-				? allRevisionsData.value.slice(0, props.feedCap)
-				: randomPick(allRevisionsData.value, props.feedCap)
+		selectedRevisions.value = allRevisionsData.value
 
 		isLoading.value = false
 		if (props.showRevertRisk) {

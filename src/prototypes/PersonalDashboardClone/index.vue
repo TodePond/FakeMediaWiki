@@ -88,6 +88,7 @@
 				ref="reviewChangesFeedRef"
 				:show-revert-risk="showRevertRiskInFeed"
 				:show-source-icons="showSourceIcons"
+				:show-source-subtitles="showSourceSubtitles"
 				:source="feedSource"
 				:recent-changes-ratio="recentChangesRatio"
 				:pages-and-users-ratio="pagesAndUsersRatio"
@@ -188,6 +189,14 @@
 							/>
 							<span class="show-revert-risk-card__text">Show source icons</span>
 						</label>
+						<label class="show-revert-risk-card__label">
+							<input
+								v-model="showSourceSubtitles"
+								type="checkbox"
+								class="show-revert-risk-card__input"
+							/>
+							<span class="show-revert-risk-card__text">Show source subtitles</span>
+						</label>
 					</div>
 				</section>
 
@@ -274,6 +283,7 @@ const thanksLogUrl = computed(
 
 const SHOW_REVERT_RISK_STORAGE_KEY = "personal-dashboard-clone-show-revert-risk"
 const SHOW_SOURCE_ICONS_STORAGE_KEY = "personal-dashboard-clone-show-source-icons"
+const SHOW_SOURCE_SUBTITLES_STORAGE_KEY = "personal-dashboard-clone-show-source-subtitles"
 const FEED_SOURCE_STORAGE_KEY = "personal-dashboard-clone-feed-source"
 const RECENT_CHANGES_RATIO_STORAGE_KEY = "personal-dashboard-clone-recent-changes-ratio"
 const PAGES_AND_USERS_RATIO_STORAGE_KEY = "personal-dashboard-clone-pages-and-users-ratio"
@@ -292,6 +302,15 @@ function getStoredShowRevertRisk(): boolean {
 function getStoredShowSourceIcons(): boolean {
 	try {
 		const stored = localStorage.getItem(SHOW_SOURCE_ICONS_STORAGE_KEY)
+		return stored === "true"
+	} catch {
+		return false
+	}
+}
+
+function getStoredShowSourceSubtitles(): boolean {
+	try {
+		const stored = localStorage.getItem(SHOW_SOURCE_SUBTITLES_STORAGE_KEY)
 		return stored === "true"
 	} catch {
 		return false
@@ -331,6 +350,7 @@ const sourceOptions = [
 
 const showRevertRiskInFeed = ref(getStoredShowRevertRisk())
 const showSourceIcons = ref(getStoredShowSourceIcons())
+const showSourceSubtitles = ref(getStoredShowSourceSubtitles())
 const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 const recentChangesRatio = ref(getStoredRatio(RECENT_CHANGES_RATIO_STORAGE_KEY, 50))
 const pagesAndUsersRatio = ref(getStoredRatio(PAGES_AND_USERS_RATIO_STORAGE_KEY, 50))
@@ -346,6 +366,14 @@ watch(showRevertRiskInFeed, enabled => {
 watch(showSourceIcons, enabled => {
 	try {
 		localStorage.setItem(SHOW_SOURCE_ICONS_STORAGE_KEY, String(enabled))
+	} catch {
+		// ignore
+	}
+})
+
+watch(showSourceSubtitles, enabled => {
+	try {
+		localStorage.setItem(SHOW_SOURCE_SUBTITLES_STORAGE_KEY, String(enabled))
 	} catch {
 		// ignore
 	}

@@ -127,6 +127,12 @@
 	color: var(--color-base, #202122);
 }
 
+.review-changes__source-subtitle {
+	font-size: 0.875em;
+	color: var(--color-base--subtle, #54595d);
+	margin-top: -0.75rem;
+}
+
 .review-changes__time {
 	color: var(--color-base--subtle, #54595d);
 	flex-shrink: 0;
