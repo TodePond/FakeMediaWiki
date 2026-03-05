@@ -35,6 +35,11 @@ export const wrappers: PrototypeTypes.WrapperDefinition[] = [
 // Define categories with their descriptions in display order
 export const categories: PrototypeTypes.CategoryDefinition[] = [
 	{
+		id: "dashboard",
+		name: "Dashboard",
+		description: "Prototypes that imitate the personal dashboard.",
+	},
+	{
 		id: "editor",
 		name: "Visual editor",
 		description: "Prototypes experimenting with the visual editor.",
@@ -63,11 +68,6 @@ export const categories: PrototypeTypes.CategoryDefinition[] = [
 		id: "feed",
 		name: "Feeds",
 		description: "Early experiments for feeds of information.",
-	},
-	{
-		id: "dashboard",
-		name: "Dashboard",
-		description: "Dashboard-style prototypes (e.g. review changes, impact).",
 	},
 	{
 		id: "article",

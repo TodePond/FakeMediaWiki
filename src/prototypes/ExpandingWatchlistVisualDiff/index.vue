@@ -195,8 +195,9 @@
 											type="button"
 											class="history-action-button"
 											:class="{
-												'history-action-button-active':
-													expandedEditIds.has(change.id),
+												'history-action-button-active': expandedEditIds.has(
+													change.id
+												),
 											}"
 											@click.stop="toggleEdit(change)"
 										>
@@ -311,14 +312,8 @@
 								</div>
 							</div>
 						</div>
-						<div
-							v-if="expandedEditIds.has(change.id)"
-							class="history-inline-edit"
-						>
-							<div
-								v-if="loadingEditIds.has(change.id)"
-								class="history-diff-loading"
-							>
+						<div v-if="expandedEditIds.has(change.id)" class="history-inline-edit">
+							<div v-if="loadingEditIds.has(change.id)" class="history-diff-loading">
 								<CdxProgressBar inline />
 							</div>
 							<div

@@ -96,8 +96,7 @@ defineExpose({
 })
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>
 
 <style>
 .visual-editor-container .ve-ce-contentBranchNode {
