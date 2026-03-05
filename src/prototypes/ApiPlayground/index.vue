@@ -31,7 +31,7 @@
 						class="filter-input"
 					/>
 				</div>
-				<nav class="method-list" aria-label="API methods">
+				<nav class="method-list" ref="methodListRef" aria-label="API methods">
 					<section
 						v-for="group in groupedFilteredMethods"
 						:key="group.category"
@@ -257,12 +257,20 @@ function selectMethod(method: MethodDescriptor): void {
 						: ""
 	}
 	paramValues.value = defaults
-	router.push({ path: route.path, query: { method: method.name } })
+	router.replace({ path: route.path, query: { method: method.name } })
 	sidebarOpen.value = false
 }
 
 function onSelectMethod(method: MethodDescriptor): void {
+	const listEl = methodListRef.value
+	const savedScrollTop = listEl ? listEl.scrollTop : 0
 	selectMethod(method)
+	// Prevent sidebar from scrolling to the clicked item (browser focus scroll or any other).
+	nextTick(() => {
+		nextTick(() => {
+			if (listEl) listEl.scrollTop = savedScrollTop
+		})
+	})
 }
 
 function parseParamValue(
@@ -431,6 +439,7 @@ function isRecordOfRevisions(obj: Record<string, unknown>): boolean {
 }
 
 const methodButtonRefs: Record<string, HTMLElement | null> = {}
+const methodListRef = ref<HTMLElement | null>(null)
 function setMethodButtonRef(name: string, el: unknown): void {
 	methodButtonRefs[name] = (el as HTMLElement) || null
 }

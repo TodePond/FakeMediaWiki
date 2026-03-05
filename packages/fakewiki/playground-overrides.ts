@@ -22,6 +22,10 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 		optionsParamKeys: ["userNames", "pageNames", "limit", "after"],
 		paramOverrides: { after: { inputType: "json" } },
 	},
+	getRecentChanges: {
+		optionsParamKeys: ["limit", "rccontinue", "onlyNeedsReview"],
+		resultHint: "json",
+	},
 	getPagesLinks: { optionsParamKeys: ["namespace"] },
 	getPagesLinksAndBacklinks: { optionsParamKeys: ["namespace", "backlinkLimit"] },
 	getPagesBacklinks: { optionsParamKeys: ["namespace", "limit"] },

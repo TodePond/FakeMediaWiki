@@ -264,6 +264,12 @@ export interface FWPageHistoryRevision {
 
 export type FWCachedRevision = FWPageHistoryRevision & { pageName?: string }
 
+/** Result of getRecentChanges (Action API list=recentchanges). Revisions are revision-like; rccontinue for pagination. */
+export interface FWRecentChangesResult {
+	revisions: FWCachedRevision[]
+	rccontinue?: string
+}
+
 export interface FWPageHistoryResponse {
 	revisions?: FWPageHistoryRevision[]
 	latest?: string

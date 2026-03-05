@@ -114,13 +114,18 @@
 
 .review-changes__summary {
 	line-height: 1.4;
-	color: var(--color-base, #202122);
+	color: var(--color-subtle);
 }
 
 .review-changes__summary-sep {
-	color: var(--color-base, #202122);
+	color: var(--color-subtle);
 	margin-left: 0.25rem;
 	margin-right: 0.25rem;
+}
+
+.review-changes__comment--empty {
+	font-style: italic;
+	color: var(--color-base--subtle, #54595d);
 }
 
 .review-changes__view-more {
@@ -206,8 +211,19 @@
 	color: var(--color-base, #202122);
 }
 
+.your-impact__value-link {
+	color: var(--color-progressive, #36c);
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.your-impact__value-link:hover {
+	text-decoration: underline;
+}
+
 .your-impact__label {
 	color: var(--color-base--subtle, #54595d);
+	flex-shrink: 0;
 }
 
 .your-impact__label-row {

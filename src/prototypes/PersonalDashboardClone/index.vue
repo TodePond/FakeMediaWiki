@@ -51,9 +51,12 @@
 										class="review-changes__comment"
 										v-html="change.summary.comment"
 									></span
-									><span v-else class="review-changes__comment">{{
-										change.comment || ""
-									}}</span>
+									><span v-else-if="change?.comment" class="review-changes__comment">{{
+										change.comment
+									}}</span
+									><em v-else class="review-changes__comment review-changes__comment--empty"
+										>No edit summary</em
+									>
 								</div>
 								<a
 									target="_blank"
@@ -87,7 +90,12 @@
 						<div class="your-impact__metric">
 							<div class="your-impact__value-row">
 								<CdxIcon :icon="cdxIconUserTalk" class="your-impact__icon" />
-								<span class="your-impact__value">0</span>
+								<a
+									:href="thanksLogUrl"
+									target="_blank"
+									rel="noopener noreferrer"
+									class="your-impact__value your-impact__value-link"
+								>0</a>
 							</div>
 							<span class="your-impact__label">Thanks sent</span>
 						</div>
@@ -173,107 +181,139 @@ import { FakeWiki } from "fakewiki"
 import type { FWPageHistoryRevision, FWRevision } from "fakewiki/types"
 import { computed, onMounted, ref } from "vue"
 
-/** Watchlist configured from code (no form) */
-const WATCHLIST_PAGE_NAMES = ["Wikipedia", "Wet Leg", "Water", "Gorillaz", "Algorave"]
-const WATCHLIST_USER_NAMES = ["Todepond", "Samwalton9"]
-
 const wiki = new FakeWiki()
 
-const allRevisionsData = ref<FWRevision[]>([])
-const isLoading = ref(false)
-const isLoadingMore = ref(false)
-const errors = ref<string[]>([])
-const hasMore = ref(true)
+const THANKS_LOG_USER = "Todepond"
+const thanksLogUrl = computed(
+	() =>
+		`${wiki.base}w/index.php?title=${wiki.encodeForUrl("Special:Log")}&type=thanks&user=${encodeURIComponent(THANKS_LOG_USER)}`
+)
 
-async function loadFeed(after?: Record<string, string>, append = false): Promise<void> {
+const allRevisionsData = ref<FWRevision[]>([])
+const selectedRevisions = ref<FWRevision[]>([])
+const rccontinue = ref<string | undefined>(undefined)
+const useNeedsReviewFilter = ref(true)
+const isLoading = ref(false)
+const errors = ref<string[]>([])
+
+const FEED_CAP = 6
+const RECENT_CHANGES_LIMIT = 50
+
+/**
+ * Fisher–Yates shuffle then take first n. If array length <= n, return a copy.
+ */
+function randomPick<T>(array: T[], n: number): T[] {
+	if (array.length <= n) return [...array]
+	const shuffled = [...array]
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+	}
+	return shuffled.slice(0, n)
+}
+
+async function processRevisions(
+	revisions: Array<{ id: number; timestamp: string; comment: string; user: { name: string }; delta: number | null; pageName?: string }>
+): Promise<FWRevision[]> {
+	return Promise.all(
+		revisions.map(async revision => {
+			const pageName =
+				(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
+			const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
+			const toolbar = wiki.parseToolbarEditSummary(_summary)
+			const summary = toolbar
+				? toolbar
+				: {
+						comment: _summary,
+						hashtags: [],
+						other: [],
+						suggestedBy: null,
+						useThisBot: null,
+						reportBugs: null,
+					}
+			const commentText = summary.comment
+				? summary.comment +
+					(summary.suggestedBy
+						? " Suggested by [[User:" +
+							summary.suggestedBy +
+							"|" +
+							summary.suggestedBy +
+							"]]"
+						: "")
+				: ""
+			summary.comment = commentText
+				? await wiki.transformWikitextToHtml(commentText, pageName)
+				: ""
+			if (summary.comment) {
+				summary.comment = stripLinksFromHtml(summary.comment)
+			}
+			summary.hashtags = Array.isArray(summary.hashtags)
+				? summary.hashtags.join(" ")
+				: summary.hashtags
+			const processedRevision: FWRevision = {
+				...revision,
+				comment: revision.comment || "",
+				summary,
+				pageName,
+				avatarUrl: null,
+			}
+			return processedRevision
+		})
+	)
+}
+
+async function loadFeed(append = false): Promise<void> {
 	if (!append) {
 		isLoading.value = true
 		errors.value = []
-	} else {
-		isLoadingMore.value = true
 	}
 
-	const pageNames = WATCHLIST_PAGE_NAMES.filter(name => name.trim() !== "")
-	const userNames = WATCHLIST_USER_NAMES.filter(name => name.trim() !== "")
-
 	try {
-		const revisions = await wiki.getCombinedFeed({
-			pageNames,
-			userNames,
-			limit: 20,
-			after,
+		const onlyNeedsReview = append ? useNeedsReviewFilter.value : true
+		const result = await wiki.getRecentChanges({
+			limit: RECENT_CHANGES_LIMIT,
+			onlyNeedsReview,
+			rccontinue: append ? rccontinue.value : undefined,
 		})
 
-		const processedRevisions = await Promise.all(
-			revisions.map(async revision => {
-				const pageName =
-					(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
-				const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-				const toolbar = wiki.parseToolbarEditSummary(_summary)
-				const summary = toolbar
-					? toolbar
-					: {
-							comment: _summary,
-							hashtags: [],
-							other: [],
-							suggestedBy: null,
-							useThisBot: null,
-							reportBugs: null,
-						}
-				const commentText = summary.comment
-					? summary.comment +
-						(summary.suggestedBy
-							? " Suggested by [[User:" +
-								summary.suggestedBy +
-								"|" +
-								summary.suggestedBy +
-								"]]"
-							: "")
-					: ""
-				summary.comment = commentText
-					? await wiki.transformWikitextToHtml(commentText, pageName)
-					: ""
-				if (summary.comment) {
-					summary.comment = stripLinksFromHtml(summary.comment)
-				}
-				summary.hashtags = Array.isArray(summary.hashtags)
-					? summary.hashtags.join(" ")
-					: summary.hashtags
-				const processedRevision: FWRevision = {
-					...revision,
-					comment: revision.comment || "",
-					summary,
-					pageName,
-					avatarUrl: null,
-				}
-				return processedRevision
+		let revisions = result.revisions
+		if (revisions.length === 0 && !append) {
+			useNeedsReviewFilter.value = false
+			const fallback = await wiki.getRecentChanges({
+				limit: RECENT_CHANGES_LIMIT,
+				onlyNeedsReview: false,
 			})
-		)
+			revisions = fallback.revisions
+			rccontinue.value = fallback.rccontinue
+		} else {
+			rccontinue.value = result.rccontinue
+		}
+
+		const processed = await processRevisions(revisions)
 
 		if (append) {
 			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
-			const newRevisions = processedRevisions.filter(r => !existingIds.has(r.id))
-			const merged = [...allRevisionsData.value, ...newRevisions].sort(
+			const newRevisions = processed.filter(r => !existingIds.has(r.id))
+			allRevisionsData.value = [...allRevisionsData.value, ...newRevisions].sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 			)
-			allRevisionsData.value = merged
-			hasMore.value = newRevisions.length > 0
 		} else {
-			allRevisionsData.value = processedRevisions
-			hasMore.value = processedRevisions.length === 20
+			allRevisionsData.value = processed.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
 		}
 
+		selectedRevisions.value = randomPick(allRevisionsData.value, FEED_CAP)
+
 		isLoading.value = false
-		isLoadingMore.value = false
 	} catch (e) {
 		isLoading.value = false
-		isLoadingMore.value = false
 		const errorObj = e as Error
 		if (!append) {
 			errors.value = [errorObj.message]
 			allRevisionsData.value = []
+			selectedRevisions.value = []
 		}
-		hasMore.value = false
 	}
 }
 
@@ -367,8 +407,9 @@ function formatDelta(delta: number | null | undefined): string {
 
 const revisionsByDate = computed(() => {
 	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
+	const source = selectedRevisions.value
 
-	allRevisionsData.value.forEach(revision => {
+	source.forEach(revision => {
 		const dateKey = getDateKey(revision.timestamp)
 		const dateLabel = formatDate(revision.timestamp)
 
@@ -384,56 +425,13 @@ const revisionsByDate = computed(() => {
 		.map(([dateKey, data]) => ({
 			dateKey,
 			dateLabel: data.dateLabel,
-			revisions: data.revisions,
+			revisions: [...data.revisions].sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			),
 		}))
 })
 
-const FEED_CAP = 6
-
-const revisionsByDateCapped = computed(() => {
-	const capped = allRevisionsData.value.slice(0, FEED_CAP)
-	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
-
-	capped.forEach(revision => {
-		const dateKey = getDateKey(revision.timestamp)
-		const dateLabel = formatDate(revision.timestamp)
-
-		if (!grouped.has(dateKey)) {
-			grouped.set(dateKey, { dateLabel, revisions: [] })
-		}
-
-		grouped.get(dateKey)!.revisions.push(revision)
-	})
-
-	return Array.from(grouped.entries())
-		.sort((a, b) => b[0].localeCompare(a[0]))
-		.map(([dateKey, data]) => ({
-			dateKey,
-			dateLabel: data.dateLabel,
-			revisions: data.revisions,
-		}))
-})
-
-async function loadMore(): Promise<void> {
-	if (allRevisionsData.value.length === 0) return
-	const pageNames = WATCHLIST_PAGE_NAMES.filter(name => name.trim() !== "")
-	const userNames = WATCHLIST_USER_NAMES.filter(name => name.trim() !== "")
-	const afterMap: Record<string, string> = {}
-	for (const pageName of pageNames) {
-		const revs = allRevisionsData.value.filter(r => r.pageName === pageName)
-		if (revs.length > 0) {
-			afterMap[pageName] = String(Math.min(...revs.map(r => r.id)))
-		}
-	}
-	for (const userName of userNames) {
-		const revs = allRevisionsData.value.filter(r => r.user?.name === userName)
-		if (revs.length > 0) {
-			afterMap[userName] = String(Math.min(...revs.map(r => r.id)))
-		}
-	}
-	if (Object.keys(afterMap).length === 0) return
-	await loadFeed(afterMap, true)
-}
+const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
 onMounted(() => {
 	loadFeed()

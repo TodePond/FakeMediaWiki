@@ -2,6 +2,7 @@ import type {
 	FWActionApiOptions,
 	FWApiOptions,
 	FWCachedRevision,
+	FWRecentChangesResult,
 	FWCompareResponse,
 	FWDiffLine,
 	FWDiffSegment,
@@ -1053,6 +1054,80 @@ export class FakeWiki {
 		return allRevisions
 			.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 			.slice(0, totalLimit)
+	}
+
+	/**
+	 * Get global recent changes from the wiki (any pages) via Action API list=recentchanges.
+	 * Optionally restrict to changes that "need review" (high revert risk) with rcshow=oresreview.
+	 * Uses rctoponly so only the latest revision of each page is returned.
+	 * @param options - Configuration object
+	 * @param options.limit - Maximum number of changes to return (default 50, max 500)
+	 * @param options.rccontinue - Continuation token from a previous response for pagination
+	 * @param options.onlyNeedsReview - If true, pass rcshow=oresreview so the server returns only high revert risk / "needs review" edits (default false)
+	 * @returns Revisions (revision-like) and optional rccontinue for pagination
+	 */
+	async getRecentChanges(options: {
+		limit?: number
+		rccontinue?: string
+		onlyNeedsReview?: boolean
+	} = {}): Promise<FWRecentChangesResult> {
+		const { limit = 50, rccontinue, onlyNeedsReview = false } = options
+		const rclimit = Math.min(Math.max(limit, 1), 500)
+
+		const params: Record<string, unknown> = {
+			action: "query",
+			list: "recentchanges",
+			rcprop: "title|timestamp|ids|user|comment|sizes|oresscores",
+			rclimit,
+			rctype: "edit|new",
+			rctoponly: 1,
+		}
+		if (onlyNeedsReview) {
+			params.rcshow = "oresreview"
+		}
+		if (rccontinue) {
+			params.rccontinue = rccontinue
+		}
+
+		const data = (await this.request({
+			api: "action",
+			params,
+		})) as {
+			query?: { recentchanges?: Array<{
+				revid?: number
+				title?: string
+				user?: string
+				timestamp?: string
+				comment?: string
+				oldlen?: number
+				newlen?: number
+				oresscores?: Record<string, unknown>
+			}> }
+			continue?: { rccontinue?: string }
+		}
+
+		const entries = data.query?.recentchanges ?? []
+		const revisions: FWCachedRevision[] = entries.map(rc => {
+			const rev: FWCachedRevision = {
+				id: rc.revid ?? 0,
+				timestamp: rc.timestamp ?? "",
+				comment: rc.comment ?? "",
+				user: { name: rc.user ?? "" },
+				delta: (rc.newlen ?? 0) - (rc.oldlen ?? 0),
+				pageName: rc.title,
+				minor: false,
+				size: rc.newlen ?? 0,
+			}
+			if (rc.oresscores) {
+				(rev as FWCachedRevision & { oresscores?: Record<string, unknown> }).oresscores = rc.oresscores
+			}
+			return rev
+		})
+
+		return {
+			revisions,
+			rccontinue: data.continue?.rccontinue,
+		}
 	}
 
 	/**
