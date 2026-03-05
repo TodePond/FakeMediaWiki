@@ -126,6 +126,7 @@
 .review-changes__comment--empty {
 	font-style: italic;
 	color: var(--color-base--subtle, #54595d);
+	margin-left: 0.25rem;
 }
 
 .review-changes__view-more {
