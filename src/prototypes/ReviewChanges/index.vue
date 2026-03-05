@@ -47,6 +47,14 @@
 			</template>
 			<label class="show-revert-risk-card__label">
 				<input
+					v-model="showDelta"
+					type="checkbox"
+					class="show-revert-risk-card__input"
+				/>
+				<span class="show-revert-risk-card__text">Delta</span>
+			</label>
+			<label class="show-revert-risk-card__label">
+				<input
 					v-model="showSourceIcons"
 					type="checkbox"
 					class="show-revert-risk-card__input"
@@ -74,6 +82,7 @@
 			:show-revert-risk="showRevertRiskInFeed"
 			:show-source-icons="showSourceIcons"
 			:show-source-subtitles="showSourceSubtitles"
+			:show-delta="showDelta"
 			:source="feedSource"
 			:recent-changes-ratio="recentChangesRatio"
 			:pages-and-users-ratio="pagesAndUsersRatio"
@@ -89,6 +98,7 @@ import { CdxLabel, CdxSelect } from "@wikimedia/codex"
 import { ref, watch } from "vue"
 
 const SHOW_REVERT_RISK_STORAGE_KEY = "review-changes-show-revert-risk"
+const SHOW_DELTA_STORAGE_KEY = "review-changes-show-delta"
 const SHOW_SOURCE_ICONS_STORAGE_KEY = "review-changes-show-source-icons"
 const SHOW_SOURCE_SUBTITLES_STORAGE_KEY = "review-changes-show-source-subtitles"
 const FEED_SOURCE_STORAGE_KEY = "review-changes-feed-source"
@@ -103,6 +113,16 @@ function getStoredShowRevertRisk(): boolean {
 		return stored === "true"
 	} catch {
 		return false
+	}
+}
+
+function getStoredShowDelta(): boolean {
+	try {
+		const stored = localStorage.getItem(SHOW_DELTA_STORAGE_KEY)
+		if (stored === null) return true
+		return stored === "true"
+	} catch {
+		return true
 	}
 }
 
@@ -156,6 +176,7 @@ const sourceOptions = [
 ]
 
 const showRevertRiskInFeed = ref(getStoredShowRevertRisk())
+const showDelta = ref(getStoredShowDelta())
 const showSourceIcons = ref(getStoredShowSourceIcons())
 const showSourceSubtitles = ref(getStoredShowSourceSubtitles())
 const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
@@ -165,6 +186,14 @@ const pagesAndUsersRatio = ref(getStoredRatio(PAGES_AND_USERS_RATIO_STORAGE_KEY,
 watch(showRevertRiskInFeed, enabled => {
 	try {
 		localStorage.setItem(SHOW_REVERT_RISK_STORAGE_KEY, String(enabled))
+	} catch {
+		// ignore
+	}
+})
+
+watch(showDelta, enabled => {
+	try {
+		localStorage.setItem(SHOW_DELTA_STORAGE_KEY, String(enabled))
 	} catch {
 		// ignore
 	}

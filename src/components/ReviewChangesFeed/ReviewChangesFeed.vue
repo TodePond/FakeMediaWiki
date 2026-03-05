@@ -58,14 +58,19 @@
 							{{ getItemSource(change) === 'pagesAndUsers' ? 'From your watchlist' : 'From recent changes' }}
 						</div>
 						<div class="review-changes__summary">
-							<span
-								class="review-changes__summary-prefix"
-								:class="wiki.getDeltaClass(change.delta ?? 0, false)"
-								>{{ formatDelta(change.delta) }}</span
-							>
-							<span class="review-changes__summary-sep" aria-hidden="true"
-								>&nbsp;·</span
-							><span
+							<template v-if="showDelta">
+								<span
+									class="review-changes__summary-prefix"
+									:class="wiki.getDeltaClass(change.delta ?? 0, false)"
+									>{{ formatDelta(change.delta) }}</span
+								>
+								<span
+									v-if="change?.summary?.comment || change?.comment"
+									class="review-changes__summary-sep"
+									aria-hidden="true"
+									>&nbsp;·</span
+								>
+							</template><span
 								v-if="change?.summary?.comment"
 								class="review-changes__comment"
 								v-html="change.summary.comment"
@@ -74,10 +79,6 @@
 								v-else-if="change?.comment"
 								class="review-changes__comment"
 								>{{ change.comment }}</span
-							><em
-								v-else
-								class="review-changes__comment review-changes__comment--empty"
-								>No edit summary</em
 							>
 						</div>
 						<a
@@ -149,6 +150,7 @@ const props = withDefaults(
 		showRevertRisk: boolean
 		showSourceIcons?: boolean
 		showSourceSubtitles?: boolean
+		showDelta?: boolean
 		source?: ReviewChangesSource
 		/** 0–100, used when source is "mixed". 0 = exclude recent changes. */
 		recentChangesRatio?: number
@@ -156,7 +158,7 @@ const props = withDefaults(
 		pagesAndUsersRatio?: number
 		title?: string
 	}>(),
-	{ showSourceIcons: false, showSourceSubtitles: false, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50 }
+	{ showSourceIcons: false, showSourceSubtitles: false, showDelta: true, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50 }
 )
 
 const wiki = new FakeWiki()
