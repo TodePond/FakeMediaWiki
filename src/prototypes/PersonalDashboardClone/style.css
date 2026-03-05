@@ -76,7 +76,7 @@
 .review-changes__item-link:hover,
 .review-changes__item-link:focus {
 	outline: none;
-	background-color: var(--background-color-progressive-subtle, #f7f7f7);
+	background-color: var(--background-color-interactive, #eaecf0);
 }
 
 .review-changes__user {
