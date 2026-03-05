@@ -72,25 +72,20 @@
 							{{ change.user.name }}
 						</a>
 						<span
-							v-if="
-								showRevertRisk &&
-								getRevertRiskLines(change.id).length > 0
-							"
+							v-if="showRevertRisk"
 							class="review-changes__revert-risk"
 						>
-							<template
-								v-for="(line, idx) in getRevertRiskLines(change.id)"
+							<span
+								v-for="line in getRevertRiskLines(change.id)"
 								:key="line.label"
+								class="review-changes__revert-risk-line"
+								:class="{
+									'review-changes__revert-risk-line--loading': line.value === '(loading)',
+									'review-changes__revert-risk-line--error': line.value === '(error)' || line.value === '(missing)',
+								}"
+								>{{ line.label }}: {{ line.value }}</span
 							>
-								<span v-if="idx > 0"> · </span
-								><span>{{ line.label }}: {{ line.pct }}%</span>
-							</template>
 						</span>
-						<span
-							v-else-if="showRevertRisk && isLoadingRevertRisk"
-							class="review-changes__revert-risk review-changes__revert-risk--loading"
-							>Revert risk: loading…</span
-						>
 					</a>
 				</li>
 			</template>
@@ -144,31 +139,38 @@ const props = withDefaults(
 
 const wiki = new FakeWiki()
 
-const revertRiskByRevId = ref<Map<number, FWPredictionByModel>>(new Map())
+const revertRiskByRevId = ref<Map<number, FWPredictionByModel | { error: true }>>(new Map())
 const isLoadingRevertRisk = ref(false)
+
+const REVERT_RISK_MODELS = [
+	{ key: "revertrisk" as const, label: "Revert risk (language-agnostic)" },
+	{ key: "revertrisk-multilingual" as const, label: "Revert risk (multilingual)" },
+]
 
 function formatRevertRiskPercent(prediction: FWLiftWingPrediction): number {
 	const p = prediction.probability?.true
 	return typeof p === "number" ? Math.round(p * 100) : 0
 }
 
-function getRevertRiskLines(revId: number): Array<{ label: string; pct: number }> {
-	const byModel = revertRiskByRevId.value.get(revId)
-	if (!byModel) return []
-	const lines: Array<{ label: string; pct: number }> = []
-	if (byModel.revertrisk) {
-		lines.push({
-			label: "Revert risk (language-agnostic)",
-			pct: formatRevertRiskPercent(byModel.revertrisk),
-		})
+function getRevertRiskLines(revId: number): Array<{ label: string; value: string }> {
+	if (isLoadingRevertRisk.value) {
+		return REVERT_RISK_MODELS.map(m => ({ label: m.label, value: "(loading)" }))
 	}
-	if (byModel["revertrisk-multilingual"]) {
-		lines.push({
-			label: "Revert risk (multilingual)",
-			pct: formatRevertRiskPercent(byModel["revertrisk-multilingual"]),
-		})
+	const entry = revertRiskByRevId.value.get(revId)
+	if (!entry) {
+		return REVERT_RISK_MODELS.map(m => ({ label: m.label, value: "(loading)" }))
 	}
-	return lines
+	if ("error" in entry && entry.error) {
+		return REVERT_RISK_MODELS.map(m => ({ label: m.label, value: "(error)" }))
+	}
+	const byModel = entry as FWPredictionByModel
+	return REVERT_RISK_MODELS.map(m => {
+		const pred = byModel[m.key]
+		const value = pred
+			? `${formatRevertRiskPercent(pred)}%`
+			: "(missing)"
+		return { label: m.label, value }
+	})
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
@@ -176,17 +178,22 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 	if (revs.length === 0) return
 	const revIds = revs.map(r => r.id)
 	isLoadingRevertRisk.value = true
+	revertRiskByRevId.value = new Map()
 	try {
 		const predictions = await wiki.getRevisionPredictions(revIds, [
 			"revertrisk",
 			"revertrisk-multilingual",
 		])
-		const next = new Map<number, FWPredictionByModel>()
+		const next = new Map<number, FWPredictionByModel | { error: true }>()
 		for (const revId of revIds) {
-			const byModel = predictions[revId]
-			if (byModel && (byModel.revertrisk || byModel["revertrisk-multilingual"])) {
-				next.set(revId, byModel)
-			}
+			const byModel = predictions[revId] ?? {}
+			next.set(revId, byModel)
+		}
+		revertRiskByRevId.value = next
+	} catch {
+		const next = new Map<number, FWPredictionByModel | { error: true }>()
+		for (const revId of revIds) {
+			next.set(revId, { error: true })
 		}
 		revertRiskByRevId.value = next
 	} finally {

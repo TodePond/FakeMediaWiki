@@ -67,17 +67,27 @@
 	text-decoration: none;
 }
 
+.review-changes__user:visited {
+	color: var(--color-progressive, #36c);
+}
+
 .review-changes__user:hover {
+	color: var(--color-progressive, #36c);
 	text-decoration: underline;
 }
 
 .review-changes__revert-risk {
-	display: block;
+	display: flex;
+	flex-direction: column;
 	font-size: 0.875em;
 	color: var(--color-base--subtle, #54595d);
 }
 
-.review-changes__revert-risk--loading {
+.review-changes__revert-risk-line {
+	display: block;
+}
+
+.review-changes__revert-risk-line--loading {
 	font-style: italic;
 }
 
