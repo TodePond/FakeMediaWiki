@@ -6,8 +6,7 @@
 			class="review-changes__description"
 			:class="{ 'review-changes__description--with-title': !!title }"
 		>
-			Help keep Wikipedia reliable by reviewing the following edits which may need
-			attention.
+			Help keep Wikipedia reliable by reviewing the following edits which may need attention.
 		</p>
 		<div v-if="errors.length > 0" class="review-changes__errors">
 			<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
@@ -24,9 +23,7 @@
 				>
 					<a
 						:href="
-							change.pageName
-								? wiki.getRevisionUrl(change.id, change.pageName)
-								: '#'
+							change.pageName ? wiki.getRevisionUrl(change.id, change.pageName) : '#'
 						"
 						target="_blank"
 						rel="noopener noreferrer"
@@ -35,29 +32,44 @@
 					>
 						<div class="review-changes__item-header">
 							<span class="review-changes__page-cell">
-								<CdxIcon
-									v-if="showSourceIcons && getItemSource(change)"
-									:icon="getItemSource(change) === 'pagesAndUsers' ? cdxIconUnStar : cdxIconClock"
-									size="x-small"
-									:class="[
-										'review-changes__source-icon',
-										`review-changes__source-icon--${getItemSource(change)}`,
-									]"
-									:aria-label="getItemSource(change) === 'pagesAndUsers' ? 'Watchlist' : 'Recent changes'"
-								/>
-								<span class="review-changes__page">{{ change.pageName }}</span>
+								<span class="review-changes__page-cell-heading">
+									<CdxIcon
+										v-if="showSourceIcons && getItemSource(change)"
+										:icon="
+											getItemSource(change) === 'pagesAndUsers'
+												? cdxIconUnStar
+												: cdxIconClock
+										"
+										size="x-small"
+										:class="[
+											'review-changes__source-icon',
+											`review-changes__source-icon--${getItemSource(change)}`,
+										]"
+										:aria-label="
+											getItemSource(change) === 'pagesAndUsers'
+												? 'Watchlist'
+												: 'Recent changes'
+										"
+									/>
+									<span class="review-changes__page">{{ change.pageName }} </span>
+								</span>
+								<div
+									v-if="showSourceSubtitles && getItemSource(change)"
+									class="review-changes__source-subtitle"
+								>
+									{{
+										getItemSource(change) === "pagesAndUsers"
+											? "From your watchlist"
+											: "From recent changes"
+									}}
+								</div>
 							</span>
 							<time :datetime="change.timestamp" class="review-changes__time">
 								{{ formatTime(change.timestamp) }},
 								{{ formatTimeLabel(change.timestamp) }}
 							</time>
 						</div>
-						<div
-							v-if="showSourceSubtitles && getItemSource(change)"
-							class="review-changes__source-subtitle"
-						>
-							{{ getItemSource(change) === 'pagesAndUsers' ? 'From your watchlist' : 'From recent changes' }}
-						</div>
+
 						<div class="review-changes__summary">
 							<template v-if="showDelta">
 								<span
@@ -65,22 +77,21 @@
 									:class="wiki.getDeltaClass(change.delta ?? 0, false)"
 									>{{ formatDelta(change.delta) }}</span
 								>
-								<span
-									class="review-changes__summary-sep"
-									aria-hidden="true"
+								<span class="review-changes__summary-sep" aria-hidden="true"
 									>&nbsp;·</span
-								>
-							</template><span
-							v-if="change?.summary?.comment"
-							class="review-changes__comment"
-							v-html="change.summary.comment"
-						></span
+								> </template
 							><span
-								v-else-if="change?.comment"
+								v-if="change?.summary?.comment"
 								class="review-changes__comment"
-								>{{ change.comment }}</span
-							><em v-else class="review-changes__comment review-changes__comment--empty"
-								>{{ showDelta ? '\u00A0' : '' }}No edit summary</em
+								v-html="change.summary.comment"
+							></span
+							><span v-else-if="change?.comment" class="review-changes__comment">{{
+								change.comment
+							}}</span
+							><em
+								v-else
+								class="review-changes__comment review-changes__comment--empty"
+								>{{ showDelta ? "\u00A0" : "" }}No edit summary</em
 							>
 						</div>
 						<a
@@ -92,17 +103,16 @@
 						>
 							{{ change.user.name }}
 						</a>
-						<span
-							v-if="showRevertRisk"
-							class="review-changes__revert-risk"
-						>
+						<span v-if="showRevertRisk" class="review-changes__revert-risk">
 							<span
 								v-for="line in getRevertRiskLines(change.id)"
 								:key="line.label"
 								class="review-changes__revert-risk-line"
 								:class="{
-									'review-changes__revert-risk-line--loading': line.value === '(loading)',
-									'review-changes__revert-risk-line--error': line.value === '(error)' || line.value === '(missing)',
+									'review-changes__revert-risk-line--loading':
+										line.value === '(loading)',
+									'review-changes__revert-risk-line--error':
+										line.value === '(error)' || line.value === '(missing)',
 								}"
 								>{{ line.label }}: {{ line.value }}</span
 							>
@@ -164,7 +174,16 @@ const props = withDefaults(
 		/** When true, hides the "Help keep Wikipedia reliable..." description line. */
 		hideDescription?: boolean
 	}>(),
-	{ showSourceIcons: false, showSourceSubtitles: false, showDelta: true, deltaFormatParentheses: true, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50, hideDescription: false }
+	{
+		showSourceIcons: false,
+		showSourceSubtitles: false,
+		showDelta: true,
+		deltaFormatParentheses: true,
+		source: "recentChanges",
+		recentChangesRatio: 50,
+		pagesAndUsersRatio: 50,
+		hideDescription: false,
+	}
 )
 
 const wiki = new FakeWiki()
@@ -196,9 +215,7 @@ function getRevertRiskLines(revId: number): Array<{ label: string; value: string
 	const byModel = entry as FWPredictionByModel
 	return REVERT_RISK_MODELS.map(m => {
 		const pred = byModel[m.key]
-		const value = pred
-			? `${formatRevertRiskPercent(pred)}%`
-			: "(missing)"
+		const value = pred ? `${formatRevertRiskPercent(pred)}%` : "(missing)"
 		return { label: m.label, value }
 	})
 }
@@ -298,7 +315,11 @@ let revertRiskDebounceId: ReturnType<typeof setTimeout> | null = null
 watch(
 	() => [selectedRevisionsForDisplay.value.map(r => r.id).join(","), props.showRevertRisk],
 	([, enabled]) => {
-		if (!enabled || props.source !== "mixed" || selectedRevisionsForDisplay.value.length === 0) {
+		if (
+			!enabled ||
+			props.source !== "mixed" ||
+			selectedRevisionsForDisplay.value.length === 0
+		) {
 			return
 		}
 		if (revertRiskDebounceId) clearTimeout(revertRiskDebounceId)
@@ -456,11 +477,11 @@ async function loadFeed(append = false): Promise<void> {
 					})
 				)
 			)
-			processedBySegment = await Promise.all(
-				results.map(r => processRevisions(r.revisions))
-			)
+			processedBySegment = await Promise.all(results.map(r => processRevisions(r.revisions)))
 			processedBySegment = processedBySegment.map(seg =>
-				seg.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+				seg.sort(
+					(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+				)
 			)
 			mixedRecentChangesBySegment.value = processedBySegment
 			allRevisionsData.value = []
@@ -563,8 +584,18 @@ function formatDate(timestamp: string): string {
 	const d = new Date(timestamp)
 	const day = d.getDate()
 	const monthNames = [
-		"January", "February", "March", "April", "May", "June",
-		"July", "August", "September", "October", "November", "December",
+		"January",
+		"February",
+		"March",
+		"April",
+		"May",
+		"June",
+		"July",
+		"August",
+		"September",
+		"October",
+		"November",
+		"December",
 	]
 	const month = monthNames[d.getMonth()]
 	const year = d.getFullYear()
