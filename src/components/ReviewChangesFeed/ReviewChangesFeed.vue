@@ -2,6 +2,7 @@
 	<section class="review-changes">
 		<div v-if="title" class="review-changes__title">{{ title }}</div>
 		<p
+			v-if="!hideDescription"
 			class="review-changes__description"
 			:class="{ 'review-changes__description--with-title': !!title }"
 		>
@@ -160,8 +161,10 @@ const props = withDefaults(
 		/** 0–100, used when source is "mixed". 0 = exclude pages/users. */
 		pagesAndUsersRatio?: number
 		title?: string
+		/** When true, hides the "Help keep Wikipedia reliable..." description line. */
+		hideDescription?: boolean
 	}>(),
-	{ showSourceIcons: false, showSourceSubtitles: false, showDelta: true, deltaFormatParentheses: true, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50 }
+	{ showSourceIcons: false, showSourceSubtitles: false, showDelta: true, deltaFormatParentheses: true, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50, hideDescription: false }
 )
 
 const wiki = new FakeWiki()

@@ -87,6 +87,7 @@
 			:recent-changes-ratio="recentChangesRatio"
 			:pages-and-users-ratio="pagesAndUsersRatio"
 			:feed-cap="10"
+			:hide-description="true"
 		/>
 	</section>
 </template>
