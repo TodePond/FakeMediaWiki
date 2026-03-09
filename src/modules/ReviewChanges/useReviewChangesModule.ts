@@ -11,6 +11,8 @@ const SHOW_SOURCE_SUBTITLES_KEY = `${STORAGE_PREFIX}show-source-subtitles`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}recent-changes-ratio`
 const PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}pages-and-users-ratio`
+const RELATED_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}related-changes-ratio`
+const RELATED_CHANGES_REC_PERCENT_KEY = `${STORAGE_PREFIX}related-changes-rec-percent`
 
 const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_REVERT_RISK_KEY]: `${LEGACY_PREFIX}show-revert-risk`,
@@ -20,6 +22,8 @@ const LEGACY_KEYS: Record<string, string> = {
 	[FEED_SOURCE_KEY]: `${LEGACY_PREFIX}feed-source`,
 	[RECENT_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}recent-changes-ratio`,
 	[PAGES_AND_USERS_RATIO_KEY]: `${LEGACY_PREFIX}pages-and-users-ratio`,
+	[RELATED_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}related-changes-ratio`,
+	[RELATED_CHANGES_REC_PERCENT_KEY]: `${LEGACY_PREFIX}related-changes-rec-percent`,
 }
 
 function getStored(key: string, legacyKey: string, fallback: string): string {
@@ -50,21 +54,32 @@ function getStoredRatio(key: string, legacyKey: string, fallback: number): numbe
 
 function getStoredFeedSource(): ReviewChangesSource {
 	const stored = getStored(FEED_SOURCE_KEY, LEGACY_KEYS[FEED_SOURCE_KEY], "recentChanges")
-	if (stored === "recentChanges" || stored === "pagesAndUsers" || stored === "mixed") {
+	if (
+		stored === "recentChanges" ||
+		stored === "pagesAndUsers" ||
+		stored === "mixed" ||
+		stored === "relatedChanges"
+	) {
 		return stored
 	}
 	return "recentChanges"
 }
 
-export const sourceOptions: Array<{ value: "recentChanges" | "pagesAndUsers" | "mixed"; label: string }> = [
+export const sourceOptions: Array<{
+	value: "recentChanges" | "pagesAndUsers" | "mixed" | "relatedChanges"
+	label: string
+}> = [
 	{ value: "recentChanges", label: "Recent changes" },
 	{ value: "pagesAndUsers", label: "Watchlist" },
+	{ value: "relatedChanges", label: "Related changes" },
 	{ value: "mixed", label: "Mixed" },
 ]
 
 export const reviewChangesSourceId = "review-changes-module-source"
 export const recentChangesSliderId = "review-changes-module-recent-slider"
 export const pagesAndUsersSliderId = "review-changes-module-pages-slider"
+export const relatedChangesSliderId = "review-changes-module-related-slider"
+export const relatedChangesRecPercentSliderId = "review-changes-module-related-rec-percent-slider"
 
 export function useReviewChangesModule() {
 	const showRevertRiskInFeed = ref(
@@ -85,6 +100,16 @@ export function useReviewChangesModule() {
 	)
 	const pagesAndUsersRatio = ref(
 		getStoredRatio(PAGES_AND_USERS_RATIO_KEY, LEGACY_KEYS[PAGES_AND_USERS_RATIO_KEY], 50)
+	)
+	const relatedChangesRatio = ref(
+		getStoredRatio(RELATED_CHANGES_RATIO_KEY, LEGACY_KEYS[RELATED_CHANGES_RATIO_KEY], 33)
+	)
+	const relatedChangesRecPercent = ref(
+		getStoredRatio(
+			RELATED_CHANGES_REC_PERCENT_KEY,
+			LEGACY_KEYS[RELATED_CHANGES_REC_PERCENT_KEY],
+			1
+		)
 	)
 
 	watch(showRevertRiskInFeed, enabled => {
@@ -143,10 +168,28 @@ export function useReviewChangesModule() {
 		}
 	})
 
+	watch(relatedChangesRatio, value => {
+		try {
+			localStorage.setItem(RELATED_CHANGES_RATIO_KEY, String(value))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(relatedChangesRecPercent, value => {
+		try {
+			localStorage.setItem(RELATED_CHANGES_REC_PERCENT_KEY, String(value))
+		} catch {
+			// ignore
+		}
+	})
+
 	return {
 		feedSource,
 		recentChangesRatio,
 		pagesAndUsersRatio,
+		relatedChangesRatio,
+		relatedChangesRecPercent,
 		showRevertRiskInFeed,
 		showDelta,
 		showSourceIcons,
@@ -155,5 +198,7 @@ export function useReviewChangesModule() {
 		reviewChangesSourceId,
 		recentChangesSliderId,
 		pagesAndUsersSliderId,
+		relatedChangesSliderId,
+		relatedChangesRecPercentSliderId,
 	}
 }

@@ -38,7 +38,9 @@
 										:icon="
 											getItemSource(change) === 'pagesAndUsers'
 												? cdxIconUnStar
-												: cdxIconClock
+												: getItemSource(change) === 'relatedChanges'
+													? cdxIconLightbulb
+													: cdxIconClock
 										"
 										size="x-small"
 										:class="[
@@ -48,7 +50,9 @@
 										:aria-label="
 											getItemSource(change) === 'pagesAndUsers'
 												? 'Watchlist'
-												: 'Recent changes'
+												: getItemSource(change) === 'relatedChanges'
+													? 'Related changes'
+													: 'Recent changes'
 										"
 									/>
 									<span class="review-changes__page">{{ change.pageName }} </span>
@@ -60,7 +64,9 @@
 									{{
 										getItemSource(change) === "pagesAndUsers"
 											? "From your watchlist"
-											: "From recent changes"
+											: getItemSource(change) === "relatedChanges"
+												? "From related pages"
+												: "From recent changes"
 									}}
 								</div>
 							</span>
@@ -143,7 +149,7 @@
 
 <script setup lang="ts">
 import { CdxIcon, CdxProgressBar } from "@wikimedia/codex"
-import { cdxIconClock, cdxIconUnStar } from "@wikimedia/codex-icons"
+import { cdxIconClock, cdxIconLightbulb, cdxIconUnStar } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import type {
 	FWLiftWingPrediction,
@@ -153,9 +159,9 @@ import type {
 } from "fakewiki/types"
 import { computed, onMounted, ref, watch } from "vue"
 
-export type ReviewChangesSource = "recentChanges" | "pagesAndUsers" | "mixed"
+export type ReviewChangesSource = "recentChanges" | "pagesAndUsers" | "relatedChanges" | "mixed"
 
-export type ItemSource = "recentChanges" | "pagesAndUsers"
+export type ItemSource = "recentChanges" | "pagesAndUsers" | "relatedChanges"
 
 const props = withDefaults(
 	defineProps<{
@@ -170,6 +176,10 @@ const props = withDefaults(
 		recentChangesRatio?: number
 		/** 0–100, used when source is "mixed". 0 = exclude pages/users. */
 		pagesAndUsersRatio?: number
+		/** 0–100, used when source is "mixed". 0 = exclude related changes. */
+		relatedChangesRatio?: number
+		/** 1–100, percentage of recommendations to show (default 1). */
+		relatedChangesRecPercent?: number
 		title?: string
 		/** When true, hides the "Help keep Wikipedia reliable..." description line. */
 		hideDescription?: boolean
@@ -182,6 +192,8 @@ const props = withDefaults(
 		source: "recentChanges",
 		recentChangesRatio: 50,
 		pagesAndUsersRatio: 50,
+		relatedChangesRatio: 33,
+		relatedChangesRecPercent: 1,
 		hideDescription: false,
 	}
 )
@@ -254,6 +266,7 @@ const selectedRevisions = ref<FWRevision[]>([])
 /** Recent changes split into 4 segments across the watchlist time range; we slice from these in parallel when displaying */
 const mixedRecentChangesBySegment = ref<FWRevision[][]>([])
 const mixedPagesAndUsersData = ref<FWRevision[]>([])
+const mixedRelatedChangesData = ref<FWRevision[]>([])
 
 type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
 
@@ -265,26 +278,30 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	}
 	const rcSegments = mixedRecentChangesBySegment.value // RC0, RC1, RC2, RC3
 	const wl = mixedPagesAndUsersData.value
+	const related = mixedRelatedChangesData.value
 	const rcRatio = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50)) / 100
 	const wlRatio = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50)) / 100
+	const relatedRatio = Math.max(0, Math.min(100, props.relatedChangesRatio ?? 33)) / 100
 
-	// 0% / 0%: show nothing
-	if (rcRatio === 0 && wlRatio === 0) return []
+	// 0% / 0% / 0%: show nothing
+	if (rcRatio === 0 && wlRatio === 0 && relatedRatio === 0) return []
 
-	// Take fraction of each pool: RC0, RC1, RC2, RC3 each get rcRatio; WL gets wlRatio
+	// Take fraction of each pool: RC0, RC1, RC2, RC3 each get rcRatio; WL gets wlRatio; related gets relatedRatio
 	const rc0 = (rcSegments[0] ?? []).slice(0, Math.floor((rcSegments[0]?.length ?? 0) * rcRatio))
 	const rc1 = (rcSegments[1] ?? []).slice(0, Math.floor((rcSegments[1]?.length ?? 0) * rcRatio))
 	const rc2 = (rcSegments[2] ?? []).slice(0, Math.floor((rcSegments[2]?.length ?? 0) * rcRatio))
 	const rc3 = (rcSegments[3] ?? []).slice(0, Math.floor((rcSegments[3]?.length ?? 0) * rcRatio))
 	const wlSliced = wl.slice(0, Math.floor(wl.length * wlRatio))
+	const relatedSliced = related.slice(0, Math.floor(related.length * relatedRatio))
 
-	// Round-robin across 5 pools: RC0[0], RC1[0], RC2[0], RC3[0], WL[0], RC0[1], ...
+	// Round-robin across 6 pools: RC0, RC1, RC2, RC3, WL, relatedChanges
 	const pools = [
 		rc0.map(r => ({ ...r, itemSource: "recentChanges" as const })),
 		rc1.map(r => ({ ...r, itemSource: "recentChanges" as const })),
 		rc2.map(r => ({ ...r, itemSource: "recentChanges" as const })),
 		rc3.map(r => ({ ...r, itemSource: "recentChanges" as const })),
 		wlSliced.map(r => ({ ...r, itemSource: "pagesAndUsers" as const })),
+		relatedSliced.map(r => ({ ...r, itemSource: "relatedChanges" as const })),
 	]
 	const maxLen = Math.max(...pools.map(p => p.length))
 	const merged: RevisionWithSource[] = []
@@ -336,6 +353,7 @@ const isLoading = ref(false)
 const errors = ref<string[]>([])
 
 const RECENT_CHANGES_LIMIT = 10
+const RELATED_CHANGES_MAX_PAGES = 12
 
 /** Hardcoded pages and users for source="pagesAndUsers" (matches DeltaSnippets / Structured deltas) */
 const HARDCODED_PAGE_NAMES = [
@@ -347,6 +365,33 @@ const HARDCODED_PAGE_NAMES = [
 	"Wet Leg",
 ]
 const HARDCODED_USER_NAMES = ["Todepond", "Samwalton9"]
+
+async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
+	const recPercent = Math.max(1, Math.min(100, props.relatedChangesRecPercent ?? 1))
+	const { pages: pagesWithScores } = await wiki.getTopRelatedPages(HARDCODED_PAGE_NAMES, {
+		percentage: recPercent,
+		limit: 50,
+	})
+	const recommendedTitles = pagesWithScores
+		.map(p => p.title)
+		.filter(title => !/^(Help|File):/i.test(title))
+		.slice(0, RELATED_CHANGES_MAX_PAGES)
+	if (recommendedTitles.length === 0) return []
+	const scoreByPage = new Map(pagesWithScores.map(p => [p.title, p.score]))
+	const latestRevisions: Array<FWPageHistoryRevision & { pageName?: string }> = []
+	for (const pageName of recommendedTitles) {
+		const history = await wiki.getPageHistory(pageName, { limit: 1 })
+		const rev = history.revisions?.[0]
+		if (rev) {
+			latestRevisions.push({ ...rev, pageName })
+		}
+	}
+	const processed = await processRevisions(latestRevisions)
+	return processed.map(r => {
+		const score = scoreByPage.get(r.pageName ?? "")
+		return { ...r, ...(score !== undefined && { score }) }
+	})
+}
 
 async function processRevisions(
 	revisions: Array<{
@@ -421,6 +466,27 @@ async function loadFeed(append = false): Promise<void> {
 			pageName?: string
 		}>
 
+		if (props.source === "relatedChanges") {
+			if (append) {
+				isLoading.value = false
+				return
+			}
+			const relatedRevisions = await loadRelatedChangesRevisions()
+			const sorted = relatedRevisions.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+			allRevisionsData.value = sorted
+			selectedRevisions.value = sorted
+			mixedRecentChangesBySegment.value = []
+			mixedPagesAndUsersData.value = []
+			mixedRelatedChangesData.value = []
+			isLoading.value = false
+			if (props.showRevertRisk) {
+				fetchRevertRiskForFeed()
+			}
+			return
+		}
+
 		if (props.source === "mixed") {
 			if (append) {
 				isLoading.value = false
@@ -484,6 +550,13 @@ async function loadFeed(append = false): Promise<void> {
 				)
 			)
 			mixedRecentChangesBySegment.value = processedBySegment
+
+			// Fetch related changes (latest revision per recommended page)
+			const relatedRevisions = await loadRelatedChangesRevisions()
+			mixedRelatedChangesData.value = relatedRevisions.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+
 			allRevisionsData.value = []
 			selectedRevisions.value = []
 			isLoading.value = false
@@ -529,6 +602,7 @@ async function loadFeed(append = false): Promise<void> {
 		const processed = await processRevisions(revisions)
 		mixedRecentChangesBySegment.value = []
 		mixedPagesAndUsersData.value = []
+		mixedRelatedChangesData.value = []
 
 		if (append && props.source === "recentChanges") {
 			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
@@ -691,6 +765,15 @@ watch(
 	() => props.source,
 	() => {
 		loadFeed()
+	}
+)
+
+watch(
+	() => props.relatedChangesRecPercent,
+	() => {
+		if (props.source === "relatedChanges" || props.source === "mixed") {
+			loadFeed()
+		}
 	}
 )
 </script>

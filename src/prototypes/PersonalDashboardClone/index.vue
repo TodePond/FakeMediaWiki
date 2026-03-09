@@ -105,6 +105,8 @@
 				:source="feedSource"
 				:recent-changes-ratio="recentChangesRatio"
 				:pages-and-users-ratio="pagesAndUsersRatio"
+				:related-changes-ratio="relatedChangesRatio"
+				:related-changes-rec-percent="relatedChangesRecPercent"
 				:feed-cap="10"
 				title="Review changes"
 				@preview-update="onPreviewUpdate"
@@ -197,6 +199,77 @@
 									/>
 									<span class="ratio-slider-value" aria-hidden="true"
 										>{{ pagesAndUsersRatio }}%</span
+									>
+								</div>
+							</div>
+							<div
+								class="review-changes-controls__row"
+								role="group"
+								aria-label="Mix ratio"
+							>
+								<CdxLabel :input-id="relatedChangesSliderId"
+									>Related changes %</CdxLabel
+								>
+								<div class="ratio-slider-line">
+									<input
+										:id="relatedChangesSliderId"
+										v-model.number="relatedChangesRatio"
+										type="range"
+										min="0"
+										max="100"
+										step="1"
+										class="ratio-slider"
+									/>
+									<span class="ratio-slider-value" aria-hidden="true"
+										>{{ relatedChangesRatio }}%</span
+									>
+								</div>
+							</div>
+							<div
+								class="review-changes-controls__row"
+								role="group"
+								aria-label="Recommendations percentage"
+							>
+								<CdxLabel :input-id="relatedChangesRecPercentSliderId"
+									>Recommendations %</CdxLabel
+								>
+								<div class="ratio-slider-line">
+									<input
+										:id="relatedChangesRecPercentSliderId"
+										v-model.number="relatedChangesRecPercent"
+										type="range"
+										min="1"
+										max="100"
+										step="1"
+										class="ratio-slider"
+									/>
+									<span class="ratio-slider-value" aria-hidden="true"
+										>{{ relatedChangesRecPercent }}%</span
+									>
+								</div>
+							</div>
+						</template>
+						<template v-if="feedSource === 'relatedChanges'">
+							<div
+								class="review-changes-controls__row"
+								role="group"
+								aria-label="Recommendations percentage"
+							>
+								<CdxLabel :input-id="relatedChangesRecPercentSliderId"
+									>Recommendations %</CdxLabel
+								>
+								<div class="ratio-slider-line">
+									<input
+										:id="relatedChangesRecPercentSliderId"
+										v-model.number="relatedChangesRecPercent"
+										type="range"
+										min="1"
+										max="100"
+										step="1"
+										class="ratio-slider"
+									/>
+									<span class="ratio-slider-value" aria-hidden="true"
+										>{{ relatedChangesRecPercent }}%</span
 									>
 								</div>
 							</div>
@@ -322,6 +395,8 @@ const {
 	feedSource,
 	recentChangesRatio,
 	pagesAndUsersRatio,
+	relatedChangesRatio,
+	relatedChangesRecPercent,
 	showRevertRiskInFeed,
 	showDelta,
 	showSourceIcons,
@@ -330,6 +405,8 @@ const {
 	reviewChangesSourceId,
 	recentChangesSliderId,
 	pagesAndUsersSliderId,
+	relatedChangesSliderId,
+	relatedChangesRecPercentSliderId,
 } = useReviewChangesModule()
 
 const previewRevisions = ref<FWRevision[]>([])
