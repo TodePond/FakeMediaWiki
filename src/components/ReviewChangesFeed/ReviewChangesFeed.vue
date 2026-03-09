@@ -188,7 +188,7 @@ const props = withDefaults(
 		showSourceIcons: false,
 		showSourceSubtitles: false,
 		showDelta: true,
-		deltaFormatParentheses: true,
+		deltaFormatParentheses: false,
 		source: "recentChanges",
 		recentChangesRatio: 50,
 		pagesAndUsersRatio: 50,
