@@ -14,6 +14,11 @@ const router = createRouter({
 			component: () => import("./views/SpecialView/index.vue"),
 		},
 		{
+			path: "/Chrome/:name",
+			name: "Chrome",
+			component: () => import("./views/ChromeView/index.vue"),
+		},
+		{
 			path: "/Fullscreen/:name",
 			name: "Fullscreen",
 			component: () => import("./views/Fullscreen/index.vue"),

@@ -146,7 +146,7 @@ function parsePageTitleFromWikiUrl(href: string): string | null {
 		const pathname = url.pathname
 		// App route: /Mobile/Page_Title or /Component/Page_Title etc.
 		const appMatch = pathname.match(
-			/^\/(?:Mobile|Component|Fullscreen|Special)\/([^/]+)(?:\/|$)/
+			/^\/(?:Mobile|Component|Fullscreen|Special|Chrome)\/([^/]+)(?:\/|$)/
 		)
 		if (appMatch) {
 			const encoded = appMatch[1]

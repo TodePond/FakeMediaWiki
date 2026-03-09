@@ -13,7 +13,7 @@
 		</div>
 		<!-- Mobile: simplified card modules -->
 		<div class="dashboard-mobile-cards">
-			<RouterLink to="/Special/ReviewChanges" class="mobile-card mobile-card--link">
+			<RouterLink to="/Chrome/ReviewChanges" class="mobile-card mobile-card--link">
 				<div class="mobile-card__header">
 					<span class="mobile-card__title">Review changes</span>
 					<CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />

@@ -19,6 +19,10 @@ export const wrappers: PrototypeTypes.WrapperDefinition[] = [
 		name: "Special page",
 	},
 	{
+		id: "Chrome",
+		name: "Chrome",
+	},
+	{
 		id: "Component",
 		name: "Component",
 	},
@@ -605,7 +609,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		name: "Review changes",
 		description: "The review changes feed, standalone.",
 		category: "dashboard",
-		wrapper: "Special",
+		wrapper: "Chrome",
 		title: "Review changes",
 		status: "new",
 		hidden: true,
