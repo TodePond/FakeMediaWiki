@@ -15,15 +15,15 @@
 					<div class="ratio-slider-line">
 						<input
 							:id="recentChangesSliderId"
-							v-model.number="recentChangesRatio"
+							v-model.number="mixedRecentChangesRatio"
 							type="range"
 							min="0"
 							max="100"
-							step="1"
+							step="10"
 							class="ratio-slider"
 						/>
 						<span class="ratio-slider-value" aria-hidden="true"
-							>{{ recentChangesRatio }}%</span
+							>{{ mixedRecentChangesRatio }}%</span
 						>
 					</div>
 				</div>
@@ -32,15 +32,34 @@
 					<div class="ratio-slider-line">
 						<input
 							:id="pagesAndUsersSliderId"
-							v-model.number="pagesAndUsersRatio"
+							v-model.number="mixedPagesAndUsersRatio"
 							type="range"
 							min="0"
 							max="100"
-							step="1"
+							step="10"
 							class="ratio-slider"
 						/>
 						<span class="ratio-slider-value" aria-hidden="true"
-							>{{ pagesAndUsersRatio }}%</span
+							>{{ mixedPagesAndUsersRatio }}%</span
+						>
+					</div>
+				</div>
+				<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
+					<CdxLabel :input-id="collaboratorsSliderId"
+						>Collaborators %</CdxLabel
+					>
+					<div class="ratio-slider-line">
+						<input
+							:id="collaboratorsSliderId"
+							v-model.number="mixedCollaboratorsRatio"
+							type="range"
+							min="0"
+							max="100"
+							step="10"
+							class="ratio-slider"
+						/>
+						<span class="ratio-slider-value" aria-hidden="true"
+							>{{ mixedCollaboratorsRatio }}%</span
 						>
 					</div>
 				</div>
@@ -51,55 +70,99 @@
 					<div class="ratio-slider-line">
 						<input
 							:id="relatedChangesSliderId"
-							v-model.number="relatedChangesRatio"
+							v-model.number="mixedRelatedChangesRatio"
 							type="range"
 							min="0"
 							max="100"
-							step="1"
+							step="10"
 							class="ratio-slider"
 						/>
 						<span class="ratio-slider-value" aria-hidden="true"
-							>{{ relatedChangesRatio }}%</span
+							>{{ mixedRelatedChangesRatio }}%</span
 						>
 					</div>
 				</div>
-				<div class="review-changes-controls__row" role="group" aria-label="Recommendations percentage">
-					<CdxLabel :input-id="relatedChangesRecPercentSliderId"
-						>Recommendations %</CdxLabel
+			</template>
+			<template v-if="feedSource === 'recentChanges'">
+				<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
+					<CdxLabel :input-id="recentChangesSliderId"
+						>Recent changes %</CdxLabel
 					>
 					<div class="ratio-slider-line">
 						<input
-							:id="relatedChangesRecPercentSliderId"
-							v-model.number="relatedChangesRecPercent"
+							:id="recentChangesSliderId"
+							v-model.number="standaloneRecentChangesRatio"
 							type="range"
-							min="1"
+							min="0"
 							max="100"
-							step="1"
+							step="10"
 							class="ratio-slider"
 						/>
 						<span class="ratio-slider-value" aria-hidden="true"
-							>{{ relatedChangesRecPercent }}%</span
+							>{{ standaloneRecentChangesRatio }}%</span
+						>
+					</div>
+				</div>
+			</template>
+			<template v-if="feedSource === 'pagesAndUsers'">
+				<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
+					<CdxLabel :input-id="pagesAndUsersSliderId"
+						>Watchlist %</CdxLabel
+					>
+					<div class="ratio-slider-line">
+						<input
+							:id="pagesAndUsersSliderId"
+							v-model.number="standalonePagesAndUsersRatio"
+							type="range"
+							min="0"
+							max="100"
+							step="10"
+							class="ratio-slider"
+						/>
+						<span class="ratio-slider-value" aria-hidden="true"
+							>{{ standalonePagesAndUsersRatio }}%</span
+						>
+					</div>
+				</div>
+			</template>
+			<template v-if="feedSource === 'collaborators'">
+				<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
+					<CdxLabel :input-id="collaboratorsSliderId"
+						>Collaborators %</CdxLabel
+					>
+					<div class="ratio-slider-line">
+						<input
+							:id="collaboratorsSliderId"
+							v-model.number="standaloneCollaboratorsRatio"
+							type="range"
+							min="0"
+							max="100"
+							step="10"
+							class="ratio-slider"
+						/>
+						<span class="ratio-slider-value" aria-hidden="true"
+							>{{ standaloneCollaboratorsRatio }}%</span
 						>
 					</div>
 				</div>
 			</template>
 			<template v-if="feedSource === 'relatedChanges'">
-				<div class="review-changes-controls__row" role="group" aria-label="Recommendations percentage">
-					<CdxLabel :input-id="relatedChangesRecPercentSliderId"
-						>Recommendations %</CdxLabel
+				<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
+					<CdxLabel :input-id="relatedChangesSliderId"
+						>Related changes %</CdxLabel
 					>
 					<div class="ratio-slider-line">
 						<input
-							:id="relatedChangesRecPercentSliderId"
-							v-model.number="relatedChangesRecPercent"
+							:id="relatedChangesSliderId"
+							v-model.number="standaloneRelatedChangesRatio"
 							type="range"
-							min="1"
+							min="0"
 							max="100"
-							step="1"
+							step="10"
 							class="ratio-slider"
 						/>
 						<span class="ratio-slider-value" aria-hidden="true"
-							>{{ relatedChangesRecPercent }}%</span
+							>{{ standaloneRelatedChangesRatio }}%</span
 						>
 					</div>
 				</div>
@@ -141,8 +204,8 @@
 			:source="feedSource"
 			:recent-changes-ratio="recentChangesRatio"
 			:pages-and-users-ratio="pagesAndUsersRatio"
+			:collaborators-ratio="collaboratorsRatio"
 			:related-changes-ratio="relatedChangesRatio"
-			:related-changes-rec-percent="relatedChangesRecPercent"
 			:feed-cap="10"
 			:hide-description="true"
 		/>
@@ -153,9 +216,9 @@
 import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import { CdxLabel, CdxSelect } from "@wikimedia/codex"
 import {
+	collaboratorsSliderId,
 	pagesAndUsersSliderId,
 	recentChangesSliderId,
-	relatedChangesRecPercentSliderId,
 	relatedChangesSliderId,
 	sourceOptions,
 	useReviewChangesModule,
@@ -163,10 +226,18 @@ import {
 
 const {
 	feedSource,
+	mixedRecentChangesRatio,
+	mixedPagesAndUsersRatio,
+	mixedCollaboratorsRatio,
+	mixedRelatedChangesRatio,
+	standaloneRecentChangesRatio,
+	standalonePagesAndUsersRatio,
+	standaloneCollaboratorsRatio,
+	standaloneRelatedChangesRatio,
 	recentChangesRatio,
 	pagesAndUsersRatio,
+	collaboratorsRatio,
 	relatedChangesRatio,
-	relatedChangesRecPercent,
 	showRevertRiskInFeed,
 	showDelta,
 	showSourceIcons,

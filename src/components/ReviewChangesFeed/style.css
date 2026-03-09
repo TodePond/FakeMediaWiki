@@ -140,6 +140,10 @@
 	color: #202122;
 }
 
+.review-changes__source-icon--collaborators {
+	color: #202122;
+}
+
 .review-changes__page {
 	font-weight: 700;
 	color: var(--color-base, #202122);
