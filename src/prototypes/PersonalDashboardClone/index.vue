@@ -28,9 +28,14 @@
 							:key="`${change.pageName}-${change.timestamp}-${change.id}`"
 							class="mobile-card__preview-item"
 						>
-							<CdxIcon :icon="cdxIconEdit" size="small" class="mobile-card__content-icon" />
+							<CdxIcon
+								:icon="cdxIconEdit"
+								size="small"
+								class="mobile-card__content-icon"
+							/>
 							<span class="mobile-card__content-text">
-								{{ change.user.name }} changed {{ formatPreviewDelta(change.delta) }} bytes in
+								{{ change.user.name }} changed
+								{{ formatPreviewDelta(change.delta) }} bytes in
 								{{
 									change.pageName
 										? `the ${change.pageName} article`
@@ -210,7 +215,7 @@
 								type="checkbox"
 								class="show-revert-risk-card__input"
 							/>
-							<span class="show-revert-risk-card__text">Source icons</span>
+							<span class="show-revert-risk-card__text">Source icon</span>
 						</label>
 						<label class="show-revert-risk-card__label">
 							<input
@@ -218,7 +223,7 @@
 								type="checkbox"
 								class="show-revert-risk-card__input"
 							/>
-							<span class="show-revert-risk-card__text">Source subtitles</span>
+							<span class="show-revert-risk-card__text">Source subtitle</span>
 						</label>
 						<label class="show-revert-risk-card__label">
 							<input
@@ -300,8 +305,8 @@ import {
 	cdxIconLinkExternal,
 	cdxIconUserTalk,
 } from "@wikimedia/codex-icons"
-import type { FWRevision } from "fakewiki/types"
 import { FakeWiki } from "fakewiki"
+import type { FWRevision } from "fakewiki/types"
 import { computed, ref } from "vue"
 import { RouterLink } from "vue-router"
 

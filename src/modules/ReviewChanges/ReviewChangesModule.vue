@@ -46,11 +46,7 @@
 				</div>
 			</template>
 			<label class="show-revert-risk-card__label">
-				<input
-					v-model="showDelta"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
+				<input v-model="showDelta" type="checkbox" class="show-revert-risk-card__input" />
 				<span class="show-revert-risk-card__text">Delta</span>
 			</label>
 			<label class="show-revert-risk-card__label">
@@ -59,7 +55,7 @@
 					type="checkbox"
 					class="show-revert-risk-card__input"
 				/>
-				<span class="show-revert-risk-card__text">Source icons</span>
+				<span class="show-revert-risk-card__text">Source icon</span>
 			</label>
 			<label class="show-revert-risk-card__label">
 				<input
@@ -67,7 +63,7 @@
 					type="checkbox"
 					class="show-revert-risk-card__input"
 				/>
-				<span class="show-revert-risk-card__text">Source subtitles</span>
+				<span class="show-revert-risk-card__text">Source subtitle</span>
 			</label>
 			<label class="show-revert-risk-card__label">
 				<input
@@ -96,8 +92,8 @@
 import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import { CdxLabel, CdxSelect } from "@wikimedia/codex"
 import {
-	recentChangesSliderId,
 	pagesAndUsersSliderId,
+	recentChangesSliderId,
 	sourceOptions,
 	useReviewChangesModule,
 } from "./useReviewChangesModule"

@@ -37,3 +37,4 @@ __screenshots__/
 
 # Generated entry points
 entry-points/
+watchlists/**/*
