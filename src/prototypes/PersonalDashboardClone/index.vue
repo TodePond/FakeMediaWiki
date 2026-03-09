@@ -90,6 +90,7 @@
 				:show-source-icons="showSourceIcons"
 				:show-source-subtitles="showSourceSubtitles"
 				:show-delta="showDelta"
+				:delta-format-parentheses="false"
 				:source="feedSource"
 				:recent-changes-ratio="recentChangesRatio"
 				:pages-and-users-ratio="pagesAndUsersRatio"

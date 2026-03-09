@@ -65,20 +65,21 @@
 									>{{ formatDelta(change.delta) }}</span
 								>
 								<span
-									v-if="change?.summary?.comment || change?.comment"
 									class="review-changes__summary-sep"
 									aria-hidden="true"
 									>&nbsp;·</span
 								>
 							</template><span
-								v-if="change?.summary?.comment"
-								class="review-changes__comment"
-								v-html="change.summary.comment"
-							></span
+							v-if="change?.summary?.comment"
+							class="review-changes__comment"
+							v-html="change.summary.comment"
+						></span
 							><span
 								v-else-if="change?.comment"
 								class="review-changes__comment"
 								>{{ change.comment }}</span
+							><em v-else class="review-changes__comment review-changes__comment--empty"
+								>{{ showDelta ? '\u00A0' : '' }}No edit summary</em
 							>
 						</div>
 						<a
@@ -151,6 +152,8 @@ const props = withDefaults(
 		showSourceIcons?: boolean
 		showSourceSubtitles?: boolean
 		showDelta?: boolean
+		/** If false, deltas are shown as +120 / -4 instead of (+120) / (-4). */
+		deltaFormatParentheses?: boolean
 		source?: ReviewChangesSource
 		/** 0–100, used when source is "mixed". 0 = exclude recent changes. */
 		recentChangesRatio?: number
@@ -158,7 +161,7 @@ const props = withDefaults(
 		pagesAndUsersRatio?: number
 		title?: string
 	}>(),
-	{ showSourceIcons: false, showSourceSubtitles: false, showDelta: true, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50 }
+	{ showSourceIcons: false, showSourceSubtitles: false, showDelta: true, deltaFormatParentheses: true, source: "recentChanges", recentChangesRatio: 50, pagesAndUsersRatio: 50 }
 )
 
 const wiki = new FakeWiki()
@@ -584,9 +587,9 @@ function formatTimeLabel(timestamp: string): string {
 
 function formatDelta(delta: number | null | undefined): string {
 	const n = delta != null ? Number(delta) : 0
-	if (Number.isNaN(n)) return "(0)"
+	if (Number.isNaN(n)) return props.deltaFormatParentheses ? "(0)" : "0"
 	const sign = n >= 0 ? "+" : ""
-	return `(${sign}${n})`
+	return props.deltaFormatParentheses ? `(${sign}${n})` : `${sign}${n}`
 }
 
 const revisionsByDate = computed(() => {
