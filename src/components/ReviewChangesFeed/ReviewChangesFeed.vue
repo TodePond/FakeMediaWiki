@@ -484,14 +484,22 @@ async function loadFeed(append = false): Promise<void> {
 			})
 		} else {
 			const onlyNeedsReview = append ? useNeedsReviewFilter.value : true
-			const result = await wiki.getRecentChanges({
+			let result = await wiki.getRecentChanges({
 				limit: RECENT_CHANGES_LIMIT,
 				onlyNeedsReview,
 				rccontinue: append ? rccontinue.value : undefined,
 			})
 
+			// Fallback: if "needs review" filter returns empty, show any recent changes
+			if (result.revisions.length === 0 && !append && onlyNeedsReview) {
+				result = await wiki.getRecentChanges({
+					limit: RECENT_CHANGES_LIMIT,
+					onlyNeedsReview: false,
+				})
+			}
+
 			revisions = result.revisions
-			if (revisions.length === 0 && !append && onlyNeedsReview) {
+			if (revisions.length === 0 && !append) {
 				throw new Error("No edits that need review were returned. Try again later.")
 			}
 			rccontinue.value = result.rccontinue
@@ -625,7 +633,24 @@ const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
 const sampleRevision = computed(() => selectedRevisionsForDisplay.value[0] ?? null)
 
-defineExpose({ sampleRevision, isLoading })
+const previewRevisions = computed(() => selectedRevisionsForDisplay.value.slice(0, 3))
+
+defineExpose({ sampleRevision, previewRevisions, isLoading })
+
+const emit = defineEmits<{
+	previewUpdate: [payload: { revisions: FWRevision[]; isLoading: boolean }]
+}>()
+
+watch(
+	[previewRevisions, isLoading],
+	([revisions, loading]) => {
+		emit("previewUpdate", {
+			revisions: (revisions as FWRevision[]) ?? [],
+			isLoading: (loading as boolean) ?? false,
+		})
+	},
+	{ immediate: true }
+)
 
 onMounted(() => {
 	loadFeed()

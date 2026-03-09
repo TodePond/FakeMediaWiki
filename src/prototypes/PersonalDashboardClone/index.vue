@@ -18,20 +18,27 @@
 					<span class="mobile-card__title">Review changes</span>
 					<CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />
 				</div>
-				<div class="mobile-card__content">
-					<CdxIcon :icon="cdxIconEdit" size="small" class="mobile-card__content-icon" />
-					<span class="mobile-card__content-text">
-						<template v-if="sampleRevision">
-							{{ sampleRevision.user.name }} changed bytes in
-							{{
-								sampleRevision.pageName
-									? `the ${sampleRevision.pageName} article`
-									: "an article"
-							}}.
-						</template>
-						<template v-else-if="isLoading"> Loading edits… </template>
-						<template v-else> No edits to review right now. </template>
-					</span>
+				<div class="mobile-card__content mobile-card__content--preview">
+					<template v-if="isLoading">
+						<CdxProgressBar inline />
+					</template>
+					<template v-else>
+						<div
+							v-for="change in previewRevisions"
+							:key="`${change.pageName}-${change.timestamp}-${change.id}`"
+							class="mobile-card__preview-item"
+						>
+							<CdxIcon :icon="cdxIconEdit" size="small" class="mobile-card__content-icon" />
+							<span class="mobile-card__content-text">
+								{{ change.user.name }} changed {{ formatPreviewDelta(change.delta) }} bytes in
+								{{
+									change.pageName
+										? `the ${change.pageName} article`
+										: "an article"
+								}}.
+							</span>
+						</div>
+					</template>
 				</div>
 				<span class="mobile-card__button">View more edits</span>
 			</RouterLink>
@@ -85,7 +92,6 @@
 		<!-- Desktop: full dashboard -->
 		<div class="dashboard-main">
 			<ReviewChangesFeed
-				ref="reviewChangesFeedRef"
 				:show-revert-risk="showRevertRiskInFeed"
 				:show-source-icons="showSourceIcons"
 				:show-source-subtitles="showSourceSubtitles"
@@ -96,6 +102,7 @@
 				:pages-and-users-ratio="pagesAndUsersRatio"
 				:feed-cap="10"
 				title="Review changes"
+				@preview-update="onPreviewUpdate"
 			/>
 
 			<aside class="dashboard-sidebar">
@@ -136,9 +143,9 @@
 				<section class="sidebar-card review-changes-controls-card">
 					<div class="review-changes-controls">
 						<div class="review-changes-controls__row">
-							<CdxLabel input-id="review-changes-source">Feed source</CdxLabel>
+							<CdxLabel :input-id="reviewChangesSourceId">Feed source</CdxLabel>
 							<CdxSelect
-								id="review-changes-source"
+								:id="reviewChangesSourceId"
 								v-model:selected="feedSource"
 								:menu-items="sourceOptions"
 							/>
@@ -282,9 +289,9 @@
 </template>
 
 <script setup lang="ts">
-import type { ReviewChangesSource } from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
-import { CdxIcon, CdxLabel, CdxSelect } from "@wikimedia/codex"
+import { useReviewChangesModule } from "@/modules/ReviewChanges/useReviewChangesModule"
+import { CdxIcon, CdxLabel, CdxProgressBar, CdxSelect } from "@wikimedia/codex"
 import {
 	cdxIconArrowNext,
 	cdxIconCheckAll,
@@ -293,8 +300,9 @@ import {
 	cdxIconLinkExternal,
 	cdxIconUserTalk,
 } from "@wikimedia/codex-icons"
+import type { FWRevision } from "fakewiki/types"
 import { FakeWiki } from "fakewiki"
-import { computed, ref, watch } from "vue"
+import { computed, ref } from "vue"
 import { RouterLink } from "vue-router"
 
 const wiki = new FakeWiki()
@@ -305,158 +313,34 @@ const thanksLogUrl = computed(
 		`${wiki.base}w/index.php?title=${wiki.encodeForUrl("Special:Log")}&type=thanks&user=${encodeURIComponent(THANKS_LOG_USER)}`
 )
 
-const SHOW_REVERT_RISK_STORAGE_KEY = "personal-dashboard-clone-show-revert-risk"
-const SHOW_DELTA_STORAGE_KEY = "personal-dashboard-clone-show-delta"
-const SHOW_SOURCE_ICONS_STORAGE_KEY = "personal-dashboard-clone-show-source-icons"
-const SHOW_SOURCE_SUBTITLES_STORAGE_KEY = "personal-dashboard-clone-show-source-subtitles"
-const FEED_SOURCE_STORAGE_KEY = "personal-dashboard-clone-feed-source"
-const RECENT_CHANGES_RATIO_STORAGE_KEY = "personal-dashboard-clone-recent-changes-ratio"
-const PAGES_AND_USERS_RATIO_STORAGE_KEY = "personal-dashboard-clone-pages-and-users-ratio"
-const recentChangesSliderId = "personal-dashboard-recent-slider"
-const pagesAndUsersSliderId = "personal-dashboard-pages-slider"
+const {
+	feedSource,
+	recentChangesRatio,
+	pagesAndUsersRatio,
+	showRevertRiskInFeed,
+	showDelta,
+	showSourceIcons,
+	showSourceSubtitles,
+	sourceOptions,
+	reviewChangesSourceId,
+	recentChangesSliderId,
+	pagesAndUsersSliderId,
+} = useReviewChangesModule()
 
-function getStoredShowRevertRisk(): boolean {
-	try {
-		const stored = localStorage.getItem(SHOW_REVERT_RISK_STORAGE_KEY)
-		return stored === "true"
-	} catch {
-		return false
-	}
+const previewRevisions = ref<FWRevision[]>([])
+const isLoading = ref(false)
+
+function onPreviewUpdate(payload: { revisions: FWRevision[]; isLoading: boolean }) {
+	previewRevisions.value = payload.revisions
+	isLoading.value = payload.isLoading
 }
 
-function getStoredShowDelta(): boolean {
-	try {
-		const stored = localStorage.getItem(SHOW_DELTA_STORAGE_KEY)
-		if (stored === null) return true
-		return stored === "true"
-	} catch {
-		return true
-	}
+function formatPreviewDelta(delta: number | null | undefined): string {
+	const n = delta != null ? Number(delta) : 0
+	if (Number.isNaN(n)) return "0"
+	const sign = n >= 0 ? "+" : ""
+	return `${sign}${n}`
 }
-
-function getStoredShowSourceIcons(): boolean {
-	try {
-		const stored = localStorage.getItem(SHOW_SOURCE_ICONS_STORAGE_KEY)
-		return stored === "true"
-	} catch {
-		return false
-	}
-}
-
-function getStoredShowSourceSubtitles(): boolean {
-	try {
-		const stored = localStorage.getItem(SHOW_SOURCE_SUBTITLES_STORAGE_KEY)
-		return stored === "true"
-	} catch {
-		return false
-	}
-}
-
-function getStoredFeedSource(): ReviewChangesSource {
-	try {
-		const stored = localStorage.getItem(FEED_SOURCE_STORAGE_KEY)
-		if (stored === "recentChanges" || stored === "pagesAndUsers" || stored === "mixed") {
-			return stored
-		}
-	} catch {
-		// ignore
-	}
-	return "recentChanges"
-}
-
-function getStoredRatio(key: string, fallback: number): number {
-	try {
-		const stored = localStorage.getItem(key)
-		if (stored !== null) {
-			const n = Number(stored)
-			if (Number.isFinite(n) && n >= 0 && n <= 100) return Math.round(n)
-		}
-	} catch {
-		// ignore
-	}
-	return fallback
-}
-
-const sourceOptions = [
-	{ value: "recentChanges", label: "Recent changes" },
-	{ value: "pagesAndUsers", label: "Watchlist" },
-	{ value: "mixed", label: "Mixed" },
-]
-
-const showRevertRiskInFeed = ref(getStoredShowRevertRisk())
-const showDelta = ref(getStoredShowDelta())
-const showSourceIcons = ref(getStoredShowSourceIcons())
-const showSourceSubtitles = ref(getStoredShowSourceSubtitles())
-const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
-const recentChangesRatio = ref(getStoredRatio(RECENT_CHANGES_RATIO_STORAGE_KEY, 50))
-const pagesAndUsersRatio = ref(getStoredRatio(PAGES_AND_USERS_RATIO_STORAGE_KEY, 50))
-
-watch(showRevertRiskInFeed, enabled => {
-	try {
-		localStorage.setItem(SHOW_REVERT_RISK_STORAGE_KEY, String(enabled))
-	} catch {
-		// ignore
-	}
-})
-
-watch(showDelta, enabled => {
-	try {
-		localStorage.setItem(SHOW_DELTA_STORAGE_KEY, String(enabled))
-	} catch {
-		// ignore
-	}
-})
-
-watch(showSourceIcons, enabled => {
-	try {
-		localStorage.setItem(SHOW_SOURCE_ICONS_STORAGE_KEY, String(enabled))
-	} catch {
-		// ignore
-	}
-})
-
-watch(showSourceSubtitles, enabled => {
-	try {
-		localStorage.setItem(SHOW_SOURCE_SUBTITLES_STORAGE_KEY, String(enabled))
-	} catch {
-		// ignore
-	}
-})
-
-watch(feedSource, source => {
-	try {
-		localStorage.setItem(FEED_SOURCE_STORAGE_KEY, source)
-	} catch {
-		// ignore
-	}
-})
-
-watch(recentChangesRatio, value => {
-	try {
-		localStorage.setItem(RECENT_CHANGES_RATIO_STORAGE_KEY, String(value))
-	} catch {
-		// ignore
-	}
-})
-
-watch(pagesAndUsersRatio, value => {
-	try {
-		localStorage.setItem(PAGES_AND_USERS_RATIO_STORAGE_KEY, String(value))
-	} catch {
-		// ignore
-	}
-})
-
-const reviewChangesFeedRef = ref<InstanceType<typeof ReviewChangesFeed> | null>(null)
-
-const sampleRevision = computed(() => {
-	const inst = reviewChangesFeedRef.value as { sampleRevision?: { value: unknown } } | null
-	return (inst?.sampleRevision?.value ?? null) as import("fakewiki/types").FWRevision | null
-})
-const isLoading = computed(() => {
-	const inst = reviewChangesFeedRef.value as { isLoading?: { value: boolean } } | null
-	return inst?.isLoading?.value ?? false
-})
 </script>
 
 <style scoped>
