@@ -160,7 +160,9 @@ export function useRelatedChangesRecommendations({
 			recommendationsTruncated: true,
 		}
 
-		const recommendedTitles = pagesWithScores.map(p => p.title)
+		const recommendedTitles = pagesWithScores
+			.map(p => p.title)
+			.filter(title => !/^(Help|File):/i.test(title))
 		const seedByPage = new Map<string, string[]>()
 		const scoreByPage = new Map<string, number>()
 		for (const c of changes) {

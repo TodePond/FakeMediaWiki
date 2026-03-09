@@ -34,6 +34,39 @@
 			<div v-if="errors.length > 0" class="error">
 				<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 			</div>
+
+			<div v-if="samplingActive" class="recommendation-sampling-hint" aria-live="polite">
+				Querying
+				<template v-if="pageCount > MAX_QUERY_SAMPLE">
+					{{ MAX_QUERY_SAMPLE }} of {{ pageCount }} pages
+				</template>
+				<template v-if="pageCount > MAX_QUERY_SAMPLE && userCount > MAX_QUERY_SAMPLE"
+					>,
+				</template>
+				<template v-if="userCount > MAX_QUERY_SAMPLE">
+					{{ MAX_QUERY_SAMPLE }} of {{ userCount }} users
+				</template>
+				<CdxButton
+					type="button"
+					@click="changeSample"
+					class="recommendation-sampling-change-btn"
+				>
+					Change sample
+				</CdxButton>
+				<div
+					v-if="pageCount > MAX_QUERY_SAMPLE && previewSamplePages.length > 0"
+					class="recommendation-sampling-list"
+				>
+					Pages: {{ previewSamplePages.join(", ") }}
+				</div>
+				<div
+					v-if="userCount > MAX_QUERY_SAMPLE && previewSampleUsers.length > 0"
+					class="recommendation-sampling-list"
+				>
+					Users: {{ previewSampleUsers.join(", ") }}
+				</div>
+			</div>
+
 			<div
 				v-if="allRevisionsData.length > 0 || isLoading"
 				class="score-filter-row"
@@ -120,19 +153,6 @@
 						<template v-if="!expandedItemIds.has(change.id)">
 							<div class="history-row">
 								<CdxIcon
-									v-if="getPredictionIcon(change.id).icon"
-									:icon="getPredictionIcon(change.id).icon!"
-									:style="{ color: getPredictionIcon(change.id).color }"
-									:class="[
-										'prediction-icon',
-										{
-											'prediction-icon-loading': getPredictionIcon(change.id)
-												.isLoading,
-										},
-									]"
-									size="small"
-									:title="getPredictionText(change.id) ?? undefined"
-								/><CdxIcon
 									:icon="
 										(change as FeedRevision).isRecommendation
 											? cdxIconLightbulb
@@ -325,26 +345,6 @@
 									v-html="change?.summary?.comment ?? ''"
 								></div>
 
-								<div v-if="getPredictionText(change.id)" class="prediction-card">
-									<CdxIcon
-										v-if="getPredictionIcon(change.id).icon"
-										:icon="getPredictionIcon(change.id).icon!"
-										:style="{ color: getPredictionIcon(change.id).color }"
-										:class="[
-											'prediction-card-icon',
-											{
-												'prediction-icon-loading': getPredictionIcon(
-													change.id
-												).isLoading,
-											},
-										]"
-										size="small"
-										:title="getPredictionText(change.id) ?? undefined"
-									/>
-									<span class="prediction-card-text">{{
-										getPredictionText(change.id)
-									}}</span>
-								</div>
 								<div
 									class="item-source-info"
 									:class="{
@@ -785,7 +785,6 @@ import {
 	FakeWiki,
 	type FeedRevisionRelatedChanges as FeedRevision,
 	useFeed,
-	usePredictions,
 	useRelatedChangesRecommendations,
 } from "fakewiki"
 import type { FWCompareResponse, FWPageHistoryResponse, FWRevision } from "fakewiki/types"
@@ -794,6 +793,7 @@ import { isInteractiveClickTarget } from "./clickTargets"
 import {
 	DEFAULT_TOP_PERCENT,
 	HEART_RISE_DURATION_MS,
+	MAX_QUERY_SAMPLE,
 	PROTOTYPE_NAME,
 	RECOMMENDATION_HISTORY_LIMIT,
 	RECOMMENDATION_MAX_PAGES,
@@ -848,6 +848,72 @@ function syncUserQueriesFromInput(): void {
 		.filter(Boolean)
 }
 
+/** Sampled page/user queries used for API calls. Updated before each load. */
+const sampledPageSearchQueries = ref<string[]>([])
+const sampledUserSearchQueries = ref<string[]>([])
+
+function updateSampledQueries(): void {
+	const pages = pageSearchQueries.value.filter(name => name.trim() !== "")
+	const users = userSearchQueries.value.filter(name => name.trim() !== "")
+	sampledPageSearchQueries.value = sampleDeterministic(pages, MAX_QUERY_SAMPLE, sampleSeed.value)
+	sampledUserSearchQueries.value = sampleDeterministic(users, MAX_QUERY_SAMPLE, sampleSeed.value)
+}
+
+/** Parsed pages/users from input (updates immediately as user types/pastes). */
+const parsedPages = computed(() =>
+	pageQueriesInput.value
+		.split(",")
+		.map(s => s.trim())
+		.filter(Boolean)
+)
+const parsedUsers = computed(() =>
+	userQueriesInput.value
+		.split(",")
+		.map(s => s.trim())
+		.filter(Boolean)
+)
+const pageCount = computed(() => parsedPages.value.length)
+const userCount = computed(() => parsedUsers.value.length)
+
+/** Incremented when user clicks "Change sample" to get a different sample from the same input. */
+const sampleRevision = ref(0)
+
+/** Deterministic sample (same input + revision = same seed). */
+function sampleDeterministic<T>(arr: T[], max: number, seed: string): T[] {
+	if (arr.length <= max) return [...arr]
+	let h = 0
+	for (let i = 0; i < seed.length; i++) h = ((h << 5) - h + seed.charCodeAt(i)) >>> 0
+	const rng = () => (h = (h * 1664525 + 1013904223) >>> 0) / 2 ** 32
+	const result = [...arr]
+	for (let i = result.length - 1; i > 0; i--) {
+		const j = Math.floor(rng() * (i + 1))
+		;[result[i], result[j]] = [result[j]!, result[i]!]
+	}
+	return result.slice(0, max)
+}
+
+/** Seed for sampling (input + revision so "Change sample" gives a different result). */
+const sampleSeed = computed(
+	() => `${pageQueriesInput.value}|${userQueriesInput.value}|${sampleRevision.value}`
+)
+
+/** Preview sample to display (updates immediately, matches actual sample on refresh). */
+const previewSamplePages = computed(() =>
+	sampleDeterministic(parsedPages.value, MAX_QUERY_SAMPLE, sampleSeed.value)
+)
+const previewSampleUsers = computed(() =>
+	sampleDeterministic(parsedUsers.value, MAX_QUERY_SAMPLE, sampleSeed.value)
+)
+
+function changeSample(): void {
+	sampleRevision.value++
+}
+
+/** True when we're sampling (user provided more than MAX_QUERY_SAMPLE pages or users). */
+const samplingActive = computed(
+	() => pageCount.value > MAX_QUERY_SAMPLE || userCount.value > MAX_QUERY_SAMPLE
+)
+
 /** Which revision ids have the inline diff expanded */
 const expandedDiffIds = ref<Set<number>>(new Set())
 /** Loaded diff data keyed by revision id */
@@ -889,7 +955,7 @@ const {
 	recommendationProgress,
 } = useRelatedChangesRecommendations({
 	wiki,
-	pageSearchQueries,
+	pageSearchQueries: sampledPageSearchQueries,
 	allRevisionsData: allRevisionsDataRef,
 	filterKeepPercent,
 	options: {
@@ -902,8 +968,8 @@ const {
 const { allRevisionsData, isLoading, isLoadingMore, errors, hasMore, loadFeed, loadMore } = useFeed(
 	{
 		wiki,
-		pageSearchQueries,
-		userSearchQueries,
+		pageSearchQueries: sampledPageSearchQueries,
+		userSearchQueries: sampledUserSearchQueries,
 		allRevisionsDataRef,
 	}
 )
@@ -914,8 +980,6 @@ const expandedTalkIds = ref<Set<number>>(new Set())
 const talkPageText = ref<Map<number, string>>(new Map())
 /** Current editor mode: 'visual' or 'source' */
 const editorMode = ref<Map<number, "visual" | "source">>(new Map())
-
-const { getPredictionIcon, getPredictionText } = usePredictions(wiki)
 
 /** Loading stage label and bar percent (0–100 or null for indeterminate) for the always-visible loading block. */
 const loadingStage = computed(() => {
@@ -962,6 +1026,9 @@ const RESERVE_SCROLLBAR_GUTTER_CLASS = "reserve-scrollbar-gutter"
 
 onMounted(async () => {
 	document.documentElement.classList.add(RESERVE_SCROLLBAR_GUTTER_CLASS)
+	syncPageQueriesFromInput()
+	syncUserQueriesFromInput()
+	updateSampledQueries()
 	await loadFeed(undefined, false)
 	await loadRecommendations()
 	saveSearchQueries()
@@ -1041,6 +1108,10 @@ function resetUserQueriesToDefault(): void {
 }
 
 async function search(): Promise<void> {
+	// Sync from input before sampling (ensures paste is captured; @input may not fire before submit)
+	syncPageQueriesFromInput()
+	syncUserQueriesFromInput()
+	updateSampledQueries()
 	await loadFeed(undefined, false)
 	await loadRecommendations()
 	saveSearchQueries()

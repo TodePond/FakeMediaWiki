@@ -29,6 +29,9 @@ export const userTypeConfig: Record<UserCategory, UserTypeConfig> = {
 /** Default "keep top N%" for getTopRelatedPages (debug slider). */
 export const DEFAULT_TOP_PERCENT = 10
 
+/** Max pages/users to use when user provides more than this many in the query (random sample). */
+export const MAX_QUERY_SAMPLE = 20
+
 /** Max recommended pages to fetch history for. */
 export const RECOMMENDATION_MAX_PAGES = 12
 

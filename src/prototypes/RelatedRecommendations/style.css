@@ -74,6 +74,23 @@
 	margin-top: 0.5rem;
 }
 
+.recommendation-sampling-hint {
+	font-size: 0.75rem;
+	color: var(--color-subtle, #54595d);
+	opacity: 0.85;
+	margin-top: 0.25rem;
+}
+
+.recommendation-sampling-change-btn {
+	margin-left: 0.5rem;
+	vertical-align: middle;
+}
+
+.recommendation-sampling-list {
+	margin-top: 0.25rem;
+	word-break: break-word;
+}
+
 .recommendation-progress-bar {
 	height: 4px;
 	background: var(--background-color-subtle, #eaecf0);
@@ -186,25 +203,6 @@
 	color: var(--color-progressive, #36c);
 }
 
-.prediction-icon-expanded {
-	margin-right: 0.5rem;
-}
-
-.prediction-icon-loading {
-	opacity: 0.6;
-	animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-	0%,
-	100% {
-		opacity: 0.6;
-	}
-	50% {
-		opacity: 1;
-	}
-}
-
 .item-source-info {
 	display: flex;
 	align-items: center;
@@ -241,27 +239,6 @@
 
 .item-source-info-link:hover {
 	text-decoration: underline;
-}
-
-.prediction-card {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin-top: 0.5rem;
-	padding: 0.5rem 0.75rem;
-	background-color: var(--background-color-subtle, #f8f9fa);
-	border: 1px solid var(--border-color-subtle);
-	border-radius: 2px;
-	font-size: 0.875rem;
-	line-height: 1.4;
-}
-
-.prediction-card-icon {
-	flex-shrink: 0;
-}
-
-.prediction-card-text {
-	color: var(--color-base, #202122);
 }
 
 .history-row-second {
