@@ -483,7 +483,13 @@ async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
 		percentage: 100,
 		limit: 50,
 	})
-	const selected = selectTopNByScoreWithRandomTies(pagesWithScores, RELATED_CHANGES_TOP_N)
+	const watchlistTitles = new Set(
+		HARDCODED_PAGE_NAMES.map(t => t.toLowerCase())
+	)
+	const pagesExcludingWatchlist = pagesWithScores.filter(
+		p => !watchlistTitles.has(p.title.toLowerCase())
+	)
+	const selected = selectTopNByScoreWithRandomTies(pagesExcludingWatchlist, RELATED_CHANGES_TOP_N)
 	const recommendedTitles = selected.map(p => p.title)
 	if (recommendedTitles.length === 0) return []
 	const scoreByPage = new Map(selected.map(p => [p.title, p.score]))
