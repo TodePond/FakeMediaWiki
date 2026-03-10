@@ -113,6 +113,7 @@
 				:feed-cap="10"
 				title="Review changes"
 				:show-module-border="showModuleBorder"
+				:card-as-link="cardAsLink"
 				@preview-update="onPreviewUpdate"
 			/>
 
@@ -163,6 +164,7 @@
 							<CdxCheckbox v-model="showUserIcon">User icon</CdxCheckbox>
 							<CdxCheckbox v-model="summaryCutout">Cutout</CdxCheckbox>
 							<CdxCheckbox v-model="showModuleBorder">Module border</CdxCheckbox>
+							<CdxCheckbox v-model="cardAsLink">Card as link</CdxCheckbox>
 						</div>
 						<div class="review-changes-controls__row">
 							<CdxLabel :input-id="reviewChangesSourceId">Feed source</CdxLabel>
@@ -458,6 +460,7 @@ const thanksLogUrl = computed(
 const {
 		feedSource,
 		showModuleBorder,
+		cardAsLink,
 		mixedRecentChangesRatio,
 	mixedPagesAndUsersRatio,
 	mixedCollaboratorsRatio,

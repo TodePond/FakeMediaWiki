@@ -9,6 +9,7 @@
 				<CdxCheckbox v-model="showUsernameAtPrefix">@ username</CdxCheckbox>
 				<CdxCheckbox v-model="showUserIcon">User icon</CdxCheckbox>
 				<CdxCheckbox v-model="summaryCutout">Cutout</CdxCheckbox>
+				<CdxCheckbox v-model="cardAsLink">Card as link</CdxCheckbox>
 			</div>
 			<div class="review-changes-controls__row">
 				<CdxLabel input-id="review-changes-module-source">Feed source</CdxLabel>
@@ -192,6 +193,7 @@
 			:related-changes-ratio="relatedChangesRatio"
 			:feed-cap="10"
 			:hide-description="true"
+			:card-as-link="cardAsLink"
 		/>
 	</section>
 </template>
@@ -214,6 +216,7 @@ const mobileSettingsVisible = inject<Ref<boolean>>("mobileSettingsVisible", ref(
 
 const {
 	feedSource,
+	cardAsLink,
 	mixedRecentChangesRatio,
 	mixedPagesAndUsersRatio,
 	mixedCollaboratorsRatio,

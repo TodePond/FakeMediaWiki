@@ -13,6 +13,7 @@ const SHOW_USER_ICON_KEY = `${STORAGE_PREFIX}show-user-icon`
 const SUMMARY_CUTOUT_KEY = `${STORAGE_PREFIX}summary-cutout`
 const SHOW_MODULE_BORDER_KEY = `${STORAGE_PREFIX}show-module-border`
 const LEGACY_HIDE_OUTER_BORDER_KEY = `${LEGACY_PREFIX}hide-outer-border`
+const CARD_AS_LINK_KEY = `${STORAGE_PREFIX}card-as-link`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -32,6 +33,7 @@ const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_USER_ICON_KEY]: `${LEGACY_PREFIX}show-user-icon`,
 	[SUMMARY_CUTOUT_KEY]: `${LEGACY_PREFIX}summary-cutout`,
 	[SHOW_MODULE_BORDER_KEY]: LEGACY_HIDE_OUTER_BORDER_KEY,
+	[CARD_AS_LINK_KEY]: `${LEGACY_PREFIX}card-as-link`,
 	[FEED_SOURCE_KEY]: `${LEGACY_PREFIX}feed-source`,
 	[MIXED_RECENT_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}recent-changes-ratio`,
 	[MIXED_PAGES_AND_USERS_RATIO_KEY]: `${LEGACY_PREFIX}pages-and-users-ratio`,
@@ -139,6 +141,9 @@ export function useReviewChangesModule() {
 		getStoredBoolean(SUMMARY_CUTOUT_KEY, LEGACY_KEYS[SUMMARY_CUTOUT_KEY], true)
 	)
 	const showModuleBorder = ref(getStoredShowModuleBorder())
+	const cardAsLink = ref(
+		getStoredBoolean(CARD_AS_LINK_KEY, LEGACY_KEYS[CARD_AS_LINK_KEY], true)
+	)
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
 		getStoredRatio(
@@ -282,6 +287,14 @@ export function useReviewChangesModule() {
 		}
 	})
 
+	watch(cardAsLink, enabled => {
+		try {
+			localStorage.setItem(CARD_AS_LINK_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -369,6 +382,7 @@ export function useReviewChangesModule() {
 		showUserIcon,
 		summaryCutout,
 		showModuleBorder,
+		cardAsLink,
 		sourceOptions,
 		reviewChangesSourceId,
 		recentChangesSliderId,

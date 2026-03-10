@@ -21,14 +21,20 @@
 					:key="`${change.pageName}-${change.timestamp}-${change.id}`"
 					class="review-changes__item"
 				>
-					<a
+					<component
+						:is="cardAsLink ? 'a' : 'div'"
 						:href="
-							change.pageName ? wiki.getRevisionUrl(change.id, change.pageName) : '#'
+							cardAsLink && change.pageName
+								? wiki.getRevisionUrl(change.id, change.pageName)
+								: undefined
 						"
-						target="_blank"
-						rel="noopener noreferrer"
+						:target="cardAsLink ? '_blank' : undefined"
+						:rel="cardAsLink ? 'noopener noreferrer' : undefined"
 						class="review-changes__item-link"
-						:aria-label="`View diff for ${change.pageName ?? 'page'}`"
+						:class="{ 'review-changes__item-link--not-link': !cardAsLink }"
+						:aria-label="
+							cardAsLink ? `View diff for ${change.pageName ?? 'page'}` : undefined
+						"
 					>
 						<div class="review-changes__item-header">
 							<span class="review-changes__page-cell">
@@ -97,7 +103,10 @@
 									v-if="showDelta"
 									:class="[
 										'review-changes__comment',
-										{ 'review-changes__comment--no-cutout': !showSummaryCutout },
+										{
+											'review-changes__comment--no-cutout':
+												!showSummaryCutout,
+										},
 									]"
 									v-html="change.summary.comment"
 								></span
@@ -105,7 +114,10 @@
 									v-else
 									:class="[
 										'review-changes__comment',
-										{ 'review-changes__comment--no-cutout': !showSummaryCutout },
+										{
+											'review-changes__comment--no-cutout':
+												!showSummaryCutout,
+										},
 									]"
 									v-html="change.summary.comment"
 								></span></template
@@ -122,26 +134,38 @@
 								>{{ showDelta ? "" : "" }}No edit summary</em
 							>
 						</div>
-						<span v-if="showUserIcon" class="review-changes__user-row">
-							<CdxButton
-								weight="quiet"
-								class="review-changes__user-icon-btn"
-								:aria-label="`User: ${change.user.name}`"
-								size="small"
-								@click.stop.prevent="openUserPopover($event, change)"
-							>
-								<CdxIcon
-									class="review-changes__user-icon"
-									:icon="
-										wiki.isTemporaryAccount(change.user.name)
-											? cdxIconUserTemporary
-											: cdxIconUserAvatar
-									"
-									size="x-small"
-									aria-hidden="true"
-								/>
-							</CdxButton>
+						<div class="review-changes__user-actions-row">
+							<span v-if="showUserIcon" class="review-changes__user-row">
+								<CdxButton
+									weight="quiet"
+									class="review-changes__user-icon-btn"
+									:aria-label="`User: ${change.user.name}`"
+									size="small"
+									@click.stop.prevent="openUserPopover($event, change)"
+								>
+									<CdxIcon
+										class="review-changes__user-icon"
+										:icon="
+											wiki.isTemporaryAccount(change.user.name)
+												? cdxIconUserTemporary
+												: cdxIconUserAvatar
+										"
+										size="x-small"
+										aria-hidden="true"
+									/>
+								</CdxButton>
+								<a
+									target="_blank"
+									rel="noopener noreferrer"
+									:href="wiki.getUserUrl(change.user.name)"
+									class="review-changes__user"
+									@click.stop
+								>
+									{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
+								</a>
+							</span>
 							<a
+								v-else
 								target="_blank"
 								rel="noopener noreferrer"
 								:href="wiki.getUserUrl(change.user.name)"
@@ -150,17 +174,18 @@
 							>
 								{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
 							</a>
-						</span>
-						<a
-							v-else
-							target="_blank"
-							rel="noopener noreferrer"
-							:href="wiki.getUserUrl(change.user.name)"
-							class="review-changes__user"
-							@click.stop
-						>
-							{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
-						</a>
+							<CdxButton
+								v-if="!cardAsLink"
+								action="progressive"
+								size="small"
+								weight="normal"
+								class="review-changes__view-change-btn"
+								@click="openDiffInNewTab(change)"
+							>
+								<CdxIcon :icon="cdxIconEye" size="x-small" />
+								Review
+							</CdxButton>
+						</div>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">
 							<span
 								v-for="line in getRevertRiskLines(change.id)"
@@ -175,7 +200,7 @@
 								>{{ line.label }}: {{ line.value }}</span
 							>
 						</span>
-					</a>
+					</component>
 				</li>
 			</template>
 		</ul>
@@ -206,6 +231,7 @@
 import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex"
 import {
 	cdxIconClock,
+	cdxIconEye,
 	cdxIconLightbulb,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
@@ -257,6 +283,8 @@ const props = withDefaults(
 		showSummaryCutout?: boolean
 		/** When true, shows the outer border around the module (for dashboard embedding). */
 		showModuleBorder?: boolean
+		/** When true, the card itself is a link. When false, the card is not a link but shows a Review button. */
+		cardAsLink?: boolean
 	}>(),
 	{
 		showSourceIcons: false,
@@ -273,6 +301,7 @@ const props = withDefaults(
 		hideDescription: false,
 		showSummaryCutout: true,
 		showModuleBorder: true,
+		cardAsLink: true,
 	}
 )
 
@@ -284,6 +313,12 @@ const showUserPopover = ref(false)
 function openUserPopover(event: MouseEvent, _change: FWRevision): void {
 	userPopoverAnchor.value = event.currentTarget as HTMLElement
 	showUserPopover.value = true
+}
+
+function openDiffInNewTab(change: FWRevision): void {
+	if (change.pageName) {
+		window.open(wiki.getRevisionUrl(change.id, change.pageName), "_blank")
+	}
 }
 
 const revertRiskByRevId = ref<Map<number, FWPredictionByModel | { error: true }>>(new Map())
