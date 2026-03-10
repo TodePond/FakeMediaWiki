@@ -1,59 +1,14 @@
 <template>
 	<section class="review-changes-module-wrapper">
 		<div v-show="mobileSettingsVisible" class="review-changes-controls">
-			<div class="review-changes-controls__checkboxes">
-				<label class="show-revert-risk-card__label">
-					<input v-model="showDelta" type="checkbox" class="show-revert-risk-card__input" />
-					<span class="show-revert-risk-card__text">Delta</span>
-				</label>
-				<label class="show-revert-risk-card__label">
-					<input
-						v-model="showSourceIcons"
-						type="checkbox"
-						class="show-revert-risk-card__input"
-					/>
-					<span class="show-revert-risk-card__text">Source icon</span>
-				</label>
-				<label class="show-revert-risk-card__label">
-					<input
-						v-model="showSourceSubtitles"
-						type="checkbox"
-						class="show-revert-risk-card__input"
-					/>
-					<span class="show-revert-risk-card__text">Source subtitle</span>
-				</label>
-				<label class="show-revert-risk-card__label">
-					<input
-						v-model="showRevertRiskInFeed"
-						type="checkbox"
-						class="show-revert-risk-card__input"
-					/>
-					<span class="show-revert-risk-card__text">Debug revert risk</span>
-				</label>
-			<label class="show-revert-risk-card__label">
-				<input
-					v-model="showUsernameAtPrefix"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
-				<span class="show-revert-risk-card__text">@ username</span>
-			</label>
-			<label class="show-revert-risk-card__label">
-				<input
-					v-model="showUserIcon"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
-				<span class="show-revert-risk-card__text">User icon</span>
-			</label>
-			<label class="show-revert-risk-card__label">
-				<input
-					v-model="summaryCutout"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
-				<span class="show-revert-risk-card__text">Cutout</span>
-			</label>
+			<div class="review-changes-controls__checkboxes" role="group" aria-label="Prototype settings">
+				<CdxCheckbox v-model="showDelta">Delta</CdxCheckbox>
+				<CdxCheckbox v-model="showSourceIcons">Source icon</CdxCheckbox>
+				<CdxCheckbox v-model="showSourceSubtitles">Source subtitle</CdxCheckbox>
+				<CdxCheckbox v-model="showRevertRiskInFeed">Debug revert risk</CdxCheckbox>
+				<CdxCheckbox v-model="showUsernameAtPrefix">@ username</CdxCheckbox>
+				<CdxCheckbox v-model="showUserIcon">User icon</CdxCheckbox>
+				<CdxCheckbox v-model="summaryCutout">Cutout</CdxCheckbox>
 			</div>
 			<div class="review-changes-controls__row">
 				<CdxLabel input-id="review-changes-module-source">Feed source</CdxLabel>
@@ -243,7 +198,7 @@
 
 <script setup lang="ts">
 import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
-import { CdxLabel, CdxSelect } from "@wikimedia/codex"
+import { CdxCheckbox, CdxLabel, CdxSelect } from "@wikimedia/codex"
 import type { Ref } from "vue"
 import { inject, ref } from "vue"
 import {

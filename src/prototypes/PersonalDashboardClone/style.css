@@ -362,25 +362,6 @@
 	min-width: 2.5em;
 }
 
-.show-revert-risk-card__label {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.show-revert-risk-card__text {
-	font-weight: 500;
-	color: var(--color-base, #202122);
-	flex-shrink: 0;
-}
-
-.show-revert-risk-card__hint {
-	margin: 0;
-	font-size: 0.875em;
-	color: var(--color-base--subtle, #54595d);
-	line-height: 1.4;
-}
-
 /* Policies */
 .policies__intro {
 	color: var(--color-base, #202122);

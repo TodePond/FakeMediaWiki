@@ -153,63 +153,14 @@
 				<section class="sidebar-card review-changes-controls-card">
 					<div class="sidebar-card__title">Prototype settings</div>
 					<div class="review-changes-controls">
-						<div class="review-changes-controls__checkboxes">
-							<label class="show-revert-risk-card__label">
-								<input
-									v-model="showDelta"
-									type="checkbox"
-									class="show-revert-risk-card__input"
-								/>
-								<span class="show-revert-risk-card__text">Delta</span>
-							</label>
-							<label class="show-revert-risk-card__label">
-								<input
-									v-model="showSourceIcons"
-									type="checkbox"
-									class="show-revert-risk-card__input"
-								/>
-								<span class="show-revert-risk-card__text">Source icon</span>
-							</label>
-							<label class="show-revert-risk-card__label">
-								<input
-									v-model="showSourceSubtitles"
-									type="checkbox"
-									class="show-revert-risk-card__input"
-								/>
-								<span class="show-revert-risk-card__text">Source subtitle</span>
-							</label>
-							<label class="show-revert-risk-card__label">
-								<input
-									v-model="showRevertRiskInFeed"
-									type="checkbox"
-									class="show-revert-risk-card__input"
-								/>
-								<span class="show-revert-risk-card__text">Debug revert risk</span>
-							</label>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="showUsernameAtPrefix"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">@ username</span>
-						</label>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="showUserIcon"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">User icon</span>
-						</label>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="summaryCutout"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">Cutout</span>
-						</label>
+						<div class="review-changes-controls__checkboxes" role="group" aria-label="Prototype settings">
+							<CdxCheckbox v-model="showDelta">Delta</CdxCheckbox>
+							<CdxCheckbox v-model="showSourceIcons">Source icon</CdxCheckbox>
+							<CdxCheckbox v-model="showSourceSubtitles">Source subtitle</CdxCheckbox>
+							<CdxCheckbox v-model="showRevertRiskInFeed">Debug revert risk</CdxCheckbox>
+							<CdxCheckbox v-model="showUsernameAtPrefix">@ username</CdxCheckbox>
+							<CdxCheckbox v-model="showUserIcon">User icon</CdxCheckbox>
+							<CdxCheckbox v-model="summaryCutout">Cutout</CdxCheckbox>
 						</div>
 						<div class="review-changes-controls__row">
 							<CdxLabel :input-id="reviewChangesSourceId">Feed source</CdxLabel>
@@ -474,7 +425,13 @@
 <script setup lang="ts">
 import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import { useReviewChangesModule } from "@/modules/ReviewChanges/useReviewChangesModule"
-import { CdxIcon, CdxLabel, CdxProgressBar, CdxSelect } from "@wikimedia/codex"
+import {
+	CdxCheckbox,
+	CdxIcon,
+	CdxLabel,
+	CdxProgressBar,
+	CdxSelect,
+} from "@wikimedia/codex"
 import {
 	cdxIconArrowNext,
 	cdxIconCheckAll,

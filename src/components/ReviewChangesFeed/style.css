@@ -162,6 +162,7 @@
 	min-width: 0;
 	flex-grow: 1;
 	overflow: hidden;
+	/* font-size: 14px; */
 	/* font-size: 16px; */
 }
 
@@ -201,7 +202,7 @@
 .review-changes__source-subtitle {
 	font-size: 0.875em;
 	color: var(--color-base--subtle, #54595d);
-	margin-top: -0.5rem;
+	margin-top: -0.25rem;
 	flex-shrink: 0;
 	white-space: nowrap;
 	overflow: hidden;
