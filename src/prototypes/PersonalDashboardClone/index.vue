@@ -102,6 +102,7 @@
 				:show-source-subtitles="showSourceSubtitles"
 				:show-username-at-prefix="showUsernameAtPrefix"
 				:show-user-icon="showUserIcon"
+				:show-summary-cutout="summaryCutout"
 				:show-delta="showDelta"
 				:delta-format-parentheses="false"
 				:source="feedSource"
@@ -200,6 +201,14 @@
 								class="show-revert-risk-card__input"
 							/>
 							<span class="show-revert-risk-card__text">User icon</span>
+						</label>
+						<label class="show-revert-risk-card__label">
+							<input
+								v-model="summaryCutout"
+								type="checkbox"
+								class="show-revert-risk-card__input"
+							/>
+							<span class="show-revert-risk-card__text">Cutout</span>
 						</label>
 						</div>
 						<div class="review-changes-controls__row">
@@ -507,6 +516,7 @@ const {
 	showSourceSubtitles,
 	showUsernameAtPrefix,
 	showUserIcon,
+	summaryCutout,
 	sourceOptions,
 	reviewChangesSourceId,
 	recentChangesSliderId,

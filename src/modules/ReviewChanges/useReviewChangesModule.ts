@@ -10,6 +10,7 @@ const SHOW_SOURCE_ICONS_KEY = `${STORAGE_PREFIX}show-source-icons`
 const SHOW_SOURCE_SUBTITLES_KEY = `${STORAGE_PREFIX}show-source-subtitles`
 const SHOW_USERNAME_AT_PREFIX_KEY = `${STORAGE_PREFIX}show-username-at-prefix`
 const SHOW_USER_ICON_KEY = `${STORAGE_PREFIX}show-user-icon`
+const SUMMARY_CUTOUT_KEY = `${STORAGE_PREFIX}summary-cutout`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -27,6 +28,7 @@ const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_SOURCE_SUBTITLES_KEY]: `${LEGACY_PREFIX}show-source-subtitles`,
 	[SHOW_USERNAME_AT_PREFIX_KEY]: `${LEGACY_PREFIX}show-username-at-prefix`,
 	[SHOW_USER_ICON_KEY]: `${LEGACY_PREFIX}show-user-icon`,
+	[SUMMARY_CUTOUT_KEY]: `${LEGACY_PREFIX}summary-cutout`,
 	[FEED_SOURCE_KEY]: `${LEGACY_PREFIX}feed-source`,
 	[MIXED_RECENT_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}recent-changes-ratio`,
 	[MIXED_PAGES_AND_USERS_RATIO_KEY]: `${LEGACY_PREFIX}pages-and-users-ratio`,
@@ -113,6 +115,9 @@ export function useReviewChangesModule() {
 	)
 	const showUserIcon = ref(
 		getStoredBoolean(SHOW_USER_ICON_KEY, LEGACY_KEYS[SHOW_USER_ICON_KEY], false)
+	)
+	const summaryCutout = ref(
+		getStoredBoolean(SUMMARY_CUTOUT_KEY, LEGACY_KEYS[SUMMARY_CUTOUT_KEY], true)
 	)
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
@@ -241,6 +246,14 @@ export function useReviewChangesModule() {
 		}
 	})
 
+	watch(summaryCutout, enabled => {
+		try {
+			localStorage.setItem(SUMMARY_CUTOUT_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -326,6 +339,7 @@ export function useReviewChangesModule() {
 		showSourceSubtitles,
 		showUsernameAtPrefix,
 		showUserIcon,
+		summaryCutout,
 		sourceOptions,
 		reviewChangesSourceId,
 		recentChangesSliderId,

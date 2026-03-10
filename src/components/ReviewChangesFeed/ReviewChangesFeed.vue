@@ -95,17 +95,27 @@
 							><template v-if="change?.summary?.comment"
 								><span
 									v-if="showDelta"
-									class="review-changes__comment"
+									:class="[
+										'review-changes__comment',
+										{ 'review-changes__comment--no-cutout': !showSummaryCutout },
+									]"
 									v-html="change.summary.comment"
 								></span
 								><span
 									v-else
-									class="review-changes__comment"
+									:class="[
+										'review-changes__comment',
+										{ 'review-changes__comment--no-cutout': !showSummaryCutout },
+									]"
 									v-html="change.summary.comment"
 								></span></template
-							><span v-else-if="change?.comment" class="review-changes__comment">{{
-								change.comment
-							}}</span
+							><span
+								v-else-if="change?.comment"
+								:class="[
+									'review-changes__comment',
+									{ 'review-changes__comment--no-cutout': !showSummaryCutout },
+								]"
+								>{{ change.comment }}</span
 							><em
 								v-else
 								class="review-changes__comment review-changes__comment--empty"
@@ -243,6 +253,8 @@ const props = withDefaults(
 		showUsernameAtPrefix?: boolean
 		/** When true, shows user icon (head and shoulders) to the left of username. */
 		showUserIcon?: boolean
+		/** When true, edit summaries appear with white bg, border and shadow (cutout style). */
+		showSummaryCutout?: boolean
 	}>(),
 	{
 		showSourceIcons: false,
@@ -257,6 +269,7 @@ const props = withDefaults(
 		relatedChangesRatio: 30,
 		collaboratorsRatio: 20,
 		hideDescription: false,
+		showSummaryCutout: true,
 	}
 )
 
