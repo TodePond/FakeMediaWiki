@@ -1,6 +1,34 @@
 <template>
 	<section class="review-changes-module-wrapper">
-		<div class="review-changes-controls">
+		<div v-show="mobileSettingsVisible" class="review-changes-controls">
+			<label class="show-revert-risk-card__label">
+				<input v-model="showDelta" type="checkbox" class="show-revert-risk-card__input" />
+				<span class="show-revert-risk-card__text">Delta</span>
+			</label>
+			<label class="show-revert-risk-card__label">
+				<input
+					v-model="showSourceIcons"
+					type="checkbox"
+					class="show-revert-risk-card__input"
+				/>
+				<span class="show-revert-risk-card__text">Source icon</span>
+			</label>
+			<label class="show-revert-risk-card__label">
+				<input
+					v-model="showSourceSubtitles"
+					type="checkbox"
+					class="show-revert-risk-card__input"
+				/>
+				<span class="show-revert-risk-card__text">Source subtitle</span>
+			</label>
+			<label class="show-revert-risk-card__label">
+				<input
+					v-model="showRevertRiskInFeed"
+					type="checkbox"
+					class="show-revert-risk-card__input"
+				/>
+				<span class="show-revert-risk-card__text">Debug revert risk</span>
+			</label>
 			<div class="review-changes-controls__row">
 				<CdxLabel input-id="review-changes-module-source">Feed source</CdxLabel>
 				<CdxSelect
@@ -167,34 +195,6 @@
 					</div>
 				</div>
 			</template>
-			<label class="show-revert-risk-card__label">
-				<input v-model="showDelta" type="checkbox" class="show-revert-risk-card__input" />
-				<span class="show-revert-risk-card__text">Delta</span>
-			</label>
-			<label class="show-revert-risk-card__label">
-				<input
-					v-model="showSourceIcons"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
-				<span class="show-revert-risk-card__text">Source icon</span>
-			</label>
-			<label class="show-revert-risk-card__label">
-				<input
-					v-model="showSourceSubtitles"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
-				<span class="show-revert-risk-card__text">Source subtitle</span>
-			</label>
-			<label class="show-revert-risk-card__label">
-				<input
-					v-model="showRevertRiskInFeed"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
-				<span class="show-revert-risk-card__text">Debug revert risk</span>
-			</label>
 		</div>
 		<ReviewChangesFeed
 			:show-revert-risk="showRevertRiskInFeed"
@@ -215,6 +215,8 @@
 <script setup lang="ts">
 import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import { CdxLabel, CdxSelect } from "@wikimedia/codex"
+import type { Ref } from "vue"
+import { inject, ref } from "vue"
 import {
 	collaboratorsSliderId,
 	pagesAndUsersSliderId,
@@ -223,6 +225,8 @@ import {
 	sourceOptions,
 	useReviewChangesModule,
 } from "./useReviewChangesModule"
+
+const mobileSettingsVisible = inject<Ref<boolean>>("mobileSettingsVisible", ref(true))
 
 const {
 	feedSource,

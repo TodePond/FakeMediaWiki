@@ -122,10 +122,13 @@
 	min-width: 0;
 	flex-grow: 1;
 	overflow: hidden;
+	/* font-size: 16px; */
 }
 
 .review-changes__source-icon {
 	flex-shrink: 0;
+	/* width: 14px; */
+	/* height: 14px; */
 }
 
 .review-changes__source-icon--pagesAndUsers {

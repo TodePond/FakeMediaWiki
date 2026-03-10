@@ -148,7 +148,40 @@
 				</section>
 
 				<section class="sidebar-card review-changes-controls-card">
+					<div class="sidebar-card__title">Prototype settings</div>
 					<div class="review-changes-controls">
+						<label class="show-revert-risk-card__label">
+							<input
+								v-model="showDelta"
+								type="checkbox"
+								class="show-revert-risk-card__input"
+							/>
+							<span class="show-revert-risk-card__text">Delta</span>
+						</label>
+						<label class="show-revert-risk-card__label">
+							<input
+								v-model="showSourceIcons"
+								type="checkbox"
+								class="show-revert-risk-card__input"
+							/>
+							<span class="show-revert-risk-card__text">Source icon</span>
+						</label>
+						<label class="show-revert-risk-card__label">
+							<input
+								v-model="showSourceSubtitles"
+								type="checkbox"
+								class="show-revert-risk-card__input"
+							/>
+							<span class="show-revert-risk-card__text">Source subtitle</span>
+						</label>
+						<label class="show-revert-risk-card__label">
+							<input
+								v-model="showRevertRiskInFeed"
+								type="checkbox"
+								class="show-revert-risk-card__input"
+							/>
+							<span class="show-revert-risk-card__text">Debug revert risk</span>
+						</label>
 						<div class="review-changes-controls__row">
 							<CdxLabel :input-id="reviewChangesSourceId">Feed source</CdxLabel>
 							<CdxSelect
@@ -349,38 +382,6 @@
 								</div>
 							</div>
 						</template>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="showDelta"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">Delta</span>
-						</label>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="showSourceIcons"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">Source icon</span>
-						</label>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="showSourceSubtitles"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">Source subtitle</span>
-						</label>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="showRevertRiskInFeed"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">Debug revert risk</span>
-						</label>
 					</div>
 				</section>
 

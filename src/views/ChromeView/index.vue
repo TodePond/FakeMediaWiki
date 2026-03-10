@@ -4,7 +4,13 @@
 			<!-- Desktop/tablet nav -->
 			<nav class="nav-desktop">
 				<div class="nav-item">
-				<CdxIcon :icon="cdxIconMenu" />
+				<CdxButton
+					weight="quiet"
+					aria-label="Menu"
+					@click="mobileSettingsVisible = !mobileSettingsVisible"
+				>
+					<CdxIcon :icon="cdxIconMenu" />
+				</CdxButton>
 				<a class="nav-wordmark">
 					<img
 						src="https://en.wikipedia.org/static/images/mobile/copyright/wikipedia-wordmark-en-25.svg"
@@ -50,7 +56,7 @@
 		</nav>
 			<!-- Mobile nav -->
 			<nav class="nav-mobile">
-				<CdxButton weight="quiet" aria-label="Menu">
+				<CdxButton weight="quiet" aria-label="Menu" @click="mobileSettingsVisible = !mobileSettingsVisible">
 					<CdxIcon :icon="cdxIconMenu" />
 				</CdxButton>
 				<span class="nav-mobile__wordmark">WIKIPEDIA</span>
@@ -82,13 +88,30 @@ import {
 	cdxIconUserAvatar,
 	cdxIconWatchlist,
 } from "@wikimedia/codex-icons"
-import { computed } from "vue"
+import { computed, onMounted, onUnmounted, provide, ref } from "vue"
 import { useRoute } from "vue-router"
 import { getPrototypeComponent } from "../../prototypes/registry"
 
 const route = useRoute()
 const prototypeName = computed(() => route.params.name as string)
 const PrototypeComponent = computed(() => getPrototypeComponent(prototypeName.value))
+
+const mobileSettingsVisible = ref(true)
+
+function checkViewport() {
+	if (window.innerWidth > 640) {
+		mobileSettingsVisible.value = true
+	}
+}
+
+onMounted(() => {
+	window.addEventListener("resize", checkViewport)
+})
+onUnmounted(() => {
+	window.removeEventListener("resize", checkViewport)
+})
+
+provide("mobileSettingsVisible", mobileSettingsVisible)
 </script>
 
 <style scoped>
