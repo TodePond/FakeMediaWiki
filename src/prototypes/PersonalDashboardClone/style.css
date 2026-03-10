@@ -222,6 +222,13 @@
 	padding: 1rem;
 }
 
+.personal-dashboard-clone .review-changes.review-changes--no-border {
+	border: none;
+	border-radius: 0;
+	padding: 0;
+	padding-top: 17px;
+}
+
 /* Right column: sidebar cards */
 .dashboard-sidebar {
 	display: flex;

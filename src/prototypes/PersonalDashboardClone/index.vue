@@ -112,6 +112,7 @@
 				:related-changes-ratio="relatedChangesRatio"
 				:feed-cap="10"
 				title="Review changes"
+				:show-module-border="showModuleBorder"
 				@preview-update="onPreviewUpdate"
 			/>
 
@@ -161,6 +162,7 @@
 							<CdxCheckbox v-model="showUsernameAtPrefix">@ username</CdxCheckbox>
 							<CdxCheckbox v-model="showUserIcon">User icon</CdxCheckbox>
 							<CdxCheckbox v-model="summaryCutout">Cutout</CdxCheckbox>
+							<CdxCheckbox v-model="showModuleBorder">Module border</CdxCheckbox>
 						</div>
 						<div class="review-changes-controls__row">
 							<CdxLabel :input-id="reviewChangesSourceId">Feed source</CdxLabel>
@@ -454,8 +456,9 @@ const thanksLogUrl = computed(
 )
 
 const {
-	feedSource,
-	mixedRecentChangesRatio,
+		feedSource,
+		showModuleBorder,
+		mixedRecentChangesRatio,
 	mixedPagesAndUsersRatio,
 	mixedCollaboratorsRatio,
 	mixedRelatedChangesRatio,

@@ -11,6 +11,8 @@ const SHOW_SOURCE_SUBTITLES_KEY = `${STORAGE_PREFIX}show-source-subtitles`
 const SHOW_USERNAME_AT_PREFIX_KEY = `${STORAGE_PREFIX}show-username-at-prefix`
 const SHOW_USER_ICON_KEY = `${STORAGE_PREFIX}show-user-icon`
 const SUMMARY_CUTOUT_KEY = `${STORAGE_PREFIX}summary-cutout`
+const SHOW_MODULE_BORDER_KEY = `${STORAGE_PREFIX}show-module-border`
+const LEGACY_HIDE_OUTER_BORDER_KEY = `${LEGACY_PREFIX}hide-outer-border`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -29,6 +31,7 @@ const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_USERNAME_AT_PREFIX_KEY]: `${LEGACY_PREFIX}show-username-at-prefix`,
 	[SHOW_USER_ICON_KEY]: `${LEGACY_PREFIX}show-user-icon`,
 	[SUMMARY_CUTOUT_KEY]: `${LEGACY_PREFIX}summary-cutout`,
+	[SHOW_MODULE_BORDER_KEY]: LEGACY_HIDE_OUTER_BORDER_KEY,
 	[FEED_SOURCE_KEY]: `${LEGACY_PREFIX}feed-source`,
 	[MIXED_RECENT_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}recent-changes-ratio`,
 	[MIXED_PAGES_AND_USERS_RATIO_KEY]: `${LEGACY_PREFIX}pages-and-users-ratio`,
@@ -58,6 +61,22 @@ function getStored(key: string, legacyKey: string, fallback: string): string {
 function getStoredBoolean(key: string, legacyKey: string, fallback: boolean): boolean {
 	const stored = getStored(key, legacyKey, String(fallback))
 	return stored === "true"
+}
+
+function getStoredShowModuleBorder(): boolean {
+	try {
+		const stored = localStorage.getItem(SHOW_MODULE_BORDER_KEY)
+		if (stored !== null) return stored === "true"
+		const legacy = localStorage.getItem(LEGACY_HIDE_OUTER_BORDER_KEY)
+		if (legacy !== null) {
+			const migrated = legacy === "true" ? "false" : "true"
+			localStorage.setItem(SHOW_MODULE_BORDER_KEY, migrated)
+			return migrated === "true"
+		}
+	} catch {
+		// ignore
+	}
+	return true
 }
 
 function getStoredRatio(key: string, legacyKey: string, fallback: number): number {
@@ -119,6 +138,7 @@ export function useReviewChangesModule() {
 	const summaryCutout = ref(
 		getStoredBoolean(SUMMARY_CUTOUT_KEY, LEGACY_KEYS[SUMMARY_CUTOUT_KEY], true)
 	)
+	const showModuleBorder = ref(getStoredShowModuleBorder())
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
 		getStoredRatio(
@@ -254,6 +274,14 @@ export function useReviewChangesModule() {
 		}
 	})
 
+	watch(showModuleBorder, enabled => {
+		try {
+			localStorage.setItem(SHOW_MODULE_BORDER_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -340,6 +368,7 @@ export function useReviewChangesModule() {
 		showUsernameAtPrefix,
 		showUserIcon,
 		summaryCutout,
+		showModuleBorder,
 		sourceOptions,
 		reviewChangesSourceId,
 		recentChangesSliderId,

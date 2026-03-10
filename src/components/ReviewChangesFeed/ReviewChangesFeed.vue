@@ -1,5 +1,5 @@
 <template>
-	<section class="review-changes">
+	<section class="review-changes" :class="{ 'review-changes--no-border': !showModuleBorder }">
 		<div v-if="title" class="review-changes__title">{{ title }}</div>
 		<p
 			v-if="!hideDescription"
@@ -255,6 +255,8 @@ const props = withDefaults(
 		showUserIcon?: boolean
 		/** When true, edit summaries appear with white bg, border and shadow (cutout style). */
 		showSummaryCutout?: boolean
+		/** When true, shows the outer border around the module (for dashboard embedding). */
+		showModuleBorder?: boolean
 	}>(),
 	{
 		showSourceIcons: false,
@@ -270,6 +272,7 @@ const props = withDefaults(
 		collaboratorsRatio: 20,
 		hideDescription: false,
 		showSummaryCutout: true,
+		showModuleBorder: true,
 	}
 )
 
