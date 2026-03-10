@@ -1,34 +1,52 @@
 <template>
 	<section class="review-changes-module-wrapper">
 		<div v-show="mobileSettingsVisible" class="review-changes-controls">
-			<label class="show-revert-risk-card__label">
-				<input v-model="showDelta" type="checkbox" class="show-revert-risk-card__input" />
-				<span class="show-revert-risk-card__text">Delta</span>
-			</label>
+			<div class="review-changes-controls__checkboxes">
+				<label class="show-revert-risk-card__label">
+					<input v-model="showDelta" type="checkbox" class="show-revert-risk-card__input" />
+					<span class="show-revert-risk-card__text">Delta</span>
+				</label>
+				<label class="show-revert-risk-card__label">
+					<input
+						v-model="showSourceIcons"
+						type="checkbox"
+						class="show-revert-risk-card__input"
+					/>
+					<span class="show-revert-risk-card__text">Source icon</span>
+				</label>
+				<label class="show-revert-risk-card__label">
+					<input
+						v-model="showSourceSubtitles"
+						type="checkbox"
+						class="show-revert-risk-card__input"
+					/>
+					<span class="show-revert-risk-card__text">Source subtitle</span>
+				</label>
+				<label class="show-revert-risk-card__label">
+					<input
+						v-model="showRevertRiskInFeed"
+						type="checkbox"
+						class="show-revert-risk-card__input"
+					/>
+					<span class="show-revert-risk-card__text">Debug revert risk</span>
+				</label>
 			<label class="show-revert-risk-card__label">
 				<input
-					v-model="showSourceIcons"
+					v-model="showUsernameAtPrefix"
 					type="checkbox"
 					class="show-revert-risk-card__input"
 				/>
-				<span class="show-revert-risk-card__text">Source icon</span>
+				<span class="show-revert-risk-card__text">@ username</span>
 			</label>
 			<label class="show-revert-risk-card__label">
 				<input
-					v-model="showSourceSubtitles"
+					v-model="showUserIcon"
 					type="checkbox"
 					class="show-revert-risk-card__input"
 				/>
-				<span class="show-revert-risk-card__text">Source subtitle</span>
+				<span class="show-revert-risk-card__text">User icon</span>
 			</label>
-			<label class="show-revert-risk-card__label">
-				<input
-					v-model="showRevertRiskInFeed"
-					type="checkbox"
-					class="show-revert-risk-card__input"
-				/>
-				<span class="show-revert-risk-card__text">Debug revert risk</span>
-			</label>
+			</div>
 			<div class="review-changes-controls__row">
 				<CdxLabel input-id="review-changes-module-source">Feed source</CdxLabel>
 				<CdxSelect
@@ -200,6 +218,8 @@
 			:show-revert-risk="showRevertRiskInFeed"
 			:show-source-icons="showSourceIcons"
 			:show-source-subtitles="showSourceSubtitles"
+			:show-username-at-prefix="showUsernameAtPrefix"
+			:show-user-icon="showUserIcon"
 			:show-delta="showDelta"
 			:source="feedSource"
 			:recent-changes-ratio="recentChangesRatio"
@@ -246,6 +266,8 @@ const {
 	showDelta,
 	showSourceIcons,
 	showSourceSubtitles,
+	showUsernameAtPrefix,
+	showUserIcon,
 } = useReviewChangesModule()
 </script>
 

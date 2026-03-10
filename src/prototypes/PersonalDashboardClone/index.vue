@@ -100,6 +100,8 @@
 				:show-revert-risk="showRevertRiskInFeed"
 				:show-source-icons="showSourceIcons"
 				:show-source-subtitles="showSourceSubtitles"
+				:show-username-at-prefix="showUsernameAtPrefix"
+				:show-user-icon="showUserIcon"
 				:show-delta="showDelta"
 				:delta-format-parentheses="false"
 				:source="feedSource"
@@ -150,38 +152,56 @@
 				<section class="sidebar-card review-changes-controls-card">
 					<div class="sidebar-card__title">Prototype settings</div>
 					<div class="review-changes-controls">
+						<div class="review-changes-controls__checkboxes">
+							<label class="show-revert-risk-card__label">
+								<input
+									v-model="showDelta"
+									type="checkbox"
+									class="show-revert-risk-card__input"
+								/>
+								<span class="show-revert-risk-card__text">Delta</span>
+							</label>
+							<label class="show-revert-risk-card__label">
+								<input
+									v-model="showSourceIcons"
+									type="checkbox"
+									class="show-revert-risk-card__input"
+								/>
+								<span class="show-revert-risk-card__text">Source icon</span>
+							</label>
+							<label class="show-revert-risk-card__label">
+								<input
+									v-model="showSourceSubtitles"
+									type="checkbox"
+									class="show-revert-risk-card__input"
+								/>
+								<span class="show-revert-risk-card__text">Source subtitle</span>
+							</label>
+							<label class="show-revert-risk-card__label">
+								<input
+									v-model="showRevertRiskInFeed"
+									type="checkbox"
+									class="show-revert-risk-card__input"
+								/>
+								<span class="show-revert-risk-card__text">Debug revert risk</span>
+							</label>
 						<label class="show-revert-risk-card__label">
 							<input
-								v-model="showDelta"
+								v-model="showUsernameAtPrefix"
 								type="checkbox"
 								class="show-revert-risk-card__input"
 							/>
-							<span class="show-revert-risk-card__text">Delta</span>
+							<span class="show-revert-risk-card__text">@ username</span>
 						</label>
 						<label class="show-revert-risk-card__label">
 							<input
-								v-model="showSourceIcons"
+								v-model="showUserIcon"
 								type="checkbox"
 								class="show-revert-risk-card__input"
 							/>
-							<span class="show-revert-risk-card__text">Source icon</span>
+							<span class="show-revert-risk-card__text">User icon</span>
 						</label>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="showSourceSubtitles"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">Source subtitle</span>
-						</label>
-						<label class="show-revert-risk-card__label">
-							<input
-								v-model="showRevertRiskInFeed"
-								type="checkbox"
-								class="show-revert-risk-card__input"
-							/>
-							<span class="show-revert-risk-card__text">Debug revert risk</span>
-						</label>
+						</div>
 						<div class="review-changes-controls__row">
 							<CdxLabel :input-id="reviewChangesSourceId">Feed source</CdxLabel>
 							<CdxSelect
@@ -485,6 +505,8 @@ const {
 	showDelta,
 	showSourceIcons,
 	showSourceSubtitles,
+	showUsernameAtPrefix,
+	showUserIcon,
 	sourceOptions,
 	reviewChangesSourceId,
 	recentChangesSliderId,

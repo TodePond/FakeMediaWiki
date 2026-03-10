@@ -8,6 +8,8 @@ const SHOW_REVERT_RISK_KEY = `${STORAGE_PREFIX}show-revert-risk`
 const SHOW_DELTA_KEY = `${STORAGE_PREFIX}show-delta`
 const SHOW_SOURCE_ICONS_KEY = `${STORAGE_PREFIX}show-source-icons`
 const SHOW_SOURCE_SUBTITLES_KEY = `${STORAGE_PREFIX}show-source-subtitles`
+const SHOW_USERNAME_AT_PREFIX_KEY = `${STORAGE_PREFIX}show-username-at-prefix`
+const SHOW_USER_ICON_KEY = `${STORAGE_PREFIX}show-user-icon`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -23,6 +25,8 @@ const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_DELTA_KEY]: `${LEGACY_PREFIX}show-delta`,
 	[SHOW_SOURCE_ICONS_KEY]: `${LEGACY_PREFIX}show-source-icons`,
 	[SHOW_SOURCE_SUBTITLES_KEY]: `${LEGACY_PREFIX}show-source-subtitles`,
+	[SHOW_USERNAME_AT_PREFIX_KEY]: `${LEGACY_PREFIX}show-username-at-prefix`,
+	[SHOW_USER_ICON_KEY]: `${LEGACY_PREFIX}show-user-icon`,
 	[FEED_SOURCE_KEY]: `${LEGACY_PREFIX}feed-source`,
 	[MIXED_RECENT_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}recent-changes-ratio`,
 	[MIXED_PAGES_AND_USERS_RATIO_KEY]: `${LEGACY_PREFIX}pages-and-users-ratio`,
@@ -103,6 +107,12 @@ export function useReviewChangesModule() {
 	)
 	const showSourceSubtitles = ref(
 		getStoredBoolean(SHOW_SOURCE_SUBTITLES_KEY, LEGACY_KEYS[SHOW_SOURCE_SUBTITLES_KEY], false)
+	)
+	const showUsernameAtPrefix = ref(
+		getStoredBoolean(SHOW_USERNAME_AT_PREFIX_KEY, LEGACY_KEYS[SHOW_USERNAME_AT_PREFIX_KEY], false)
+	)
+	const showUserIcon = ref(
+		getStoredBoolean(SHOW_USER_ICON_KEY, LEGACY_KEYS[SHOW_USER_ICON_KEY], false)
 	)
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
@@ -215,6 +225,22 @@ export function useReviewChangesModule() {
 		}
 	})
 
+	watch(showUsernameAtPrefix, enabled => {
+		try {
+			localStorage.setItem(SHOW_USERNAME_AT_PREFIX_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showUserIcon, enabled => {
+		try {
+			localStorage.setItem(SHOW_USER_ICON_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -298,6 +324,8 @@ export function useReviewChangesModule() {
 		showDelta,
 		showSourceIcons,
 		showSourceSubtitles,
+		showUsernameAtPrefix,
+		showUserIcon,
 		sourceOptions,
 		reviewChangesSourceId,
 		recentChangesSliderId,

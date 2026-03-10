@@ -17,6 +17,12 @@
 	margin-bottom: 1rem;
 }
 
+.review-changes-controls__checkboxes {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
 .review-changes-controls__row {
 	display: flex;
 	flex-direction: column;

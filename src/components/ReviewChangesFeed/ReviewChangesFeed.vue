@@ -90,30 +90,66 @@
 									>{{ formatDelta(change.delta) }}</span
 								>
 								<span class="review-changes__summary-sep" aria-hidden="true"
-									>&nbsp;·</span
-								> </template
-							><span
-								v-if="change?.summary?.comment"
-								class="review-changes__comment"
-								v-html="change.summary.comment"
-							></span
+									>&nbsp;·&nbsp;</span
+								></template
+							><template v-if="change?.summary?.comment"
+								><span
+									v-if="showDelta"
+									class="review-changes__comment"
+									v-html="change.summary.comment"
+								></span
+								><span
+									v-else
+									class="review-changes__comment"
+									v-html="change.summary.comment"
+								></span></template
 							><span v-else-if="change?.comment" class="review-changes__comment">{{
 								change.comment
 							}}</span
 							><em
 								v-else
 								class="review-changes__comment review-changes__comment--empty"
-								>{{ showDelta ? "\u00A0" : "" }}No edit summary</em
+								>{{ showDelta ? "" : "" }}No edit summary</em
 							>
 						</div>
+						<span v-if="showUserIcon" class="review-changes__user-row">
+							<CdxButton
+								weight="quiet"
+								class="review-changes__user-icon-btn"
+								:aria-label="`User: ${change.user.name}`"
+								size="small"
+								@click.stop.prevent="openUserPopover($event, change)"
+							>
+								<CdxIcon
+									class="review-changes__user-icon"
+									:icon="
+										wiki.isTemporaryAccount(change.user.name)
+											? cdxIconUserTemporary
+											: cdxIconUserAvatar
+									"
+									size="x-small"
+									aria-hidden="true"
+								/>
+							</CdxButton>
+							<a
+								target="_blank"
+								rel="noopener noreferrer"
+								:href="wiki.getUserUrl(change.user.name)"
+								class="review-changes__user"
+								@click.stop
+							>
+								{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
+							</a>
+						</span>
 						<a
+							v-else
 							target="_blank"
 							rel="noopener noreferrer"
 							:href="wiki.getUserUrl(change.user.name)"
 							class="review-changes__user"
 							@click.stop
 						>
-							{{ change.user.name }}
+							{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
 						</a>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">
 							<span
@@ -143,16 +179,27 @@
 				>recent changes page</a
 			>.
 		</div>
+		<CdxPopover
+			v-model:open="showUserPopover"
+			:anchor="userPopoverAnchor"
+			placement="bottom-start"
+			:render-in-place="true"
+			title="User"
+			:use-close-button="true"
+		>
+			This is where the user information goes!
+		</CdxPopover>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { CdxIcon, CdxProgressBar } from "@wikimedia/codex"
+import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex"
 import {
 	cdxIconClock,
 	cdxIconLightbulb,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
+	cdxIconUserTemporary,
 } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import type {
@@ -192,10 +239,16 @@ const props = withDefaults(
 		title?: string
 		/** When true, hides the "Help keep Wikipedia reliable..." description line. */
 		hideDescription?: boolean
+		/** When true, shows @ before usernames. */
+		showUsernameAtPrefix?: boolean
+		/** When true, shows user icon (head and shoulders) to the left of username. */
+		showUserIcon?: boolean
 	}>(),
 	{
 		showSourceIcons: false,
 		showSourceSubtitles: false,
+		showUsernameAtPrefix: false,
+		showUserIcon: false,
 		showDelta: true,
 		deltaFormatParentheses: false,
 		source: "recentChanges",
@@ -208,6 +261,14 @@ const props = withDefaults(
 )
 
 const wiki = new FakeWiki()
+
+const userPopoverAnchor = ref<HTMLElement | null>(null)
+const showUserPopover = ref(false)
+
+function openUserPopover(event: MouseEvent, _change: FWRevision): void {
+	userPopoverAnchor.value = event.currentTarget as HTMLElement
+	showUserPopover.value = true
+}
 
 const revertRiskByRevId = ref<Map<number, FWPredictionByModel | { error: true }>>(new Map())
 const isLoadingRevertRisk = ref(false)
@@ -301,10 +362,7 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 					: props.source === "collaborators"
 						? Math.max(0, Math.min(100, props.collaboratorsRatio ?? 20))
 						: Math.max(0, Math.min(100, props.relatedChangesRatio ?? 30))
-		const count = Math.min(
-			Math.floor((RECENT_CHANGES_LIMIT * ratioPercent) / 100),
-			all.length
-		)
+		const count = Math.min(Math.floor((RECENT_CHANGES_LIMIT * ratioPercent) / 100), all.length)
 		const toShow = all.slice(0, count)
 		return toShow.map(r => ({ ...r, itemSource: props.source as ItemSource }))
 	}
@@ -483,9 +541,7 @@ async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
 		percentage: 100,
 		limit: 50,
 	})
-	const watchlistTitles = new Set(
-		HARDCODED_PAGE_NAMES.map(t => t.toLowerCase())
-	)
+	const watchlistTitles = new Set(HARDCODED_PAGE_NAMES.map(t => t.toLowerCase()))
 	const pagesExcludingWatchlist = pagesWithScores.filter(
 		p => !watchlistTitles.has(p.title.toLowerCase())
 	)

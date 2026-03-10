@@ -111,3 +111,7 @@ p {
 ins {
 	/* font-weight: bold; */
 }
+
+a .cdx-icon {
+	padding-left: 0px !important;
+}
