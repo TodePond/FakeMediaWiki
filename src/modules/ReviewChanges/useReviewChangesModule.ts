@@ -7,6 +7,7 @@ const LEGACY_PREFIX = "review-changes-"
 const SHOW_REVERT_RISK_KEY = `${STORAGE_PREFIX}show-revert-risk`
 const SHOW_REVERT_RISK_FLAGS_KEY = `${STORAGE_PREFIX}show-revert-risk-flags`
 const REVERT_RISK_FLAGS_IN_BOX_KEY = `${STORAGE_PREFIX}revert-risk-flags-in-box`
+const SHOW_REVERTED_FLAG_KEY = `${STORAGE_PREFIX}show-reverted-flag`
 const SHOW_DELTA_KEY = `${STORAGE_PREFIX}show-delta`
 const SHOW_SOURCE_ICONS_KEY = `${STORAGE_PREFIX}show-source-icons`
 const SHOW_SOURCE_SUBTITLES_KEY = `${STORAGE_PREFIX}show-source-subtitles`
@@ -33,6 +34,7 @@ const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_REVERT_RISK_KEY]: `${LEGACY_PREFIX}show-revert-risk`,
 	[SHOW_REVERT_RISK_FLAGS_KEY]: `${STORAGE_PREFIX}show-revert-risk-flags`,
 	[REVERT_RISK_FLAGS_IN_BOX_KEY]: `${STORAGE_PREFIX}revert-risk-flags-in-box`,
+	[SHOW_REVERTED_FLAG_KEY]: `${STORAGE_PREFIX}show-reverted-flag`,
 	[SHOW_DELTA_KEY]: `${LEGACY_PREFIX}show-delta`,
 	[SHOW_SOURCE_ICONS_KEY]: `${LEGACY_PREFIX}show-source-icons`,
 	[SHOW_SOURCE_SUBTITLES_KEY]: `${LEGACY_PREFIX}show-source-subtitles`,
@@ -168,7 +170,8 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showSourceSubtitles", label: "Source subtitle" },
 	{ key: "showRevertRiskInFeed", label: "Debug revert risk" },
 	{ key: "showRevertRiskFlags", label: "Revert risk flags" },
-	{ key: "revertRiskFlagsInBox", label: "Flag in box" },
+	{ key: "revertRiskFlagsInBox", label: "Flags in box" },
+	{ key: "showRevertedFlag", label: "Reverted flag" },
 	{ key: "showUsernameAtPrefix", label: "@ username" },
 	{ key: "showUserIcon", label: "User icon" },
 	{ key: "summaryCutout", label: "Cutout" },
@@ -188,6 +191,9 @@ function createReviewChangesModule() {
 	)
 	const revertRiskFlagsInBox = ref(
 		getStoredBoolean(REVERT_RISK_FLAGS_IN_BOX_KEY, LEGACY_KEYS[REVERT_RISK_FLAGS_IN_BOX_KEY], true)
+	)
+	const showRevertedFlag = ref(
+		getStoredBoolean(SHOW_REVERTED_FLAG_KEY, LEGACY_KEYS[SHOW_REVERTED_FLAG_KEY], true)
 	)
 	const showDelta = ref(
 		getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], true)
@@ -308,6 +314,14 @@ function createReviewChangesModule() {
 	watch(revertRiskFlagsInBox, enabled => {
 		try {
 			localStorage.setItem(REVERT_RISK_FLAGS_IN_BOX_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showRevertedFlag, enabled => {
+		try {
+			localStorage.setItem(SHOW_REVERTED_FLAG_KEY, String(enabled))
 		} catch {
 			// ignore
 		}
@@ -467,6 +481,7 @@ function createReviewChangesModule() {
 		showRevertRiskInFeed,
 		showRevertRiskFlags,
 		revertRiskFlagsInBox,
+		showRevertedFlag,
 		showDelta,
 		showSourceIcons,
 		showSourceSubtitles,

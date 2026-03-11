@@ -889,7 +889,7 @@ export class FakeWiki {
 			list: "usercontribs",
 			ucuser: userName,
 			uclimit: limit,
-			ucprop: "ids|title|timestamp|comment|size|sizediff|flags",
+			ucprop: "ids|title|timestamp|comment|size|sizediff|flags|tags",
 		}
 
 		if (ucstart) params.ucstart = ucstart
@@ -919,6 +919,7 @@ export class FakeWiki {
 			delta: contrib.sizediff || null,
 			pageName: contrib.title,
 			pageId: contrib.pageid,
+			...(Array.isArray(contrib.tags) && contrib.tags.length > 0 && { tags: contrib.tags }),
 		}))
 
 		return {
@@ -1081,7 +1082,7 @@ export class FakeWiki {
 		const params: Record<string, unknown> = {
 			action: "query",
 			list: "recentchanges",
-			rcprop: "title|timestamp|ids|user|comment|sizes|oresscores",
+			rcprop: "title|timestamp|ids|user|comment|sizes|oresscores|tags",
 			rclimit,
 			rctype: "edit|new",
 			rctoponly: 1,
@@ -1112,6 +1113,7 @@ export class FakeWiki {
 				oldlen?: number
 				newlen?: number
 				oresscores?: Record<string, unknown>
+				tags?: string[]
 			}> }
 			continue?: { rccontinue?: string }
 		}
@@ -1131,6 +1133,9 @@ export class FakeWiki {
 			if (rc.oresscores) {
 				(rev as FWCachedRevision & { oresscores?: Record<string, unknown> }).oresscores = rc.oresscores
 			}
+			if (Array.isArray(rc.tags) && rc.tags.length > 0) {
+				rev.tags = rc.tags
+			}
 			return rev
 		})
 
@@ -1138,6 +1143,51 @@ export class FakeWiki {
 			revisions,
 			rccontinue: data.continue?.rccontinue,
 		}
+	}
+
+	/**
+	 * Fetch edit tags for given revision IDs via Action API.
+	 * Use for revisions from sources that don't include tags (e.g. page history, related changes).
+	 * @param revIds - Revision IDs to fetch tags for
+	 * @returns Map of revision ID to tags array
+	 */
+	async getRevisionTags(revIds: number[]): Promise<Map<number, string[]>> {
+		const result = new Map<number, string[]>()
+		const unique = [...new Set(revIds)].filter(id => id > 0)
+		if (unique.length === 0) return result
+
+		const REVIDS_PER_REQUEST = 50
+		for (let i = 0; i < unique.length; i += REVIDS_PER_REQUEST) {
+			const chunk = unique.slice(i, i + REVIDS_PER_REQUEST)
+			const revidsParam = chunk.join("|")
+
+			const data = (await this.request({
+				api: "action",
+				params: {
+					action: "query",
+					prop: "revisions",
+					revids: revidsParam,
+					rvprop: "ids|tags",
+				},
+			})) as {
+				query?: {
+					pages?: Record<
+						string,
+						{ revisions?: Array<{ revid: number; tags?: string[] }> }
+					>
+				}
+			}
+
+			const pages = data.query?.pages ?? {}
+			for (const page of Object.values(pages)) {
+				for (const rev of page.revisions ?? []) {
+					if (Array.isArray(rev.tags) && rev.tags.length > 0) {
+						result.set(rev.revid, rev.tags)
+					}
+				}
+			}
+		}
+		return result
 	}
 
 	/**

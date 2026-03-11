@@ -148,34 +148,59 @@
 							>
 						</div>
 						<div
-							v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
-							class="review-changes__revert-risk-notice"
+							v-if="
+								(showRevertRiskFlags && getRevertRiskNotice(change)) ||
+								(showRevertedFlag && isReverted(change))
+							"
+							class="review-changes__flags-container"
 							:class="{
-								'review-changes__revert-risk-notice--no-box': !revertRiskFlagsInBox,
+								'review-changes__flags-container--no-box': !revertRiskFlagsInBox,
+								'review-changes__flags-container--no-summary-above':
+									!hasSummaryAbove(change),
 							}"
 						>
-							<CdxIcon
-								:icon="
-									['low', 'mediumLow'].includes(getRevertRiskNotice(change)?.band ?? '')
-										? cdxIconSuccess
-										: cdxIconAlert
-								"
-								size="small"
-								class="review-changes__revert-risk-notice-icon"
-								:class="{
-									'review-changes__revert-risk-notice-icon--very-high':
-										getRevertRiskNotice(change)?.band === 'high',
-									'review-changes__revert-risk-notice-icon--high':
-										getRevertRiskNotice(change)?.band === 'mediumHigh',
-									'review-changes__revert-risk-notice-icon--low':
-										getRevertRiskNotice(change)?.band === 'low',
-									'review-changes__revert-risk-notice-icon--medium-low':
-										getRevertRiskNotice(change)?.band === 'mediumLow',
-								}"
-							/>
-							<span class="review-changes__revert-risk-notice-text">{{
-								getRevertRiskNotice(change)!.text
-							}}</span>
+							<div
+								v-if="showRevertedFlag && isReverted(change)"
+								class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
+							>
+								<CdxIcon
+									:icon="cdxIconEditUndo"
+									size="small"
+									class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--reverted"
+								/>
+								<span class="review-changes__revert-risk-notice-text"
+									>This change was reverted</span
+								>
+							</div>
+							<div
+								v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
+								class="review-changes__revert-risk-notice"
+							>
+								<CdxIcon
+									:icon="
+										['low', 'mediumLow'].includes(
+											getRevertRiskNotice(change)?.band ?? ''
+										)
+											? cdxIconSuccess
+											: cdxIconAlert
+									"
+									size="small"
+									class="review-changes__revert-risk-notice-icon"
+									:class="{
+										'review-changes__revert-risk-notice-icon--very-high':
+											getRevertRiskNotice(change)?.band === 'high',
+										'review-changes__revert-risk-notice-icon--high':
+											getRevertRiskNotice(change)?.band === 'mediumHigh',
+										'review-changes__revert-risk-notice-icon--low':
+											getRevertRiskNotice(change)?.band === 'low',
+										'review-changes__revert-risk-notice-icon--medium-low':
+											getRevertRiskNotice(change)?.band === 'mediumLow',
+									}"
+								/>
+								<span class="review-changes__revert-risk-notice-text">{{
+									getRevertRiskNotice(change)!.text
+								}}</span>
+							</div>
 						</div>
 						<div class="review-changes__user-actions-row">
 							<span v-if="showUserIcon" class="review-changes__user-row">
@@ -219,14 +244,22 @@
 							</a>
 							<CdxButton
 								v-if="showReviewButton"
-								action="progressive"
+								:action="
+									!isReverted(change) && hasHighRevertRisk(change)
+										? 'progressive'
+										: 'default'
+								"
 								size="small"
 								weight="normal"
 								class="review-changes__view-change-btn"
 								@click.stop="openDiffInNewTab(change)"
 							>
 								<CdxIcon :icon="cdxIconEye" size="x-small" />
-								Review
+								{{
+									isReverted(change) || !hasHighRevertRisk(change)
+										? "View"
+										: "Review"
+								}}
 							</CdxButton>
 						</div>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">
@@ -275,6 +308,7 @@ import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex
 import {
 	cdxIconAlert,
 	cdxIconClock,
+	cdxIconEditUndo,
 	cdxIconEye,
 	cdxIconLightbulb,
 	cdxIconSuccess,
@@ -307,6 +341,8 @@ const props = withDefaults(
 		showRevertRiskFlags?: boolean
 		/** When true, flag notices have border and padding (box style). When false, no border/padding. */
 		revertRiskFlagsInBox?: boolean
+		/** When true, shows "Reverted" flag for edits that have been reverted. */
+		showRevertedFlag?: boolean
 		showSourceIcons?: boolean
 		showSourceSubtitles?: boolean
 		showDelta?: boolean
@@ -340,6 +376,7 @@ const props = withDefaults(
 	{
 		showRevertRiskFlags: false,
 		revertRiskFlagsInBox: true,
+		showRevertedFlag: true,
 		showSourceIcons: false,
 		showSourceSubtitles: false,
 		showUsernameAtPrefix: false,
@@ -373,6 +410,45 @@ function openDiffInNewTab(change: FWRevision): void {
 	if (change.pageName) {
 		window.open(wiki.getRevisionUrl(change.id, change.pageName), "_blank")
 	}
+}
+
+/** Check if a revision has been reverted (mw-reverted or reverted tag). */
+function isReverted(change: FWRevision): boolean {
+	const tags = change.tags
+	if (!tags || tags.length === 0) return false
+	return tags.includes("mw-reverted") || tags.includes("reverted")
+}
+
+/** Whether there is summary content (comment, delta, or empty-edit placeholder) above the flags. */
+function hasSummaryAbove(change: FWRevision): boolean {
+	return (
+		!!(change?.summary?.comment || change?.comment) ||
+		props.showDelta ||
+		props.showEmptyEditSummary
+	)
+}
+
+/** Whether the change has high or very high revert risk (band mediumHigh or high). */
+function hasHighRevertRisk(change: FWRevision): boolean {
+	const notice = getRevertRiskNotice(change)
+	return notice?.band === "high" || notice?.band === "mediumHigh" || false
+}
+
+/** Enrich revisions that lack tags by fetching from the API (for page history, related changes). */
+async function enrichRevisionsWithTags(revisions: FWRevision[]): Promise<FWRevision[]> {
+	const revIdsToFetch = revisions
+		.filter(r => r.id > 0 && (!r.tags || r.tags.length === 0))
+		.map(r => r.id)
+	if (revIdsToFetch.length === 0) return revisions
+
+	const tagsMap = await wiki.getRevisionTags(revIdsToFetch)
+	if (tagsMap.size === 0) return revisions
+
+	return revisions.map(r => {
+		const tags = tagsMap.get(r.id)
+		if (!tags) return r
+		return { ...r, tags }
+	})
 }
 
 const revertRiskByRevId = ref<Map<number, FWPredictionByModel | { error: true }>>(new Map())
@@ -432,27 +508,28 @@ function getRevertRiskNotice(
 	const pred = byModel.revertrisk
 	if (!pred) return null
 	const risk = getRiskFromPrediction(pred)
+	const revert = isReverted(change) ? "had" : "has"
 	if (risk > REVERT_RISK_THRESHOLDS.upperTight) {
 		return {
-			text: "This change has very high revert risk.",
+			text: `This change ${revert} very high revert risk.`,
 			band: "high",
 		}
 	}
 	if (risk > REVERT_RISK_THRESHOLDS.upperLoose) {
 		return {
-			text: "This change has high revert risk.",
+			text: `This change ${revert} high revert risk.`,
 			band: "mediumHigh",
 		}
 	}
 	if (risk < REVERT_RISK_THRESHOLDS.lowerTight) {
 		return {
-			text: "This change has very low revert risk.",
+			text: `This change ${revert} very low revert risk.`,
 			band: "low",
 		}
 	}
 	if (risk < REVERT_RISK_THRESHOLDS.lowerLoose) {
 		return {
-			text: "This change has low revert risk.",
+			text: `This change ${revert} low revert risk.`,
 			band: "mediumLow",
 		}
 	}
@@ -718,7 +795,8 @@ async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
 		}
 	}
 	const processed = await processRevisions(latestRevisions)
-	return processed.map(r => {
+	const enriched = await enrichRevisionsWithTags(processed)
+	return enriched.map(r => {
 		const score = scoreByPage.get(r.pageName ?? "")
 		return { ...r, ...(score !== undefined && { score }) }
 	})
@@ -835,7 +913,9 @@ async function loadFeed(append = false): Promise<void> {
 					limit: RECENT_CHANGES_LIMIT,
 				}),
 			])
-			const processedPages = await processRevisions(pagesRevisions)
+			const processedPages = await enrichRevisionsWithTags(
+				await processRevisions(pagesRevisions)
+			)
 			const processedCollaborators = await processRevisions(collaboratorsRevisions)
 			const sortedPages = processedPages.sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -893,7 +973,7 @@ async function loadFeed(append = false): Promise<void> {
 			)
 			mixedRecentChangesBySegment.value = processedBySegment
 
-			// Fetch related changes (latest revision per recommended page)
+			// Fetch related changes (latest revision per recommended page) - loadRelatedChangesRevisions already enriches with tags
 			const relatedRevisions = await loadRelatedChangesRevisions()
 			mixedRelatedChangesData.value = relatedRevisions.sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -949,7 +1029,11 @@ async function loadFeed(append = false): Promise<void> {
 			rccontinue.value = result.rccontinue
 		}
 
-		const processed = await processRevisions(revisions)
+		let processed = await processRevisions(revisions)
+		// Page history (pagesAndUsers) doesn't include tags; enrich via getRevisionTags
+		if (props.source === "pagesAndUsers") {
+			processed = await enrichRevisionsWithTags(processed)
+		}
 		mixedRecentChangesBySegment.value = []
 		mixedPagesAndUsersData.value = []
 		mixedCollaboratorsData.value = []

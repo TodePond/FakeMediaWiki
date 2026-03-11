@@ -67,6 +67,9 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getRecentChanges", description: "Get global recent changes from the wiki (any pages) via Action API list=recentchanges.\nOptionally restrict to changes that \"need review\" (high revert risk) with rcshow=oresreview.\nUses rctoponly so only the latest revision of each page is returned.", category: undefined, params: [
       { key: "options", description: "Configuration object" }
   ] },
+  { name: "getRevisionTags", description: "Fetch edit tags for given revision IDs via Action API.\nUse for revisions from sources that don't include tags (e.g. page history, related changes).", category: undefined, params: [
+      { key: "revIds", description: "Revision IDs to fetch tags for" }
+  ] },
   { name: "clearPageHistoryCache", description: "Clear the page history cache for a page (or all pages if no name given).\nUse when you need fresh data, e.g. when opening the inline history view.", category: undefined, params: [
       { key: "pageName" }
   ] },

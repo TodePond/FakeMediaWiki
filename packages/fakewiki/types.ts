@@ -85,6 +85,8 @@ export interface FWRevision {
 	avatarUrl?: string | null
 	pageName?: string
 	title?: string
+	/** Edit tags (e.g. mw-reverted) from the API */
+	tags?: string[]
 	thumbnailUrl?: string | null
 	diff?: FWCompareResponse | null
 }
@@ -190,6 +192,7 @@ export interface FWUserContrib {
 	sizediff?: number
 	title: string
 	pageid: number
+	tags?: string[]
 }
 
 export interface FWPageSearchResult {
@@ -260,6 +263,8 @@ export interface FWPageHistoryRevision {
 	comment: string
 	user: { name: string }
 	delta: number | null
+	/** Edit tags (e.g. mw-reverted) from the API */
+	tags?: string[]
 }
 
 export type FWCachedRevision = FWPageHistoryRevision & { pageName?: string }
