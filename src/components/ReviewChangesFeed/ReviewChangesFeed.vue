@@ -151,7 +151,7 @@
 							v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
 							class="review-changes__revert-risk-notice"
 							:class="{
-								'review-changes__revert-risk-notice--no-box': showSummaryCutout,
+								'review-changes__revert-risk-notice--no-box': !revertRiskFlagsInBox,
 							}"
 						>
 							<CdxIcon
@@ -296,6 +296,8 @@ const props = withDefaults(
 		showRevertRisk: boolean
 		/** When true, shows "High revert risk" / "Very high revert risk" notice flags on feed items. */
 		showRevertRiskFlags?: boolean
+		/** When true, flag notices have border and padding (box style). When false, no border/padding. */
+		revertRiskFlagsInBox?: boolean
 		showSourceIcons?: boolean
 		showSourceSubtitles?: boolean
 		showDelta?: boolean
@@ -328,6 +330,7 @@ const props = withDefaults(
 	}>(),
 	{
 		showRevertRiskFlags: false,
+		revertRiskFlagsInBox: true,
 		showSourceIcons: false,
 		showSourceSubtitles: false,
 		showUsernameAtPrefix: false,

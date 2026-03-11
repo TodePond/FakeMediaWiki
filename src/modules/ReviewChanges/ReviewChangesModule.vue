@@ -6,6 +6,7 @@
 		<ReviewChangesFeed
 			:show-revert-risk="showRevertRiskInFeed"
 			:show-revert-risk-flags="showRevertRiskFlags"
+			:revert-risk-flags-in-box="revertRiskFlagsInBox"
 			:show-source-icons="showSourceIcons"
 			:show-source-subtitles="showSourceSubtitles"
 			:show-username-at-prefix="showUsernameAtPrefix"
@@ -45,6 +46,7 @@ const {
 	relatedChangesRatio,
 	showRevertRiskInFeed,
 	showRevertRiskFlags,
+	revertRiskFlagsInBox,
 	showDelta,
 	showSourceIcons,
 	showSourceSubtitles,
