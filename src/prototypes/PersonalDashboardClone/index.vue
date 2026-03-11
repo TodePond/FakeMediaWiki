@@ -100,6 +100,7 @@
 				:show-revert-risk="showRevertRiskInFeed"
 				:show-revert-risk-flags="showRevertRiskFlags"
 				:revert-risk-flags-in-box="revertRiskFlagsInBox"
+				:verbose-flags="verboseFlags"
 				:show-reverted-flag="showRevertedFlag"
 				:show-source-icons="showSourceIcons"
 				:show-source-subtitles="showSourceSubtitles"
@@ -258,6 +259,7 @@ const {
 		showRevertRiskInFeed,
 		showRevertRiskFlags,
 		revertRiskFlagsInBox,
+		verboseFlags,
 		showRevertedFlag,
 		showDelta,
 		showSourceIcons,

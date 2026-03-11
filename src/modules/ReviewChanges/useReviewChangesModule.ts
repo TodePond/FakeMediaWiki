@@ -8,6 +8,7 @@ const SHOW_REVERT_RISK_KEY = `${STORAGE_PREFIX}show-revert-risk`
 const SHOW_REVERT_RISK_FLAGS_KEY = `${STORAGE_PREFIX}show-revert-risk-flags`
 const REVERT_RISK_FLAGS_IN_BOX_KEY = `${STORAGE_PREFIX}revert-risk-flags-in-box`
 const SHOW_REVERTED_FLAG_KEY = `${STORAGE_PREFIX}show-reverted-flag`
+const VERBOSE_FLAGS_KEY = `${STORAGE_PREFIX}verbose-flags`
 const SHOW_DELTA_KEY = `${STORAGE_PREFIX}show-delta`
 const SHOW_SOURCE_ICONS_KEY = `${STORAGE_PREFIX}show-source-icons`
 const SHOW_SOURCE_SUBTITLES_KEY = `${STORAGE_PREFIX}show-source-subtitles`
@@ -35,6 +36,7 @@ const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_REVERT_RISK_FLAGS_KEY]: `${STORAGE_PREFIX}show-revert-risk-flags`,
 	[REVERT_RISK_FLAGS_IN_BOX_KEY]: `${STORAGE_PREFIX}revert-risk-flags-in-box`,
 	[SHOW_REVERTED_FLAG_KEY]: `${STORAGE_PREFIX}show-reverted-flag`,
+	[VERBOSE_FLAGS_KEY]: `${STORAGE_PREFIX}verbose-flags`,
 	[SHOW_DELTA_KEY]: `${LEGACY_PREFIX}show-delta`,
 	[SHOW_SOURCE_ICONS_KEY]: `${LEGACY_PREFIX}show-source-icons`,
 	[SHOW_SOURCE_SUBTITLES_KEY]: `${LEGACY_PREFIX}show-source-subtitles`,
@@ -171,6 +173,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showRevertRiskInFeed", label: "Debug revert risk" },
 	{ key: "showRevertRiskFlags", label: "Revert risk flags" },
 	{ key: "revertRiskFlagsInBox", label: "Flags in box" },
+	{ key: "verboseFlags", label: "Verbose flags" },
 	{ key: "showRevertedFlag", label: "Reverted flag" },
 	{ key: "showUsernameAtPrefix", label: "@ username" },
 	{ key: "showUserIcon", label: "User icon" },
@@ -194,6 +197,9 @@ function createReviewChangesModule() {
 	)
 	const showRevertedFlag = ref(
 		getStoredBoolean(SHOW_REVERTED_FLAG_KEY, LEGACY_KEYS[SHOW_REVERTED_FLAG_KEY], true)
+	)
+	const verboseFlags = ref(
+		getStoredBoolean(VERBOSE_FLAGS_KEY, LEGACY_KEYS[VERBOSE_FLAGS_KEY], true)
 	)
 	const showDelta = ref(
 		getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], true)
@@ -322,6 +328,14 @@ function createReviewChangesModule() {
 	watch(showRevertedFlag, enabled => {
 		try {
 			localStorage.setItem(SHOW_REVERTED_FLAG_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(verboseFlags, enabled => {
+		try {
+			localStorage.setItem(VERBOSE_FLAGS_KEY, String(enabled))
 		} catch {
 			// ignore
 		}
@@ -481,6 +495,7 @@ function createReviewChangesModule() {
 		showRevertRiskInFeed,
 		showRevertRiskFlags,
 		revertRiskFlagsInBox,
+		verboseFlags,
 		showRevertedFlag,
 		showDelta,
 		showSourceIcons,

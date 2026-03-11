@@ -33,7 +33,9 @@
 						class="review-changes__item-link"
 						:class="{ 'review-changes__item-link--not-link': !change.pageName }"
 						:aria-label="
-							change.pageName ? `View diff for ${change.pageName ?? 'page'}` : undefined
+							change.pageName
+								? `View diff for ${change.pageName ?? 'page'}`
+								: undefined
 						"
 					>
 						<div class="review-changes__item-header">
@@ -75,7 +77,7 @@
 										getItemSource(change) === "pagesAndUsers"
 											? "From your watchlist"
 											: getItemSource(change) === "relatedChanges"
-												? "From related pages"
+												? "From recommendations"
 												: getItemSource(change) === "collaborators"
 													? "By your mentor"
 													: "From recent changes"
@@ -168,9 +170,10 @@
 									size="small"
 									class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--reverted"
 								/>
-								<span class="review-changes__revert-risk-notice-text"
-									>This change was reverted</span
-								>
+								<span class="review-changes__revert-risk-notice-text">{{
+									verboseFlags ? "This change was reverted" : "Reverted"
+								}}</span
+							>
 							</div>
 							<div
 								v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
@@ -341,6 +344,8 @@ const props = withDefaults(
 		showRevertRiskFlags?: boolean
 		/** When true, flag notices have border and padding (box style). When false, no border/padding. */
 		revertRiskFlagsInBox?: boolean
+		/** When true, shows verbose flag text ("This change has very high revert risk", "This change was reverted"). When false, shows simple text ("Very high revert risk", "Reverted"). */
+		verboseFlags?: boolean
 		/** When true, shows "Reverted" flag for edits that have been reverted. */
 		showRevertedFlag?: boolean
 		showSourceIcons?: boolean
@@ -376,6 +381,7 @@ const props = withDefaults(
 	{
 		showRevertRiskFlags: false,
 		revertRiskFlagsInBox: true,
+		verboseFlags: true,
 		showRevertedFlag: true,
 		showSourceIcons: false,
 		showSourceSubtitles: false,
@@ -498,9 +504,7 @@ function getRiskFromPrediction(pred: FWLiftWingPrediction): number {
 	return typeof p === "number" ? p : 0
 }
 
-function getRevertRiskNotice(
-	change: FWRevision
-): { text: string; band: RevertRiskBand } | null {
+function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRiskBand } | null {
 	if (isLoadingRevertRisk.value) return null
 	const entry = revertRiskByRevId.value.get(change.id)
 	if (!entry || ("error" in entry && entry.error)) return null
@@ -508,28 +512,36 @@ function getRevertRiskNotice(
 	const pred = byModel.revertrisk
 	if (!pred) return null
 	const risk = getRiskFromPrediction(pred)
-	const revert = isReverted(change) ? "had" : "has"
+	const verbose = props.verboseFlags
 	if (risk > REVERT_RISK_THRESHOLDS.upperTight) {
 		return {
-			text: `This change ${revert} very high revert risk.`,
+			text: verbose
+				? `This change ${isReverted(change) ? "had" : "has"} very high revert risk.`
+				: "Very high revert risk",
 			band: "high",
 		}
 	}
 	if (risk > REVERT_RISK_THRESHOLDS.upperLoose) {
 		return {
-			text: `This change ${revert} high revert risk.`,
+			text: verbose
+				? `This change ${isReverted(change) ? "had" : "has"} high revert risk.`
+				: "High revert risk",
 			band: "mediumHigh",
 		}
 	}
 	if (risk < REVERT_RISK_THRESHOLDS.lowerTight) {
 		return {
-			text: `This change ${revert} very low revert risk.`,
+			text: verbose
+				? `This change ${isReverted(change) ? "had" : "has"} very low revert risk.`
+				: "Very low revert risk",
 			band: "low",
 		}
 	}
 	if (risk < REVERT_RISK_THRESHOLDS.lowerLoose) {
 		return {
-			text: `This change ${revert} low revert risk.`,
+			text: verbose
+				? `This change ${isReverted(change) ? "had" : "has"} low revert risk.`
+				: "Low revert risk",
 			band: "mediumLow",
 		}
 	}
