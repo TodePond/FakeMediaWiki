@@ -186,6 +186,14 @@
 	color: var(--color-destructive);
 }
 
+.review-changes__revert-risk-notice-icon--low {
+	color: var(--color-success);
+}
+
+.review-changes__revert-risk-notice-icon--medium-low {
+	color: var(--color-progressive);
+}
+
 .review-changes__revert-risk-notice-text {
 	color: var(--color-base);
 }

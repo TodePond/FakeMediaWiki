@@ -155,7 +155,11 @@
 							}"
 						>
 							<CdxIcon
-								:icon="cdxIconAlert"
+								:icon="
+									['low', 'mediumLow'].includes(getRevertRiskNotice(change)?.band ?? '')
+										? cdxIconSuccess
+										: cdxIconAlert
+								"
 								size="small"
 								class="review-changes__revert-risk-notice-icon"
 								:class="{
@@ -163,6 +167,10 @@
 										getRevertRiskNotice(change)?.band === 'high',
 									'review-changes__revert-risk-notice-icon--high':
 										getRevertRiskNotice(change)?.band === 'mediumHigh',
+									'review-changes__revert-risk-notice-icon--low':
+										getRevertRiskNotice(change)?.band === 'low',
+									'review-changes__revert-risk-notice-icon--medium-low':
+										getRevertRiskNotice(change)?.band === 'mediumLow',
 								}"
 							/>
 							<span class="review-changes__revert-risk-notice-text">{{
@@ -269,6 +277,7 @@ import {
 	cdxIconClock,
 	cdxIconEye,
 	cdxIconLightbulb,
+	cdxIconSuccess,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
 	cdxIconUserTemporary,
@@ -398,10 +407,15 @@ function getRevertRiskLines(revId: number): Array<{ label: string; value: string
 	})
 }
 
-/** Band thresholds for language-agnostic revert risk: above 80% = yellow, above 90% = red */
-const REVERT_RISK_THRESHOLDS = { upperLoose: 0.8, upperTight: 0.9 } as const
+/** Band thresholds for language-agnostic revert risk: above 80% = yellow, above 90% = red; below 25% = green, below 45% = blue */
+const REVERT_RISK_THRESHOLDS = {
+	lowerTight: 0.25,
+	lowerLoose: 0.45,
+	upperLoose: 0.8,
+	upperTight: 0.9,
+} as const
 
-type RevertRiskBand = "high" | "mediumHigh"
+type RevertRiskBand = "high" | "mediumHigh" | "low" | "mediumLow"
 
 function getRiskFromPrediction(pred: FWLiftWingPrediction): number {
 	const p = pred.probability?.true
@@ -428,6 +442,18 @@ function getRevertRiskNotice(
 		return {
 			text: "This change has high revert risk.",
 			band: "mediumHigh",
+		}
+	}
+	if (risk < REVERT_RISK_THRESHOLDS.lowerTight) {
+		return {
+			text: "This change has very low revert risk.",
+			band: "low",
+		}
+	}
+	if (risk < REVERT_RISK_THRESHOLDS.lowerLoose) {
+		return {
+			text: "This change has low revert risk.",
+			band: "mediumLow",
 		}
 	}
 	return null
