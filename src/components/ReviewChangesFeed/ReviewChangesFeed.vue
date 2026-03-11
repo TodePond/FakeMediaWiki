@@ -353,11 +353,11 @@ export type ItemSource = "recentChanges" | "pagesAndUsers" | "relatedChanges" | 
 const props = withDefaults(
 	defineProps<{
 		showRevertRisk: boolean
-		/** When true, shows "High revert risk" / "Very high revert risk" notice flags on feed items. */
+		/** When true, shows "High revert risk" notice flags on feed items. */
 		showRevertRiskFlags?: boolean
 		/** When true, flag notices have border and padding (box style). When false, no border/padding. */
 		revertRiskFlagsInBox?: boolean
-		/** When true, shows verbose flag text ("This change has very high revert risk", "This change was reverted"). When false, shows simple text ("Very high revert risk", "Reverted"). */
+		/** When true, shows verbose flag text ("This change has very high revert risk", "This change was reverted", "Recommended based on X and Y."). When false, shows simple text ("High revert risk", "Reverted", "Based on X and Y."). */
 		verboseFlags?: boolean
 		/** When true, shows "Reverted" flag for edits that have been reverted. */
 		showRevertedFlag?: boolean
@@ -390,7 +390,7 @@ const props = withDefaults(
 		showModuleBorder?: boolean
 		/** When true, shows a Review button in addition to the card being a link. */
 		showReviewButton?: boolean
-		/** When true, shows recommendation reason for Related changes items (e.g. "Recommended because you watch X and Y."). */
+		/** When true, shows recommendation reason for Related changes items (e.g. "Recommended based on X and Y." or "Based on X and Y." when verboseFlags is false). */
 		showRecommendationFlags?: boolean
 	}>(),
 	{
@@ -527,7 +527,7 @@ function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRi
 		return {
 			text: verbose
 				? `This change ${isReverted(change) ? "had" : "has"} very high revert risk.`
-				: "Very high revert risk",
+				: "High revert risk",
 			band: "high",
 		}
 	}
@@ -543,7 +543,7 @@ function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRi
 		return {
 			text: verbose
 				? `This change ${isReverted(change) ? "had" : "has"} very low revert risk.`
-				: "Very low revert risk",
+				: "Low revert risk",
 			band: "low",
 		}
 	}
@@ -566,15 +566,16 @@ function getRecommendationSourcePageNames(
 
 function getRecommendationReason(sourcePageNames: string[]): string {
 	if (!sourcePageNames?.length) return ""
+	const intro = props.verboseFlags ? "Recommended based on " : "Based on "
 	if (sourcePageNames.length === 1) {
-		return `Recommended because you watch ${sourcePageNames[0]}.`
+		return `${intro}${sourcePageNames[0]}.`
 	}
 	if (sourcePageNames.length === 2) {
-		return `Recommended because you watch ${sourcePageNames[0]} and ${sourcePageNames[1]}.`
+		return `${intro}${sourcePageNames[0]} and ${sourcePageNames[1]}.`
 	}
 	const last = sourcePageNames[sourcePageNames.length - 1]
 	const rest = sourcePageNames.slice(0, -1).join(", ")
-	return `Recommended because you watch ${rest}, and ${last}.`
+	return `${intro}${rest}, and ${last}.`
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
