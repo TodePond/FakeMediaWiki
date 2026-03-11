@@ -275,7 +275,7 @@
 								@click.stop="openDiffInNewTab(change)"
 							>
 								<CdxIcon :icon="cdxIconEye" size="x-small" />
-								{{ isLatestRevision(change) ? "Review" : "View" }}
+								View
 							</CdxButton>
 						</div>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">
