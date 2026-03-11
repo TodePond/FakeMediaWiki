@@ -21,6 +21,7 @@ const SHOW_REVIEW_BUTTON_KEY = `${STORAGE_PREFIX}show-review-button`
 const LEGACY_CARD_AS_LINK_KEY = `${LEGACY_PREFIX}card-as-link`
 const SHOW_EMPTY_EDIT_SUMMARY_KEY = `${STORAGE_PREFIX}show-empty-edit-summary`
 const LEGACY_HIDE_EMPTY_SUMMARY_KEY = `${LEGACY_PREFIX}hide-empty-summary`
+const SHOW_RECOMMENDATION_FLAGS_KEY = `${STORAGE_PREFIX}show-recommendation-flags`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -170,6 +171,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showDelta", label: "Delta" },
 	{ key: "showSourceIcons", label: "Source icon" },
 	{ key: "showSourceSubtitles", label: "Source subtitle" },
+	{ key: "showRecommendationFlags", label: "Recommendation flags" },
 	{ key: "showRevertRiskInFeed", label: "Debug revert risk" },
 	{ key: "showRevertRiskFlags", label: "Revert risk flags" },
 	{ key: "revertRiskFlagsInBox", label: "Flags in box" },
@@ -222,6 +224,9 @@ function createReviewChangesModule() {
 	const showModuleBorder = ref(getStoredShowModuleBorder())
 	const showReviewButton = ref(getStoredShowReviewButton())
 	const showEmptyEditSummary = ref(getStoredShowEmptyEditSummary())
+	const showRecommendationFlags = ref(
+		getStoredBoolean(SHOW_RECOMMENDATION_FLAGS_KEY, SHOW_RECOMMENDATION_FLAGS_KEY, false)
+	)
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
 		getStoredRatio(
@@ -413,6 +418,14 @@ function createReviewChangesModule() {
 		}
 	})
 
+	watch(showRecommendationFlags, enabled => {
+		try {
+			localStorage.setItem(SHOW_RECOMMENDATION_FLAGS_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -506,6 +519,7 @@ function createReviewChangesModule() {
 		showModuleBorder,
 		showReviewButton,
 		showEmptyEditSummary,
+		showRecommendationFlags,
 		sourceOptions,
 		reviewChangesSourceId,
 		recentChangesSliderId,

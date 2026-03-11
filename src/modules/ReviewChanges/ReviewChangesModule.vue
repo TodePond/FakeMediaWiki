@@ -24,6 +24,7 @@
 			:feed-cap="10"
 			:hide-description="true"
 			:show-review-button="showReviewButton"
+			:show-recommendation-flags="showRecommendationFlags"
 		/>
 	</section>
 </template>
@@ -58,6 +59,7 @@ const {
 	showUserIcon,
 	summaryCutout,
 	showEmptyEditSummary,
+	showRecommendationFlags,
 } = useReviewChangesModule()
 </script>
 

@@ -119,6 +119,7 @@
 				title="Review changes"
 				:show-module-border="showModuleBorder"
 				:show-review-button="showReviewButton"
+				:show-recommendation-flags="showRecommendationFlags"
 				@preview-update="onPreviewUpdate"
 			/>
 
@@ -268,6 +269,7 @@ const {
 		showUserIcon,
 		summaryCutout,
 		showEmptyEditSummary,
+		showRecommendationFlags,
 	} = useReviewChangesModule()
 
 const previewRevisions = ref<FWRevision[]>([])

@@ -96,6 +96,7 @@
 
 .review-changes__user-row {
 	display: inline-flex;
+
 	align-items: center;
 	/* gap: 0.125rem; */
 }
@@ -164,13 +165,15 @@
 	margin-top: calc(0.125rem / 2);
 }
 
-.review-changes__flags-container--no-box .review-changes__revert-risk-notice {
+.review-changes__flags-container--no-box .review-changes__revert-risk-notice,
+.review-changes__flags-container--no-box .review-changes__recommendation-notice {
 	border: none;
 	padding: 0;
 	background-color: transparent;
 }
 
-.review-changes__revert-risk-notice {
+.review-changes__revert-risk-notice,
+.review-changes__recommendation-notice {
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
@@ -181,8 +184,20 @@
 	line-height: var(--line-height-content);
 }
 
-.review-changes__revert-risk-notice + .review-changes__revert-risk-notice {
+.review-changes__revert-risk-notice + .review-changes__revert-risk-notice,
+.review-changes__recommendation-notice + .review-changes__revert-risk-notice,
+.review-changes__revert-risk-notice + .review-changes__recommendation-notice,
+.review-changes__recommendation-notice + .review-changes__recommendation-notice {
 	margin-top: 0.125rem;
+}
+
+.review-changes__recommendation-notice-icon {
+	flex-shrink: 0;
+	color: var(--color-progressive, #36c);
+}
+
+.review-changes__recommendation-notice-text {
+	color: var(--color-base);
 }
 
 .review-changes__revert-risk-notice-icon {

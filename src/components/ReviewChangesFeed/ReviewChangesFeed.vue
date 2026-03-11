@@ -152,7 +152,10 @@
 						<div
 							v-if="
 								(showRevertRiskFlags && getRevertRiskNotice(change)) ||
-								(showRevertedFlag && isReverted(change))
+								(showRevertedFlag && isReverted(change)) ||
+								(showRecommendationFlags &&
+									getItemSource(change) === 'relatedChanges' &&
+									getRecommendationSourcePageNames(change).length)
 							"
 							class="review-changes__flags-container"
 							:class="{
@@ -161,6 +164,24 @@
 									!hasSummaryAbove(change),
 							}"
 						>
+							<div
+								v-if="
+									showRecommendationFlags &&
+									getItemSource(change) === 'relatedChanges' &&
+									getRecommendationReason(getRecommendationSourcePageNames(change))
+								"
+								class="review-changes__recommendation-notice"
+							>
+								<CdxIcon
+									:icon="cdxIconLightbulb"
+									size="small"
+									class="review-changes__recommendation-notice-icon"
+									aria-hidden="true"
+								/>
+								<span class="review-changes__recommendation-notice-text">{{
+									getRecommendationReason(getRecommendationSourcePageNames(change))
+								}}</span>
+							</div>
 							<div
 								v-if="showRevertedFlag && isReverted(change)"
 								class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
@@ -247,22 +268,14 @@
 							</a>
 							<CdxButton
 								v-if="showReviewButton"
-								:action="
-									!isReverted(change) && hasHighRevertRisk(change)
-										? 'progressive'
-										: 'default'
-								"
+								:action="isLatestRevision(change) ? 'progressive' : 'default'"
 								size="small"
 								weight="normal"
 								class="review-changes__view-change-btn"
 								@click.stop="openDiffInNewTab(change)"
 							>
 								<CdxIcon :icon="cdxIconEye" size="x-small" />
-								{{
-									isReverted(change) || !hasHighRevertRisk(change)
-										? "View"
-										: "Review"
-								}}
+								{{ isLatestRevision(change) ? "Review" : "View" }}
 							</CdxButton>
 						</div>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">
@@ -377,6 +390,8 @@ const props = withDefaults(
 		showModuleBorder?: boolean
 		/** When true, shows a Review button in addition to the card being a link. */
 		showReviewButton?: boolean
+		/** When true, shows recommendation reason for Related changes items (e.g. "Recommended because you watch X and Y."). */
+		showRecommendationFlags?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -399,6 +414,7 @@ const props = withDefaults(
 		showEmptyEditSummary: true,
 		showModuleBorder: true,
 		showReviewButton: false,
+		showRecommendationFlags: false,
 	}
 )
 
@@ -432,12 +448,6 @@ function hasSummaryAbove(change: FWRevision): boolean {
 		props.showDelta ||
 		props.showEmptyEditSummary
 	)
-}
-
-/** Whether the change has high or very high revert risk (band mediumHigh or high). */
-function hasHighRevertRisk(change: FWRevision): boolean {
-	const notice = getRevertRiskNotice(change)
-	return notice?.band === "high" || notice?.band === "mediumHigh" || false
 }
 
 /** Enrich revisions that lack tags by fetching from the API (for page history, related changes). */
@@ -546,6 +556,25 @@ function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRi
 		}
 	}
 	return null
+}
+
+function getRecommendationSourcePageNames(
+	change: RevisionWithSource
+): string[] {
+	return (change as { recommendationSourcePageNames?: string[] }).recommendationSourcePageNames ?? []
+}
+
+function getRecommendationReason(sourcePageNames: string[]): string {
+	if (!sourcePageNames?.length) return ""
+	if (sourcePageNames.length === 1) {
+		return `Recommended because you watch ${sourcePageNames[0]}.`
+	}
+	if (sourcePageNames.length === 2) {
+		return `Recommended because you watch ${sourcePageNames[0]} and ${sourcePageNames[1]}.`
+	}
+	const last = sourcePageNames[sourcePageNames.length - 1]
+	const rest = sourcePageNames.slice(0, -1).join(", ")
+	return `Recommended because you watch ${rest}, and ${last}.`
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
@@ -699,6 +728,51 @@ function getItemSource(change: RevisionWithSource): ItemSource | undefined {
 	return change.itemSource
 }
 
+/** Latest revision ID per page for watchlist (pagesAndUsers) source. */
+function buildLatestRevIdByPage(revisions: FWRevision[]): Map<string, number> {
+	const map = new Map<string, number>()
+	for (const rev of revisions) {
+		const page = rev.pageName
+		if (!page) continue
+		const current = map.get(page)
+		if (current === undefined || rev.id > current) {
+			map.set(page, rev.id)
+		}
+	}
+	return map
+}
+
+const latestRevIdByPageWatchlist = computed(() => {
+	if (props.source === "mixed") {
+		return buildLatestRevIdByPage(mixedPagesAndUsersData.value)
+	}
+	if (props.source === "pagesAndUsers") {
+		return buildLatestRevIdByPage(allRevisionsData.value)
+	}
+	return new Map<string, number>()
+})
+
+const latestRevIdByPageCollaborators = computed(() => {
+	if (props.source === "mixed") {
+		return buildLatestRevIdByPage(mixedCollaboratorsData.value)
+	}
+	if (props.source === "collaborators") {
+		return buildLatestRevIdByPage(allRevisionsData.value)
+	}
+	return new Map<string, number>()
+})
+
+function isLatestRevision(change: RevisionWithSource): boolean {
+	const source = change.itemSource ?? props.source
+	if (source === "recentChanges" || source === "relatedChanges") return true
+	if (!change.pageName) return false
+	const latestMap =
+		source === "pagesAndUsers"
+			? latestRevIdByPageWatchlist.value
+			: latestRevIdByPageCollaborators.value
+	return latestMap.get(change.pageName) === change.id
+}
+
 const selectedRevisionsForDisplay = computed(() => getSelectedRevisionsForDisplay())
 
 watch(
@@ -786,10 +860,19 @@ function selectTopNByScoreWithRandomTies(
 }
 
 async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
-	const { pages: pagesWithScores } = await wiki.getTopRelatedPages(HARDCODED_PAGE_NAMES, {
+	const { pages: pagesWithScores, changes } = await wiki.getTopRelatedPages(HARDCODED_PAGE_NAMES, {
 		percentage: 100,
 		limit: 50,
 	})
+	const sourcePageNamesByPage = new Map<string, string[]>()
+	for (const c of changes) {
+		const pageName = c.pageName?.trim()
+		if (pageName && c.sourcePageNames?.length) {
+			const existing = sourcePageNamesByPage.get(pageName) ?? []
+			const combined = [...new Set([...existing, ...c.sourcePageNames])]
+			sourcePageNamesByPage.set(pageName, combined)
+		}
+	}
 	const watchlistTitles = new Set(HARDCODED_PAGE_NAMES.map(t => t.toLowerCase()))
 	const pagesExcludingWatchlist = pagesWithScores.filter(
 		p => !watchlistTitles.has(p.title.toLowerCase())
@@ -810,7 +893,14 @@ async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
 	const enriched = await enrichRevisionsWithTags(processed)
 	return enriched.map(r => {
 		const score = scoreByPage.get(r.pageName ?? "")
-		return { ...r, ...(score !== undefined && { score }) }
+		const recommendationSourcePageNames = sourcePageNamesByPage.get(r.pageName ?? "")
+		return {
+			...r,
+			...(score !== undefined && { score }),
+			...(recommendationSourcePageNames !== undefined && {
+				recommendationSourcePageNames,
+			}),
+		}
 	})
 }
 
