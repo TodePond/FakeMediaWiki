@@ -24,6 +24,7 @@
 			:feed-cap="10"
 			:hide-description="true"
 			:show-review-button="showReviewButton"
+			:show-dismiss-button="showDismissButton"
 			:show-recommendation-flags="showRecommendationFlags"
 		/>
 	</section>
@@ -43,6 +44,7 @@ const mobileSettingsVisible = inject<Ref<boolean>>("mobileSettingsVisible", ref(
 const {
 	feedSource,
 	showReviewButton,
+	showDismissButton,
 	recentChangesRatio,
 	pagesAndUsersRatio,
 	collaboratorsRatio,

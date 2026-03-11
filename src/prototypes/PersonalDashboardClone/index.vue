@@ -119,6 +119,7 @@
 				title="Review changes"
 				:show-module-border="showModuleBorder"
 				:show-review-button="showReviewButton"
+				:show-dismiss-button="showDismissButton"
 				:show-recommendation-flags="showRecommendationFlags"
 				@preview-update="onPreviewUpdate"
 			/>
@@ -253,6 +254,7 @@ const {
 		feedSource,
 		showModuleBorder,
 		showReviewButton,
+		showDismissButton,
 		recentChangesRatio,
 		pagesAndUsersRatio,
 		collaboratorsRatio,

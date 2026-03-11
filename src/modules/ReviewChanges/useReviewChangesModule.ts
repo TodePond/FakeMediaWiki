@@ -22,6 +22,7 @@ const LEGACY_CARD_AS_LINK_KEY = `${LEGACY_PREFIX}card-as-link`
 const SHOW_EMPTY_EDIT_SUMMARY_KEY = `${STORAGE_PREFIX}show-empty-edit-summary`
 const LEGACY_HIDE_EMPTY_SUMMARY_KEY = `${LEGACY_PREFIX}hide-empty-summary`
 const SHOW_RECOMMENDATION_FLAGS_KEY = `${STORAGE_PREFIX}show-recommendation-flags`
+const SHOW_DISMISS_BUTTON_KEY = `${STORAGE_PREFIX}show-dismiss-button`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -182,6 +183,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "summaryCutout", label: "Cutout" },
 	{ key: "showEmptyEditSummary", label: "Empty edit summary" },
 	{ key: "showReviewButton", label: "Review button" },
+	{ key: "showDismissButton", label: "Dismiss button" },
 	{ key: "showModuleBorder", label: "Module border", prototypeOnly: true },
 ] as const
 
@@ -198,10 +200,10 @@ function createReviewChangesModule() {
 		getStoredBoolean(REVERT_RISK_FLAGS_IN_BOX_KEY, LEGACY_KEYS[REVERT_RISK_FLAGS_IN_BOX_KEY], true)
 	)
 	const showRevertedFlag = ref(
-		getStoredBoolean(SHOW_REVERTED_FLAG_KEY, LEGACY_KEYS[SHOW_REVERTED_FLAG_KEY], true)
+		getStoredBoolean(SHOW_REVERTED_FLAG_KEY, LEGACY_KEYS[SHOW_REVERTED_FLAG_KEY], false)
 	)
 	const verboseFlags = ref(
-		getStoredBoolean(VERBOSE_FLAGS_KEY, LEGACY_KEYS[VERBOSE_FLAGS_KEY], true)
+		getStoredBoolean(VERBOSE_FLAGS_KEY, LEGACY_KEYS[VERBOSE_FLAGS_KEY], false)
 	)
 	const showDelta = ref(
 		getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], true)
@@ -219,7 +221,7 @@ function createReviewChangesModule() {
 		getStoredBoolean(SHOW_USER_ICON_KEY, LEGACY_KEYS[SHOW_USER_ICON_KEY], false)
 	)
 	const summaryCutout = ref(
-		getStoredBoolean(SUMMARY_CUTOUT_KEY, LEGACY_KEYS[SUMMARY_CUTOUT_KEY], true)
+		getStoredBoolean(SUMMARY_CUTOUT_KEY, LEGACY_KEYS[SUMMARY_CUTOUT_KEY], false)
 	)
 	const showModuleBorder = ref(getStoredShowModuleBorder())
 	const showReviewButton = ref(getStoredShowReviewButton())
@@ -227,12 +229,15 @@ function createReviewChangesModule() {
 	const showRecommendationFlags = ref(
 		getStoredBoolean(SHOW_RECOMMENDATION_FLAGS_KEY, SHOW_RECOMMENDATION_FLAGS_KEY, false)
 	)
+	const showDismissButton = ref(
+		getStoredBoolean(SHOW_DISMISS_BUTTON_KEY, SHOW_DISMISS_BUTTON_KEY, false)
+	)
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
 		getStoredRatio(
 			MIXED_RECENT_CHANGES_RATIO_KEY,
 			LEGACY_KEYS[MIXED_RECENT_CHANGES_RATIO_KEY],
-			20
+			60
 		)
 	)
 	const mixedPagesAndUsersRatio = ref(
@@ -260,7 +265,7 @@ function createReviewChangesModule() {
 		getStoredRatio(
 			STANDALONE_RECENT_CHANGES_RATIO_KEY,
 			LEGACY_KEYS[STANDALONE_RECENT_CHANGES_RATIO_KEY],
-			100
+			60
 		)
 	)
 	const standalonePagesAndUsersRatio = ref(
@@ -426,6 +431,14 @@ function createReviewChangesModule() {
 		}
 	})
 
+	watch(showDismissButton, enabled => {
+		try {
+			localStorage.setItem(SHOW_DISMISS_BUTTON_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -491,6 +504,34 @@ function createReviewChangesModule() {
 		}
 	})
 
+	function resetToDefaults(): void {
+		showRevertRiskInFeed.value = false
+		showRevertRiskFlags.value = false
+		revertRiskFlagsInBox.value = true
+		showRevertedFlag.value = false
+		verboseFlags.value = false
+		showDelta.value = true
+		showSourceIcons.value = false
+		showSourceSubtitles.value = false
+		showUsernameAtPrefix.value = false
+		showUserIcon.value = false
+		summaryCutout.value = false
+		showModuleBorder.value = true
+		showReviewButton.value = false
+		showEmptyEditSummary.value = true
+		showRecommendationFlags.value = false
+		showDismissButton.value = false
+		feedSource.value = "recentChanges"
+		mixedRecentChangesRatio.value = 60
+		mixedPagesAndUsersRatio.value = 20
+		mixedRelatedChangesRatio.value = 20
+		mixedCollaboratorsRatio.value = 20
+		standaloneRecentChangesRatio.value = 60
+		standalonePagesAndUsersRatio.value = 100
+		standaloneRelatedChangesRatio.value = 100
+		standaloneCollaboratorsRatio.value = 100
+	}
+
 	return {
 		feedSource,
 		mixedRecentChangesRatio,
@@ -518,6 +559,7 @@ function createReviewChangesModule() {
 		summaryCutout,
 		showModuleBorder,
 		showReviewButton,
+		showDismissButton,
 		showEmptyEditSummary,
 		showRecommendationFlags,
 		sourceOptions,
@@ -526,6 +568,7 @@ function createReviewChangesModule() {
 		pagesAndUsersSliderId,
 		relatedChangesSliderId,
 		collaboratorsSliderId,
+		resetToDefaults,
 	}
 }
 

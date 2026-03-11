@@ -1,6 +1,10 @@
 <template>
 	<div class="review-changes-controls">
-		<div class="review-changes-controls__checkboxes" role="group" aria-label="Prototype settings">
+		<div
+			class="review-changes-controls__checkboxes"
+			role="group"
+			aria-label="Prototype settings"
+		>
 			<CdxCheckbox
 				v-for="item in visibleCheckboxes"
 				:key="item.key"
@@ -164,11 +168,15 @@
 				</div>
 			</div>
 		</template>
+		<div class="review-changes-controls__buttons">
+			<CdxButton @click="resetProgress">Reset progress</CdxButton>
+			<CdxButton @click="resetToDefaults">Reset config</CdxButton>
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { CdxCheckbox, CdxLabel, CdxSelect } from "@wikimedia/codex"
+import { CdxButton, CdxCheckbox, CdxLabel, CdxSelect } from "@wikimedia/codex"
 import { computed } from "vue"
 import {
 	REVIEW_CHANGES_CHECKBOX_CONFIG,
@@ -180,6 +188,7 @@ import {
 	sourceOptions,
 	useReviewChangesModule,
 } from "./useReviewChangesModule"
+import { useReviewChangesProgress } from "./useReviewChangesProgress"
 
 const props = withDefaults(
 	defineProps<{
@@ -190,6 +199,8 @@ const props = withDefaults(
 )
 
 const module = useReviewChangesModule()
+const { resetProgress } = useReviewChangesProgress()
+const { resetToDefaults } = module
 
 const visibleCheckboxes = computed(() =>
 	REVIEW_CHANGES_CHECKBOX_CONFIG.filter(

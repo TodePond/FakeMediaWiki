@@ -38,6 +38,8 @@
 								: undefined
 						"
 						@click="change.pageName && markRevisionAsViewed(change)"
+						@pointerdown.capture="onCardPointerDown"
+						@mousedown.capture="onCardPointerDown"
 					>
 						<div class="review-changes__item-header">
 							<span class="review-changes__page-cell">
@@ -141,7 +143,9 @@
 								v-else-if="change?.comment"
 								:class="[
 									'review-changes__comment',
-									{ 'review-changes__comment--no-cutout': !showSummaryCutout },
+									{
+										'review-changes__comment--no-cutout': !showSummaryCutout,
+									},
 								]"
 								>{{ change.comment }}</span
 							><em
@@ -169,7 +173,9 @@
 								v-if="
 									showRecommendationFlags &&
 									getItemSource(change) === 'relatedChanges' &&
-									getRecommendationReason(getRecommendationSourcePageNames(change))
+									getRecommendationReason(
+										getRecommendationSourcePageNames(change)
+									)
 								"
 								class="review-changes__recommendation-notice"
 							>
@@ -180,7 +186,9 @@
 									aria-hidden="true"
 								/>
 								<span class="review-changes__recommendation-notice-text">{{
-									getRecommendationReason(getRecommendationSourcePageNames(change))
+									getRecommendationReason(
+										getRecommendationSourcePageNames(change)
+									)
 								}}</span>
 							</div>
 							<div
@@ -194,8 +202,7 @@
 								/>
 								<span class="review-changes__revert-risk-notice-text">{{
 									verboseFlags ? "This change was reverted" : "Reverted"
-								}}</span
-							>
+								}}</span>
 							</div>
 							<div
 								v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
@@ -267,24 +274,46 @@
 							>
 								{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
 							</a>
-							<CdxButton
-								v-if="showReviewButton"
-								:action="
-									isRevisionViewed(change)
-										? 'default'
-										: isLatestRevision(change)
-											? 'progressive'
-											: 'default'
-								"
-								size="small"
-								weight="normal"
-								class="review-changes__view-change-btn"
-								:class="{ 'review-changes__view-change-btn--viewed': isRevisionViewed(change) }"
-								@click.stop="openDiffInNewTab(change)"
+							<span
+								v-if="showReviewButton || showDismissButton"
+								class="review-changes__action-buttons"
 							>
-								<CdxIcon :icon="cdxIconEye" size="x-small" />
-								View
-							</CdxButton>
+								<CdxButton
+									v-if="showReviewButton"
+									:action="
+										isRevisionViewed(change)
+											? 'default'
+											: isLatestRevision(change)
+												? 'progressive'
+												: 'default'
+									"
+									size="small"
+									weight="quiet"
+									class="review-changes__view-change-btn"
+									:class="{
+										'review-changes__view-change-btn--viewed':
+											isRevisionViewed(change),
+									}"
+									@pointerdown.stop
+									@mousedown.stop
+									@click.stop="openDiffInNewTab(change)"
+								>
+									<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
+									Open
+								</CdxButton>
+								<CdxButton
+									v-if="showDismissButton"
+									action="default"
+									size="small"
+									weight="quiet"
+									class="review-changes__dismiss-btn"
+									aria-label="Dismiss"
+									@click.stop="dismissRevision(change)"
+								>
+									<CdxIcon :icon="cdxIconCheck" size="x-small" />
+									Dismiss
+								</CdxButton>
+							</span>
 						</div>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">
 							<span
@@ -328,13 +357,15 @@
 </template>
 
 <script setup lang="ts">
+import { useReviewChangesProgress } from "@/modules/ReviewChanges/useReviewChangesProgress"
 import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex"
 import {
 	cdxIconAlert,
+	cdxIconCheck,
 	cdxIconClock,
 	cdxIconEditUndo,
-	cdxIconEye,
 	cdxIconLightbulb,
+	cdxIconLinkExternal,
 	cdxIconSuccess,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
@@ -398,6 +429,8 @@ const props = withDefaults(
 		showModuleBorder?: boolean
 		/** When true, shows a Review button in addition to the card being a link. */
 		showReviewButton?: boolean
+		/** When true, shows a Dismiss button to the right of the View button. */
+		showDismissButton?: boolean
 		/** When true, shows recommendation reason for Related changes items (e.g. "Recommended based on X and Y." or "Based on X and Y." when verboseFlags is false). */
 		showRecommendationFlags?: boolean
 	}>(),
@@ -422,45 +455,15 @@ const props = withDefaults(
 		showEmptyEditSummary: true,
 		showModuleBorder: true,
 		showReviewButton: false,
+		showDismissButton: false,
 		showRecommendationFlags: false,
 	}
 )
 
 const wiki = new FakeWiki()
 
-const VIEWED_REVISIONS_STORAGE_KEY = "review-changes-viewed-revisions"
-
-function loadViewedRevisionIds(): Set<number> {
-	try {
-		const stored = localStorage.getItem(VIEWED_REVISIONS_STORAGE_KEY)
-		if (!stored) return new Set()
-		const parsed = JSON.parse(stored) as number[]
-		return new Set(Array.isArray(parsed) ? parsed : [])
-	} catch {
-		return new Set()
-	}
-}
-
-function saveViewedRevisionIds(ids: Set<number>): void {
-	try {
-		localStorage.setItem(VIEWED_REVISIONS_STORAGE_KEY, JSON.stringify([...ids]))
-	} catch {
-		// Ignore quota/security errors
-	}
-}
-
-const viewedRevisionIds = ref<Set<number>>(loadViewedRevisionIds())
-
-function isRevisionViewed(change: FWRevision): boolean {
-	return viewedRevisionIds.value.has(change.id)
-}
-
-function markRevisionAsViewed(change: FWRevision): void {
-	const next = new Set(viewedRevisionIds.value)
-	next.add(change.id)
-	viewedRevisionIds.value = next
-	saveViewedRevisionIds(next)
-}
+const { isRevisionViewed, markRevisionAsViewed, dismissedRevisionIds, dismissRevision } =
+	useReviewChangesProgress()
 
 const userPopoverAnchor = ref<HTMLElement | null>(null)
 const showUserPopover = ref(false)
@@ -474,6 +477,15 @@ function openDiffInNewTab(change: FWRevision): void {
 	if (change.pageName) {
 		markRevisionAsViewed(change)
 		window.open(wiki.getRevisionUrl(change.id, change.pageName), "_blank")
+	}
+}
+
+/** Prevent pointer/mouse events from the action buttons (View, Dismiss) from activating the card link.
+ * Uses capture phase so we run when the event arrives at the link (before it reaches the buttons).
+ * We only preventDefault so the event still reaches the buttons; preventDefault stops the link from activating. */
+function onCardPointerDown(event: PointerEvent | MouseEvent): void {
+	if ((event.target as Element)?.closest(".review-changes__action-buttons")) {
+		event.preventDefault()
 	}
 }
 
@@ -601,10 +613,10 @@ function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRi
 	return null
 }
 
-function getRecommendationSourcePageNames(
-	change: RevisionWithSource
-): string[] {
-	return (change as { recommendationSourcePageNames?: string[] }).recommendationSourcePageNames ?? []
+function getRecommendationSourcePageNames(change: RevisionWithSource): string[] {
+	return (
+		(change as { recommendationSourcePageNames?: string[] }).recommendationSourcePageNames ?? []
+	)
 }
 
 function getRecommendationReason(sourcePageNames: string[]): string {
@@ -904,10 +916,13 @@ function selectTopNByScoreWithRandomTies(
 }
 
 async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
-	const { pages: pagesWithScores, changes } = await wiki.getTopRelatedPages(HARDCODED_PAGE_NAMES, {
-		percentage: 100,
-		limit: 50,
-	})
+	const { pages: pagesWithScores, changes } = await wiki.getTopRelatedPages(
+		HARDCODED_PAGE_NAMES,
+		{
+			percentage: 100,
+			limit: 50,
+		}
+	)
 	const sourcePageNamesByPage = new Map<string, string[]>()
 	for (const c of changes) {
 		const pageName = c.pageName?.trim()
@@ -1291,7 +1306,9 @@ function formatDelta(delta: number | null | undefined): string {
 
 const revisionsByDate = computed(() => {
 	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
-	const source = selectedRevisionsForDisplay.value
+	const source = selectedRevisionsForDisplay.value.filter(
+		revision => !dismissedRevisionIds.value.has(revision.id)
+	)
 
 	source.forEach(revision => {
 		const dateKey = getDateKey(revision.timestamp)
@@ -1317,9 +1334,15 @@ const revisionsByDate = computed(() => {
 
 const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
-const sampleRevision = computed(() => selectedRevisionsForDisplay.value[0] ?? null)
+const sampleRevision = computed(
+	() =>
+		selectedRevisionsForDisplay.value.filter(r => !dismissedRevisionIds.value.has(r.id))[0] ??
+		null
+)
 
-const previewRevisions = computed(() => selectedRevisionsForDisplay.value.slice(0, 3))
+const previewRevisions = computed(() =>
+	selectedRevisionsForDisplay.value.filter(r => !dismissedRevisionIds.value.has(r.id)).slice(0, 3)
+)
 
 defineExpose({ sampleRevision, previewRevisions, isLoading })
 
