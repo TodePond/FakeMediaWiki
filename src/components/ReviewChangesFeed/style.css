@@ -233,6 +233,11 @@
 	flex-shrink: 0;
 }
 
+.review-changes__view-change-btn--viewed {
+	opacity: 0.6;
+	color: var(--color-base--subtle, #54595d);
+}
+
 .review-changes__item:last-child {
 	border-bottom: 1px solid var(--border-color-subtle, #a2a9b1);
 }

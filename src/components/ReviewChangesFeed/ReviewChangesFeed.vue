@@ -37,6 +37,7 @@
 								? `View diff for ${change.pageName ?? 'page'}`
 								: undefined
 						"
+						@click="change.pageName && markRevisionAsViewed(change)"
 					>
 						<div class="review-changes__item-header">
 							<span class="review-changes__page-cell">
@@ -268,10 +269,17 @@
 							</a>
 							<CdxButton
 								v-if="showReviewButton"
-								:action="isLatestRevision(change) ? 'progressive' : 'default'"
+								:action="
+									isRevisionViewed(change)
+										? 'default'
+										: isLatestRevision(change)
+											? 'progressive'
+											: 'default'
+								"
 								size="small"
 								weight="normal"
 								class="review-changes__view-change-btn"
+								:class="{ 'review-changes__view-change-btn--viewed': isRevisionViewed(change) }"
 								@click.stop="openDiffInNewTab(change)"
 							>
 								<CdxIcon :icon="cdxIconEye" size="x-small" />
@@ -420,6 +428,40 @@ const props = withDefaults(
 
 const wiki = new FakeWiki()
 
+const VIEWED_REVISIONS_STORAGE_KEY = "review-changes-viewed-revisions"
+
+function loadViewedRevisionIds(): Set<number> {
+	try {
+		const stored = localStorage.getItem(VIEWED_REVISIONS_STORAGE_KEY)
+		if (!stored) return new Set()
+		const parsed = JSON.parse(stored) as number[]
+		return new Set(Array.isArray(parsed) ? parsed : [])
+	} catch {
+		return new Set()
+	}
+}
+
+function saveViewedRevisionIds(ids: Set<number>): void {
+	try {
+		localStorage.setItem(VIEWED_REVISIONS_STORAGE_KEY, JSON.stringify([...ids]))
+	} catch {
+		// Ignore quota/security errors
+	}
+}
+
+const viewedRevisionIds = ref<Set<number>>(loadViewedRevisionIds())
+
+function isRevisionViewed(change: FWRevision): boolean {
+	return viewedRevisionIds.value.has(change.id)
+}
+
+function markRevisionAsViewed(change: FWRevision): void {
+	const next = new Set(viewedRevisionIds.value)
+	next.add(change.id)
+	viewedRevisionIds.value = next
+	saveViewedRevisionIds(next)
+}
+
 const userPopoverAnchor = ref<HTMLElement | null>(null)
 const showUserPopover = ref(false)
 
@@ -430,6 +472,7 @@ function openUserPopover(event: MouseEvent, _change: FWRevision): void {
 
 function openDiffInNewTab(change: FWRevision): void {
 	if (change.pageName) {
+		markRevisionAsViewed(change)
 		window.open(wiki.getRevisionUrl(change.id, change.pageName), "_blank")
 	}
 }
