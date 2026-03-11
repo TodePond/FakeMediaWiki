@@ -22,18 +22,18 @@
 					class="review-changes__item"
 				>
 					<component
-						:is="cardAsLink ? 'a' : 'div'"
+						:is="change.pageName ? 'a' : 'div'"
 						:href="
-							cardAsLink && change.pageName
+							change.pageName
 								? wiki.getRevisionUrl(change.id, change.pageName)
 								: undefined
 						"
-						:target="cardAsLink ? '_blank' : undefined"
-						:rel="cardAsLink ? 'noopener noreferrer' : undefined"
+						:target="change.pageName ? '_blank' : undefined"
+						:rel="change.pageName ? 'noopener noreferrer' : undefined"
 						class="review-changes__item-link"
-						:class="{ 'review-changes__item-link--not-link': !cardAsLink }"
+						:class="{ 'review-changes__item-link--not-link': !change.pageName }"
 						:aria-label="
-							cardAsLink ? `View diff for ${change.pageName ?? 'page'}` : undefined
+							change.pageName ? `View diff for ${change.pageName ?? 'page'}` : undefined
 						"
 					>
 						<div class="review-changes__item-header">
@@ -92,7 +92,7 @@
 							v-if="
 								!!(change?.summary?.comment || change?.comment) ||
 								showDelta ||
-								!hideEmptySummary
+								showEmptyEditSummary
 							"
 							class="review-changes__summary"
 						>
@@ -105,7 +105,7 @@
 								<span
 									v-if="
 										!!(change?.summary?.comment || change?.comment) ||
-										!hideEmptySummary
+										showEmptyEditSummary
 									"
 									class="review-changes__summary-sep"
 									aria-hidden="true"
@@ -142,10 +142,32 @@
 								]"
 								>{{ change.comment }}</span
 							><em
-								v-else-if="!hideEmptySummary"
+								v-else-if="showEmptyEditSummary"
 								class="review-changes__comment review-changes__comment--empty"
 								>{{ showDelta ? "" : "" }}No edit summary</em
 							>
+						</div>
+						<div
+							v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
+							class="review-changes__revert-risk-notice"
+							:class="{
+								'review-changes__revert-risk-notice--no-box': showSummaryCutout,
+							}"
+						>
+							<CdxIcon
+								:icon="cdxIconAlert"
+								size="small"
+								class="review-changes__revert-risk-notice-icon"
+								:class="{
+									'review-changes__revert-risk-notice-icon--very-high':
+										getRevertRiskNotice(change)?.band === 'high',
+									'review-changes__revert-risk-notice-icon--high':
+										getRevertRiskNotice(change)?.band === 'mediumHigh',
+								}"
+							/>
+							<span class="review-changes__revert-risk-notice-text">{{
+								getRevertRiskNotice(change)!.text
+							}}</span>
 						</div>
 						<div class="review-changes__user-actions-row">
 							<span v-if="showUserIcon" class="review-changes__user-row">
@@ -188,12 +210,12 @@
 								{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
 							</a>
 							<CdxButton
-								v-if="!cardAsLink"
+								v-if="showReviewButton"
 								action="progressive"
 								size="small"
 								weight="normal"
 								class="review-changes__view-change-btn"
-								@click="openDiffInNewTab(change)"
+								@click.stop="openDiffInNewTab(change)"
 							>
 								<CdxIcon :icon="cdxIconEye" size="x-small" />
 								Review
@@ -243,6 +265,7 @@
 <script setup lang="ts">
 import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex"
 import {
+	cdxIconAlert,
 	cdxIconClock,
 	cdxIconEye,
 	cdxIconLightbulb,
@@ -271,6 +294,8 @@ export type ItemSource = "recentChanges" | "pagesAndUsers" | "relatedChanges" | 
 const props = withDefaults(
 	defineProps<{
 		showRevertRisk: boolean
+		/** When true, shows "High revert risk" / "Very high revert risk" notice flags on feed items. */
+		showRevertRiskFlags?: boolean
 		showSourceIcons?: boolean
 		showSourceSubtitles?: boolean
 		showDelta?: boolean
@@ -294,14 +319,15 @@ const props = withDefaults(
 		showUserIcon?: boolean
 		/** When true, edit summaries appear with white bg, border and shadow (cutout style). */
 		showSummaryCutout?: boolean
-		/** When true, hide the summary section entirely when there is no edit summary. */
-		hideEmptySummary?: boolean
+		/** When true, show "No edit summary" when there is no edit summary. When false, hide it (delta still shown if enabled). */
+		showEmptyEditSummary?: boolean
 		/** When true, shows the outer border around the module (for dashboard embedding). */
 		showModuleBorder?: boolean
-		/** When true, the card itself is a link. When false, the card is not a link but shows a Review button. */
-		cardAsLink?: boolean
+		/** When true, shows a Review button in addition to the card being a link. */
+		showReviewButton?: boolean
 	}>(),
 	{
+		showRevertRiskFlags: false,
 		showSourceIcons: false,
 		showSourceSubtitles: false,
 		showUsernameAtPrefix: false,
@@ -315,9 +341,9 @@ const props = withDefaults(
 		collaboratorsRatio: 20,
 		hideDescription: false,
 		showSummaryCutout: true,
-		hideEmptySummary: false,
+		showEmptyEditSummary: true,
 		showModuleBorder: true,
-		cardAsLink: true,
+		showReviewButton: false,
 	}
 )
 
@@ -367,6 +393,41 @@ function getRevertRiskLines(revId: number): Array<{ label: string; value: string
 		const value = pred ? `${formatRevertRiskPercent(pred)}%` : "(missing)"
 		return { label: m.label, value }
 	})
+}
+
+/** Band thresholds for language-agnostic revert risk: above 80% = yellow, above 90% = red */
+const REVERT_RISK_THRESHOLDS = { upperLoose: 0.8, upperTight: 0.9 } as const
+
+type RevertRiskBand = "high" | "mediumHigh"
+
+function getRiskFromPrediction(pred: FWLiftWingPrediction): number {
+	const p = pred.probability?.true
+	return typeof p === "number" ? p : 0
+}
+
+function getRevertRiskNotice(
+	change: FWRevision
+): { text: string; band: RevertRiskBand } | null {
+	if (isLoadingRevertRisk.value) return null
+	const entry = revertRiskByRevId.value.get(change.id)
+	if (!entry || ("error" in entry && entry.error)) return null
+	const byModel = entry as FWPredictionByModel
+	const pred = byModel.revertrisk
+	if (!pred) return null
+	const risk = getRiskFromPrediction(pred)
+	if (risk > REVERT_RISK_THRESHOLDS.upperTight) {
+		return {
+			text: "This change has very high revert risk.",
+			band: "high",
+		}
+	}
+	if (risk > REVERT_RISK_THRESHOLDS.upperLoose) {
+		return {
+			text: "This change has high revert risk.",
+			band: "mediumHigh",
+		}
+	}
+	return null
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
@@ -523,7 +584,7 @@ function getItemSource(change: RevisionWithSource): ItemSource | undefined {
 const selectedRevisionsForDisplay = computed(() => getSelectedRevisionsForDisplay())
 
 watch(
-	() => props.showRevertRisk,
+	() => props.showRevertRisk || props.showRevertRiskFlags,
 	enabled => {
 		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
 			fetchRevertRiskForFeed()
@@ -533,7 +594,10 @@ watch(
 
 let revertRiskDebounceId: ReturnType<typeof setTimeout> | null = null
 watch(
-	() => [selectedRevisionsForDisplay.value.map(r => r.id).join(","), props.showRevertRisk],
+	() => [
+		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
+		props.showRevertRisk || props.showRevertRiskFlags,
+	],
 	([, enabled]) => {
 		if (
 			!enabled ||
@@ -720,7 +784,7 @@ async function loadFeed(append = false): Promise<void> {
 			mixedCollaboratorsData.value = []
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
-			if (props.showRevertRisk) {
+			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
 			return
@@ -809,7 +873,7 @@ async function loadFeed(append = false): Promise<void> {
 			allRevisionsData.value = []
 			selectedRevisions.value = []
 			isLoading.value = false
-			if (props.showRevertRisk) {
+			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
 			return
@@ -877,7 +941,7 @@ async function loadFeed(append = false): Promise<void> {
 		selectedRevisions.value = allRevisionsData.value
 
 		isLoading.value = false
-		if (props.showRevertRisk) {
+		if (props.showRevertRisk || props.showRevertRiskFlags) {
 			fetchRevertRiskForFeed()
 		}
 	} catch (e) {

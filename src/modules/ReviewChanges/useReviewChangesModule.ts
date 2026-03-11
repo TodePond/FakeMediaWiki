@@ -5,6 +5,7 @@ const STORAGE_PREFIX = "review-changes-module-"
 const LEGACY_PREFIX = "review-changes-"
 
 const SHOW_REVERT_RISK_KEY = `${STORAGE_PREFIX}show-revert-risk`
+const SHOW_REVERT_RISK_FLAGS_KEY = `${STORAGE_PREFIX}show-revert-risk-flags`
 const SHOW_DELTA_KEY = `${STORAGE_PREFIX}show-delta`
 const SHOW_SOURCE_ICONS_KEY = `${STORAGE_PREFIX}show-source-icons`
 const SHOW_SOURCE_SUBTITLES_KEY = `${STORAGE_PREFIX}show-source-subtitles`
@@ -13,8 +14,10 @@ const SHOW_USER_ICON_KEY = `${STORAGE_PREFIX}show-user-icon`
 const SUMMARY_CUTOUT_KEY = `${STORAGE_PREFIX}summary-cutout`
 const SHOW_MODULE_BORDER_KEY = `${STORAGE_PREFIX}show-module-border`
 const LEGACY_HIDE_OUTER_BORDER_KEY = `${LEGACY_PREFIX}hide-outer-border`
-const CARD_AS_LINK_KEY = `${STORAGE_PREFIX}card-as-link`
-const HIDE_EMPTY_SUMMARY_KEY = `${STORAGE_PREFIX}hide-empty-summary`
+const SHOW_REVIEW_BUTTON_KEY = `${STORAGE_PREFIX}show-review-button`
+const LEGACY_CARD_AS_LINK_KEY = `${LEGACY_PREFIX}card-as-link`
+const SHOW_EMPTY_EDIT_SUMMARY_KEY = `${STORAGE_PREFIX}show-empty-edit-summary`
+const LEGACY_HIDE_EMPTY_SUMMARY_KEY = `${LEGACY_PREFIX}hide-empty-summary`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -27,6 +30,7 @@ const STANDALONE_COLLABORATORS_RATIO_KEY = `${STORAGE_PREFIX}standalone-collabor
 
 const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_REVERT_RISK_KEY]: `${LEGACY_PREFIX}show-revert-risk`,
+	[SHOW_REVERT_RISK_FLAGS_KEY]: `${STORAGE_PREFIX}show-revert-risk-flags`,
 	[SHOW_DELTA_KEY]: `${LEGACY_PREFIX}show-delta`,
 	[SHOW_SOURCE_ICONS_KEY]: `${LEGACY_PREFIX}show-source-icons`,
 	[SHOW_SOURCE_SUBTITLES_KEY]: `${LEGACY_PREFIX}show-source-subtitles`,
@@ -34,8 +38,6 @@ const LEGACY_KEYS: Record<string, string> = {
 	[SHOW_USER_ICON_KEY]: `${LEGACY_PREFIX}show-user-icon`,
 	[SUMMARY_CUTOUT_KEY]: `${LEGACY_PREFIX}summary-cutout`,
 	[SHOW_MODULE_BORDER_KEY]: LEGACY_HIDE_OUTER_BORDER_KEY,
-	[CARD_AS_LINK_KEY]: `${LEGACY_PREFIX}card-as-link`,
-	[HIDE_EMPTY_SUMMARY_KEY]: `${LEGACY_PREFIX}hide-empty-summary`,
 	[FEED_SOURCE_KEY]: `${LEGACY_PREFIX}feed-source`,
 	[MIXED_RECENT_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}recent-changes-ratio`,
 	[MIXED_PAGES_AND_USERS_RATIO_KEY]: `${LEGACY_PREFIX}pages-and-users-ratio`,
@@ -65,6 +67,38 @@ function getStored(key: string, legacyKey: string, fallback: string): string {
 function getStoredBoolean(key: string, legacyKey: string, fallback: boolean): boolean {
 	const stored = getStored(key, legacyKey, String(fallback))
 	return stored === "true"
+}
+
+function getStoredShowReviewButton(): boolean {
+	try {
+		const stored = localStorage.getItem(SHOW_REVIEW_BUTTON_KEY)
+		if (stored !== null) return stored === "true"
+		const legacy = localStorage.getItem(LEGACY_CARD_AS_LINK_KEY)
+		if (legacy !== null) {
+			const migrated = legacy === "true" ? "false" : "true"
+			localStorage.setItem(SHOW_REVIEW_BUTTON_KEY, migrated)
+			return migrated === "true"
+		}
+	} catch {
+		// ignore
+	}
+	return false
+}
+
+function getStoredShowEmptyEditSummary(): boolean {
+	try {
+		const stored = localStorage.getItem(SHOW_EMPTY_EDIT_SUMMARY_KEY)
+		if (stored !== null) return stored === "true"
+		const legacy = localStorage.getItem(LEGACY_HIDE_EMPTY_SUMMARY_KEY)
+		if (legacy !== null) {
+			const migrated = legacy === "true" ? "false" : "true"
+			localStorage.setItem(SHOW_EMPTY_EDIT_SUMMARY_KEY, migrated)
+			return migrated === "true"
+		}
+	} catch {
+		// ignore
+	}
+	return true
 }
 
 function getStoredShowModuleBorder(): boolean {
@@ -120,9 +154,34 @@ export const pagesAndUsersSliderId = "review-changes-module-pages-slider"
 export const relatedChangesSliderId = "review-changes-module-related-slider"
 export const collaboratorsSliderId = "review-changes-module-collaborators-slider"
 
-export function useReviewChangesModule() {
+/**
+ * Single source of truth for prototype setting checkboxes.
+ * Add new controls here – they will appear in both ReviewChangesModule and PersonalDashboardClone.
+ * Use prototypeOnly: true for controls that only make sense in dashboard context (e.g. Module border).
+ * Prototype-only controls are listed at the bottom.
+ */
+export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
+	{ key: "showDelta", label: "Delta" },
+	{ key: "showSourceIcons", label: "Source icon" },
+	{ key: "showSourceSubtitles", label: "Source subtitle" },
+	{ key: "showRevertRiskInFeed", label: "Debug revert risk" },
+	{ key: "showRevertRiskFlags", label: "Revert risk flags" },
+	{ key: "showUsernameAtPrefix", label: "@ username" },
+	{ key: "showUserIcon", label: "User icon" },
+	{ key: "summaryCutout", label: "Cutout" },
+	{ key: "showEmptyEditSummary", label: "Empty edit summary" },
+	{ key: "showReviewButton", label: "Review button" },
+	{ key: "showModuleBorder", label: "Module border", prototypeOnly: true },
+] as const
+
+let moduleInstance: ReturnType<typeof createReviewChangesModule> | null = null
+
+function createReviewChangesModule() {
 	const showRevertRiskInFeed = ref(
 		getStoredBoolean(SHOW_REVERT_RISK_KEY, LEGACY_KEYS[SHOW_REVERT_RISK_KEY], false)
+	)
+	const showRevertRiskFlags = ref(
+		getStoredBoolean(SHOW_REVERT_RISK_FLAGS_KEY, LEGACY_KEYS[SHOW_REVERT_RISK_FLAGS_KEY], false)
 	)
 	const showDelta = ref(
 		getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], true)
@@ -143,12 +202,8 @@ export function useReviewChangesModule() {
 		getStoredBoolean(SUMMARY_CUTOUT_KEY, LEGACY_KEYS[SUMMARY_CUTOUT_KEY], true)
 	)
 	const showModuleBorder = ref(getStoredShowModuleBorder())
-	const cardAsLink = ref(
-		getStoredBoolean(CARD_AS_LINK_KEY, LEGACY_KEYS[CARD_AS_LINK_KEY], true)
-	)
-	const hideEmptySummary = ref(
-		getStoredBoolean(HIDE_EMPTY_SUMMARY_KEY, LEGACY_KEYS[HIDE_EMPTY_SUMMARY_KEY], false)
-	)
+	const showReviewButton = ref(getStoredShowReviewButton())
+	const showEmptyEditSummary = ref(getStoredShowEmptyEditSummary())
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
 		getStoredRatio(
@@ -236,6 +291,14 @@ export function useReviewChangesModule() {
 		}
 	})
 
+	watch(showRevertRiskFlags, enabled => {
+		try {
+			localStorage.setItem(SHOW_REVERT_RISK_FLAGS_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(showDelta, enabled => {
 		try {
 			localStorage.setItem(SHOW_DELTA_KEY, String(enabled))
@@ -292,17 +355,17 @@ export function useReviewChangesModule() {
 		}
 	})
 
-	watch(cardAsLink, enabled => {
+	watch(showReviewButton, enabled => {
 		try {
-			localStorage.setItem(CARD_AS_LINK_KEY, String(enabled))
+			localStorage.setItem(SHOW_REVIEW_BUTTON_KEY, String(enabled))
 		} catch {
 			// ignore
 		}
 	})
 
-	watch(hideEmptySummary, enabled => {
+	watch(showEmptyEditSummary, enabled => {
 		try {
-			localStorage.setItem(HIDE_EMPTY_SUMMARY_KEY, String(enabled))
+			localStorage.setItem(SHOW_EMPTY_EDIT_SUMMARY_KEY, String(enabled))
 		} catch {
 			// ignore
 		}
@@ -388,6 +451,7 @@ export function useReviewChangesModule() {
 		relatedChangesRatio,
 		collaboratorsRatio,
 		showRevertRiskInFeed,
+		showRevertRiskFlags,
 		showDelta,
 		showSourceIcons,
 		showSourceSubtitles,
@@ -395,8 +459,8 @@ export function useReviewChangesModule() {
 		showUserIcon,
 		summaryCutout,
 		showModuleBorder,
-		cardAsLink,
-		hideEmptySummary,
+		showReviewButton,
+		showEmptyEditSummary,
 		sourceOptions,
 		reviewChangesSourceId,
 		recentChangesSliderId,
@@ -404,4 +468,11 @@ export function useReviewChangesModule() {
 		relatedChangesSliderId,
 		collaboratorsSliderId,
 	}
+}
+
+export function useReviewChangesModule() {
+	if (!moduleInstance) {
+		moduleInstance = createReviewChangesModule()
+	}
+	return moduleInstance
 }
