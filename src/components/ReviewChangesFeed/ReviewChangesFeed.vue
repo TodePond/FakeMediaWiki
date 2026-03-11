@@ -88,14 +88,27 @@
 							</time>
 						</div>
 
-						<div class="review-changes__summary">
+						<div
+							v-if="
+								!!(change?.summary?.comment || change?.comment) ||
+								showDelta ||
+								!hideEmptySummary
+							"
+							class="review-changes__summary"
+						>
 							<template v-if="showDelta">
 								<span
 									class="review-changes__summary-prefix"
 									:class="wiki.getDeltaClass(change.delta ?? 0, false)"
 									>{{ formatDelta(change.delta) }}</span
 								>
-								<span class="review-changes__summary-sep" aria-hidden="true"
+								<span
+									v-if="
+										!!(change?.summary?.comment || change?.comment) ||
+										!hideEmptySummary
+									"
+									class="review-changes__summary-sep"
+									aria-hidden="true"
 									>&nbsp;·&nbsp;</span
 								></template
 							><template v-if="change?.summary?.comment"
@@ -129,7 +142,7 @@
 								]"
 								>{{ change.comment }}</span
 							><em
-								v-else
+								v-else-if="!hideEmptySummary"
 								class="review-changes__comment review-changes__comment--empty"
 								>{{ showDelta ? "" : "" }}No edit summary</em
 							>
@@ -281,6 +294,8 @@ const props = withDefaults(
 		showUserIcon?: boolean
 		/** When true, edit summaries appear with white bg, border and shadow (cutout style). */
 		showSummaryCutout?: boolean
+		/** When true, hide the summary section entirely when there is no edit summary. */
+		hideEmptySummary?: boolean
 		/** When true, shows the outer border around the module (for dashboard embedding). */
 		showModuleBorder?: boolean
 		/** When true, the card itself is a link. When false, the card is not a link but shows a Review button. */
@@ -300,6 +315,7 @@ const props = withDefaults(
 		collaboratorsRatio: 20,
 		hideDescription: false,
 		showSummaryCutout: true,
+		hideEmptySummary: false,
 		showModuleBorder: true,
 		cardAsLink: true,
 	}

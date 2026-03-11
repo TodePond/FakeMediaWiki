@@ -9,6 +9,7 @@
 				<CdxCheckbox v-model="showUsernameAtPrefix">@ username</CdxCheckbox>
 				<CdxCheckbox v-model="showUserIcon">User icon</CdxCheckbox>
 				<CdxCheckbox v-model="summaryCutout">Cutout</CdxCheckbox>
+				<CdxCheckbox v-model="hideEmptySummary">Hide empty summary</CdxCheckbox>
 				<CdxCheckbox v-model="cardAsLink">Card as link</CdxCheckbox>
 			</div>
 			<div class="review-changes-controls__row">
@@ -185,6 +186,7 @@
 			:show-username-at-prefix="showUsernameAtPrefix"
 			:show-user-icon="showUserIcon"
 			:show-summary-cutout="summaryCutout"
+			:hide-empty-summary="hideEmptySummary"
 			:show-delta="showDelta"
 			:source="feedSource"
 			:recent-changes-ratio="recentChangesRatio"
@@ -236,6 +238,7 @@ const {
 	showUsernameAtPrefix,
 	showUserIcon,
 	summaryCutout,
+	hideEmptySummary,
 } = useReviewChangesModule()
 </script>
 
