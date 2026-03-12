@@ -550,7 +550,7 @@ const props = withDefaults(
 		showUserIcon: false,
 		flagsBelowUsername: true,
 		simplifiedTimestamp: false,
-		timestampPosition: "belowUsername",
+		timestampPosition: "rightOfUsername",
 		showDelta: true,
 		deltaFormatParentheses: false,
 		source: "recentChanges",

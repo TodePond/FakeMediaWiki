@@ -207,7 +207,7 @@ function getStoredTimestampPosition(): TimestampPosition {
 	} catch {
 		// ignore
 	}
-	return "belowUsername"
+	return "rightOfUsername"
 }
 
 /**
@@ -689,7 +689,7 @@ function createReviewChangesModule() {
 		showLastClickedHighlight.value = false
 		flagsBelowUsername.value = true
 		simplifiedTimestamp.value = false
-		timestampPosition.value = "belowUsername"
+		timestampPosition.value = "rightOfUsername"
 		feedSource.value = "recentChanges"
 		mixedRecentChangesRatio.value = 60
 		mixedPagesAndUsersRatio.value = 0
