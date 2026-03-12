@@ -22,6 +22,9 @@ const LEGACY_CARD_AS_LINK_KEY = `${LEGACY_PREFIX}card-as-link`
 const SHOW_EMPTY_EDIT_SUMMARY_KEY = `${STORAGE_PREFIX}show-empty-edit-summary`
 const LEGACY_HIDE_EMPTY_SUMMARY_KEY = `${LEGACY_PREFIX}hide-empty-summary`
 const SHOW_RECOMMENDATION_FLAGS_KEY = `${STORAGE_PREFIX}show-recommendation-flags`
+const SHOW_EDIT_CHECK_TONE_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-tone-flag`
+const SHOW_EDIT_CHECK_PASTE_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-paste-flag`
+const SHOW_EDIT_CHECK_OTHER_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-other-flag`
 const SHOW_DISMISS_BUTTON_KEY = `${STORAGE_PREFIX}show-dismiss-button`
 const SHOW_HIGHLIGHT_UNVIEWED_KEY = `${STORAGE_PREFIX}show-highlight-unviewed`
 const SHOW_UNVIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-unviewed-border`
@@ -224,6 +227,9 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showRevertRiskFlags", label: "Revert risk flags", section: "Flag types" },
 	{ key: "showRecommendationFlags", label: "Recommendation flags", section: "Flag types" },
 	{ key: "showRevertedFlag", label: "Reverted flag", section: "Flag types" },
+	{ key: "showEditCheckToneFlag", label: "Tone check flag", section: "Flag types" },
+	{ key: "showEditCheckPasteFlag", label: "Paste check flag", section: "Flag types" },
+	{ key: "showEditCheckOtherFlag", label: "Other edit check flag", section: "Flag types" },
 	{ key: "revertRiskFlagsInBox", label: "Flags in box", section: "Flag appearance" },
 	{ key: "verboseFlags", label: "Verbose flags", section: "Flag appearance" },
 	{ key: "showUsernameAtPrefix", label: "@ username", section: "User" },
@@ -282,6 +288,15 @@ function createReviewChangesModule() {
 	const showEmptyEditSummary = ref(getStoredShowEmptyEditSummary())
 	const showRecommendationFlags = ref(
 		getStoredBoolean(SHOW_RECOMMENDATION_FLAGS_KEY, SHOW_RECOMMENDATION_FLAGS_KEY, false)
+	)
+	const showEditCheckToneFlag = ref(
+		getStoredBoolean(SHOW_EDIT_CHECK_TONE_FLAG_KEY, SHOW_EDIT_CHECK_TONE_FLAG_KEY, false)
+	)
+	const showEditCheckPasteFlag = ref(
+		getStoredBoolean(SHOW_EDIT_CHECK_PASTE_FLAG_KEY, SHOW_EDIT_CHECK_PASTE_FLAG_KEY, false)
+	)
+	const showEditCheckOtherFlag = ref(
+		getStoredBoolean(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, SHOW_EDIT_CHECK_OTHER_FLAG_KEY, false)
 	)
 	const showDismissButton = ref(
 		getStoredBoolean(SHOW_DISMISS_BUTTON_KEY, SHOW_DISMISS_BUTTON_KEY, false)
@@ -523,6 +538,30 @@ function createReviewChangesModule() {
 		}
 	})
 
+	watch(showEditCheckToneFlag, enabled => {
+		try {
+			localStorage.setItem(SHOW_EDIT_CHECK_TONE_FLAG_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showEditCheckPasteFlag, enabled => {
+		try {
+			localStorage.setItem(SHOW_EDIT_CHECK_PASTE_FLAG_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showEditCheckOtherFlag, enabled => {
+		try {
+			localStorage.setItem(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(showDismissButton, enabled => {
 		try {
 			localStorage.setItem(SHOW_DISMISS_BUTTON_KEY, String(enabled))
@@ -682,6 +721,9 @@ function createReviewChangesModule() {
 		showReviewButton.value = false
 		showEmptyEditSummary.value = true
 		showRecommendationFlags.value = false
+		showEditCheckToneFlag.value = false
+		showEditCheckPasteFlag.value = false
+		showEditCheckOtherFlag.value = false
 		showDismissButton.value = false
 		showHighlightUnviewed.value = false
 		showUnviewedBorder.value = false
@@ -743,6 +785,9 @@ function createReviewChangesModule() {
 		timestampPosition,
 		showEmptyEditSummary,
 		showRecommendationFlags,
+		showEditCheckToneFlag,
+		showEditCheckPasteFlag,
+		showEditCheckOtherFlag,
 		sourceOptions,
 		reviewChangesSourceId,
 		recentChangesSliderId,

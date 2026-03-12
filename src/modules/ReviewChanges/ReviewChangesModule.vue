@@ -31,6 +31,9 @@
 			:viewed-border="showViewedBorder"
 			:last-clicked-highlight="showLastClickedHighlight"
 			:show-recommendation-flags="showRecommendationFlags"
+			:show-edit-check-tone-flag="showEditCheckToneFlag"
+			:show-edit-check-paste-flag="showEditCheckPasteFlag"
+			:show-edit-check-other-flag="showEditCheckOtherFlag"
 			:flags-below-username="flagsBelowUsername"
 			:simplified-timestamp="simplifiedTimestamp"
 			:timestamp-position="timestampPosition"
@@ -75,6 +78,9 @@ const {
 	summaryCutout,
 	showEmptyEditSummary,
 	showRecommendationFlags,
+	showEditCheckToneFlag,
+	showEditCheckPasteFlag,
+	showEditCheckOtherFlag,
 	flagsBelowUsername,
 	simplifiedTimestamp,
 	timestampPosition,

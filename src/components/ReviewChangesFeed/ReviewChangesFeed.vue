@@ -266,6 +266,48 @@
 									</time>
 								</template>
 								</span>
+								<span
+									v-if="(showReviewButton || showDismissButton) && !hasAnyFlag(change)"
+									class="review-changes__action-buttons"
+								>
+									<CdxButton
+										v-if="showReviewButton"
+										:action="
+											isRevisionViewed(change)
+												? 'default'
+												: isLatestRevision(change)
+													? 'progressive'
+													: 'default'
+										"
+										size="small"
+										weight="quiet"
+										class="review-changes__view-change-btn"
+										:class="{
+											'review-changes__view-change-btn--viewed':
+												isRevisionViewed(change),
+										}"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="openDiffInNewTab(change)"
+									>
+										<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
+										Open
+									</CdxButton>
+									<CdxButton
+										v-if="showDismissButton"
+										action="default"
+										size="small"
+										weight="quiet"
+										class="review-changes__dismiss-btn"
+										aria-label="Dismiss"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="dismissRevision(change)"
+									>
+										<CdxIcon :icon="cdxIconCheck" size="x-small" />
+										Dismiss
+									</CdxButton>
+								</span>
 							</div>
 							<div
 								v-if="
@@ -274,8 +316,9 @@
 									(showRecommendationFlags &&
 										getItemSource(change) === 'relatedChanges' &&
 										getRecommendationSourcePageNames(change).length) ||
-									showReviewButton ||
-									showDismissButton
+									(showEditCheckToneFlag && hasEditCheckTone(change)) ||
+									(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
+									(showEditCheckOtherFlag && hasEditCheckOther(change))
 								"
 								class="review-changes__flags-actions-row"
 								:class="{
@@ -289,7 +332,10 @@
 									(showRevertedFlag && isReverted(change)) ||
 									(showRecommendationFlags &&
 										getItemSource(change) === 'relatedChanges' &&
-										getRecommendationSourcePageNames(change).length)
+										getRecommendationSourcePageNames(change).length) ||
+									(showEditCheckToneFlag && hasEditCheckTone(change)) ||
+									(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
+									(showEditCheckOtherFlag && hasEditCheckOther(change))
 								"
 								class="review-changes__flags-container"
 								:class="{
@@ -344,7 +390,7 @@
 											)
 												? cdxIconSuccess
 												: cdxIconAlert
-									"
+										"
 										size="small"
 										class="review-changes__revert-risk-notice-icon"
 										:class="{
@@ -362,9 +408,57 @@
 										getRevertRiskNotice(change)!.text
 									}}</span>
 								</div>
+								<div
+									v-if="showEditCheckToneFlag && hasEditCheckTone(change)"
+									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+								>
+									<CdxIcon
+										:icon="cdxIconAlert"
+										size="small"
+										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check-tone"
+										aria-hidden="true"
+									/>
+									<span class="review-changes__revert-risk-notice-text">{{
+										verboseFlags
+											? "Tone check was detected; tone may need revising."
+											: "Needs a tone check"
+									}}</span>
+								</div>
+								<div
+									v-if="showEditCheckPasteFlag && hasEditCheckPaste(change)"
+									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+								>
+									<CdxIcon
+										:icon="cdxIconPaste"
+										size="small"
+										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check-paste"
+										aria-hidden="true"
+									/>
+									<span class="review-changes__revert-risk-notice-text">{{
+										verboseFlags
+											? "Paste check was shown during editing."
+											: "Needs a paste check"
+									}}</span>
+								</div>
+								<div
+									v-if="showEditCheckOtherFlag && hasEditCheckOther(change)"
+									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+								>
+									<CdxIcon
+										:icon="cdxIconInfo"
+										size="small"
+										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check-other"
+										aria-hidden="true"
+									/>
+									<span class="review-changes__revert-risk-notice-text">{{
+										verboseFlags
+											? "Another edit check was triggered (references, new content, or suggestion)."
+											: "Needs a check"
+									}}</span>
+								</div>
 							</div>
 							<span
-								v-if="showReviewButton || showDismissButton"
+								v-if="(showReviewButton || showDismissButton) && hasAnyFlag(change)"
 								class="review-changes__action-buttons"
 							>
 								<CdxButton
@@ -397,6 +491,8 @@
 									weight="quiet"
 									class="review-changes__dismiss-btn"
 									aria-label="Dismiss"
+									@pointerdown.stop
+									@mousedown.stop
 									@click.stop="dismissRevision(change)"
 								>
 									<CdxIcon :icon="cdxIconCheck" size="x-small" />
@@ -462,8 +558,10 @@ import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex
 import {
 	cdxIconAlert,
 	cdxIconCheck,
+	cdxIconPaste,
 	cdxIconClock,
 	cdxIconEditUndo,
+	cdxIconInfo,
 	cdxIconLightbulb,
 	cdxIconLinkExternal,
 	cdxIconSuccess,
@@ -502,7 +600,7 @@ const props = withDefaults(
 		showRevertRiskFlags?: boolean
 		/** When true, flag notices have border and padding (box style). When false, no border/padding. */
 		revertRiskFlagsInBox?: boolean
-		/** When true, shows verbose flag text ("This change has very high revert risk", "This change was reverted", "Recommended based on X and Y."). When false, shows simple text ("High revert risk", "Reverted", "Based on X and Y."). */
+		/** When true, shows verbose flag text ("This change has very high revert risk", "This change was reverted", "Because you watch X and Y."). When false, shows simple text ("High revert risk", "Reverted", "Because you watch X and Y."). */
 		verboseFlags?: boolean
 		/** When true, shows "Reverted" flag for edits that have been reverted. */
 		showRevertedFlag?: boolean
@@ -545,8 +643,14 @@ const props = withDefaults(
 		showReviewButton?: boolean
 		/** When true, shows a Dismiss button to the right of the View button. */
 		showDismissButton?: boolean
-		/** When true, shows recommendation reason for Related changes items (e.g. "Recommended based on X and Y." or "Based on X and Y." when verboseFlags is false). */
+		/** When true, shows recommendation reason for Related changes items (e.g. "Because you watch X and Y."). */
 		showRecommendationFlags?: boolean
+		/** When true, shows "Needs a tone check" flag for edits where tone check was detected (editcheck-tone, editcheck-tone-shown). */
+		showEditCheckToneFlag?: boolean
+		/** When true, shows "Needs a paste check" flag for edits where paste check was shown (editcheck-paste-shown). */
+		showEditCheckPasteFlag?: boolean
+		/** When true, shows "Needs a check" flag for edits with other edit check tags (references, newcontent, editsuggestion-seen, etc.). */
+		showEditCheckOtherFlag?: boolean
 		/** When true, unopened feed items display with a slight blue background. */
 		highlightUnviewed?: boolean
 		/** When true, unopened feed items display with blue vertical lines on left and right. */
@@ -583,6 +687,9 @@ const props = withDefaults(
 		showReviewButton: false,
 		showDismissButton: false,
 		showRecommendationFlags: false,
+		showEditCheckToneFlag: false,
+		showEditCheckPasteFlag: false,
+		showEditCheckOtherFlag: false,
 		highlightUnviewed: false,
 		unviewedBorder: false,
 		viewedBorder: false,
@@ -639,6 +746,49 @@ function isReverted(change: FWRevision): boolean {
 	const tags = change.tags
 	if (!tags || tags.length === 0) return false
 	return tags.includes("mw-reverted") || tags.includes("reverted")
+}
+
+/** Edit check tags: tone (editcheck-tone, editcheck-tone-shown), paste (editcheck-paste-shown), other (references, newcontent, editsuggestion-seen, etc.). */
+const EDIT_CHECK_TONE_TAGS = ["editcheck-tone", "editcheck-tone-shown"]
+const EDIT_CHECK_PASTE_TAGS = ["editcheck-paste-shown"]
+const EDIT_CHECK_OTHER_TAGS = [
+	"editcheck-references",
+	"editcheck-newreference",
+	"editcheck-newcontent",
+	"editcheck-references-shown",
+	"editsuggestion-seen",
+]
+
+function hasEditCheckTone(change: FWRevision): boolean {
+	const tags = change.tags
+	if (!tags || tags.length === 0) return false
+	return EDIT_CHECK_TONE_TAGS.some(t => tags.includes(t))
+}
+
+function hasEditCheckPaste(change: FWRevision): boolean {
+	const tags = change.tags
+	if (!tags || tags.length === 0) return false
+	return EDIT_CHECK_PASTE_TAGS.some(t => tags.includes(t))
+}
+
+function hasEditCheckOther(change: FWRevision): boolean {
+	const tags = change.tags
+	if (!tags || tags.length === 0) return false
+	return EDIT_CHECK_OTHER_TAGS.some(t => tags.includes(t))
+}
+
+/** Whether any flag is shown for this change (revert risk, reverted, recommendation, edit check). */
+function hasAnyFlag(change: FWRevision): boolean {
+	return (
+		(props.showRevertRiskFlags && !!getRevertRiskNotice(change)) ||
+		(props.showRevertedFlag && isReverted(change)) ||
+		(props.showRecommendationFlags &&
+			getItemSource(change) === "relatedChanges" &&
+			getRecommendationSourcePageNames(change).length > 0) ||
+		(props.showEditCheckToneFlag && hasEditCheckTone(change)) ||
+		(props.showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
+		(props.showEditCheckOtherFlag && hasEditCheckOther(change))
+	)
 }
 
 /** Whether there is summary content (comment, delta, or empty-edit placeholder) above the flags. */
@@ -766,7 +916,7 @@ function getRecommendationSourcePageNames(change: RevisionWithSource): string[] 
 
 function getRecommendationReason(sourcePageNames: string[]): string {
 	if (!sourcePageNames?.length) return ""
-	const intro = props.verboseFlags ? "Recommended based on " : "Based on "
+	const intro = "Because you watch "
 	if (sourcePageNames.length === 1) {
 		return `${intro}${sourcePageNames[0]}.`
 	}
