@@ -192,7 +192,7 @@
 }
 
 .review-changes__flags-container {
-	margin-top: 0.125rem;
+	/* margin-top: 0.125rem; */
 	margin-bottom: 0.125rem;
 	display: flex;
 	flex-direction: column;
@@ -330,7 +330,8 @@
 	margin-right: -2px;
 }
 
-.review-changes__source-icon--pagesAndUsers {
+.review-changes__source-icon--pagesAndUsers,
+.review-changes__source-icon--pagesAndUsersLatest {
 	color: #202122;
 }
 

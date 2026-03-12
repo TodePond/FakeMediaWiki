@@ -113,6 +113,7 @@
 				:source="feedSource"
 				:recent-changes-ratio="recentChangesRatio"
 				:pages-and-users-ratio="pagesAndUsersRatio"
+				:pages-and-users-latest-ratio="pagesAndUsersLatestRatio"
 				:collaborators-ratio="collaboratorsRatio"
 				:related-changes-ratio="relatedChangesRatio"
 				:feed-cap="10"
@@ -265,6 +266,7 @@ const {
 		showLastClickedHighlight,
 		recentChangesRatio,
 		pagesAndUsersRatio,
+		pagesAndUsersLatestRatio,
 		collaboratorsRatio,
 		relatedChangesRatio,
 		showRevertRiskInFeed,

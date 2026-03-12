@@ -41,6 +41,23 @@
 				</div>
 			</div>
 			<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
+				<CdxLabel :input-id="pagesAndUsersLatestSliderId">Watchlist (latest) %</CdxLabel>
+				<div class="ratio-slider-line">
+					<input
+						:id="pagesAndUsersLatestSliderId"
+						v-model.number="mixedPagesAndUsersLatestRatio"
+						type="range"
+						min="0"
+						max="100"
+						step="10"
+						class="ratio-slider"
+					/>
+					<span class="ratio-slider-value" aria-hidden="true"
+						>{{ mixedPagesAndUsersLatestRatio }}%</span
+					>
+				</div>
+			</div>
+			<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
 				<CdxLabel :input-id="pagesAndUsersSliderId">Watchlist %</CdxLabel>
 				<div class="ratio-slider-line">
 					<input
@@ -107,6 +124,25 @@
 					/>
 					<span class="ratio-slider-value" aria-hidden="true"
 						>{{ standaloneRecentChangesRatio }}%</span
+					>
+				</div>
+			</div>
+		</template>
+		<template v-if="feedSource === 'pagesAndUsersLatest'">
+			<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
+				<CdxLabel :input-id="pagesAndUsersLatestSliderId">Watchlist (latest) %</CdxLabel>
+				<div class="ratio-slider-line">
+					<input
+						:id="pagesAndUsersLatestSliderId"
+						v-model.number="standalonePagesAndUsersLatestRatio"
+						type="range"
+						min="0"
+						max="100"
+						step="10"
+						class="ratio-slider"
+					/>
+					<span class="ratio-slider-value" aria-hidden="true"
+						>{{ standalonePagesAndUsersLatestRatio }}%</span
 					>
 				</div>
 			</div>
@@ -182,6 +218,7 @@ import {
 	REVIEW_CHANGES_CHECKBOX_CONFIG,
 	collaboratorsSliderId,
 	pagesAndUsersSliderId,
+	pagesAndUsersLatestSliderId,
 	recentChangesSliderId,
 	relatedChangesSliderId,
 	reviewChangesSourceId,
@@ -226,10 +263,12 @@ const {
 	feedSource,
 	mixedRecentChangesRatio,
 	mixedPagesAndUsersRatio,
+	mixedPagesAndUsersLatestRatio,
 	mixedCollaboratorsRatio,
 	mixedRelatedChangesRatio,
 	standaloneRecentChangesRatio,
 	standalonePagesAndUsersRatio,
+	standalonePagesAndUsersLatestRatio,
 	standaloneCollaboratorsRatio,
 	standaloneRelatedChangesRatio,
 } = module
