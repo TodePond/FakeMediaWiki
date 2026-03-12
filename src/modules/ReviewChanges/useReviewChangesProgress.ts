@@ -1,6 +1,8 @@
 import type { FWRevision } from "fakewiki/types"
 import { ref } from "vue"
 
+type RevisionsCallback = () => FWRevision[]
+
 const VIEWED_REVISIONS_STORAGE_KEY = "review-changes-viewed-revisions"
 const DISMISSED_REVISIONS_STORAGE_KEY = "review-changes-dismissed-revisions"
 const LAST_CLICKED_REVISION_KEY = "review-changes-last-clicked-revision"
@@ -49,6 +51,16 @@ function saveRevisionIds(key: string, ids: Set<number>): void {
 
 let progressInstance: ReturnType<typeof createReviewChangesProgress> | null = null
 
+let revisionsCallback: RevisionsCallback | null = null
+
+export function setRevisionsCallback(cb: RevisionsCallback): void {
+	revisionsCallback = cb
+}
+
+export function clearRevisionsCallback(): void {
+	revisionsCallback = null
+}
+
 function createReviewChangesProgress() {
 	const viewedRevisionIds = ref<Set<number>>(loadRevisionIds(VIEWED_REVISIONS_STORAGE_KEY))
 	const dismissedRevisionIds = ref<Set<number>>(loadRevisionIds(DISMISSED_REVISIONS_STORAGE_KEY))
@@ -65,6 +77,23 @@ function createReviewChangesProgress() {
 		saveRevisionIds(VIEWED_REVISIONS_STORAGE_KEY, next)
 		lastClickedRevisionId.value = change.id
 		saveLastClickedRevisionId(change.id)
+	}
+
+	function markRevisionsAsViewed(revisions: FWRevision[]): void {
+		if (revisions.length === 0) return
+		const next = new Set(viewedRevisionIds.value)
+		for (const r of revisions) {
+			next.add(r.id)
+		}
+		viewedRevisionIds.value = next
+		saveRevisionIds(VIEWED_REVISIONS_STORAGE_KEY, next)
+		lastClickedRevisionId.value = null
+		saveLastClickedRevisionId(null)
+	}
+
+	function completeProgress(): void {
+		const revisions = revisionsCallback?.() ?? []
+		markRevisionsAsViewed(revisions)
 	}
 
 	function clearLastClickedRevisionId(): void {
@@ -103,6 +132,8 @@ function createReviewChangesProgress() {
 		clearLastClickedRevisionId,
 		isRevisionViewed,
 		markRevisionAsViewed,
+		markRevisionsAsViewed,
+		completeProgress,
 		isRevisionDismissed,
 		dismissRevision,
 		resetProgress,

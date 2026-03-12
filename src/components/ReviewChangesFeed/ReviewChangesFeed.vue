@@ -452,8 +452,8 @@
 									/>
 									<span class="review-changes__revert-risk-notice-text">{{
 										verboseFlags
-											? "Another edit check was triggered (references, new content, or suggestion)."
-											: "Needs a check"
+											? "Reference check was shown."
+											: "Reference check"
 									}}</span>
 								</div>
 							</div>
@@ -553,7 +553,11 @@
 </template>
 
 <script setup lang="ts">
-import { useReviewChangesProgress } from "@/modules/ReviewChanges/useReviewChangesProgress"
+import {
+	clearRevisionsCallback,
+	setRevisionsCallback,
+	useReviewChangesProgress,
+} from "@/modules/ReviewChanges/useReviewChangesProgress"
 import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex"
 import {
 	cdxIconAlert,
@@ -574,7 +578,7 @@ import type {
 	FWPredictionByModel,
 	FWRevision,
 } from "fakewiki/types"
-import { computed, onMounted, ref, watch } from "vue"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 
 export type ReviewChangesSource =
 	| "recentChanges"
@@ -647,7 +651,7 @@ const props = withDefaults(
 		showEditCheckToneFlag?: boolean
 		/** When true, shows "Needs a paste check" flag for edits where paste check was shown (editcheck-paste-shown). */
 		showEditCheckPasteFlag?: boolean
-		/** When true, shows "Needs a check" flag for edits with other edit check tags (references, newcontent, editsuggestion-seen, etc.). */
+		/** When true, shows "Reference check" flag for edits with reference check tags (editcheck-references, editcheck-newreference, editcheck-references-shown). */
 		showEditCheckOtherFlag?: boolean
 		/** When true, unopened feed items display with a slight blue background. */
 		highlightUnviewed?: boolean
@@ -747,16 +751,13 @@ function isReverted(change: FWRevision): boolean {
 }
 
 /** Edit check and similar tags. Tone Check is experimental (French/Japanese/Portuguese Wikipedias).
- * Paste/references/other may appear on en.wikipedia.org. visualeditor-needcheck = VE detected unintended changes. */
+ * Paste/references may appear on en.wikipedia.org. */
 const EDIT_CHECK_TONE_TAGS = ["editcheck-tone", "editcheck-tone-shown"]
 const EDIT_CHECK_PASTE_TAGS = ["editcheck-paste-shown"]
 const EDIT_CHECK_OTHER_TAGS = [
 	"editcheck-references",
 	"editcheck-newreference",
-	"editcheck-newcontent",
 	"editcheck-references-shown",
-	"editsuggestion-seen",
-	"visualeditor-needcheck", // VE detected possibly unintended wikitext changes
 ]
 
 function hasEditCheckTone(change: FWRevision): boolean {
@@ -1709,6 +1710,10 @@ const revisionsByDate = computed(() => {
 
 const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
+const revisionsOnScreen = computed(() =>
+	revisionsByDateCapped.value.flatMap(g => g.revisions)
+)
+
 const sampleRevision = computed(
 	() =>
 		selectedRevisionsForDisplay.value.filter(r => !dismissedRevisionIds.value.has(r.id))[0] ??
@@ -1738,6 +1743,11 @@ watch(
 
 onMounted(() => {
 	loadFeed()
+	setRevisionsCallback(() => revisionsOnScreen.value)
+})
+
+onUnmounted(() => {
+	clearRevisionsCallback()
 })
 
 watch(

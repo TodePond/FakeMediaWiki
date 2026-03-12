@@ -276,6 +276,7 @@
 		<div class="review-changes-controls__buttons">
 			<CdxButton @click="resetProgress">Reset progress</CdxButton>
 			<CdxButton @click="resetToDefaults">Reset config</CdxButton>
+			<CdxButton @click="completeProgress">Complete progress</CdxButton>
 		</div>
 	</div>
 </template>
@@ -307,7 +308,7 @@ const props = withDefaults(
 )
 
 const module = useReviewChangesModule()
-const { resetProgress } = useReviewChangesProgress()
+const { completeProgress, resetProgress } = useReviewChangesProgress()
 const { resetToDefaults } = module
 
 const visibleCheckboxes = computed(() =>

@@ -229,7 +229,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showRevertedFlag", label: "Reverted flag", section: "Flag types" },
 	{ key: "showEditCheckToneFlag", label: "Tone check flag", section: "Flag types" },
 	{ key: "showEditCheckPasteFlag", label: "Paste check flag", section: "Flag types" },
-	{ key: "showEditCheckOtherFlag", label: "Other edit check flag", section: "Flag types" },
+	{ key: "showEditCheckOtherFlag", label: "Reference check flag", section: "Flag types" },
 	{ key: "revertRiskFlagsInBox", label: "Flags in box", section: "Flag appearance" },
 	{ key: "verboseFlags", label: "Verbose flags", section: "Flag appearance" },
 	{ key: "showUsernameAtPrefix", label: "@ username", section: "User" },
