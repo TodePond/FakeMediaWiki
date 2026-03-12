@@ -14,13 +14,34 @@
 		<div v-if="isLoading" class="review-changes__loading">
 			<CdxProgressBar inline />
 		</div>
-		<ul v-else class="review-changes__feed">
+		<ul
+			v-else
+			ref="feedRef"
+			class="review-changes__feed"
+			@focusout="onFeedFocusOut"
+		>
 			<template v-for="dateGroup in revisionsByDateCapped" :key="dateGroup.dateKey">
 				<li
 					v-for="change in dateGroup.revisions"
 					:key="`${change.pageName}-${change.timestamp}-${change.id}`"
 					class="review-changes__item"
+					:class="{
+						'review-changes__item--last-clicked':
+							viewedBorder && change.id === lastClickedRevisionId,
+						'review-changes__item--unviewed':
+							unviewedBorder && !isRevisionViewed(change),
+					}"
 				>
+					<span
+						v-if="viewedBorder && change.id === lastClickedRevisionId"
+						class="review-changes__item-line review-changes__item-line--last-clicked review-changes__item-line--left"
+						aria-hidden="true"
+					/>
+					<span
+						v-if="unviewedBorder && !isRevisionViewed(change)"
+						class="review-changes__item-line review-changes__item-line--unviewed review-changes__item-line--left"
+						aria-hidden="true"
+					/>
 					<component
 						:is="change.pageName ? 'a' : 'div'"
 						:href="
@@ -35,6 +56,8 @@
 							'review-changes__item-link--not-link': !change.pageName,
 							'review-changes__item-link--unviewed':
 								highlightUnviewed && !isRevisionViewed(change),
+							'review-changes__item-link--last-clicked':
+								lastClickedHighlight && change.id === lastClickedRevisionId,
 						}"
 						:aria-label="
 							change.pageName
@@ -334,6 +357,16 @@
 							>
 						</span>
 					</component>
+					<span
+						v-if="viewedBorder && change.id === lastClickedRevisionId"
+						class="review-changes__item-line review-changes__item-line--last-clicked review-changes__item-line--right"
+						aria-hidden="true"
+					/>
+					<span
+						v-if="unviewedBorder && !isRevisionViewed(change)"
+						class="review-changes__item-line review-changes__item-line--unviewed review-changes__item-line--right"
+						aria-hidden="true"
+					/>
 				</li>
 			</template>
 		</ul>
@@ -439,6 +472,12 @@ const props = withDefaults(
 		showRecommendationFlags?: boolean
 		/** When true, unviewed feed items display with a slight blue background. */
 		highlightUnviewed?: boolean
+		/** When true, unviewed feed items display with blue vertical lines on left and right. */
+		unviewedBorder?: boolean
+		/** When true, the most recently clicked feed item displays with black vertical lines until focus leaves the feed. */
+		viewedBorder?: boolean
+		/** When true, the most recently clicked feed item displays with a subtle background until focus leaves the feed. */
+		lastClickedHighlight?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -464,13 +503,31 @@ const props = withDefaults(
 		showDismissButton: false,
 		showRecommendationFlags: false,
 		highlightUnviewed: false,
+		unviewedBorder: false,
+		viewedBorder: false,
+		lastClickedHighlight: false,
 	}
 )
 
 const wiki = new FakeWiki()
 
-const { isRevisionViewed, markRevisionAsViewed, dismissedRevisionIds, dismissRevision } =
-	useReviewChangesProgress()
+const {
+	isRevisionViewed,
+	markRevisionAsViewed,
+	dismissedRevisionIds,
+	dismissRevision,
+	lastClickedRevisionId,
+	clearLastClickedRevisionId,
+} = useReviewChangesProgress()
+
+const feedRef = ref<HTMLElement | null>(null)
+
+function onFeedFocusOut(event: FocusEvent): void {
+	const relatedTarget = event.relatedTarget as Node | null
+	if (feedRef.value && relatedTarget && !feedRef.value.contains(relatedTarget)) {
+		clearLastClickedRevisionId()
+	}
+}
 
 const userPopoverAnchor = ref<HTMLElement | null>(null)
 const showUserPopover = ref(false)

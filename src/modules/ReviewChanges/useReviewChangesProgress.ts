@@ -3,6 +3,7 @@ import { ref } from "vue"
 
 const VIEWED_REVISIONS_STORAGE_KEY = "review-changes-viewed-revisions"
 const DISMISSED_REVISIONS_STORAGE_KEY = "review-changes-dismissed-revisions"
+const LAST_CLICKED_REVISION_KEY = "review-changes-last-clicked-revision"
 
 function loadRevisionIds(key: string): Set<number> {
 	try {
@@ -12,6 +13,29 @@ function loadRevisionIds(key: string): Set<number> {
 		return new Set(Array.isArray(parsed) ? parsed : [])
 	} catch {
 		return new Set()
+	}
+}
+
+function loadLastClickedRevisionId(): number | null {
+	try {
+		const stored = localStorage.getItem(LAST_CLICKED_REVISION_KEY)
+		if (!stored) return null
+		const n = Number(stored)
+		return Number.isFinite(n) ? n : null
+	} catch {
+		return null
+	}
+}
+
+function saveLastClickedRevisionId(id: number | null): void {
+	try {
+		if (id === null) {
+			localStorage.removeItem(LAST_CLICKED_REVISION_KEY)
+		} else {
+			localStorage.setItem(LAST_CLICKED_REVISION_KEY, String(id))
+		}
+	} catch {
+		// ignore
 	}
 }
 
@@ -28,6 +52,7 @@ let progressInstance: ReturnType<typeof createReviewChangesProgress> | null = nu
 function createReviewChangesProgress() {
 	const viewedRevisionIds = ref<Set<number>>(loadRevisionIds(VIEWED_REVISIONS_STORAGE_KEY))
 	const dismissedRevisionIds = ref<Set<number>>(loadRevisionIds(DISMISSED_REVISIONS_STORAGE_KEY))
+	const lastClickedRevisionId = ref<number | null>(loadLastClickedRevisionId())
 
 	function isRevisionViewed(change: FWRevision): boolean {
 		return viewedRevisionIds.value.has(change.id)
@@ -38,6 +63,13 @@ function createReviewChangesProgress() {
 		next.add(change.id)
 		viewedRevisionIds.value = next
 		saveRevisionIds(VIEWED_REVISIONS_STORAGE_KEY, next)
+		lastClickedRevisionId.value = change.id
+		saveLastClickedRevisionId(change.id)
+	}
+
+	function clearLastClickedRevisionId(): void {
+		lastClickedRevisionId.value = null
+		saveLastClickedRevisionId(null)
 	}
 
 	function isRevisionDismissed(change: FWRevision): boolean {
@@ -54,9 +86,11 @@ function createReviewChangesProgress() {
 	function resetProgress(): void {
 		viewedRevisionIds.value = new Set()
 		dismissedRevisionIds.value = new Set()
+		lastClickedRevisionId.value = null
 		try {
 			localStorage.removeItem(VIEWED_REVISIONS_STORAGE_KEY)
 			localStorage.removeItem(DISMISSED_REVISIONS_STORAGE_KEY)
+			localStorage.removeItem(LAST_CLICKED_REVISION_KEY)
 		} catch {
 			// Ignore
 		}
@@ -65,6 +99,8 @@ function createReviewChangesProgress() {
 	return {
 		viewedRevisionIds,
 		dismissedRevisionIds,
+		lastClickedRevisionId,
+		clearLastClickedRevisionId,
 		isRevisionViewed,
 		markRevisionAsViewed,
 		isRevisionDismissed,

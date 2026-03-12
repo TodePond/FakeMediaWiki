@@ -121,6 +121,9 @@
 				:show-review-button="showReviewButton"
 				:show-dismiss-button="showDismissButton"
 				:highlight-unviewed="showHighlightUnviewed"
+				:unviewed-border="showUnviewedBorder"
+				:viewed-border="showViewedBorder"
+				:last-clicked-highlight="showLastClickedHighlight"
 				:show-recommendation-flags="showRecommendationFlags"
 				@preview-update="onPreviewUpdate"
 			/>
@@ -257,6 +260,9 @@ const {
 		showReviewButton,
 		showDismissButton,
 		showHighlightUnviewed,
+		showUnviewedBorder,
+		showViewedBorder,
+		showLastClickedHighlight,
 		recentChangesRatio,
 		pagesAndUsersRatio,
 		collaboratorsRatio,

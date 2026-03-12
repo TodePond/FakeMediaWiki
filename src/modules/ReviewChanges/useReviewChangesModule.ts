@@ -24,6 +24,9 @@ const LEGACY_HIDE_EMPTY_SUMMARY_KEY = `${LEGACY_PREFIX}hide-empty-summary`
 const SHOW_RECOMMENDATION_FLAGS_KEY = `${STORAGE_PREFIX}show-recommendation-flags`
 const SHOW_DISMISS_BUTTON_KEY = `${STORAGE_PREFIX}show-dismiss-button`
 const SHOW_HIGHLIGHT_UNVIEWED_KEY = `${STORAGE_PREFIX}show-highlight-unviewed`
+const SHOW_UNVIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-unviewed-border`
+const SHOW_VIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-viewed-border`
+const SHOW_LAST_CLICKED_HIGHLIGHT_KEY = `${STORAGE_PREFIX}show-last-clicked-highlight`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -185,7 +188,10 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showEmptyEditSummary", label: "Empty edit summary" },
 	{ key: "showReviewButton", label: "Review button" },
 	{ key: "showDismissButton", label: "Dismiss button" },
-	{ key: "showHighlightUnviewed", label: "Highlight unviewed" },
+	{ key: "showHighlightUnviewed", label: "Unviewed highlight" },
+	{ key: "showUnviewedBorder", label: "Unviewed border" },
+	{ key: "showViewedBorder", label: "Last clicked border" },
+	{ key: "showLastClickedHighlight", label: "Last clicked highlight" },
 	{ key: "showModuleBorder", label: "Module border", prototypeOnly: true },
 ] as const
 
@@ -236,6 +242,15 @@ function createReviewChangesModule() {
 	)
 	const showHighlightUnviewed = ref(
 		getStoredBoolean(SHOW_HIGHLIGHT_UNVIEWED_KEY, SHOW_HIGHLIGHT_UNVIEWED_KEY, false)
+	)
+	const showUnviewedBorder = ref(
+		getStoredBoolean(SHOW_UNVIEWED_BORDER_KEY, SHOW_UNVIEWED_BORDER_KEY, false)
+	)
+	const showViewedBorder = ref(
+		getStoredBoolean(SHOW_VIEWED_BORDER_KEY, SHOW_VIEWED_BORDER_KEY, false)
+	)
+	const showLastClickedHighlight = ref(
+		getStoredBoolean(SHOW_LAST_CLICKED_HIGHLIGHT_KEY, SHOW_LAST_CLICKED_HIGHLIGHT_KEY, false)
 	)
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
@@ -452,6 +467,30 @@ function createReviewChangesModule() {
 		}
 	})
 
+	watch(showUnviewedBorder, enabled => {
+		try {
+			localStorage.setItem(SHOW_UNVIEWED_BORDER_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showViewedBorder, enabled => {
+		try {
+			localStorage.setItem(SHOW_VIEWED_BORDER_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showLastClickedHighlight, enabled => {
+		try {
+			localStorage.setItem(SHOW_LAST_CLICKED_HIGHLIGHT_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -535,6 +574,9 @@ function createReviewChangesModule() {
 		showRecommendationFlags.value = false
 		showDismissButton.value = false
 		showHighlightUnviewed.value = false
+		showUnviewedBorder.value = false
+		showViewedBorder.value = false
+		showLastClickedHighlight.value = false
 		feedSource.value = "recentChanges"
 		mixedRecentChangesRatio.value = 60
 		mixedPagesAndUsersRatio.value = 20
@@ -575,6 +617,9 @@ function createReviewChangesModule() {
 		showReviewButton,
 		showDismissButton,
 		showHighlightUnviewed,
+		showUnviewedBorder,
+		showViewedBorder,
+		showLastClickedHighlight,
 		showEmptyEditSummary,
 		showRecommendationFlags,
 		sourceOptions,

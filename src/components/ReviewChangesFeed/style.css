@@ -85,6 +85,45 @@
 	background-color: rgba(51, 102, 204, 0.08);
 }
 
+.review-changes__item-link--last-clicked {
+	background-color: rgba(51, 102, 204, 0.08);
+}
+
+/* Recently clicked indicator: black vertical lines on left and right.
+   Disappears when focus leaves the feed (handled in component). */
+.review-changes__item--last-clicked {
+	position: relative;
+}
+
+/* Unviewed indicator: blue vertical lines (when highlight unviewed control enabled). */
+.review-changes__item--unviewed {
+	position: relative;
+}
+
+.review-changes__item-line {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 3px;
+	pointer-events: none;
+}
+
+.review-changes__item-line--left {
+	left: 0;
+}
+
+.review-changes__item-line--right {
+	right: 0;
+}
+
+.review-changes__item-line--last-clicked {
+	background-color: var(--color-progressive, #36c);
+}
+
+.review-changes__item-line--unviewed {
+	background-color: var(--color-progressive, #36c);
+}
+
 .review-changes__user-actions-row {
 	display: flex;
 	align-items: flex-end;
