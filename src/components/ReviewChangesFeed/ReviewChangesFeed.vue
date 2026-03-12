@@ -266,47 +266,23 @@
 									</time>
 								</template>
 								</span>
-								<span
-									v-if="showReviewButton || showDismissButton"
-									class="review-changes__action-buttons"
-								>
-									<CdxButton
-										v-if="showReviewButton"
-										:action="
-											isRevisionViewed(change)
-												? 'default'
-												: isLatestRevision(change)
-													? 'progressive'
-													: 'default'
-										"
-										size="small"
-										weight="quiet"
-										class="review-changes__view-change-btn"
-										:class="{
-											'review-changes__view-change-btn--viewed':
-												isRevisionViewed(change),
-										}"
-										@pointerdown.stop
-										@mousedown.stop
-										@click.stop="openDiffInNewTab(change)"
-									>
-										<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
-										Open
-									</CdxButton>
-									<CdxButton
-										v-if="showDismissButton"
-										action="default"
-										size="small"
-										weight="quiet"
-										class="review-changes__dismiss-btn"
-										aria-label="Dismiss"
-										@click.stop="dismissRevision(change)"
-									>
-										<CdxIcon :icon="cdxIconCheck" size="x-small" />
-										Dismiss
-									</CdxButton>
-								</span>
 							</div>
+							<div
+								v-if="
+									(showRevertRiskFlags && getRevertRiskNotice(change)) ||
+									(showRevertedFlag && isReverted(change)) ||
+									(showRecommendationFlags &&
+										getItemSource(change) === 'relatedChanges' &&
+										getRecommendationSourcePageNames(change).length) ||
+									showReviewButton ||
+									showDismissButton
+								"
+								class="review-changes__flags-actions-row"
+								:class="{
+									'review-changes__flags-actions-row--flags-only':
+										!(showReviewButton || showDismissButton),
+								}"
+							>
 							<div
 								v-if="
 									(showRevertRiskFlags && getRevertRiskNotice(change)) ||
@@ -386,6 +362,47 @@
 										getRevertRiskNotice(change)!.text
 									}}</span>
 								</div>
+							</div>
+							<span
+								v-if="showReviewButton || showDismissButton"
+								class="review-changes__action-buttons"
+							>
+								<CdxButton
+									v-if="showReviewButton"
+									:action="
+										isRevisionViewed(change)
+											? 'default'
+											: isLatestRevision(change)
+												? 'progressive'
+												: 'default'
+									"
+									size="small"
+									weight="quiet"
+									class="review-changes__view-change-btn"
+									:class="{
+										'review-changes__view-change-btn--viewed':
+											isRevisionViewed(change),
+									}"
+									@pointerdown.stop
+									@mousedown.stop
+									@click.stop="openDiffInNewTab(change)"
+								>
+									<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
+									Open
+								</CdxButton>
+								<CdxButton
+									v-if="showDismissButton"
+									action="default"
+									size="small"
+									weight="quiet"
+									class="review-changes__dismiss-btn"
+									aria-label="Dismiss"
+									@click.stop="dismissRevision(change)"
+								>
+									<CdxIcon :icon="cdxIconCheck" size="x-small" />
+									Dismiss
+								</CdxButton>
+							</span>
 							</div>
 						</div>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">

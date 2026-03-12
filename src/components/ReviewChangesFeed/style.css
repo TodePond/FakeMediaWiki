@@ -128,6 +128,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
+	width: 100%;
 }
 
 .review-changes__user-flags-wrapper--flags-above .review-changes__user-actions-row {
@@ -225,6 +226,19 @@
 	font-style: italic;
 }
 
+.review-changes__flags-actions-row {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 0.5rem;
+	width: 100%;
+	min-width: 0;
+}
+
+.review-changes__flags-actions-row--flags-only .review-changes__flags-container {
+	margin-bottom: 0;
+}
+
 .review-changes__flags-container {
 	/* margin-top: 0.125rem; */
 	margin-bottom: 0.125rem;
@@ -232,6 +246,8 @@
 	flex-direction: column;
 	gap: 0.125rem;
 	align-items: flex-start;
+	flex: 1 1 0;
+	min-width: 0;
 }
 
 .review-changes__flags-container--no-summary-above {
@@ -307,6 +323,14 @@
 	align-items: center;
 	gap: 0.25rem;
 	flex-shrink: 0;
+}
+
+.review-changes__action-buttons-row {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 0.25rem;
+	width: 100%;
 }
 
 .review-changes__view-change-btn {
