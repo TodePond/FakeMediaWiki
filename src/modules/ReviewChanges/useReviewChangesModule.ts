@@ -29,6 +29,8 @@ const SHOW_VIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-viewed-border`
 const SHOW_LAST_CLICKED_HIGHLIGHT_KEY = `${STORAGE_PREFIX}show-last-clicked-highlight`
 const FLAGS_BELOW_USERNAME_KEY = `${STORAGE_PREFIX}flags-below-username`
 const SIMPLIFIED_TIMESTAMP_KEY = `${STORAGE_PREFIX}simplified-timestamp`
+const TIMESTAMP_POSITION_KEY = `${STORAGE_PREFIX}timestamp-position`
+const LEGACY_TIMESTAMP_RIGHT_OF_USERNAME_KEY = `${STORAGE_PREFIX}timestamp-right-of-username`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -174,36 +176,69 @@ export const pagesAndUsersSliderId = "review-changes-module-pages-slider"
 export const pagesAndUsersLatestSliderId = "review-changes-module-pages-latest-slider"
 export const relatedChangesSliderId = "review-changes-module-related-slider"
 export const collaboratorsSliderId = "review-changes-module-collaborators-slider"
+export const timestampPositionId = "review-changes-module-timestamp-position"
+
+export type TimestampPosition = "topRight" | "rightOfUsername" | "belowUsername"
+
+export const timestampPositionOptions: Array<{ value: TimestampPosition; label: string }> = [
+	{ value: "topRight", label: "Top-right" },
+	{ value: "rightOfUsername", label: "Right of username" },
+	{ value: "belowUsername", label: "Below username" },
+]
+
+function getStoredTimestampPosition(): TimestampPosition {
+	try {
+		const stored = localStorage.getItem(TIMESTAMP_POSITION_KEY)
+		if (stored !== null) {
+			if (
+				stored === "topRight" ||
+				stored === "rightOfUsername" ||
+				stored === "belowUsername"
+			) {
+				return stored
+			}
+		}
+		const legacy = localStorage.getItem(LEGACY_TIMESTAMP_RIGHT_OF_USERNAME_KEY)
+		if (legacy !== null) {
+			const migrated = legacy === "true" ? "rightOfUsername" : "topRight"
+			localStorage.setItem(TIMESTAMP_POSITION_KEY, migrated)
+			return migrated
+		}
+	} catch {
+		// ignore
+	}
+	return "belowUsername"
+}
 
 /**
  * Single source of truth for prototype setting checkboxes.
  * Add new controls here – they will appear in both ReviewChangesModule and PersonalDashboardClone.
  * Use prototypeOnly: true for controls that only make sense in dashboard context (e.g. Module border).
- * Prototype-only controls are listed at the bottom.
+ * Use section to group related controls under a titled header.
  */
 export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
-	{ key: "showDelta", label: "Delta" },
-	{ key: "showSourceIcons", label: "Source icon" },
-	{ key: "showSourceSubtitles", label: "Source subtitle" },
-	{ key: "showRecommendationFlags", label: "Recommendation flags" },
-	{ key: "showRevertRiskInFeed", label: "Debug revert risk" },
-	{ key: "showRevertRiskFlags", label: "Revert risk flags" },
-	{ key: "revertRiskFlagsInBox", label: "Flags in box" },
-	{ key: "verboseFlags", label: "Verbose flags" },
-	{ key: "showRevertedFlag", label: "Reverted flag" },
-	{ key: "showUsernameAtPrefix", label: "@ username" },
-	{ key: "showUserIcon", label: "User icon" },
-	{ key: "flagsBelowUsername", label: "Flags below username" },
-	{ key: "simplifiedTimestamp", label: "Simplified timestamp" },
-	{ key: "summaryCutout", label: "Cutout" },
-	{ key: "showEmptyEditSummary", label: "Empty edit summary" },
-	{ key: "showReviewButton", label: "Review button" },
-	{ key: "showDismissButton", label: "Dismiss button" },
-	{ key: "showHighlightUnviewed", label: "Unviewed highlight" },
-	{ key: "showUnviewedBorder", label: "Unviewed border" },
-	{ key: "showViewedBorder", label: "Last clicked border" },
-	{ key: "showLastClickedHighlight", label: "Last clicked highlight" },
-	{ key: "showModuleBorder", label: "Module border", prototypeOnly: true },
+	{ key: "showDelta", label: "Delta", section: "Structured information" },
+	{ key: "showSourceIcons", label: "Source icon", section: "Source" },
+	{ key: "showSourceSubtitles", label: "Source subtitle", section: "Source" },
+	{ key: "showRevertRiskInFeed", label: "Debug revert risk", section: "Revert risk" },
+	{ key: "showRevertRiskFlags", label: "Revert risk flags", section: "Revert risk" },
+	{ key: "showRecommendationFlags", label: "Flags", section: "Revert risk" },
+	{ key: "revertRiskFlagsInBox", label: "Flags in box", section: "Revert risk" },
+	{ key: "verboseFlags", label: "Verbose flags", section: "Revert risk" },
+	{ key: "showRevertedFlag", label: "Reverted flag", section: "Revert risk" },
+	{ key: "showUsernameAtPrefix", label: "@ username", section: "User & flags" },
+	{ key: "showUserIcon", label: "User icon", section: "User & flags" },
+	{ key: "flagsBelowUsername", label: "Flags below username", section: "User & flags" },
+	{ key: "simplifiedTimestamp", label: "Simplified timestamp", section: "Timestamp" },
+	{ key: "summaryCutout", label: "Cutout", section: "Edit summary" },
+	{ key: "showEmptyEditSummary", label: "Empty edit summary", section: "Edit summary" },
+	{ key: "showReviewButton", label: "Review button", section: "Actions" },
+	{ key: "showDismissButton", label: "Dismiss button", section: "Actions" },
+	{ key: "showHighlightUnviewed", label: "Unviewed highlight", section: "Viewing state" },
+	{ key: "showUnviewedBorder", label: "Unviewed border", section: "Viewing state" },
+	{ key: "showViewedBorder", label: "Last clicked border", section: "Viewing state" },
+	{ key: "showLastClickedHighlight", label: "Last clicked highlight", section: "Viewing state" },
+	{ key: "showModuleBorder", label: "Module border", section: "Layout", prototypeOnly: true },
 ] as const
 
 let moduleInstance: ReturnType<typeof createReviewChangesModule> | null = null
@@ -269,6 +304,7 @@ function createReviewChangesModule() {
 	const simplifiedTimestamp = ref(
 		getStoredBoolean(SIMPLIFIED_TIMESTAMP_KEY, SIMPLIFIED_TIMESTAMP_KEY, false)
 	)
+	const timestampPosition = ref<TimestampPosition>(getStoredTimestampPosition())
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
 		getStoredRatio(
@@ -543,6 +579,14 @@ function createReviewChangesModule() {
 		}
 	})
 
+	watch(timestampPosition, value => {
+		try {
+			localStorage.setItem(TIMESTAMP_POSITION_KEY, value)
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -645,6 +689,7 @@ function createReviewChangesModule() {
 		showLastClickedHighlight.value = false
 		flagsBelowUsername.value = true
 		simplifiedTimestamp.value = false
+		timestampPosition.value = "belowUsername"
 		feedSource.value = "recentChanges"
 		mixedRecentChangesRatio.value = 60
 		mixedPagesAndUsersRatio.value = 0
@@ -695,6 +740,7 @@ function createReviewChangesModule() {
 		showLastClickedHighlight,
 		flagsBelowUsername,
 		simplifiedTimestamp,
+		timestampPosition,
 		showEmptyEditSummary,
 		showRecommendationFlags,
 		sourceOptions,

@@ -119,7 +119,11 @@
 									}}
 								</div>
 							</span>
-							<time :datetime="change.timestamp" class="review-changes__time">
+							<time
+								v-if="timestampPosition === 'topRight'"
+								:datetime="change.timestamp"
+								class="review-changes__time"
+							>
 								{{
 									simplifiedTimestamp
 										? formatRelativeTime(change.timestamp)
@@ -196,8 +200,15 @@
 							}"
 						>
 							<div class="review-changes__user-actions-row">
-								<span v-if="showUserIcon" class="review-changes__user-row">
-									<CdxButton
+								<span
+									class="review-changes__user-time-group"
+									:class="{
+										'review-changes__user-time-group--timestamp-below':
+											timestampPosition === 'belowUsername',
+									}"
+								>
+									<span v-if="showUserIcon" class="review-changes__user-row">
+										<CdxButton
 										weight="quiet"
 										class="review-changes__user-icon-btn"
 										:aria-label="`User: ${change.user.name}`"
@@ -235,6 +246,26 @@
 								>
 									{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
 								</a>
+								<template v-if="timestampPosition === 'rightOfUsername'">
+									<span class="review-changes__time-sep" aria-hidden="true"> · </span>
+									<time :datetime="change.timestamp" class="review-changes__time">
+										{{
+											simplifiedTimestamp
+												? formatRelativeTime(change.timestamp)
+												: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+										}}
+									</time>
+								</template>
+								<template v-else-if="timestampPosition === 'belowUsername'">
+									<time :datetime="change.timestamp" class="review-changes__time review-changes__time--block">
+										{{
+											simplifiedTimestamp
+												? formatRelativeTime(change.timestamp)
+												: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+										}}
+									</time>
+								</template>
+								</span>
 								<span
 									v-if="showReviewButton || showDismissButton"
 									class="review-changes__action-buttons"
@@ -485,6 +516,8 @@ const props = withDefaults(
 		flagsBelowUsername?: boolean
 		/** When true, timestamps show relative format ("2 minutes ago", "3 days ago") instead of time + date. */
 		simplifiedTimestamp?: boolean
+		/** Where to show the timestamp: "topRight" (header), "rightOfUsername", or "belowUsername". */
+		timestampPosition?: "topRight" | "rightOfUsername" | "belowUsername"
 		/** When true, edit summaries appear with white bg, border and shadow (cutout style). */
 		showSummaryCutout?: boolean
 		/** When true, show "No edit summary" when there is no edit summary. When false, hide it (delta still shown if enabled). */
@@ -517,6 +550,7 @@ const props = withDefaults(
 		showUserIcon: false,
 		flagsBelowUsername: true,
 		simplifiedTimestamp: false,
+		timestampPosition: "belowUsername",
 		showDelta: true,
 		deltaFormatParentheses: false,
 		source: "recentChanges",

@@ -128,6 +128,7 @@
 				:show-recommendation-flags="showRecommendationFlags"
 				:flags-below-username="flagsBelowUsername"
 				:simplified-timestamp="simplifiedTimestamp"
+				:timestamp-position="timestampPosition"
 				@preview-update="onPreviewUpdate"
 			/>
 
@@ -286,6 +287,7 @@ const {
 		showRecommendationFlags,
 		flagsBelowUsername,
 		simplifiedTimestamp,
+		timestampPosition,
 	} = useReviewChangesModule()
 
 const previewRevisions = ref<FWRevision[]>([])

@@ -1,18 +1,33 @@
 <template>
 	<div class="review-changes-controls">
-		<div
-			class="review-changes-controls__checkboxes"
-			role="group"
-			aria-label="Prototype settings"
-		>
-			<CdxCheckbox
-				v-for="item in visibleCheckboxes"
-				:key="item.key"
-				:model-value="getCheckboxValue(item.key)"
-				@update:model-value="setCheckboxValue(item.key, $event)"
+		<div class="review-changes-controls__checkboxes">
+			<div
+				v-for="section in checkboxSections"
+				:key="section.title"
+				class="review-changes-controls__section"
+				role="group"
+				:aria-label="section.title"
 			>
-				{{ item.label }}
-			</CdxCheckbox>
+				<div class="review-changes-controls__section-title">{{ section.title }}</div>
+				<div class="review-changes-controls__section-checkboxes">
+					<CdxCheckbox
+						v-for="item in section.items"
+						:key="item.key"
+						:model-value="getCheckboxValue(item.key)"
+						@update:model-value="setCheckboxValue(item.key, $event)"
+					>
+						{{ item.label }}
+					</CdxCheckbox>
+				</div>
+			</div>
+		</div>
+		<div class="review-changes-controls__row">
+			<CdxLabel :input-id="timestampPositionId">Timestamp position</CdxLabel>
+			<CdxSelect
+				:id="timestampPositionId"
+				v-model:selected="timestampPosition"
+				:menu-items="timestampPositionOptions"
+			/>
 		</div>
 		<div class="review-changes-controls__row">
 			<CdxLabel :input-id="reviewChangesSourceId">Feed source</CdxLabel>
@@ -223,6 +238,8 @@ import {
 	relatedChangesSliderId,
 	reviewChangesSourceId,
 	sourceOptions,
+	timestampPositionId,
+	timestampPositionOptions,
 	useReviewChangesModule,
 } from "./useReviewChangesModule"
 import { useReviewChangesProgress } from "./useReviewChangesProgress"
@@ -245,6 +262,33 @@ const visibleCheckboxes = computed(() =>
 	)
 )
 
+const SECTION_ORDER = [
+	"Structured information",
+	"Source",
+	"Revert risk",
+	"User & flags",
+	"Timestamp",
+	"Edit summary",
+	"Actions",
+	"Viewing state",
+	"Layout",
+] as const
+
+const checkboxSections = computed(() => {
+	const bySection = new Map<string, typeof visibleCheckboxes.value>()
+	for (const item of visibleCheckboxes.value) {
+		const section = "section" in item ? (item.section as string) : "Other"
+		if (!bySection.has(section)) {
+			bySection.set(section, [])
+		}
+		bySection.get(section)!.push(item)
+	}
+	return SECTION_ORDER.filter(title => bySection.has(title)).map(title => ({
+		title,
+		items: bySection.get(title)!,
+	}))
+})
+
 function getCheckboxValue(key: string): boolean {
 	const ref = module[key as keyof typeof module]
 	return typeof ref === "object" && ref !== null && "value" in ref
@@ -261,6 +305,7 @@ function setCheckboxValue(key: string, value: boolean): void {
 
 const {
 	feedSource,
+	timestampPosition,
 	mixedRecentChangesRatio,
 	mixedPagesAndUsersRatio,
 	mixedPagesAndUsersLatestRatio,

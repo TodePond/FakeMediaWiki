@@ -147,9 +147,29 @@
 	margin-top: -0.125rem;
 }
 
+.review-changes__user-time-group {
+	display: inline-flex;
+	align-items: center;
+	align-self: flex-start;
+	gap: 0.25rem;
+}
+
+.review-changes__user-time-group--timestamp-below {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.125rem;
+}
+
+.review-changes__time-sep {
+	color: var(--color-base--subtle, #54595d);
+}
+
+.review-changes__time--block {
+	display: block;
+}
+
 .review-changes__user-row {
 	display: inline-flex;
-
 	align-items: center;
 	/* gap: 0.125rem; */
 }

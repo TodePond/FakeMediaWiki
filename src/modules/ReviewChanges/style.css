@@ -20,6 +20,26 @@
 .review-changes-controls__checkboxes {
 	display: flex;
 	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.review-changes-controls__section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.review-changes-controls__section-title {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--color-base--subtle, #54595d);
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+.review-changes-controls__section-checkboxes {
+	display: flex;
+	flex-direction: column;
 	gap: 0.25rem;
 }
 

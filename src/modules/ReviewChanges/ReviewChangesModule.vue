@@ -33,6 +33,7 @@
 			:show-recommendation-flags="showRecommendationFlags"
 			:flags-below-username="flagsBelowUsername"
 			:simplified-timestamp="simplifiedTimestamp"
+			:timestamp-position="timestampPosition"
 		/>
 	</section>
 </template>
@@ -76,6 +77,7 @@ const {
 	showRecommendationFlags,
 	flagsBelowUsername,
 	simplifiedTimestamp,
+	timestampPosition,
 } = useReviewChangesModule()
 </script>
 
