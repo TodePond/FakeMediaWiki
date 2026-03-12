@@ -153,7 +153,7 @@
 					</div>
 					<footer>
 						<a target="_blank" :href="wiki.getRevisionUrl(change.id, change.pageName!)">
-							<CdxIcon :icon="cdxIconLinkExternal" />View change </a
+							<CdxIcon :icon="cdxIconLinkExternal" />Open change </a
 						>&nbsp;|<a target="_blank" :href="wiki.getThankUrl(change.id)">
 							<CdxIcon :icon="cdxIconHeart" />Give thanks
 						</a>

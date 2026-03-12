@@ -45,7 +45,7 @@
 						</div>
 					</template>
 				</div>
-				<span class="mobile-card__button">View more edits</span>
+				<span class="mobile-card__button">Open more edits</span>
 			</RouterLink>
 
 			<section class="mobile-card">
@@ -75,7 +75,7 @@
 							class="mobile-card__stat-icon"
 						/>
 						<span class="mobile-card__stat-value">0</span>
-						<span>Edits reviewed.</span>
+						<span>Edits opened.</span>
 						<CdxIcon :icon="cdxIconInfo" size="small" class="mobile-card__stat-info" />
 					</div>
 				</div>
@@ -156,7 +156,7 @@
 								<span class="your-impact__value">0</span>
 							</div>
 							<span class="your-impact__label-row">
-								<span class="your-impact__label">Edits reviewed</span>
+								<span class="your-impact__label">Edits opened</span>
 								<CdxIcon
 									:icon="cdxIconInfo"
 									size="small"

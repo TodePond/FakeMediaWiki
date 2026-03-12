@@ -31,7 +31,7 @@
 				</p>
 				<footer>
 					<a target="_blank" :href="wiki.getRevisionUrl(change.id, searchQuery)"
-						>View change</a
+						>Open change</a
 					>
 					<span>|</span>
 					<a target="_blank" :href="wiki.getThankUrl(change.id)">Give thanks</a>

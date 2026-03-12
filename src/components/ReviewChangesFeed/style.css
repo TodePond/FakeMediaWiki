@@ -95,7 +95,7 @@
 	position: relative;
 }
 
-/* Unviewed indicator: blue vertical lines (when highlight unviewed control enabled). */
+/* Unopened indicator: blue vertical lines (when highlight unopened control enabled). */
 .review-changes__item--unviewed {
 	position: relative;
 }

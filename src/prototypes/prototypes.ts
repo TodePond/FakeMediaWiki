@@ -337,7 +337,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		id: "ChangeTypesWatchlistDetails",
 		title: "Change types",
 		name: "Change types",
-		description: "A watchlist that shows information about changes when clicked on.",
+		description: "A watchlist that shows information about changes when opened.",
 		category: "changetypes",
 		wrapper: "Fullscreen",
 		featured: true,
@@ -356,7 +356,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 				title: "Inline watchlist",
 				name: "Inline watchlist",
 				description:
-					"A watchlist where you can view a diff inline by clicking the diff button.",
+					"A watchlist where you can open a diff inline by using the diff button.",
 				wrapper: "Special",
 			},
 			{

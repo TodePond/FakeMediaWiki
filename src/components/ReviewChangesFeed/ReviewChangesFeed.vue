@@ -6,7 +6,7 @@
 			class="review-changes__description"
 			:class="{ 'review-changes__description--with-title': !!title }"
 		>
-			Help keep Wikipedia reliable by reviewing the following edits which may need attention.
+			Help keep Wikipedia reliable by opening the following edits which may need attention.
 		</p>
 		<div v-if="errors.length > 0" class="review-changes__errors">
 			<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
@@ -61,7 +61,7 @@
 						}"
 						:aria-label="
 							change.pageName
-								? `View diff for ${change.pageName ?? 'page'}`
+								? `Open diff for ${change.pageName ?? 'page'}`
 								: undefined
 						"
 						@click="change.pageName && markRevisionAsViewed(change)"
@@ -417,7 +417,7 @@
 			</template>
 		</ul>
 		<div v-if="!isLoading" class="review-changes__view-more">
-			View more edits in the
+			Open more edits in the
 			<a
 				target="_blank"
 				rel="noopener noreferrer"
@@ -524,19 +524,19 @@ const props = withDefaults(
 		showEmptyEditSummary?: boolean
 		/** When true, shows the outer border around the module (for dashboard embedding). */
 		showModuleBorder?: boolean
-		/** When true, shows a Review button in addition to the card being a link. */
+		/** When true, shows an Open button in addition to the card being a link. */
 		showReviewButton?: boolean
 		/** When true, shows a Dismiss button to the right of the View button. */
 		showDismissButton?: boolean
 		/** When true, shows recommendation reason for Related changes items (e.g. "Recommended based on X and Y." or "Based on X and Y." when verboseFlags is false). */
 		showRecommendationFlags?: boolean
-		/** When true, unviewed feed items display with a slight blue background. */
+		/** When true, unopened feed items display with a slight blue background. */
 		highlightUnviewed?: boolean
-		/** When true, unviewed feed items display with blue vertical lines on left and right. */
+		/** When true, unopened feed items display with blue vertical lines on left and right. */
 		unviewedBorder?: boolean
-		/** When true, the most recently clicked feed item displays with black vertical lines until focus leaves the feed. */
+		/** When true, the most recently opened feed item displays with black vertical lines until focus leaves the feed. */
 		viewedBorder?: boolean
-		/** When true, the most recently clicked feed item displays with a subtle background until focus leaves the feed. */
+		/** When true, the most recently opened feed item displays with a subtle background until focus leaves the feed. */
 		lastClickedHighlight?: boolean
 	}>(),
 	{
@@ -710,7 +710,7 @@ function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRi
 		return {
 			text: verbose
 				? `This change ${isReverted(change) ? "had" : "has"} very high revert risk.`
-				: "High revert risk",
+				: "Very high revert risk",
 			band: "high",
 		}
 	}
@@ -726,7 +726,7 @@ function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRi
 		return {
 			text: verbose
 				? `This change ${isReverted(change) ? "had" : "has"} very low revert risk.`
-				: "Low revert risk",
+				: "Very low revert risk",
 			band: "low",
 		}
 	}

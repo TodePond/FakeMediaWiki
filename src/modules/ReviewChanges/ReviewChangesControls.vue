@@ -9,6 +9,258 @@
 				:aria-label="section.title"
 			>
 				<div class="review-changes-controls__section-title">{{ section.title }}</div>
+				<div
+					v-if="section.title === 'Source'"
+					class="review-changes-controls__section-widget"
+				>
+					<CdxSelect
+						:id="reviewChangesSourceId"
+						v-model:selected="feedSource"
+						:menu-items="sourceOptions"
+						aria-label="Feed source"
+					/>
+				</div>
+				<div
+					v-if="section.title === 'Source' && feedSource === 'mixed'"
+					class="review-changes-controls__section-widget ratio-sliders"
+				>
+					<div class="ratio-slider-row" role="group" aria-label="Mix ratio">
+						<CdxLabel
+							:input-id="recentChangesSliderId"
+							class="ratio-slider-label"
+							title="Recent changes %"
+							>Recent</CdxLabel
+						>
+						<div class="ratio-slider-line">
+							<input
+								:id="recentChangesSliderId"
+								v-model.number="mixedRecentChangesRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ mixedRecentChangesRatio }}%</span
+							>
+						</div>
+					</div>
+					<div class="ratio-slider-row" role="group" aria-label="Mix ratio">
+						<CdxLabel
+							:input-id="pagesAndUsersLatestSliderId"
+							class="ratio-slider-label"
+							title="Watchlist (latest) %"
+							>WL latest</CdxLabel
+						>
+						<div class="ratio-slider-line">
+							<input
+								:id="pagesAndUsersLatestSliderId"
+								v-model.number="mixedPagesAndUsersLatestRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ mixedPagesAndUsersLatestRatio }}%</span
+							>
+						</div>
+					</div>
+					<div class="ratio-slider-row" role="group" aria-label="Mix ratio">
+						<CdxLabel
+							:input-id="pagesAndUsersSliderId"
+							class="ratio-slider-label"
+							title="Watchlist %"
+							>Watchlist</CdxLabel
+						>
+						<div class="ratio-slider-line">
+							<input
+								:id="pagesAndUsersSliderId"
+								v-model.number="mixedPagesAndUsersRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ mixedPagesAndUsersRatio }}%</span
+							>
+						</div>
+					</div>
+					<div class="ratio-slider-row" role="group" aria-label="Mix ratio">
+						<CdxLabel
+							:input-id="collaboratorsSliderId"
+							class="ratio-slider-label"
+							title="Collaborators %"
+							>Collab</CdxLabel
+						>
+						<div class="ratio-slider-line">
+							<input
+								:id="collaboratorsSliderId"
+								v-model.number="mixedCollaboratorsRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ mixedCollaboratorsRatio }}%</span
+							>
+						</div>
+					</div>
+					<div class="ratio-slider-row" role="group" aria-label="Mix ratio">
+						<CdxLabel
+							:input-id="relatedChangesSliderId"
+							class="ratio-slider-label"
+							title="Related changes %"
+							>Related</CdxLabel
+						>
+						<div class="ratio-slider-line">
+							<input
+								:id="relatedChangesSliderId"
+								v-model.number="mixedRelatedChangesRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ mixedRelatedChangesRatio }}%</span
+							>
+						</div>
+					</div>
+				</div>
+				<div
+					v-if="section.title === 'Source' && feedSource !== 'mixed'"
+					class="review-changes-controls__section-widget ratio-sliders ratio-sliders--standalone"
+				>
+					<div
+						v-if="feedSource === 'recentChanges'"
+						class="ratio-slider-row"
+						role="group"
+						aria-label="Show ratio"
+					>
+						<div class="ratio-slider-line">
+							<input
+								:id="recentChangesSliderId"
+								v-model.number="standaloneRecentChangesRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+								aria-label="Recent changes %"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ standaloneRecentChangesRatio }}%</span
+							>
+						</div>
+					</div>
+					<div
+						v-if="feedSource === 'pagesAndUsersLatest'"
+						class="ratio-slider-row"
+						role="group"
+						aria-label="Show ratio"
+					>
+						<div class="ratio-slider-line">
+							<input
+								:id="pagesAndUsersLatestSliderId"
+								v-model.number="standalonePagesAndUsersLatestRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+								aria-label="Watchlist (latest) %"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ standalonePagesAndUsersLatestRatio }}%</span
+							>
+						</div>
+					</div>
+					<div
+						v-if="feedSource === 'pagesAndUsers'"
+						class="ratio-slider-row"
+						role="group"
+						aria-label="Show ratio"
+					>
+						<div class="ratio-slider-line">
+							<input
+								:id="pagesAndUsersSliderId"
+								v-model.number="standalonePagesAndUsersRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+								aria-label="Watchlist %"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ standalonePagesAndUsersRatio }}%</span
+							>
+						</div>
+					</div>
+					<div
+						v-if="feedSource === 'collaborators'"
+						class="ratio-slider-row"
+						role="group"
+						aria-label="Show ratio"
+					>
+						<div class="ratio-slider-line">
+							<input
+								:id="collaboratorsSliderId"
+								v-model.number="standaloneCollaboratorsRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+								aria-label="Collaborators %"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ standaloneCollaboratorsRatio }}%</span
+							>
+						</div>
+					</div>
+					<div
+						v-if="feedSource === 'relatedChanges'"
+						class="ratio-slider-row"
+						role="group"
+						aria-label="Show ratio"
+					>
+						<div class="ratio-slider-line">
+							<input
+								:id="relatedChangesSliderId"
+								v-model.number="standaloneRelatedChangesRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+								aria-label="Related changes %"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ standaloneRelatedChangesRatio }}%</span
+							>
+						</div>
+					</div>
+				</div>
+				<div
+					v-if="section.title === 'Timestamp'"
+					class="review-changes-controls__section-widget"
+				>
+					<CdxSelect
+						:id="timestampPositionId"
+						v-model:selected="timestampPosition"
+						:menu-items="timestampPositionOptions"
+						aria-label="Timestamp position"
+					/>
+				</div>
 				<div class="review-changes-controls__section-checkboxes">
 					<CdxCheckbox
 						v-for="item in section.items"
@@ -21,204 +273,6 @@
 				</div>
 			</div>
 		</div>
-		<div class="review-changes-controls__row">
-			<CdxLabel :input-id="timestampPositionId">Timestamp position</CdxLabel>
-			<CdxSelect
-				:id="timestampPositionId"
-				v-model:selected="timestampPosition"
-				:menu-items="timestampPositionOptions"
-			/>
-		</div>
-		<div class="review-changes-controls__row">
-			<CdxLabel :input-id="reviewChangesSourceId">Feed source</CdxLabel>
-			<CdxSelect
-				:id="reviewChangesSourceId"
-				v-model:selected="feedSource"
-				:menu-items="sourceOptions"
-			/>
-		</div>
-		<template v-if="feedSource === 'mixed'">
-			<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
-				<CdxLabel :input-id="recentChangesSliderId">Recent changes %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="recentChangesSliderId"
-						v-model.number="mixedRecentChangesRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ mixedRecentChangesRatio }}%</span
-					>
-				</div>
-			</div>
-			<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
-				<CdxLabel :input-id="pagesAndUsersLatestSliderId">Watchlist (latest) %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="pagesAndUsersLatestSliderId"
-						v-model.number="mixedPagesAndUsersLatestRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ mixedPagesAndUsersLatestRatio }}%</span
-					>
-				</div>
-			</div>
-			<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
-				<CdxLabel :input-id="pagesAndUsersSliderId">Watchlist %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="pagesAndUsersSliderId"
-						v-model.number="mixedPagesAndUsersRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ mixedPagesAndUsersRatio }}%</span
-					>
-				</div>
-			</div>
-			<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
-				<CdxLabel :input-id="collaboratorsSliderId">Collaborators %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="collaboratorsSliderId"
-						v-model.number="mixedCollaboratorsRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ mixedCollaboratorsRatio }}%</span
-					>
-				</div>
-			</div>
-			<div class="review-changes-controls__row" role="group" aria-label="Mix ratio">
-				<CdxLabel :input-id="relatedChangesSliderId">Related changes %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="relatedChangesSliderId"
-						v-model.number="mixedRelatedChangesRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ mixedRelatedChangesRatio }}%</span
-					>
-				</div>
-			</div>
-		</template>
-		<template v-if="feedSource === 'recentChanges'">
-			<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
-				<CdxLabel :input-id="recentChangesSliderId">Recent changes %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="recentChangesSliderId"
-						v-model.number="standaloneRecentChangesRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ standaloneRecentChangesRatio }}%</span
-					>
-				</div>
-			</div>
-		</template>
-		<template v-if="feedSource === 'pagesAndUsersLatest'">
-			<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
-				<CdxLabel :input-id="pagesAndUsersLatestSliderId">Watchlist (latest) %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="pagesAndUsersLatestSliderId"
-						v-model.number="standalonePagesAndUsersLatestRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ standalonePagesAndUsersLatestRatio }}%</span
-					>
-				</div>
-			</div>
-		</template>
-		<template v-if="feedSource === 'pagesAndUsers'">
-			<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
-				<CdxLabel :input-id="pagesAndUsersSliderId">Watchlist %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="pagesAndUsersSliderId"
-						v-model.number="standalonePagesAndUsersRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ standalonePagesAndUsersRatio }}%</span
-					>
-				</div>
-			</div>
-		</template>
-		<template v-if="feedSource === 'collaborators'">
-			<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
-				<CdxLabel :input-id="collaboratorsSliderId">Collaborators %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="collaboratorsSliderId"
-						v-model.number="standaloneCollaboratorsRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ standaloneCollaboratorsRatio }}%</span
-					>
-				</div>
-			</div>
-		</template>
-		<template v-if="feedSource === 'relatedChanges'">
-			<div class="review-changes-controls__row" role="group" aria-label="Show ratio">
-				<CdxLabel :input-id="relatedChangesSliderId">Related changes %</CdxLabel>
-				<div class="ratio-slider-line">
-					<input
-						:id="relatedChangesSliderId"
-						v-model.number="standaloneRelatedChangesRatio"
-						type="range"
-						min="0"
-						max="100"
-						step="10"
-						class="ratio-slider"
-					/>
-					<span class="ratio-slider-value" aria-hidden="true"
-						>{{ standaloneRelatedChangesRatio }}%</span
-					>
-				</div>
-			</div>
-		</template>
 		<div class="review-changes-controls__buttons">
 			<CdxButton @click="resetProgress">Reset progress</CdxButton>
 			<CdxButton @click="resetToDefaults">Reset config</CdxButton>
@@ -265,13 +319,14 @@ const visibleCheckboxes = computed(() =>
 const SECTION_ORDER = [
 	"Structured information",
 	"Source",
-	"Revert risk",
-	"User & flags",
+	"Flag types",
+	"Flag appearance",
+	"User",
 	"Timestamp",
 	"Edit summary",
 	"Actions",
-	"Viewing state",
-	"Layout",
+	"Open state",
+	"Module",
 ] as const
 
 const checkboxSections = computed(() => {
