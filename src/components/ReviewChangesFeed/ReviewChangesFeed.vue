@@ -31,7 +31,11 @@
 						:target="change.pageName ? '_blank' : undefined"
 						:rel="change.pageName ? 'noopener noreferrer' : undefined"
 						class="review-changes__item-link"
-						:class="{ 'review-changes__item-link--not-link': !change.pageName }"
+						:class="{
+							'review-changes__item-link--not-link': !change.pageName,
+							'review-changes__item-link--unviewed':
+								highlightUnviewed && !isRevisionViewed(change),
+						}"
 						:aria-label="
 							change.pageName
 								? `View diff for ${change.pageName ?? 'page'}`
@@ -433,6 +437,8 @@ const props = withDefaults(
 		showDismissButton?: boolean
 		/** When true, shows recommendation reason for Related changes items (e.g. "Recommended based on X and Y." or "Based on X and Y." when verboseFlags is false). */
 		showRecommendationFlags?: boolean
+		/** When true, unviewed feed items display with a slight blue background. */
+		highlightUnviewed?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -457,6 +463,7 @@ const props = withDefaults(
 		showReviewButton: false,
 		showDismissButton: false,
 		showRecommendationFlags: false,
+		highlightUnviewed: false,
 	}
 )
 

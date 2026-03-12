@@ -25,6 +25,7 @@
 			:hide-description="true"
 			:show-review-button="showReviewButton"
 			:show-dismiss-button="showDismissButton"
+			:highlight-unviewed="showHighlightUnviewed"
 			:show-recommendation-flags="showRecommendationFlags"
 		/>
 	</section>
@@ -45,6 +46,7 @@ const {
 	feedSource,
 	showReviewButton,
 	showDismissButton,
+	showHighlightUnviewed,
 	recentChangesRatio,
 	pagesAndUsersRatio,
 	collaboratorsRatio,

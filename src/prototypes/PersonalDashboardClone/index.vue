@@ -120,6 +120,7 @@
 				:show-module-border="showModuleBorder"
 				:show-review-button="showReviewButton"
 				:show-dismiss-button="showDismissButton"
+				:highlight-unviewed="showHighlightUnviewed"
 				:show-recommendation-flags="showRecommendationFlags"
 				@preview-update="onPreviewUpdate"
 			/>
@@ -255,6 +256,7 @@ const {
 		showModuleBorder,
 		showReviewButton,
 		showDismissButton,
+		showHighlightUnviewed,
 		recentChangesRatio,
 		pagesAndUsersRatio,
 		collaboratorsRatio,
