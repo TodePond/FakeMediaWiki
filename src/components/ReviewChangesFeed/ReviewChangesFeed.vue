@@ -415,7 +415,7 @@
 									<CdxIcon
 										:icon="cdxIconAlert"
 										size="small"
-										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check-tone"
+										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
 										aria-hidden="true"
 									/>
 									<span class="review-changes__revert-risk-notice-text">{{
@@ -429,9 +429,9 @@
 									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
 								>
 									<CdxIcon
-										:icon="cdxIconPaste"
+										:icon="cdxIconAlert"
 										size="small"
-										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check-paste"
+										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
 										aria-hidden="true"
 									/>
 									<span class="review-changes__revert-risk-notice-text">{{
@@ -445,9 +445,9 @@
 									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
 								>
 									<CdxIcon
-										:icon="cdxIconInfo"
+										:icon="cdxIconAlert"
 										size="small"
-										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check-other"
+										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
 										aria-hidden="true"
 									/>
 									<span class="review-changes__revert-risk-notice-text">{{
@@ -558,10 +558,8 @@ import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex
 import {
 	cdxIconAlert,
 	cdxIconCheck,
-	cdxIconPaste,
 	cdxIconClock,
 	cdxIconEditUndo,
-	cdxIconInfo,
 	cdxIconLightbulb,
 	cdxIconLinkExternal,
 	cdxIconSuccess,
@@ -748,7 +746,8 @@ function isReverted(change: FWRevision): boolean {
 	return tags.includes("mw-reverted") || tags.includes("reverted")
 }
 
-/** Edit check tags: tone (editcheck-tone, editcheck-tone-shown), paste (editcheck-paste-shown), other (references, newcontent, editsuggestion-seen, etc.). */
+/** Edit check and similar tags. Tone Check is experimental (French/Japanese/Portuguese Wikipedias).
+ * Paste/references/other may appear on en.wikipedia.org. visualeditor-needcheck = VE detected unintended changes. */
 const EDIT_CHECK_TONE_TAGS = ["editcheck-tone", "editcheck-tone-shown"]
 const EDIT_CHECK_PASTE_TAGS = ["editcheck-paste-shown"]
 const EDIT_CHECK_OTHER_TAGS = [
@@ -757,6 +756,7 @@ const EDIT_CHECK_OTHER_TAGS = [
 	"editcheck-newcontent",
 	"editcheck-references-shown",
 	"editsuggestion-seen",
+	"visualeditor-needcheck", // VE detected possibly unintended wikitext changes
 ]
 
 function hasEditCheckTone(change: FWRevision): boolean {
@@ -1545,10 +1545,9 @@ async function loadFeed(append = false): Promise<void> {
 		}
 
 		let processed = await processRevisions(revisions)
-		// Page history (pagesAndUsers) doesn't include tags; enrich via getRevisionTags
-		if (props.source === "pagesAndUsers") {
-			processed = await enrichRevisionsWithTags(processed)
-		}
+		// Enrich with tags: page history (REST API) and related changes (Atom feed) don't include tags.
+		// User contribs and recent changes include tags; enrichRevisionsWithTags skips revs that already have them.
+		processed = await enrichRevisionsWithTags(processed)
 		mixedRecentChangesBySegment.value = []
 		mixedPagesAndUsersData.value = []
 		mixedPagesAndUsersLatestData.value = []

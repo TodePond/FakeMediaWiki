@@ -314,16 +314,8 @@
 	color: var(--color-base--subtle, #54595d);
 }
 
-.review-changes__revert-risk-notice-icon--edit-check-tone {
-	color: var(--color-destructive, #b32424);
-}
-
-.review-changes__revert-risk-notice-icon--edit-check-paste {
+.review-changes__revert-risk-notice-icon--edit-check {
 	color: var(--color-base--subtle, #54595d);
-}
-
-.review-changes__revert-risk-notice-icon--edit-check-other {
-	color: var(--color-progressive, #36c);
 }
 
 .review-changes__revert-risk-notice-text {
