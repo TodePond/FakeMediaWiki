@@ -120,8 +120,11 @@
 								</div>
 							</span>
 							<time :datetime="change.timestamp" class="review-changes__time">
-								{{ formatTime(change.timestamp) }},
-								{{ formatTimeLabel(change.timestamp) }}
+								{{
+									simplifiedTimestamp
+										? formatRelativeTime(change.timestamp)
+										: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+								}}
 							</time>
 						</div>
 
@@ -187,106 +190,43 @@
 							>
 						</div>
 						<div
-							v-if="
-								(showRevertRiskFlags && getRevertRiskNotice(change)) ||
-								(showRevertedFlag && isReverted(change)) ||
-								(showRecommendationFlags &&
-									getItemSource(change) === 'relatedChanges' &&
-									getRecommendationSourcePageNames(change).length)
-							"
-							class="review-changes__flags-container"
+							class="review-changes__user-flags-wrapper"
 							:class="{
-								'review-changes__flags-container--no-box': !revertRiskFlagsInBox,
-								'review-changes__flags-container--no-summary-above':
-									!hasSummaryAbove(change),
+								'review-changes__user-flags-wrapper--flags-above': !flagsBelowUsername,
 							}"
 						>
-							<div
-								v-if="
-									showRecommendationFlags &&
-									getItemSource(change) === 'relatedChanges' &&
-									getRecommendationReason(
-										getRecommendationSourcePageNames(change)
-									)
-								"
-								class="review-changes__recommendation-notice"
-							>
-								<CdxIcon
-									:icon="cdxIconLightbulb"
-									size="small"
-									class="review-changes__recommendation-notice-icon"
-									aria-hidden="true"
-								/>
-								<span class="review-changes__recommendation-notice-text">{{
-									getRecommendationReason(
-										getRecommendationSourcePageNames(change)
-									)
-								}}</span>
-							</div>
-							<div
-								v-if="showRevertedFlag && isReverted(change)"
-								class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
-							>
-								<CdxIcon
-									:icon="cdxIconEditUndo"
-									size="small"
-									class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--reverted"
-								/>
-								<span class="review-changes__revert-risk-notice-text">{{
-									verboseFlags ? "This change was reverted" : "Reverted"
-								}}</span>
-							</div>
-							<div
-								v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
-								class="review-changes__revert-risk-notice"
-							>
-								<CdxIcon
-									:icon="
-										['low', 'mediumLow'].includes(
-											getRevertRiskNotice(change)?.band ?? ''
-										)
-											? cdxIconSuccess
-											: cdxIconAlert
-									"
-									size="small"
-									class="review-changes__revert-risk-notice-icon"
-									:class="{
-										'review-changes__revert-risk-notice-icon--very-high':
-											getRevertRiskNotice(change)?.band === 'high',
-										'review-changes__revert-risk-notice-icon--high':
-											getRevertRiskNotice(change)?.band === 'mediumHigh',
-										'review-changes__revert-risk-notice-icon--low':
-											getRevertRiskNotice(change)?.band === 'low',
-										'review-changes__revert-risk-notice-icon--medium-low':
-											getRevertRiskNotice(change)?.band === 'mediumLow',
-									}"
-								/>
-								<span class="review-changes__revert-risk-notice-text">{{
-									getRevertRiskNotice(change)!.text
-								}}</span>
-							</div>
-						</div>
-						<div class="review-changes__user-actions-row">
-							<span v-if="showUserIcon" class="review-changes__user-row">
-								<CdxButton
-									weight="quiet"
-									class="review-changes__user-icon-btn"
-									:aria-label="`User: ${change.user.name}`"
-									size="small"
-									@click.stop.prevent="openUserPopover($event, change)"
-								>
-									<CdxIcon
-										class="review-changes__user-icon"
-										:icon="
-											wiki.isTemporaryAccount(change.user.name)
-												? cdxIconUserTemporary
-												: cdxIconUserAvatar
-										"
-										size="x-small"
-										aria-hidden="true"
-									/>
-								</CdxButton>
+							<div class="review-changes__user-actions-row">
+								<span v-if="showUserIcon" class="review-changes__user-row">
+									<CdxButton
+										weight="quiet"
+										class="review-changes__user-icon-btn"
+										:aria-label="`User: ${change.user.name}`"
+										size="small"
+										@click.stop.prevent="openUserPopover($event, change)"
+									>
+										<CdxIcon
+											class="review-changes__user-icon"
+											:icon="
+												wiki.isTemporaryAccount(change.user.name)
+													? cdxIconUserTemporary
+													: cdxIconUserAvatar
+											"
+											size="x-small"
+											aria-hidden="true"
+										/>
+									</CdxButton>
+									<a
+										target="_blank"
+										rel="noopener noreferrer"
+										:href="wiki.getUserUrl(change.user.name)"
+										class="review-changes__user"
+										@click.stop
+									>
+										{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
+									</a>
+								</span>
 								<a
+									v-else
 									target="_blank"
 									rel="noopener noreferrer"
 									:href="wiki.getUserUrl(change.user.name)"
@@ -295,57 +235,127 @@
 								>
 									{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
 								</a>
-							</span>
-							<a
-								v-else
-								target="_blank"
-								rel="noopener noreferrer"
-								:href="wiki.getUserUrl(change.user.name)"
-								class="review-changes__user"
-								@click.stop
+								<span
+									v-if="showReviewButton || showDismissButton"
+									class="review-changes__action-buttons"
+								>
+									<CdxButton
+										v-if="showReviewButton"
+										:action="
+											isRevisionViewed(change)
+												? 'default'
+												: isLatestRevision(change)
+													? 'progressive'
+													: 'default'
+										"
+										size="small"
+										weight="quiet"
+										class="review-changes__view-change-btn"
+										:class="{
+											'review-changes__view-change-btn--viewed':
+												isRevisionViewed(change),
+										}"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="openDiffInNewTab(change)"
+									>
+										<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
+										Open
+									</CdxButton>
+									<CdxButton
+										v-if="showDismissButton"
+										action="default"
+										size="small"
+										weight="quiet"
+										class="review-changes__dismiss-btn"
+										aria-label="Dismiss"
+										@click.stop="dismissRevision(change)"
+									>
+										<CdxIcon :icon="cdxIconCheck" size="x-small" />
+										Dismiss
+									</CdxButton>
+								</span>
+							</div>
+							<div
+								v-if="
+									(showRevertRiskFlags && getRevertRiskNotice(change)) ||
+									(showRevertedFlag && isReverted(change)) ||
+									(showRecommendationFlags &&
+										getItemSource(change) === 'relatedChanges' &&
+										getRecommendationSourcePageNames(change).length)
+								"
+								class="review-changes__flags-container"
+								:class="{
+									'review-changes__flags-container--no-box': !revertRiskFlagsInBox,
+									'review-changes__flags-container--no-summary-above':
+										!hasSummaryAbove(change),
+								}"
 							>
-								{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
-							</a>
-							<span
-								v-if="showReviewButton || showDismissButton"
-								class="review-changes__action-buttons"
-							>
-								<CdxButton
-									v-if="showReviewButton"
-									:action="
-										isRevisionViewed(change)
-											? 'default'
-											: isLatestRevision(change)
-												? 'progressive'
-												: 'default'
+								<div
+									v-if="
+										showRecommendationFlags &&
+										getItemSource(change) === 'relatedChanges' &&
+										getRecommendationReason(
+											getRecommendationSourcePageNames(change)
+										)
 									"
-									size="small"
-									weight="quiet"
-									class="review-changes__view-change-btn"
-									:class="{
-										'review-changes__view-change-btn--viewed':
-											isRevisionViewed(change),
-									}"
-									@pointerdown.stop
-									@mousedown.stop
-									@click.stop="openDiffInNewTab(change)"
+									class="review-changes__recommendation-notice"
 								>
-									<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
-									Open
-								</CdxButton>
-								<CdxButton
-									v-if="showDismissButton"
-									action="default"
-									size="small"
-									weight="quiet"
-									class="review-changes__dismiss-btn"
-									aria-label="Dismiss"
-									@click.stop="dismissRevision(change)"
+									<CdxIcon
+										:icon="cdxIconLightbulb"
+										size="small"
+										class="review-changes__recommendation-notice-icon"
+										aria-hidden="true"
+									/>
+									<span class="review-changes__recommendation-notice-text">{{
+										getRecommendationReason(
+											getRecommendationSourcePageNames(change)
+										)
+									}}</span>
+								</div>
+								<div
+									v-if="showRevertedFlag && isReverted(change)"
+									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
 								>
-									<CdxIcon :icon="cdxIconCheck" size="x-small" />
-									Dismiss
-								</CdxButton>
-							</span>
+									<CdxIcon
+										:icon="cdxIconEditUndo"
+										size="small"
+										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--reverted"
+									/>
+									<span class="review-changes__revert-risk-notice-text">{{
+										verboseFlags ? "This change was reverted" : "Reverted"
+									}}</span>
+								</div>
+								<div
+									v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
+									class="review-changes__revert-risk-notice"
+								>
+									<CdxIcon
+										:icon="
+											['low', 'mediumLow'].includes(
+												getRevertRiskNotice(change)?.band ?? ''
+											)
+												? cdxIconSuccess
+												: cdxIconAlert
+									"
+										size="small"
+										class="review-changes__revert-risk-notice-icon"
+										:class="{
+											'review-changes__revert-risk-notice-icon--very-high':
+												getRevertRiskNotice(change)?.band === 'high',
+											'review-changes__revert-risk-notice-icon--high':
+												getRevertRiskNotice(change)?.band === 'mediumHigh',
+											'review-changes__revert-risk-notice-icon--low':
+												getRevertRiskNotice(change)?.band === 'low',
+											'review-changes__revert-risk-notice-icon--medium-low':
+												getRevertRiskNotice(change)?.band === 'mediumLow',
+										}"
+									/>
+									<span class="review-changes__revert-risk-notice-text">{{
+										getRevertRiskNotice(change)!.text
+									}}</span>
+								</div>
+							</div>
 						</div>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">
 							<span
@@ -471,6 +481,10 @@ const props = withDefaults(
 		showUsernameAtPrefix?: boolean
 		/** When true, shows user icon (head and shoulders) to the left of username. */
 		showUserIcon?: boolean
+		/** When true, flags (revert risk, reverted, recommendations) appear below the username. Default on. */
+		flagsBelowUsername?: boolean
+		/** When true, timestamps show relative format ("2 minutes ago", "3 days ago") instead of time + date. */
+		simplifiedTimestamp?: boolean
 		/** When true, edit summaries appear with white bg, border and shadow (cutout style). */
 		showSummaryCutout?: boolean
 		/** When true, show "No edit summary" when there is no edit summary. When false, hide it (delta still shown if enabled). */
@@ -501,6 +515,8 @@ const props = withDefaults(
 		showSourceSubtitles: false,
 		showUsernameAtPrefix: false,
 		showUserIcon: false,
+		flagsBelowUsername: true,
+		simplifiedTimestamp: false,
 		showDelta: true,
 		deltaFormatParentheses: false,
 		source: "recentChanges",
@@ -1423,6 +1439,27 @@ function daysAgo(timestamp: string): number {
 	const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
 	const pastStart = new Date(d.getFullYear(), d.getMonth(), d.getDate())
 	return Math.floor((todayStart.getTime() - pastStart.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function formatRelativeTime(timestamp: string): string {
+	const d = new Date(timestamp)
+	const now = new Date()
+	const diffMs = now.getTime() - d.getTime()
+	const diffSec = Math.floor(diffMs / 1000)
+	const diffMin = Math.floor(diffSec / 60)
+	const diffHour = Math.floor(diffMin / 60)
+	const diffDay = Math.floor(diffHour / 24)
+	const diffWeek = Math.floor(diffDay / 7)
+	const diffMonth = Math.floor(diffDay / 30)
+	const diffYear = Math.floor(diffDay / 365)
+
+	if (diffSec < 60) return "just now"
+	if (diffMin < 60) return diffMin === 1 ? "1 minute ago" : `${diffMin} minutes ago`
+	if (diffHour < 24) return diffHour === 1 ? "1 hour ago" : `${diffHour} hours ago`
+	if (diffDay < 7) return diffDay === 1 ? "1 day ago" : `${diffDay} days ago`
+	if (diffWeek < 4) return diffWeek === 1 ? "1 week ago" : `${diffWeek} weeks ago`
+	if (diffMonth < 12) return diffMonth === 1 ? "1 month ago" : `${diffMonth} months ago`
+	return diffYear === 1 ? "1 year ago" : `${diffYear} years ago`
 }
 
 const RELATIVE_DAYS_CAP = 6

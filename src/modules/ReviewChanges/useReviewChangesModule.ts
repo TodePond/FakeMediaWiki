@@ -27,6 +27,8 @@ const SHOW_HIGHLIGHT_UNVIEWED_KEY = `${STORAGE_PREFIX}show-highlight-unviewed`
 const SHOW_UNVIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-unviewed-border`
 const SHOW_VIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-viewed-border`
 const SHOW_LAST_CLICKED_HIGHLIGHT_KEY = `${STORAGE_PREFIX}show-last-clicked-highlight`
+const FLAGS_BELOW_USERNAME_KEY = `${STORAGE_PREFIX}flags-below-username`
+const SIMPLIFIED_TIMESTAMP_KEY = `${STORAGE_PREFIX}simplified-timestamp`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
@@ -191,6 +193,8 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showRevertedFlag", label: "Reverted flag" },
 	{ key: "showUsernameAtPrefix", label: "@ username" },
 	{ key: "showUserIcon", label: "User icon" },
+	{ key: "flagsBelowUsername", label: "Flags below username" },
+	{ key: "simplifiedTimestamp", label: "Simplified timestamp" },
 	{ key: "summaryCutout", label: "Cutout" },
 	{ key: "showEmptyEditSummary", label: "Empty edit summary" },
 	{ key: "showReviewButton", label: "Review button" },
@@ -258,6 +262,12 @@ function createReviewChangesModule() {
 	)
 	const showLastClickedHighlight = ref(
 		getStoredBoolean(SHOW_LAST_CLICKED_HIGHLIGHT_KEY, SHOW_LAST_CLICKED_HIGHLIGHT_KEY, false)
+	)
+	const flagsBelowUsername = ref(
+		getStoredBoolean(FLAGS_BELOW_USERNAME_KEY, FLAGS_BELOW_USERNAME_KEY, true)
+	)
+	const simplifiedTimestamp = ref(
+		getStoredBoolean(SIMPLIFIED_TIMESTAMP_KEY, SIMPLIFIED_TIMESTAMP_KEY, false)
 	)
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
 	const mixedRecentChangesRatio = ref(
@@ -517,6 +527,22 @@ function createReviewChangesModule() {
 		}
 	})
 
+	watch(flagsBelowUsername, enabled => {
+		try {
+			localStorage.setItem(FLAGS_BELOW_USERNAME_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(simplifiedTimestamp, enabled => {
+		try {
+			localStorage.setItem(SIMPLIFIED_TIMESTAMP_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(feedSource, source => {
 		try {
 			localStorage.setItem(FEED_SOURCE_KEY, source)
@@ -617,6 +643,8 @@ function createReviewChangesModule() {
 		showUnviewedBorder.value = false
 		showViewedBorder.value = false
 		showLastClickedHighlight.value = false
+		flagsBelowUsername.value = true
+		simplifiedTimestamp.value = false
 		feedSource.value = "recentChanges"
 		mixedRecentChangesRatio.value = 60
 		mixedPagesAndUsersRatio.value = 0
@@ -665,6 +693,8 @@ function createReviewChangesModule() {
 		showUnviewedBorder,
 		showViewedBorder,
 		showLastClickedHighlight,
+		flagsBelowUsername,
+		simplifiedTimestamp,
 		showEmptyEditSummary,
 		showRecommendationFlags,
 		sourceOptions,

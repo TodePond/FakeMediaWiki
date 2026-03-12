@@ -124,6 +124,20 @@
 	background-color: var(--color-progressive, #36c);
 }
 
+.review-changes__user-flags-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.review-changes__user-flags-wrapper--flags-above .review-changes__user-actions-row {
+	order: 1;
+}
+
+.review-changes__user-flags-wrapper--flags-above .review-changes__flags-container {
+	order: 0;
+}
+
 .review-changes__user-actions-row {
 	display: flex;
 	align-items: flex-end;

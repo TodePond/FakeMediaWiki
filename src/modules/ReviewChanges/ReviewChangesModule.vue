@@ -31,6 +31,8 @@
 			:viewed-border="showViewedBorder"
 			:last-clicked-highlight="showLastClickedHighlight"
 			:show-recommendation-flags="showRecommendationFlags"
+			:flags-below-username="flagsBelowUsername"
+			:simplified-timestamp="simplifiedTimestamp"
 		/>
 	</section>
 </template>
@@ -72,6 +74,8 @@ const {
 	summaryCutout,
 	showEmptyEditSummary,
 	showRecommendationFlags,
+	flagsBelowUsername,
+	simplifiedTimestamp,
 } = useReviewChangesModule()
 </script>
 
