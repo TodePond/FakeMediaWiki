@@ -94,8 +94,8 @@
 						<CdxLabel
 							:input-id="collaboratorsSliderId"
 							class="ratio-slider-label"
-							title="Collaborators %"
-							>Collab</CdxLabel
+							title="Mentor %"
+							>Mentor</CdxLabel
 						>
 						<div class="ratio-slider-line">
 							<input
@@ -220,7 +220,7 @@
 								max="100"
 								step="10"
 								class="ratio-slider"
-								aria-label="Collaborators %"
+								aria-label="Mentor %"
 							/>
 							<span class="ratio-slider-value" aria-hidden="true"
 								>{{ standaloneCollaboratorsRatio }}%</span
@@ -287,8 +287,8 @@ import { computed } from "vue"
 import {
 	REVIEW_CHANGES_CHECKBOX_CONFIG,
 	collaboratorsSliderId,
-	pagesAndUsersSliderId,
 	pagesAndUsersLatestSliderId,
+	pagesAndUsersSliderId,
 	recentChangesSliderId,
 	relatedChangesSliderId,
 	reviewChangesSourceId,

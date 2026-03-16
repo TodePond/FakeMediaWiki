@@ -14,12 +14,7 @@
 		<div v-if="isLoading" class="review-changes__loading">
 			<CdxProgressBar inline />
 		</div>
-		<ul
-			v-else
-			ref="feedRef"
-			class="review-changes__feed"
-			@focusout="onFeedFocusOut"
-		>
+		<ul v-else ref="feedRef" class="review-changes__feed" @focusout="onFeedFocusOut">
 			<template v-for="dateGroup in revisionsByDateCapped" :key="dateGroup.dateKey">
 				<li
 					v-for="change in dateGroup.revisions"
@@ -96,7 +91,7 @@
 													: getItemSource(change) === 'relatedChanges'
 														? 'Related changes'
 														: getItemSource(change) === 'collaborators'
-															? 'Collaborators'
+															? 'Mentor'
 															: 'Recent changes'
 										"
 									/>
@@ -196,7 +191,8 @@
 						<div
 							class="review-changes__user-flags-wrapper"
 							:class="{
-								'review-changes__user-flags-wrapper--flags-above': !flagsBelowUsername,
+								'review-changes__user-flags-wrapper--flags-above':
+									!flagsBelowUsername,
 							}"
 						>
 							<div class="review-changes__user-actions-row">
@@ -209,24 +205,36 @@
 								>
 									<span v-if="showUserIcon" class="review-changes__user-row">
 										<CdxButton
-										weight="quiet"
-										class="review-changes__user-icon-btn"
-										:aria-label="`User: ${change.user.name}`"
-										size="small"
-										@click.stop.prevent="openUserPopover($event, change)"
-									>
-										<CdxIcon
-											class="review-changes__user-icon"
-											:icon="
-												wiki.isTemporaryAccount(change.user.name)
-													? cdxIconUserTemporary
-													: cdxIconUserAvatar
-											"
-											size="x-small"
-											aria-hidden="true"
-										/>
-									</CdxButton>
+											weight="quiet"
+											class="review-changes__user-icon-btn"
+											:aria-label="`User: ${change.user.name}`"
+											size="small"
+											@click.stop.prevent="openUserPopover($event, change)"
+										>
+											<CdxIcon
+												class="review-changes__user-icon"
+												:icon="
+													wiki.isTemporaryAccount(change.user.name)
+														? cdxIconUserTemporary
+														: cdxIconUserAvatar
+												"
+												size="x-small"
+												aria-hidden="true"
+											/>
+										</CdxButton>
+										<a
+											target="_blank"
+											rel="noopener noreferrer"
+											:href="wiki.getUserUrl(change.user.name)"
+											class="review-changes__user"
+											@click.stop
+										>
+											{{ showUsernameAtPrefix ? "@" : ""
+											}}{{ change.user.name }}
+										</a>
+									</span>
 									<a
+										v-else
 										target="_blank"
 										rel="noopener noreferrer"
 										:href="wiki.getUserUrl(change.user.name)"
@@ -235,39 +243,39 @@
 									>
 										{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
 									</a>
-								</span>
-								<a
-									v-else
-									target="_blank"
-									rel="noopener noreferrer"
-									:href="wiki.getUserUrl(change.user.name)"
-									class="review-changes__user"
-									@click.stop
-								>
-									{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
-								</a>
-								<template v-if="timestampPosition === 'rightOfUsername'">
-									<span class="review-changes__time-sep" aria-hidden="true"> · </span>
-									<time :datetime="change.timestamp" class="review-changes__time">
-										{{
-											simplifiedTimestamp
-												? formatRelativeTime(change.timestamp)
-												: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
-										}}
-									</time>
-								</template>
-								<template v-else-if="timestampPosition === 'belowUsername'">
-									<time :datetime="change.timestamp" class="review-changes__time review-changes__time--block">
-										{{
-											simplifiedTimestamp
-												? formatRelativeTime(change.timestamp)
-												: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
-										}}
-									</time>
-								</template>
+									<template v-if="timestampPosition === 'rightOfUsername'">
+										<span class="review-changes__time-sep" aria-hidden="true">
+											·
+										</span>
+										<time
+											:datetime="change.timestamp"
+											class="review-changes__time"
+										>
+											{{
+												simplifiedTimestamp
+													? formatRelativeTime(change.timestamp)
+													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+											}}
+										</time>
+									</template>
+									<template v-else-if="timestampPosition === 'belowUsername'">
+										<time
+											:datetime="change.timestamp"
+											class="review-changes__time review-changes__time--block"
+										>
+											{{
+												simplifiedTimestamp
+													? formatRelativeTime(change.timestamp)
+													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+											}}
+										</time>
+									</template>
 								</span>
 								<span
-									v-if="(showReviewButton || showDismissButton) && !hasAnyFlag(change)"
+									v-if="
+										(showReviewButton || showDismissButton) &&
+										!hasAnyFlag(change)
+									"
 									class="review-changes__action-buttons"
 								>
 									<CdxButton
@@ -322,183 +330,190 @@
 								"
 								class="review-changes__flags-actions-row"
 								:class="{
-									'review-changes__flags-actions-row--flags-only':
-										!(showReviewButton || showDismissButton),
-								}"
-							>
-							<div
-								v-if="
-									(showRevertRiskFlags && getRevertRiskNotice(change)) ||
-									(showRevertedFlag && isReverted(change)) ||
-									(showRecommendationFlags &&
-										getItemSource(change) === 'relatedChanges' &&
-										getRecommendationSourcePageNames(change).length) ||
-									(showEditCheckToneFlag && hasEditCheckTone(change)) ||
-									(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
-									(showEditCheckOtherFlag && hasEditCheckOther(change))
-								"
-								class="review-changes__flags-container"
-								:class="{
-									'review-changes__flags-container--no-box': !revertRiskFlagsInBox,
-									'review-changes__flags-container--no-summary-above':
-										!hasSummaryAbove(change),
+									'review-changes__flags-actions-row--flags-only': !(
+										showReviewButton || showDismissButton
+									),
 								}"
 							>
 								<div
 									v-if="
-										showRecommendationFlags &&
-										getItemSource(change) === 'relatedChanges' &&
-										getRecommendationReason(
-											getRecommendationSourcePageNames(change)
-										)
+										(showRevertRiskFlags && getRevertRiskNotice(change)) ||
+										(showRevertedFlag && isReverted(change)) ||
+										(showRecommendationFlags &&
+											getItemSource(change) === 'relatedChanges' &&
+											getRecommendationSourcePageNames(change).length) ||
+										(showEditCheckToneFlag && hasEditCheckTone(change)) ||
+										(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
+										(showEditCheckOtherFlag && hasEditCheckOther(change))
 									"
-									class="review-changes__recommendation-notice"
+									class="review-changes__flags-container"
+									:class="{
+										'review-changes__flags-container--no-box':
+											!revertRiskFlagsInBox,
+										'review-changes__flags-container--no-summary-above':
+											!hasSummaryAbove(change),
+									}"
 								>
-									<CdxIcon
-										:icon="cdxIconLightbulb"
-										size="small"
-										class="review-changes__recommendation-notice-icon"
-										aria-hidden="true"
-									/>
-									<span class="review-changes__recommendation-notice-text">{{
-										getRecommendationReason(
-											getRecommendationSourcePageNames(change)
-										)
-									}}</span>
-								</div>
-								<div
-									v-if="showRevertedFlag && isReverted(change)"
-									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
-								>
-									<CdxIcon
-										:icon="cdxIconEditUndo"
-										size="small"
-										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--reverted"
-									/>
-									<span class="review-changes__revert-risk-notice-text">{{
-										verboseFlags ? "This change was reverted" : "Reverted"
-									}}</span>
-								</div>
-								<div
-									v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
-									class="review-changes__revert-risk-notice"
-								>
-									<CdxIcon
-										:icon="
-											['low', 'mediumLow'].includes(
-												getRevertRiskNotice(change)?.band ?? ''
+									<div
+										v-if="
+											showRecommendationFlags &&
+											getItemSource(change) === 'relatedChanges' &&
+											getRecommendationReason(
+												getRecommendationSourcePageNames(change)
 											)
-												? cdxIconSuccess
-												: cdxIconAlert
+										"
+										class="review-changes__recommendation-notice"
+									>
+										<CdxIcon
+											:icon="cdxIconLightbulb"
+											size="small"
+											class="review-changes__recommendation-notice-icon"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__recommendation-notice-text">{{
+											getRecommendationReason(
+												getRecommendationSourcePageNames(change)
+											)
+										}}</span>
+									</div>
+									<div
+										v-if="showRevertedFlag && isReverted(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
+									>
+										<CdxIcon
+											:icon="cdxIconEditUndo"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--reverted"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags ? "This change was reverted" : "Reverted"
+										}}</span>
+									</div>
+									<div
+										v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
+										class="review-changes__revert-risk-notice"
+									>
+										<CdxIcon
+											:icon="
+												['low', 'mediumLow'].includes(
+													getRevertRiskNotice(change)?.band ?? ''
+												)
+													? cdxIconSuccess
+													: cdxIconAlert
+											"
+											size="small"
+											class="review-changes__revert-risk-notice-icon"
+											:class="{
+												'review-changes__revert-risk-notice-icon--very-high':
+													getRevertRiskNotice(change)?.band === 'high',
+												'review-changes__revert-risk-notice-icon--high':
+													getRevertRiskNotice(change)?.band ===
+													'mediumHigh',
+												'review-changes__revert-risk-notice-icon--low':
+													getRevertRiskNotice(change)?.band === 'low',
+												'review-changes__revert-risk-notice-icon--medium-low':
+													getRevertRiskNotice(change)?.band ===
+													'mediumLow',
+											}"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											getRevertRiskNotice(change)!.text
+										}}</span>
+									</div>
+									<div
+										v-if="showEditCheckToneFlag && hasEditCheckTone(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconAlert"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags
+												? "Tone check was detected; tone may need revising."
+												: "Needs a tone check"
+										}}</span>
+									</div>
+									<div
+										v-if="showEditCheckPasteFlag && hasEditCheckPaste(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconAlert"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags
+												? "Paste check was shown during editing."
+												: "Needs a paste check"
+										}}</span>
+									</div>
+									<div
+										v-if="showEditCheckOtherFlag && hasEditCheckOther(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconAlert"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags
+												? "Reference check was shown."
+												: "Reference check"
+										}}</span>
+									</div>
+								</div>
+								<span
+									v-if="
+										(showReviewButton || showDismissButton) &&
+										hasAnyFlag(change)
+									"
+									class="review-changes__action-buttons"
+								>
+									<CdxButton
+										v-if="showReviewButton"
+										:action="
+											isRevisionViewed(change)
+												? 'default'
+												: isLatestRevision(change)
+													? 'progressive'
+													: 'default'
 										"
 										size="small"
-										class="review-changes__revert-risk-notice-icon"
+										weight="quiet"
+										class="review-changes__view-change-btn"
 										:class="{
-											'review-changes__revert-risk-notice-icon--very-high':
-												getRevertRiskNotice(change)?.band === 'high',
-											'review-changes__revert-risk-notice-icon--high':
-												getRevertRiskNotice(change)?.band === 'mediumHigh',
-											'review-changes__revert-risk-notice-icon--low':
-												getRevertRiskNotice(change)?.band === 'low',
-											'review-changes__revert-risk-notice-icon--medium-low':
-												getRevertRiskNotice(change)?.band === 'mediumLow',
+											'review-changes__view-change-btn--viewed':
+												isRevisionViewed(change),
 										}"
-									/>
-									<span class="review-changes__revert-risk-notice-text">{{
-										getRevertRiskNotice(change)!.text
-									}}</span>
-								</div>
-								<div
-									v-if="showEditCheckToneFlag && hasEditCheckTone(change)"
-									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
-								>
-									<CdxIcon
-										:icon="cdxIconAlert"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="openDiffInNewTab(change)"
+									>
+										<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
+										Open
+									</CdxButton>
+									<CdxButton
+										v-if="showDismissButton"
+										action="default"
 										size="small"
-										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-										aria-hidden="true"
-									/>
-									<span class="review-changes__revert-risk-notice-text">{{
-										verboseFlags
-											? "Tone check was detected; tone may need revising."
-											: "Needs a tone check"
-									}}</span>
-								</div>
-								<div
-									v-if="showEditCheckPasteFlag && hasEditCheckPaste(change)"
-									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
-								>
-									<CdxIcon
-										:icon="cdxIconAlert"
-										size="small"
-										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-										aria-hidden="true"
-									/>
-									<span class="review-changes__revert-risk-notice-text">{{
-										verboseFlags
-											? "Paste check was shown during editing."
-											: "Needs a paste check"
-									}}</span>
-								</div>
-								<div
-									v-if="showEditCheckOtherFlag && hasEditCheckOther(change)"
-									class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
-								>
-									<CdxIcon
-										:icon="cdxIconAlert"
-										size="small"
-										class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-										aria-hidden="true"
-									/>
-									<span class="review-changes__revert-risk-notice-text">{{
-										verboseFlags
-											? "Reference check was shown."
-											: "Reference check"
-									}}</span>
-								</div>
-							</div>
-							<span
-								v-if="(showReviewButton || showDismissButton) && hasAnyFlag(change)"
-								class="review-changes__action-buttons"
-							>
-								<CdxButton
-									v-if="showReviewButton"
-									:action="
-										isRevisionViewed(change)
-											? 'default'
-											: isLatestRevision(change)
-												? 'progressive'
-												: 'default'
-									"
-									size="small"
-									weight="quiet"
-									class="review-changes__view-change-btn"
-									:class="{
-										'review-changes__view-change-btn--viewed':
-											isRevisionViewed(change),
-									}"
-									@pointerdown.stop
-									@mousedown.stop
-									@click.stop="openDiffInNewTab(change)"
-								>
-									<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
-									Open
-								</CdxButton>
-								<CdxButton
-									v-if="showDismissButton"
-									action="default"
-									size="small"
-									weight="quiet"
-									class="review-changes__dismiss-btn"
-									aria-label="Dismiss"
-									@pointerdown.stop
-									@mousedown.stop
-									@click.stop="dismissRevision(change)"
-								>
-									<CdxIcon :icon="cdxIconCheck" size="x-small" />
-									Dismiss
-								</CdxButton>
-							</span>
+										weight="quiet"
+										class="review-changes__dismiss-btn"
+										aria-label="Dismiss"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="dismissRevision(change)"
+									>
+										<CdxIcon :icon="cdxIconCheck" size="x-small" />
+										Dismiss
+									</CdxButton>
+								</span>
 							</div>
 						</div>
 						<span v-if="showRevertRisk" class="review-changes__revert-risk">
@@ -1003,10 +1018,7 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	const related = mixedRelatedChangesData.value
 	const rcRatioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
 	const wlRatioPercent = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50))
-	const wlLatestRatioPercent = Math.max(
-		0,
-		Math.min(100, props.pagesAndUsersLatestRatio ?? 20)
-	)
+	const wlLatestRatioPercent = Math.max(0, Math.min(100, props.pagesAndUsersLatestRatio ?? 20))
 	const collaboratorsRatioPercent = Math.max(0, Math.min(100, props.collaboratorsRatio ?? 20))
 	const relatedRatioPercent = Math.max(0, Math.min(100, props.relatedChangesRatio ?? 30))
 
@@ -1588,6 +1600,8 @@ function stripLinksFromHtml(html: string): string {
 	if (typeof document === "undefined") return html
 	const div = document.createElement("div")
 	div.innerHTML = html
+	// Remove <base> tags – they change document base URL and break relative links (e.g. RouterLink)
+	div.querySelectorAll("base").forEach(el => el.remove())
 	const links = Array.from(div.querySelectorAll("a"))
 	links.forEach(a => {
 		const span = document.createElement("span")
@@ -1710,9 +1724,7 @@ const revisionsByDate = computed(() => {
 
 const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
-const revisionsOnScreen = computed(() =>
-	revisionsByDateCapped.value.flatMap(g => g.revisions)
-)
+const revisionsOnScreen = computed(() => revisionsByDateCapped.value.flatMap(g => g.revisions))
 
 const sampleRevision = computed(
 	() =>

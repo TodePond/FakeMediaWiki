@@ -162,13 +162,19 @@ function getStoredFeedSource(): ReviewChangesSource {
 }
 
 export const sourceOptions: Array<{
-	value: "recentChanges" | "pagesAndUsers" | "pagesAndUsersLatest" | "mixed" | "relatedChanges" | "collaborators"
+	value:
+		| "recentChanges"
+		| "pagesAndUsers"
+		| "pagesAndUsersLatest"
+		| "mixed"
+		| "relatedChanges"
+		| "collaborators"
 	label: string
 }> = [
 	{ value: "recentChanges", label: "Recent changes" },
 	{ value: "pagesAndUsers", label: "Watchlist" },
 	{ value: "pagesAndUsersLatest", label: "Watchlist (latest revision)" },
-	{ value: "collaborators", label: "Collaborators" },
+	{ value: "collaborators", label: "Mentor" },
 	{ value: "relatedChanges", label: "Related changes" },
 	{ value: "mixed", label: "Mixed" },
 ]
@@ -257,7 +263,11 @@ function createReviewChangesModule() {
 		getStoredBoolean(SHOW_REVERT_RISK_FLAGS_KEY, LEGACY_KEYS[SHOW_REVERT_RISK_FLAGS_KEY], false)
 	)
 	const revertRiskFlagsInBox = ref(
-		getStoredBoolean(REVERT_RISK_FLAGS_IN_BOX_KEY, LEGACY_KEYS[REVERT_RISK_FLAGS_IN_BOX_KEY], true)
+		getStoredBoolean(
+			REVERT_RISK_FLAGS_IN_BOX_KEY,
+			LEGACY_KEYS[REVERT_RISK_FLAGS_IN_BOX_KEY],
+			true
+		)
 	)
 	const showRevertedFlag = ref(
 		getStoredBoolean(SHOW_REVERTED_FLAG_KEY, LEGACY_KEYS[SHOW_REVERTED_FLAG_KEY], false)
@@ -265,9 +275,7 @@ function createReviewChangesModule() {
 	const verboseFlags = ref(
 		getStoredBoolean(VERBOSE_FLAGS_KEY, LEGACY_KEYS[VERBOSE_FLAGS_KEY], false)
 	)
-	const showDelta = ref(
-		getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], true)
-	)
+	const showDelta = ref(getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], true))
 	const showSourceIcons = ref(
 		getStoredBoolean(SHOW_SOURCE_ICONS_KEY, LEGACY_KEYS[SHOW_SOURCE_ICONS_KEY], false)
 	)
@@ -275,7 +283,11 @@ function createReviewChangesModule() {
 		getStoredBoolean(SHOW_SOURCE_SUBTITLES_KEY, LEGACY_KEYS[SHOW_SOURCE_SUBTITLES_KEY], false)
 	)
 	const showUsernameAtPrefix = ref(
-		getStoredBoolean(SHOW_USERNAME_AT_PREFIX_KEY, LEGACY_KEYS[SHOW_USERNAME_AT_PREFIX_KEY], false)
+		getStoredBoolean(
+			SHOW_USERNAME_AT_PREFIX_KEY,
+			LEGACY_KEYS[SHOW_USERNAME_AT_PREFIX_KEY],
+			false
+		)
 	)
 	const showUserIcon = ref(
 		getStoredBoolean(SHOW_USER_ICON_KEY, LEGACY_KEYS[SHOW_USER_ICON_KEY], false)

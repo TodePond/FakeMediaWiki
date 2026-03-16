@@ -2,7 +2,7 @@
 	<main class="personal-dashboard-clone">
 		<div class="dashboard-mobile-banner">
 			<a
-				href="#"
+				:href="wiki.getPageUrl('Wikipedia:Feedback')"
 				target="_blank"
 				rel="noopener noreferrer"
 				class="dashboard-mobile-banner__feedback"
@@ -81,7 +81,12 @@
 				</div>
 			</section>
 
-			<a href="#" class="mobile-card mobile-card--link">
+			<a
+				:href="wiki.getPageUrl('Wikipedia:List_of_policies')"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="mobile-card mobile-card--link"
+			>
 				<div class="mobile-card__header">
 					<span class="mobile-card__title">Policies and guidelines</span>
 					<CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />
@@ -187,7 +192,9 @@
 								<span class="policies__item-desc"
 									>Content must represent significant views fairly,
 									proportionately, and without bias.<a
-										href="#"
+										:href="wiki.getPageUrl('Wikipedia:Neutral_point_of_view') + '#Examples'"
+										target="_blank"
+										rel="noopener noreferrer"
 										class="policies__examples"
 										>Examples</a
 									></span
@@ -198,7 +205,9 @@
 								<span class="policies__item-desc"
 									>Articles should summarise published sources, and not contain
 									users' own interpretation or knowledge.<a
-										href="#"
+										:href="wiki.getPageUrl('Wikipedia:No_original_research') + '#Examples'"
+										target="_blank"
+										rel="noopener noreferrer"
 										class="policies__examples"
 										>Examples</a
 									></span
@@ -208,7 +217,11 @@
 								<strong class="policies__item-title">Verifiability</strong>
 								<span class="policies__item-desc"
 									>New additions should include a citation, providing the source
-									of the information.<a href="#" class="policies__examples"
+									of the information.<a
+										:href="wiki.getPageUrl('Wikipedia:Verifiability') + '#Examples'"
+										target="_blank"
+										rel="noopener noreferrer"
+										class="policies__examples"
 										>Examples</a
 									></span
 								>
@@ -218,7 +231,9 @@
 								<span class="policies__item-desc"
 									>Remember that most users are trying to improve Wikipedia and
 									not deliberately reduce its quality.<a
-										href="#"
+										:href="wiki.getPageUrl('Wikipedia:Assume_good_faith') + '#Examples'"
+										target="_blank"
+										rel="noopener noreferrer"
 										class="policies__examples"
 										>Examples</a
 									></span
