@@ -295,10 +295,6 @@
 	color: var(--color-progressive, #36c);
 }
 
-.review-changes__recommendation-notice-text {
-	color: var(--color-base);
-}
-
 .review-changes__revert-risk-notice-icon {
 	flex-shrink: 0;
 }
@@ -327,9 +323,9 @@
 	color: var(--color-base--subtle, #54595d);
 }
 
-.review-changes__revert-risk-notice-text {
-	/* color: var(--color-subtle); */
-	color: var(--color-base);
+.review-changes__revert-risk-notice-text,
+.review-changes__recommendation-notice-text {
+	color: var(--color-base--subtle, #54595d);
 }
 
 .review-changes__action-buttons {
