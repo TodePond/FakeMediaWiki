@@ -102,7 +102,21 @@
 															: 'Recent changes'
 										"
 									/>
-									<span class="review-changes__page">{{ change.pageName }} </span>
+									<span class="review-changes__page">{{ change.pageName }}</span>
+									<span
+										v-if="
+											showShortDescription &&
+											change.pageName &&
+											shortDescriptionByPage.get(change.pageName)
+										"
+										class="review-changes__short-desc"
+										:class="{
+											'review-changes__short-desc--no-separator':
+												!showShortDescriptionSeparator,
+										}"
+									>
+										{{ shortDescriptionByPage.get(change.pageName) }}
+									</span>
 								</span>
 								<div
 									v-if="showSourceSubtitles && getItemSource(change)"
@@ -686,6 +700,10 @@ const props = withDefaults(
 		lastClickedHighlight?: boolean
 		/** When true, displays a right arrow in the top right of each card. */
 		showArrowInTopRight?: boolean
+		/** When true, displays the page's short description to the right of the page name. */
+		showShortDescription?: boolean
+		/** When true, displays a separator (·) between the page name and short description. */
+		showShortDescriptionSeparator?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -722,6 +740,8 @@ const props = withDefaults(
 		viewedBorder: false,
 		lastClickedHighlight: false,
 		showArrowInTopRight: false,
+		showShortDescription: true,
+		showShortDescriptionSeparator: true,
 	}
 )
 
@@ -1170,6 +1190,34 @@ function isLatestRevision(change: RevisionWithSource): boolean {
 }
 
 const selectedRevisionsForDisplay = computed(() => getSelectedRevisionsForDisplay())
+
+const shortDescriptionByPage = ref<Map<string, string | null>>(new Map())
+
+async function fetchShortDescriptionsForFeed(): Promise<void> {
+	if (!props.showShortDescription) return
+	const revs = selectedRevisionsForDisplay.value
+	const pageNames = [...new Set(revs.map(r => r.pageName).filter((p): p is string => !!p))]
+	const toFetch = pageNames.filter(p => !shortDescriptionByPage.value.has(p))
+	if (toFetch.length === 0) return
+	const results = await Promise.all(
+		toFetch.map(async pageName => {
+			const desc = await wiki.getShortDescription(pageName)
+			return { pageName, desc } as const
+		})
+	)
+	const next = new Map(shortDescriptionByPage.value)
+	for (const { pageName, desc } of results) {
+		next.set(pageName, desc)
+	}
+	shortDescriptionByPage.value = next
+}
+
+watch(
+	() => [props.showShortDescription, selectedRevisionsForDisplay.value.map(r => r.pageName).join(",")],
+	() => {
+		fetchShortDescriptionsForFeed()
+	}
+)
 
 watch(
 	() => props.showRevertRisk || props.showRevertRiskFlags,

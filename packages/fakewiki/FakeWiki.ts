@@ -137,6 +137,12 @@ export class FakeWiki {
 	 */
 	private revisionHtmlCache = new Map<string, string>()
 
+	/**
+	 * Cache for short descriptions by page name.
+	 * key = pageName, value = description string or null if none
+	 */
+	private shortDescriptionCache = new Map<string, string | null>()
+
 	/** Base URL for the edit-types API (edit-types.wmcloud.org). */
 	private readonly editTypesBase = "https://edit-types.wmcloud.org"
 
@@ -562,6 +568,26 @@ export class FakeWiki {
 			api: "wikimedia",
 			path: `page/summary/${this.encodeForUrl(pageName)}`,
 		})) as FWPageSummary
+	}
+
+	/**
+	 * Get the short description for a page (from template or Wikidata).
+	 * Uses the page summary API; results are cached to avoid repeated requests.
+	 * @param pageName - Page title
+	 * @returns Short description string, or null if none or on error
+	 */
+	async getShortDescription(pageName: string): Promise<string | null> {
+		const cached = this.shortDescriptionCache.get(pageName)
+		if (cached !== undefined) return cached
+		try {
+			const summary = await this.getPageSummary(pageName)
+			const desc = summary.description ?? null
+			this.shortDescriptionCache.set(pageName, desc)
+			return desc
+		} catch {
+			this.shortDescriptionCache.set(pageName, null)
+			return null
+		}
 	}
 
 	/**

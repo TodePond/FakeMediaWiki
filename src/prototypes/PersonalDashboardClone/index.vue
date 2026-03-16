@@ -114,6 +114,8 @@
 				:show-summary-cutout="summaryCutout"
 				:show-empty-edit-summary="showEmptyEditSummary"
 				:show-delta="showDelta"
+				:show-short-description="showShortDescription"
+				:show-short-description-separator="showShortDescriptionSeparator"
 				:delta-format-parentheses="false"
 				:source="feedSource"
 				:recent-changes-ratio="recentChangesRatio"
@@ -298,6 +300,8 @@ const {
 		verboseFlags,
 		showRevertedFlag,
 		showDelta,
+		showShortDescription,
+		showShortDescriptionSeparator,
 		showSourceIcons,
 		showSourceSubtitles,
 		showUsernameAtPrefix,

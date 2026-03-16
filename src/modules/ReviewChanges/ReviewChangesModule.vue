@@ -16,6 +16,8 @@
 			:show-summary-cutout="summaryCutout"
 			:show-empty-edit-summary="showEmptyEditSummary"
 			:show-delta="showDelta"
+			:show-short-description="showShortDescription"
+			:show-short-description-separator="showShortDescriptionSeparator"
 			:source="feedSource"
 			:recent-changes-ratio="recentChangesRatio"
 			:pages-and-users-ratio="pagesAndUsersRatio"
@@ -73,6 +75,8 @@ const {
 	verboseFlags,
 	showRevertedFlag,
 	showDelta,
+	showShortDescription,
+	showShortDescriptionSeparator,
 	showSourceIcons,
 	showSourceSubtitles,
 	showUsernameAtPrefix,

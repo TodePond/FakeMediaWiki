@@ -236,18 +236,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		featured: true,
 		status: "updated",
 	},
-	// {
-	// 	type: "prototype",
-	// 	id: "FlaggedWatchlistDualPredictions",
-	// 	component: "FlaggedWatchlistDualPredictions",
-	// 	name: "Multiple flag watchlist",
-	// 	description: "A feed with separate flags for damaging and good faith predictions.",
-	// 	category: "flagging",
-	// 	wrapper: "Fullscreen",
-	// 	title: "Multiple flag watchlist",
-	// 	featured: true,
-	// 	status: "new",
-	// },
 	{
 		type: "prototype",
 		id: "FlaggedWatchlist",
@@ -308,7 +296,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		name: "Structured deltas",
 		description: "A watchlist with more helpful deltas.",
 		category: "changetypes",
-		status: "new",
 		variants: [
 			{
 				featured: true,
@@ -341,7 +328,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		category: "changetypes",
 		wrapper: "Fullscreen",
 		featured: true,
-		status: "new",
 	},
 	{
 		type: "variants",
@@ -567,7 +553,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		category: "editor",
 		wrapper: "Fullscreen",
 		title: "Visual editor",
-		status: "new",
 		featured: true,
 	},
 	{
@@ -578,7 +563,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		category: "editor",
 		wrapper: "Fullscreen",
 		title: "Visual diff",
-		status: "new",
 		featured: true,
 	},
 	{
@@ -589,18 +573,17 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		category: "editor",
 		wrapper: "Fullscreen",
 		title: "Visual diff feed",
-		status: "new",
 		featured: true,
 	},
 	{
 		type: "prototype",
 		id: "PersonalDashboardClone",
-		name: "Personal dashboard clone",
+		name: "Personal dashboard",
 		description: "A clone of the personal dashboard.",
 		category: "dashboard",
 		wrapper: "Special",
-		title: "Personal dashboard clone",
-		status: "new",
+		title: "Personal dashboard",
+		status: "updated",
 		featured: true,
 	},
 	{
@@ -611,7 +594,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		category: "dashboard",
 		wrapper: "Chrome",
 		title: "Review changes",
-		status: "new",
 		hidden: true,
 	},
 	{

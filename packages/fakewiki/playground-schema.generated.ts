@@ -20,6 +20,9 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getPageSummary", description: "Get a page summary (extract, thumbnail, etc.)", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },
+  { name: "getShortDescription", description: "Get the short description for a page (from template or Wikidata).\nUses the page summary API; results are cached to avoid repeated requests.", category: undefined, params: [
+      { key: "pageName", description: "Page title" }
+  ] },
   { name: "getPageHtml", description: "Get page content as HTML", category: undefined, params: [
       { key: "pageName", description: "Page title" }
   ] },

@@ -31,6 +31,8 @@ const SHOW_UNVIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-unviewed-border`
 const SHOW_VIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-viewed-border`
 const SHOW_LAST_CLICKED_HIGHLIGHT_KEY = `${STORAGE_PREFIX}show-last-clicked-highlight`
 const SHOW_ARROW_IN_TOP_RIGHT_KEY = `${STORAGE_PREFIX}show-arrow-in-top-right`
+const SHOW_SHORT_DESCRIPTION_KEY = `${STORAGE_PREFIX}show-short-description`
+const SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY = `${STORAGE_PREFIX}show-short-description-separator`
 const FLAGS_BELOW_USERNAME_KEY = `${STORAGE_PREFIX}flags-below-username`
 const SIMPLIFIED_TIMESTAMP_KEY = `${STORAGE_PREFIX}simplified-timestamp`
 const TIMESTAMP_POSITION_KEY = `${STORAGE_PREFIX}timestamp-position`
@@ -228,6 +230,8 @@ function getStoredTimestampPosition(): TimestampPosition {
  */
 export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showDelta", label: "Delta", section: "Structured information" },
+	{ key: "showShortDescription", label: "Short description", section: "Structured information" },
+	{ key: "showShortDescriptionSeparator", label: "Short description separator", section: "Structured information" },
 	{ key: "showSourceIcons", label: "Source icon", section: "Source" },
 	{ key: "showSourceSubtitles", label: "Source subtitle", section: "Source" },
 	{ key: "showRevertRiskInFeed", label: "Debug revert risk", section: "Flag types" },
@@ -278,6 +282,12 @@ function createReviewChangesModule() {
 		getStoredBoolean(VERBOSE_FLAGS_KEY, LEGACY_KEYS[VERBOSE_FLAGS_KEY], false)
 	)
 	const showDelta = ref(getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], true))
+	const showShortDescription = ref(
+		getStoredBoolean(SHOW_SHORT_DESCRIPTION_KEY, SHOW_SHORT_DESCRIPTION_KEY, true)
+	)
+	const showShortDescriptionSeparator = ref(
+		getStoredBoolean(SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY, SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY, true)
+	)
 	const showSourceIcons = ref(
 		getStoredBoolean(SHOW_SOURCE_ICONS_KEY, LEGACY_KEYS[SHOW_SOURCE_ICONS_KEY], false)
 	)
@@ -478,6 +488,22 @@ function createReviewChangesModule() {
 	watch(showDelta, enabled => {
 		try {
 			localStorage.setItem(SHOW_DELTA_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showShortDescription, enabled => {
+		try {
+			localStorage.setItem(SHOW_SHORT_DESCRIPTION_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showShortDescriptionSeparator, enabled => {
+		try {
+			localStorage.setItem(SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY, String(enabled))
 		} catch {
 			// ignore
 		}
@@ -737,6 +763,8 @@ function createReviewChangesModule() {
 		showRevertedFlag.value = false
 		verboseFlags.value = false
 		showDelta.value = true
+		showShortDescription.value = true
+		showShortDescriptionSeparator.value = true
 		showSourceIcons.value = false
 		showSourceSubtitles.value = false
 		showUsernameAtPrefix.value = false
@@ -794,6 +822,8 @@ function createReviewChangesModule() {
 		verboseFlags,
 		showRevertedFlag,
 		showDelta,
+		showShortDescription,
+		showShortDescriptionSeparator,
 		showSourceIcons,
 		showSourceSubtitles,
 		showUsernameAtPrefix,

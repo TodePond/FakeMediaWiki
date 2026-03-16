@@ -387,7 +387,6 @@
 .review-changes__page-cell-heading {
 	display: flex;
 	align-items: center;
-	gap: 0.25rem;
 	min-width: 0;
 	flex-grow: 1;
 	overflow: hidden;
@@ -422,12 +421,29 @@
 .review-changes__page {
 	font-weight: 700;
 	color: var(--color-base, #202122);
-	/* overflow: hidden; */
-	/* text-overflow: ellipsis; */
-	/* white-space: nowrap; */
 	line-height: var(--line-height-content);
 	flex-shrink: 1;
-	/* max-width: 100%; */
+}
+
+.review-changes__short-desc {
+	color: var(--color-base--subtle, #54595d);
+	font-weight: normal;
+	line-height: var(--line-height-content);
+	margin-left: 0px;
+}
+
+.review-changes__short-desc::before {
+	content: "·";
+	margin-right: 6px;
+	margin-left: 6px;
+}
+
+.review-changes__short-desc--no-separator::before {
+	content: none;
+}
+
+.review-changes__short-desc--no-separator {
+	margin-left: 8px;
 }
 
 .review-changes__source-subtitle {
