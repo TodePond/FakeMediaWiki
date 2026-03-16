@@ -64,6 +64,13 @@
 						@mousedown.capture="onCardPointerDown"
 					>
 						<div class="review-changes__item-header">
+							<CdxIcon
+								v-if="showArrowInTopRight"
+								:icon="cdxIconArrowNext"
+								size="medium"
+								class="review-changes__arrow-in-top-right"
+								aria-hidden="true"
+							/>
 							<span class="review-changes__page-cell">
 								<span class="review-changes__page-cell-heading">
 									<CdxIcon
@@ -576,6 +583,7 @@ import {
 import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex"
 import {
 	cdxIconAlert,
+	cdxIconArrowNext,
 	cdxIconCheck,
 	cdxIconClock,
 	cdxIconEditUndo,
@@ -676,6 +684,8 @@ const props = withDefaults(
 		viewedBorder?: boolean
 		/** When true, the most recently opened feed item displays with a subtle background until focus leaves the feed. */
 		lastClickedHighlight?: boolean
+		/** When true, displays a right arrow in the top right of each card. */
+		showArrowInTopRight?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -711,6 +721,7 @@ const props = withDefaults(
 		unviewedBorder: false,
 		viewedBorder: false,
 		lastClickedHighlight: false,
+		showArrowInTopRight: false,
 	}
 )
 

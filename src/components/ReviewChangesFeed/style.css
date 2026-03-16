@@ -53,6 +53,7 @@
 }
 
 .review-changes__item-link {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -88,6 +89,14 @@
 
 .review-changes__item-link--last-clicked {
 	background-color: rgba(51, 102, 204, 0.08);
+}
+
+.review-changes__arrow-in-top-right {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	color: var(--color-base--subtle, #54595d);
+	pointer-events: none;
 }
 
 /* Recently clicked indicator: black vertical lines on left and right.

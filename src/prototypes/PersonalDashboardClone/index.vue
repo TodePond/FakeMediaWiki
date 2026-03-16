@@ -130,6 +130,7 @@
 				:unviewed-border="showUnviewedBorder"
 				:viewed-border="showViewedBorder"
 				:last-clicked-highlight="showLastClickedHighlight"
+				:show-arrow-in-top-right="showArrowInTopRight"
 				:show-recommendation-flags="showRecommendationFlags"
 				:show-edit-check-tone-flag="showEditCheckToneFlag"
 				:show-edit-check-paste-flag="showEditCheckPasteFlag"
@@ -285,6 +286,7 @@ const {
 		showUnviewedBorder,
 		showViewedBorder,
 		showLastClickedHighlight,
+		showArrowInTopRight,
 		recentChangesRatio,
 		pagesAndUsersRatio,
 		pagesAndUsersLatestRatio,

@@ -30,6 +30,7 @@ const SHOW_HIGHLIGHT_UNVIEWED_KEY = `${STORAGE_PREFIX}show-highlight-unviewed`
 const SHOW_UNVIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-unviewed-border`
 const SHOW_VIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-viewed-border`
 const SHOW_LAST_CLICKED_HIGHLIGHT_KEY = `${STORAGE_PREFIX}show-last-clicked-highlight`
+const SHOW_ARROW_IN_TOP_RIGHT_KEY = `${STORAGE_PREFIX}show-arrow-in-top-right`
 const FLAGS_BELOW_USERNAME_KEY = `${STORAGE_PREFIX}flags-below-username`
 const SIMPLIFIED_TIMESTAMP_KEY = `${STORAGE_PREFIX}simplified-timestamp`
 const TIMESTAMP_POSITION_KEY = `${STORAGE_PREFIX}timestamp-position`
@@ -245,6 +246,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "summaryCutout", label: "Cutout", section: "Edit summary" },
 	{ key: "showEmptyEditSummary", label: "Empty edit summary", section: "Edit summary" },
 	{ key: "showReviewButton", label: "Open button", section: "Actions" },
+	{ key: "showArrowInTopRight", label: "Arrow", section: "Actions" },
 	{ key: "showDismissButton", label: "Dismiss button", section: "Actions" },
 	{ key: "showHighlightUnviewed", label: "Unopened highlight", section: "Open state" },
 	{ key: "showUnviewedBorder", label: "Unopened border", section: "Open state" },
@@ -324,6 +326,9 @@ function createReviewChangesModule() {
 	)
 	const showLastClickedHighlight = ref(
 		getStoredBoolean(SHOW_LAST_CLICKED_HIGHLIGHT_KEY, SHOW_LAST_CLICKED_HIGHLIGHT_KEY, false)
+	)
+	const showArrowInTopRight = ref(
+		getStoredBoolean(SHOW_ARROW_IN_TOP_RIGHT_KEY, SHOW_ARROW_IN_TOP_RIGHT_KEY, false)
 	)
 	const flagsBelowUsername = ref(
 		getStoredBoolean(FLAGS_BELOW_USERNAME_KEY, FLAGS_BELOW_USERNAME_KEY, true)
@@ -614,6 +619,14 @@ function createReviewChangesModule() {
 		}
 	})
 
+	watch(showArrowInTopRight, enabled => {
+		try {
+			localStorage.setItem(SHOW_ARROW_IN_TOP_RIGHT_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
 	watch(flagsBelowUsername, enabled => {
 		try {
 			localStorage.setItem(FLAGS_BELOW_USERNAME_KEY, String(enabled))
@@ -741,6 +754,7 @@ function createReviewChangesModule() {
 		showUnviewedBorder.value = false
 		showViewedBorder.value = false
 		showLastClickedHighlight.value = false
+		showArrowInTopRight.value = false
 		flagsBelowUsername.value = true
 		simplifiedTimestamp.value = false
 		timestampPosition.value = "rightOfUsername"
@@ -792,6 +806,7 @@ function createReviewChangesModule() {
 		showUnviewedBorder,
 		showViewedBorder,
 		showLastClickedHighlight,
+		showArrowInTopRight,
 		flagsBelowUsername,
 		simplifiedTimestamp,
 		timestampPosition,
