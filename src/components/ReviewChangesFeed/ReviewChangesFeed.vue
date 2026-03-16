@@ -345,6 +345,9 @@
 									(showRecommendationFlags &&
 										getItemSource(change) === 'relatedChanges' &&
 										getRecommendationSourcePageNames(change).length) ||
+									(showOnWatchlistLabel &&
+										change.pageName &&
+										isPageOnWatchlist(change.pageName)) ||
 									(showEditCheckToneFlag && hasEditCheckTone(change)) ||
 									(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
 									(showEditCheckOtherFlag && hasEditCheckOther(change))
@@ -363,6 +366,9 @@
 										(showRecommendationFlags &&
 											getItemSource(change) === 'relatedChanges' &&
 											getRecommendationSourcePageNames(change).length) ||
+										(showOnWatchlistLabel &&
+											change.pageName &&
+											isPageOnWatchlist(change.pageName)) ||
 										(showEditCheckToneFlag && hasEditCheckTone(change)) ||
 										(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
 										(showEditCheckOtherFlag && hasEditCheckOther(change))
@@ -375,6 +381,24 @@
 											!hasSummaryAbove(change),
 									}"
 								>
+									<div
+										v-if="
+											showOnWatchlistLabel &&
+											change.pageName &&
+											isPageOnWatchlist(change.pageName)
+										"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconUnStar"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text"
+											>On your watchlist</span
+										>
+									</div>
 									<div
 										v-if="
 											showRecommendationFlags &&
@@ -704,6 +728,8 @@ const props = withDefaults(
 		showShortDescription?: boolean
 		/** When true, displays a separator (·) between the page name and short description. */
 		showShortDescriptionSeparator?: boolean
+		/** When true, shows "On your watchlist" for any page in the watchlist set, regardless of feed source. */
+		showOnWatchlistLabel?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -742,6 +768,7 @@ const props = withDefaults(
 		showArrowInTopRight: false,
 		showShortDescription: true,
 		showShortDescriptionSeparator: true,
+		showOnWatchlistLabel: false,
 	}
 )
 
@@ -824,7 +851,7 @@ function hasEditCheckOther(change: FWRevision): boolean {
 	return EDIT_CHECK_OTHER_TAGS.some(t => tags.includes(t))
 }
 
-/** Whether any flag is shown for this change (revert risk, reverted, recommendation, edit check). */
+/** Whether any flag is shown for this change (revert risk, reverted, recommendation, edit check, on watchlist). */
 function hasAnyFlag(change: FWRevision): boolean {
 	return (
 		(props.showRevertRiskFlags && !!getRevertRiskNotice(change)) ||
@@ -832,6 +859,9 @@ function hasAnyFlag(change: FWRevision): boolean {
 		(props.showRecommendationFlags &&
 			getItemSource(change) === "relatedChanges" &&
 			getRecommendationSourcePageNames(change).length > 0) ||
+		(props.showOnWatchlistLabel &&
+			!!change.pageName &&
+			isPageOnWatchlist(change.pageName)) ||
 		(props.showEditCheckToneFlag && hasEditCheckTone(change)) ||
 		(props.showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
 		(props.showEditCheckOtherFlag && hasEditCheckOther(change))
@@ -1137,6 +1167,12 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 
 function getItemSource(change: RevisionWithSource): ItemSource | undefined {
 	return change.itemSource
+}
+
+function isPageOnWatchlist(pageName: string | undefined): boolean {
+	if (!pageName) return false
+	const lower = pageName.toLowerCase()
+	return HARDCODED_PAGE_NAMES.some(p => p.toLowerCase() === lower)
 }
 
 /** Latest revision ID per page for watchlist (pagesAndUsers) source. */

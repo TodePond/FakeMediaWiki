@@ -116,6 +116,7 @@
 				:show-delta="showDelta"
 				:show-short-description="showShortDescription"
 				:show-short-description-separator="showShortDescriptionSeparator"
+				:show-on-watchlist-label="showOnWatchlistLabel"
 				:delta-format-parentheses="false"
 				:source="feedSource"
 				:recent-changes-ratio="recentChangesRatio"
@@ -302,6 +303,7 @@ const {
 		showDelta,
 		showShortDescription,
 		showShortDescriptionSeparator,
+		showOnWatchlistLabel,
 		showSourceIcons,
 		showSourceSubtitles,
 		showUsernameAtPrefix,

@@ -33,6 +33,7 @@ const SHOW_LAST_CLICKED_HIGHLIGHT_KEY = `${STORAGE_PREFIX}show-last-clicked-high
 const SHOW_ARROW_IN_TOP_RIGHT_KEY = `${STORAGE_PREFIX}show-arrow-in-top-right`
 const SHOW_SHORT_DESCRIPTION_KEY = `${STORAGE_PREFIX}show-short-description`
 const SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY = `${STORAGE_PREFIX}show-short-description-separator`
+const SHOW_ON_WATCHLIST_LABEL_KEY = `${STORAGE_PREFIX}show-on-watchlist-label`
 const FLAGS_BELOW_USERNAME_KEY = `${STORAGE_PREFIX}flags-below-username`
 const SIMPLIFIED_TIMESTAMP_KEY = `${STORAGE_PREFIX}simplified-timestamp`
 const TIMESTAMP_POSITION_KEY = `${STORAGE_PREFIX}timestamp-position`
@@ -235,6 +236,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showSourceIcons", label: "Source icon", section: "Source" },
 	{ key: "showSourceSubtitles", label: "Source subtitle", section: "Source" },
 	{ key: "showRevertRiskInFeed", label: "Debug revert risk", section: "Flag types" },
+	{ key: "showOnWatchlistLabel", label: "On watchlist label", section: "Flag types" },
 	{ key: "showRevertRiskFlags", label: "Revert risk flags", section: "Flag types" },
 	{ key: "showRecommendationFlags", label: "Recommendation flags", section: "Flag types" },
 	{ key: "showRevertedFlag", label: "Reverted flag", section: "Flag types" },
@@ -293,6 +295,9 @@ function createReviewChangesModule() {
 	)
 	const showSourceSubtitles = ref(
 		getStoredBoolean(SHOW_SOURCE_SUBTITLES_KEY, LEGACY_KEYS[SHOW_SOURCE_SUBTITLES_KEY], false)
+	)
+	const showOnWatchlistLabel = ref(
+		getStoredBoolean(SHOW_ON_WATCHLIST_LABEL_KEY, SHOW_ON_WATCHLIST_LABEL_KEY, false)
 	)
 	const showUsernameAtPrefix = ref(
 		getStoredBoolean(
@@ -520,6 +525,14 @@ function createReviewChangesModule() {
 	watch(showSourceSubtitles, enabled => {
 		try {
 			localStorage.setItem(SHOW_SOURCE_SUBTITLES_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showOnWatchlistLabel, enabled => {
+		try {
+			localStorage.setItem(SHOW_ON_WATCHLIST_LABEL_KEY, String(enabled))
 		} catch {
 			// ignore
 		}
@@ -767,6 +780,7 @@ function createReviewChangesModule() {
 		showShortDescriptionSeparator.value = true
 		showSourceIcons.value = false
 		showSourceSubtitles.value = false
+		showOnWatchlistLabel.value = false
 		showUsernameAtPrefix.value = false
 		showUserIcon.value = false
 		summaryCutout.value = false
@@ -826,6 +840,7 @@ function createReviewChangesModule() {
 		showShortDescriptionSeparator,
 		showSourceIcons,
 		showSourceSubtitles,
+		showOnWatchlistLabel,
 		showUsernameAtPrefix,
 		showUserIcon,
 		summaryCutout,

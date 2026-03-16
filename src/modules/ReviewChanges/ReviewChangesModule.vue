@@ -18,6 +18,7 @@
 			:show-delta="showDelta"
 			:show-short-description="showShortDescription"
 			:show-short-description-separator="showShortDescriptionSeparator"
+			:show-on-watchlist-label="showOnWatchlistLabel"
 			:source="feedSource"
 			:recent-changes-ratio="recentChangesRatio"
 			:pages-and-users-ratio="pagesAndUsersRatio"
@@ -77,6 +78,7 @@ const {
 	showDelta,
 	showShortDescription,
 	showShortDescriptionSeparator,
+	showOnWatchlistLabel,
 	showSourceIcons,
 	showSourceSubtitles,
 	showUsernameAtPrefix,
