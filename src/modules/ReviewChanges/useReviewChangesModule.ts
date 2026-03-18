@@ -25,6 +25,9 @@ const SHOW_RECOMMENDATION_FLAGS_KEY = `${STORAGE_PREFIX}show-recommendation-flag
 const SHOW_EDIT_CHECK_TONE_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-tone-flag`
 const SHOW_EDIT_CHECK_PASTE_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-paste-flag`
 const SHOW_EDIT_CHECK_OTHER_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-other-flag`
+const SHOW_EDIT_CHECK_NEWCONTENT_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-newcontent-flag`
+const SHOW_EDIT_SUGGESTION_FLAG_KEY = `${STORAGE_PREFIX}show-edit-suggestion-flag`
+const SHOW_DEBUG_CHECKS_KEY = `${STORAGE_PREFIX}show-debug-checks`
 const SHOW_DISMISS_BUTTON_KEY = `${STORAGE_PREFIX}show-dismiss-button`
 const SHOW_HIGHLIGHT_UNVIEWED_KEY = `${STORAGE_PREFIX}show-highlight-unviewed`
 const SHOW_UNVIEWED_BORDER_KEY = `${STORAGE_PREFIX}show-unviewed-border`
@@ -175,7 +178,7 @@ export const sourceOptions: Array<{
 		| "collaborators"
 	label: string
 }> = [
-	{ value: "recentChanges", label: "Recent changes" },
+	{ value: "recentChanges", label: "Risky" },
 	{ value: "pagesAndUsers", label: "Watchlist" },
 	{ value: "pagesAndUsersLatest", label: "Watchlist (latest revision)" },
 	{ value: "collaborators", label: "Mentor" },
@@ -236,6 +239,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showSourceIcons", label: "Source icon", section: "Source" },
 	{ key: "showSourceSubtitles", label: "Source subtitle", section: "Source" },
 	{ key: "showRevertRiskInFeed", label: "Debug revert risk", section: "Flag types" },
+	{ key: "showDebugChecks", label: "Debug checks", section: "Flag types" },
 	{ key: "showOnWatchlistLabel", label: "On watchlist label", section: "Flag types" },
 	{ key: "showRevertRiskFlags", label: "Revert risk flags", section: "Flag types" },
 	{ key: "showRecommendationFlags", label: "Recommendation flags", section: "Flag types" },
@@ -243,6 +247,8 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showEditCheckToneFlag", label: "Tone check flag", section: "Flag types" },
 	{ key: "showEditCheckPasteFlag", label: "Paste check flag", section: "Flag types" },
 	{ key: "showEditCheckOtherFlag", label: "Reference check flag", section: "Flag types" },
+	{ key: "showEditCheckNewContentFlag", label: "New content flag", section: "Flag types" },
+	{ key: "showEditSuggestionFlag", label: "Edit suggestion flag", section: "Flag types" },
 	{ key: "revertRiskFlagsInBox", label: "Flags in box", section: "Flag appearance" },
 	{ key: "verboseFlags", label: "Verbose flags", section: "Flag appearance" },
 	{ key: "showUsernameAtPrefix", label: "@ username", section: "User" },
@@ -326,6 +332,15 @@ function createReviewChangesModule() {
 	)
 	const showEditCheckOtherFlag = ref(
 		getStoredBoolean(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, SHOW_EDIT_CHECK_OTHER_FLAG_KEY, false)
+	)
+	const showEditCheckNewContentFlag = ref(
+		getStoredBoolean(SHOW_EDIT_CHECK_NEWCONTENT_FLAG_KEY, SHOW_EDIT_CHECK_NEWCONTENT_FLAG_KEY, false)
+	)
+	const showEditSuggestionFlag = ref(
+		getStoredBoolean(SHOW_EDIT_SUGGESTION_FLAG_KEY, SHOW_EDIT_SUGGESTION_FLAG_KEY, false)
+	)
+	const showDebugChecks = ref(
+		getStoredBoolean(SHOW_DEBUG_CHECKS_KEY, SHOW_DEBUG_CHECKS_KEY, false)
 	)
 	const showDismissButton = ref(
 		getStoredBoolean(SHOW_DISMISS_BUTTON_KEY, SHOW_DISMISS_BUTTON_KEY, false)
@@ -617,6 +632,27 @@ function createReviewChangesModule() {
 			// ignore
 		}
 	})
+	watch(showEditCheckNewContentFlag, enabled => {
+		try {
+			localStorage.setItem(SHOW_EDIT_CHECK_NEWCONTENT_FLAG_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+	watch(showEditSuggestionFlag, enabled => {
+		try {
+			localStorage.setItem(SHOW_EDIT_SUGGESTION_FLAG_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+	watch(showDebugChecks, enabled => {
+		try {
+			localStorage.setItem(SHOW_DEBUG_CHECKS_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
 
 	watch(showDismissButton, enabled => {
 		try {
@@ -791,6 +827,9 @@ function createReviewChangesModule() {
 		showEditCheckToneFlag.value = false
 		showEditCheckPasteFlag.value = false
 		showEditCheckOtherFlag.value = false
+		showEditCheckNewContentFlag.value = false
+		showEditSuggestionFlag.value = false
+		showDebugChecks.value = false
 		showDismissButton.value = false
 		showHighlightUnviewed.value = false
 		showUnviewedBorder.value = false
@@ -860,6 +899,9 @@ function createReviewChangesModule() {
 		showEditCheckToneFlag,
 		showEditCheckPasteFlag,
 		showEditCheckOtherFlag,
+		showEditCheckNewContentFlag,
+		showEditSuggestionFlag,
+		showDebugChecks,
 		sourceOptions,
 		reviewChangesSourceId,
 		recentChangesSliderId,

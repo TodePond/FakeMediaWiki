@@ -99,7 +99,7 @@
 														? 'Related changes'
 														: getItemSource(change) === 'collaborators'
 															? 'Mentor'
-															: 'Recent changes'
+															: 'Risky'
 										"
 									/>
 									<span class="review-changes__page">{{ change.pageName }}</span>
@@ -348,9 +348,11 @@
 									(showOnWatchlistLabel &&
 										change.pageName &&
 										isPageOnWatchlist(change.pageName)) ||
-									(showEditCheckToneFlag && hasEditCheckTone(change)) ||
+									(showEditCheckToneFlag && hasToneCheck(change)) ||
 									(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
-									(showEditCheckOtherFlag && hasEditCheckOther(change))
+									(showEditCheckOtherFlag && hasReferenceNeed(change)) ||
+									(showEditCheckNewContentFlag && hasEditCheckNewContent(change)) ||
+									(showEditSuggestionFlag && hasEditSuggestionSeen(change))
 								"
 								class="review-changes__flags-actions-row"
 								:class="{
@@ -369,9 +371,11 @@
 										(showOnWatchlistLabel &&
 											change.pageName &&
 											isPageOnWatchlist(change.pageName)) ||
-										(showEditCheckToneFlag && hasEditCheckTone(change)) ||
+										(showEditCheckToneFlag && hasToneCheck(change)) ||
 										(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
-										(showEditCheckOtherFlag && hasEditCheckOther(change))
+										(showEditCheckOtherFlag && hasReferenceNeed(change)) ||
+										(showEditCheckNewContentFlag && hasEditCheckNewContent(change)) ||
+										(showEditSuggestionFlag && hasEditSuggestionSeen(change))
 									"
 									class="review-changes__flags-container"
 									:class="{
@@ -466,7 +470,7 @@
 										}}</span>
 									</div>
 									<div
-										v-if="showEditCheckToneFlag && hasEditCheckTone(change)"
+										v-if="showEditCheckToneFlag && hasToneCheck(change)"
 										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
 									>
 										<CdxIcon
@@ -498,7 +502,7 @@
 										}}</span>
 									</div>
 									<div
-										v-if="showEditCheckOtherFlag && hasEditCheckOther(change)"
+										v-if="showEditCheckOtherFlag && hasReferenceNeed(change)"
 										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
 									>
 										<CdxIcon
@@ -511,6 +515,38 @@
 											verboseFlags
 												? "Reference check was shown."
 												: "Reference check"
+										}}</span>
+									</div>
+									<div
+										v-if="showEditCheckNewContentFlag && hasEditCheckNewContent(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconAlert"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags
+												? "New content was added."
+												: "New content"
+										}}</span>
+									</div>
+									<div
+										v-if="showEditSuggestionFlag && hasEditSuggestionSeen(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconAlert"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags
+												? "Edit suggestion was seen."
+												: "Edit suggestion"
 										}}</span>
 									</div>
 								</div>
@@ -571,6 +607,20 @@
 										line.value === '(loading)',
 									'review-changes__revert-risk-line--error':
 										line.value === '(error)' || line.value === '(missing)',
+								}"
+								>{{ line.label }}: {{ line.value }}</span
+							>
+						</span>
+						<span v-if="showDebugChecks" class="review-changes__revert-risk">
+							<span
+								v-for="line in getEditCheckDebugLines(change)"
+								:key="line.label"
+								class="review-changes__revert-risk-line"
+								:class="{
+									'review-changes__revert-risk-line--loading':
+										line.value === '(loading)',
+									'review-changes__revert-risk-line--error':
+										line.value === '(error)',
 								}"
 								>{{ line.label }}: {{ line.value }}</span
 							>
@@ -637,6 +687,7 @@ import type {
 	FWLiftWingPrediction,
 	FWPageHistoryRevision,
 	FWPredictionByModel,
+	FWPredictionModel,
 	FWRevision,
 } from "fakewiki/types"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
@@ -714,6 +765,10 @@ const props = withDefaults(
 		showEditCheckPasteFlag?: boolean
 		/** When true, shows "Reference check" flag for edits with reference check tags (editcheck-references, editcheck-newreference, editcheck-references-shown). */
 		showEditCheckOtherFlag?: boolean
+		/** When true, shows "New content" flag for edits with editcheck-newcontent tag. */
+		showEditCheckNewContentFlag?: boolean
+		/** When true, shows "Edit suggestion seen" flag for edits with editsuggestion-seen tag. */
+		showEditSuggestionFlag?: boolean
 		/** When true, unopened feed items display with a slight blue background. */
 		highlightUnviewed?: boolean
 		/** When true, unopened feed items display with blue vertical lines on left and right. */
@@ -730,6 +785,8 @@ const props = withDefaults(
 		showShortDescriptionSeparator?: boolean
 		/** When true, shows "On your watchlist" for any page in the watchlist set, regardless of feed source. */
 		showOnWatchlistLabel?: boolean
+		/** When true, shows debug scores for edit checks (reference need delta, tone check, tags). */
+		showDebugChecks?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -761,6 +818,8 @@ const props = withDefaults(
 		showEditCheckToneFlag: false,
 		showEditCheckPasteFlag: false,
 		showEditCheckOtherFlag: false,
+		showEditCheckNewContentFlag: false,
+		showEditSuggestionFlag: false,
 		highlightUnviewed: false,
 		unviewedBorder: false,
 		viewedBorder: false,
@@ -769,6 +828,7 @@ const props = withDefaults(
 		showShortDescription: true,
 		showShortDescriptionSeparator: true,
 		showOnWatchlistLabel: false,
+		showDebugChecks: false,
 	}
 )
 
@@ -832,6 +892,8 @@ const EDIT_CHECK_OTHER_TAGS = [
 	"editcheck-newreference",
 	"editcheck-references-shown",
 ]
+const EDIT_CHECK_NEWCONTENT_TAGS = ["editcheck-newcontent"]
+const EDIT_SUGGESTION_TAGS = ["editsuggestion-seen"]
 
 function hasEditCheckTone(change: FWRevision): boolean {
 	const tags = change.tags
@@ -851,6 +913,41 @@ function hasEditCheckOther(change: FWRevision): boolean {
 	return EDIT_CHECK_OTHER_TAGS.some(t => tags.includes(t))
 }
 
+function hasEditCheckNewContent(change: FWRevision): boolean {
+	const tags = change.tags
+	if (!tags || tags.length === 0) return false
+	return EDIT_CHECK_NEWCONTENT_TAGS.some(t => tags.includes(t))
+}
+
+function hasEditSuggestionSeen(change: FWRevision): boolean {
+	const tags = change.tags
+	if (!tags || tags.length === 0) return false
+	return EDIT_SUGGESTION_TAGS.some(t => tags.includes(t))
+}
+
+/** Reference check: tags OR API delta above threshold (change increased uncited content). */
+function hasReferenceNeed(change: FWRevision): boolean {
+	if (hasEditCheckOther(change)) return true
+	const entry = referenceNeedByRevId.value.get(change.id)
+	return (
+		entry != null &&
+		!("error" in entry) &&
+		entry.delta >= REFERENCE_NEED_THRESHOLD
+	)
+}
+
+/** Tone check: tags OR API prediction true. */
+function hasToneCheck(change: FWRevision): boolean {
+	if (hasEditCheckTone(change)) return true
+	const entry = toneCheckByRevId.value.get(change.id)
+	return (
+		entry != null &&
+		!("error" in entry) &&
+		entry.prediction === true &&
+		entry.probability >= 0.5
+	)
+}
+
 /** Whether any flag is shown for this change (revert risk, reverted, recommendation, edit check, on watchlist). */
 function hasAnyFlag(change: FWRevision): boolean {
 	return (
@@ -862,9 +959,11 @@ function hasAnyFlag(change: FWRevision): boolean {
 		(props.showOnWatchlistLabel &&
 			!!change.pageName &&
 			isPageOnWatchlist(change.pageName)) ||
-		(props.showEditCheckToneFlag && hasEditCheckTone(change)) ||
+		(props.showEditCheckToneFlag && hasToneCheck(change)) ||
 		(props.showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
-		(props.showEditCheckOtherFlag && hasEditCheckOther(change))
+		(props.showEditCheckOtherFlag && hasReferenceNeed(change)) ||
+		(props.showEditCheckNewContentFlag && hasEditCheckNewContent(change)) ||
+		(props.showEditSuggestionFlag && hasEditSuggestionSeen(change))
 	)
 }
 
@@ -897,6 +996,18 @@ async function enrichRevisionsWithTags(revisions: FWRevision[]): Promise<FWRevis
 const revertRiskByRevId = ref<Map<number, FWPredictionByModel | { error: true }>>(new Map())
 const isLoadingRevertRisk = ref(false)
 
+const referenceNeedByRevId = ref<
+	Map<number, { delta: number; before: number; after: number } | { error: true }>
+>(new Map())
+const isLoadingReferenceNeed = ref(false)
+/** Delta threshold: show flag when change increased uncited content by this much (rn_after - rn_before). */
+const REFERENCE_NEED_THRESHOLD = 0.01
+
+const toneCheckByRevId = ref<
+	Map<number, { prediction: boolean; probability: number } | { error: true }>
+>(new Map())
+const isLoadingToneCheck = ref(false)
+
 const REVERT_RISK_MODELS = [
 	{ key: "revertrisk" as const, label: "Revert risk (language-agnostic)" },
 	{ key: "revertrisk-multilingual" as const, label: "Revert risk (multilingual)" },
@@ -924,6 +1035,77 @@ function getRevertRiskLines(revId: number): Array<{ label: string; value: string
 		const value = pred ? `${formatRevertRiskPercent(pred)}%` : "(missing)"
 		return { label: m.label, value }
 	})
+}
+
+const EDIT_CHECK_DEBUG_TAGS = [
+	...EDIT_CHECK_TONE_TAGS,
+	...EDIT_CHECK_PASTE_TAGS,
+	...EDIT_CHECK_OTHER_TAGS,
+	...EDIT_CHECK_NEWCONTENT_TAGS,
+	...EDIT_SUGGESTION_TAGS,
+]
+
+function getEditCheckDebugLines(change: FWRevision): Array<{ label: string; value: string }> {
+	const lines: Array<{ label: string; value: string }> = []
+
+	// Reference need: before, after, delta (only for revisions with pageName)
+	if (change.pageName) {
+		if (isLoadingReferenceNeed.value) {
+			lines.push({ label: "Ref need before", value: "(loading)" })
+			lines.push({ label: "Ref need after", value: "(loading)" })
+			lines.push({ label: "Ref need Δ", value: "(loading)" })
+		} else {
+			const rnEntry = referenceNeedByRevId.value.get(change.id)
+			if (rnEntry === undefined) {
+				lines.push({ label: "Ref need before", value: "(loading)" })
+				lines.push({ label: "Ref need after", value: "(loading)" })
+				lines.push({ label: "Ref need Δ", value: "(loading)" })
+			} else if (typeof rnEntry === "object" && "error" in rnEntry) {
+				lines.push({ label: "Ref need before", value: "(error)" })
+				lines.push({ label: "Ref need after", value: "(error)" })
+				lines.push({ label: "Ref need Δ", value: "(error)" })
+			} else {
+				lines.push({ label: "Ref need before", value: rnEntry.before.toFixed(3) })
+				lines.push({ label: "Ref need after", value: rnEntry.after.toFixed(3) })
+				lines.push({ label: "Ref need Δ", value: rnEntry.delta.toFixed(3) })
+			}
+		}
+	} else {
+		lines.push({ label: "Ref need before", value: "(n/a)" })
+		lines.push({ label: "Ref need after", value: "(n/a)" })
+		lines.push({ label: "Ref need Δ", value: "(n/a)" })
+	}
+
+	// Tone check (only for revisions with pageName)
+	if (change.pageName) {
+		if (isLoadingToneCheck.value) {
+			lines.push({ label: "Tone", value: "(loading)" })
+		} else {
+			const tcEntry = toneCheckByRevId.value.get(change.id)
+			if (tcEntry === undefined) {
+				lines.push({ label: "Tone", value: "(loading)" })
+			} else if (typeof tcEntry === "object" && "error" in tcEntry) {
+				lines.push({ label: "Tone", value: "(error)" })
+			} else {
+				lines.push({
+					label: "Tone",
+					value: `${tcEntry.prediction} (${(tcEntry.probability * 100).toFixed(0)}%)`,
+				})
+			}
+		}
+	} else {
+		lines.push({ label: "Tone", value: "(n/a)" })
+	}
+
+	// Edit check tags present on this revision
+	const tags = change.tags ?? []
+	const editCheckTags = tags.filter(t => EDIT_CHECK_DEBUG_TAGS.includes(t))
+	lines.push({
+		label: "Tags",
+		value: editCheckTags.length > 0 ? editCheckTags.join(", ") : "(none)",
+	})
+
+	return lines
 }
 
 /** Band thresholds for language-agnostic revert risk: above 80% = yellow, above 90% = red; below 25% = green, below 45% = blue */
@@ -1011,11 +1193,11 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 	const revIds = revs.map(r => r.id)
 	isLoadingRevertRisk.value = true
 	revertRiskByRevId.value = new Map()
+	const models: FWPredictionModel[] = props.showRevertRisk
+		? ["revertrisk", "revertrisk-multilingual"]
+		: ["revertrisk"]
 	try {
-		const predictions = await wiki.getRevisionPredictions(revIds, [
-			"revertrisk",
-			"revertrisk-multilingual",
-		])
+		const predictions = await wiki.getRevisionPredictions(revIds, models)
 		const next = new Map<number, FWPredictionByModel | { error: true }>()
 		for (const revId of revIds) {
 			const byModel = predictions[revId] ?? {}
@@ -1030,6 +1212,116 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 		revertRiskByRevId.value = next
 	} finally {
 		isLoadingRevertRisk.value = false
+	}
+}
+
+async function fetchReferenceNeedForFeed(): Promise<void> {
+	const revs = selectedRevisionsForDisplay.value
+	if (revs.length === 0) return
+	const revsWithPage = revs.filter(r => r.pageName)
+	if (revsWithPage.length === 0) return
+	isLoadingReferenceNeed.value = true
+	referenceNeedByRevId.value = new Map()
+	try {
+		const results = await Promise.all(
+			revsWithPage.map(async change => {
+				try {
+					const parentId = await wiki.getParentRevisionId(change.pageName!, change.id)
+					const [beforePred, afterPred] = await Promise.all([
+						parentId != null ? wiki.getReferenceNeedPrediction(parentId) : null,
+						wiki.getReferenceNeedPrediction(change.id),
+					])
+					const rnBefore = beforePred?.rn_score ?? 0
+					const rnAfter = afterPred?.rn_score ?? null
+					if (typeof rnAfter !== "number") return { revId: change.id, delta: null, error: true } as const
+					const delta = rnAfter - rnBefore
+					return {
+						revId: change.id,
+						before: rnBefore,
+						after: rnAfter,
+						delta,
+						error: false,
+					} as const
+				} catch {
+					return { revId: change.id, delta: null, error: true } as const
+				}
+			})
+		)
+		const next = new Map<
+			number,
+			{ delta: number; before: number; after: number } | { error: true }
+		>()
+		for (const result of results) {
+			if (result.error) {
+				next.set(result.revId, { error: true })
+			} else if (typeof result.delta === "number") {
+				next.set(result.revId, {
+					before: result.before,
+					after: result.after,
+					delta: result.delta,
+				})
+			}
+		}
+		referenceNeedByRevId.value = next
+	} catch {
+		const next = new Map<
+			number,
+			{ delta: number; before: number; after: number } | { error: true }
+		>()
+		for (const change of revsWithPage) {
+			next.set(change.id, { error: true })
+		}
+		referenceNeedByRevId.value = next
+	} finally {
+		isLoadingReferenceNeed.value = false
+	}
+}
+
+async function fetchToneCheckForFeed(): Promise<void> {
+	const revs = selectedRevisionsForDisplay.value
+	if (revs.length === 0) return
+	const revsWithPage = revs.filter(r => r.pageName)
+	if (revsWithPage.length === 0) return
+	isLoadingToneCheck.value = true
+	toneCheckByRevId.value = new Map()
+	try {
+		const results = await Promise.all(
+			revsWithPage.map(async change => {
+				try {
+					const pred = await wiki.getToneCheckPrediction(
+						change.id,
+						change.pageName!,
+						undefined
+					)
+					return { revId: change.id, pred, error: false } as const
+				} catch {
+					return { revId: change.id, pred: null, error: true } as const
+				}
+			})
+		)
+		const next = new Map<
+			number,
+			{ prediction: boolean; probability: number } | { error: true }
+		>()
+		for (const { revId, pred, error } of results) {
+			if (error) {
+				next.set(revId, { error: true })
+			} else if (pred) {
+				next.set(revId, { prediction: pred.prediction, probability: pred.probability })
+			}
+		}
+		toneCheckByRevId.value = next
+	} catch {
+		const next = new Map<
+			number,
+			{ prediction: boolean; probability: number } | { error: true }
+		>()
+		for (const change of revsWithPage) {
+			next.set(change.id, { error: true })
+		}
+		toneCheckByRevId.value = next
+	} finally {
+		isLoadingToneCheck.value = false
 	}
 }
 
@@ -1261,6 +1553,68 @@ watch(
 		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
 			fetchRevertRiskForFeed()
 		}
+	}
+)
+
+watch(
+	() => props.showEditCheckOtherFlag || props.showDebugChecks,
+	enabled => {
+		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
+			fetchReferenceNeedForFeed()
+		}
+	}
+)
+
+watch(
+	() => props.showEditCheckToneFlag || props.showDebugChecks,
+	enabled => {
+		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
+			fetchToneCheckForFeed()
+		}
+	}
+)
+
+let referenceNeedDebounceId: ReturnType<typeof setTimeout> | null = null
+watch(
+	() => [
+		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
+		props.showEditCheckOtherFlag || props.showDebugChecks,
+	],
+	([, enabled]) => {
+		if (
+			!enabled ||
+			props.source !== "mixed" ||
+			selectedRevisionsForDisplay.value.length === 0
+		) {
+			return
+		}
+		if (referenceNeedDebounceId) clearTimeout(referenceNeedDebounceId)
+		referenceNeedDebounceId = setTimeout(() => {
+			referenceNeedDebounceId = null
+			fetchReferenceNeedForFeed()
+		}, 300)
+	}
+)
+
+let toneCheckDebounceId: ReturnType<typeof setTimeout> | null = null
+watch(
+	() => [
+		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
+		props.showEditCheckToneFlag || props.showDebugChecks,
+	],
+	([, enabled]) => {
+		if (
+			!enabled ||
+			props.source !== "mixed" ||
+			selectedRevisionsForDisplay.value.length === 0
+		) {
+			return
+		}
+		if (toneCheckDebounceId) clearTimeout(toneCheckDebounceId)
+		toneCheckDebounceId = setTimeout(() => {
+			toneCheckDebounceId = null
+			fetchToneCheckForFeed()
+		}, 300)
 	}
 )
 
@@ -1496,6 +1850,12 @@ async function loadFeed(append = false): Promise<void> {
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
+			if (props.showEditCheckOtherFlag) {
+				fetchReferenceNeedForFeed()
+			}
+			if (props.showEditCheckToneFlag) {
+				fetchToneCheckForFeed()
+			}
 			return
 		}
 
@@ -1590,6 +1950,12 @@ async function loadFeed(append = false): Promise<void> {
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
+			if (props.showEditCheckOtherFlag) {
+				fetchReferenceNeedForFeed()
+			}
+			if (props.showEditCheckToneFlag) {
+				fetchToneCheckForFeed()
+			}
 			return
 		}
 
@@ -1618,6 +1984,12 @@ async function loadFeed(append = false): Promise<void> {
 			isLoading.value = false
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
+			}
+			if (props.showEditCheckOtherFlag) {
+				fetchReferenceNeedForFeed()
+			}
+			if (props.showEditCheckToneFlag) {
+				fetchToneCheckForFeed()
 			}
 			return
 		} else if (props.source === "collaborators") {
@@ -1679,6 +2051,12 @@ async function loadFeed(append = false): Promise<void> {
 		isLoading.value = false
 		if (props.showRevertRisk || props.showRevertRiskFlags) {
 			fetchRevertRiskForFeed()
+		}
+		if (props.showEditCheckOtherFlag) {
+			fetchReferenceNeedForFeed()
+		}
+		if (props.showEditCheckToneFlag) {
+			fetchToneCheckForFeed()
 		}
 	} catch (e) {
 		isLoading.value = false

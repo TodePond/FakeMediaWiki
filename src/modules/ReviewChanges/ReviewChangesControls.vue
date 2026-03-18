@@ -28,8 +28,8 @@
 						<CdxLabel
 							:input-id="recentChangesSliderId"
 							class="ratio-slider-label"
-							title="Recent changes %"
-							>Recent</CdxLabel
+							title="Risky %"
+							>Risky</CdxLabel
 						>
 						<div class="ratio-slider-line">
 							<input
@@ -154,7 +154,7 @@
 								max="100"
 								step="10"
 								class="ratio-slider"
-								aria-label="Recent changes %"
+								aria-label="Risky %"
 							/>
 							<span class="ratio-slider-value" aria-hidden="true"
 								>{{ standaloneRecentChangesRatio }}%</span

@@ -138,6 +138,9 @@
 				:show-edit-check-tone-flag="showEditCheckToneFlag"
 				:show-edit-check-paste-flag="showEditCheckPasteFlag"
 				:show-edit-check-other-flag="showEditCheckOtherFlag"
+				:show-edit-check-newcontent-flag="showEditCheckNewContentFlag"
+				:show-edit-suggestion-flag="showEditSuggestionFlag"
+				:show-debug-checks="showDebugChecks"
 				:flags-below-username="flagsBelowUsername"
 				:simplified-timestamp="simplifiedTimestamp"
 				:timestamp-position="timestampPosition"
@@ -314,6 +317,9 @@ const {
 		showEditCheckToneFlag,
 		showEditCheckPasteFlag,
 		showEditCheckOtherFlag,
+		showEditCheckNewContentFlag,
+		showEditSuggestionFlag,
+		showDebugChecks,
 		flagsBelowUsername,
 		simplifiedTimestamp,
 		timestampPosition,

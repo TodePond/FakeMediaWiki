@@ -35,6 +35,8 @@ import type {
 	FWRevision,
 	FWRevisionPredictions,
 	FWRevisionWithLinkType,
+	FWReferenceNeedPrediction,
+	FWToneCheckPrediction,
 	FWStructuredDeltaCandidate,
 	FWStructuredDeltaCanonicalType,
 	FWStructuredDeltaKind,
@@ -142,6 +144,12 @@ export class FakeWiki {
 	 * key = pageName, value = description string or null if none
 	 */
 	private shortDescriptionCache = new Map<string, string | null>()
+
+	/**
+	 * Cache for tone check predictions by revision ID.
+	 * key = revId, value = prediction or null
+	 */
+	private toneCheckCache = new Map<number, FWToneCheckPrediction | null>()
 
 	/** Base URL for the edit-types API (edit-types.wmcloud.org). */
 	private readonly editTypesBase = "https://edit-types.wmcloud.org"
@@ -1214,6 +1222,148 @@ export class FakeWiki {
 			}
 		}
 		return result
+	}
+
+	/**
+	 * Get reference need prediction for a revision from Lift Wing.
+	 * Predicts the proportion of uncited sentences that need citations (0–1).
+	 * Use for surfacing "needs reference check" flags when tags are unavailable.
+	 * @param revId - Revision ID
+	 * @param lang - Language code (e.g. "en"). If not provided, derived from base URL
+	 * @returns Reference need score or null on error
+	 */
+	async getReferenceNeedPrediction(
+		revId: number,
+		lang?: string
+	): Promise<FWReferenceNeedPrediction | null> {
+		const langCode = lang ?? this.getEditTypesLang()
+		const url = "https://api.wikimedia.org/service/lw/inference/v1/models/reference-need:predict"
+
+		try {
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
+				},
+				body: JSON.stringify({ rev_id: revId, lang: langCode }),
+			})
+
+			if (!response.ok) {
+				if (response.status === 422) return null
+				const message = await this.getPredictionApiErrorMessage(response)
+				console.warn(`Reference need prediction unavailable for revision ${revId}: ${message}`)
+				return null
+			}
+
+			const data = (await response.json()) as {
+				rn_score?: number
+				reference_need_score?: number
+			}
+			const score = data.rn_score ?? data.reference_need_score
+			if (typeof score === "number") {
+				return { rn_score: score }
+			}
+			return null
+		} catch (error) {
+			console.error(`Failed to get reference need prediction for revision ${revId}:`, error)
+			return null
+		}
+	}
+
+	/** Max wikitext length per revision for tone check (avoids huge payloads). */
+	private readonly TONE_CHECK_MAX_TEXT_LENGTH = 50000
+
+	/**
+	 * Get tone check prediction for a revision from Lift Wing edit-check model.
+	 * Detects promotional, derogatory, or subjective language in the edit.
+	 * Requires fetching parent and current revision wikitext.
+	 * @param revId - Revision ID
+	 * @param pageName - Page title (needed to resolve parent revision)
+	 * @param lang - Language code (e.g. "en"). If not provided, derived from base URL
+	 * @returns Tone check prediction or null on error
+	 */
+	async getToneCheckPrediction(
+		revId: number,
+		pageName: string,
+		lang?: string
+	): Promise<FWToneCheckPrediction | null> {
+		const cached = this.toneCheckCache.get(revId)
+		if (cached !== undefined) return cached
+
+		const langCode = lang ?? this.getEditTypesLang()
+		const url =
+			"https://api.wikimedia.org/service/lw/inference/v1/models/edit-check:predict"
+
+		try {
+			const parentId = await this.getParentRevisionId(pageName, revId)
+			const [originalText, modifiedText] = await Promise.all([
+				parentId != null ? this.getRevisionSource(parentId) : Promise.resolve(""),
+				this.getRevisionSource(revId),
+			])
+
+			const truncate = (s: string) =>
+				s.length > this.TONE_CHECK_MAX_TEXT_LENGTH
+					? s.slice(0, this.TONE_CHECK_MAX_TEXT_LENGTH)
+					: s
+
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
+				},
+				body: JSON.stringify({
+					instances: [
+						{
+							lang: langCode,
+							check_type: "tone",
+							page_title: pageName,
+							original_text: truncate(originalText),
+							modified_text: truncate(modifiedText),
+						},
+					],
+				}),
+			})
+
+			if (!response.ok) {
+				if (response.status === 422) {
+					this.toneCheckCache.set(revId, null)
+					return null
+				}
+				const message = await this.getPredictionApiErrorMessage(response)
+				console.warn(`Tone check prediction unavailable for revision ${revId}: ${message}`)
+				this.toneCheckCache.set(revId, null)
+				return null
+			}
+
+			const data = (await response.json()) as {
+				predictions?: Array<{
+					prediction?: boolean
+					probability?: number
+					status_code?: number
+				}>
+			}
+			const pred = data.predictions?.[0]
+			if (
+				pred &&
+				typeof pred.prediction === "boolean" &&
+				typeof pred.probability === "number"
+			) {
+				const result: FWToneCheckPrediction = {
+					prediction: pred.prediction,
+					probability: pred.probability,
+				}
+				this.toneCheckCache.set(revId, result)
+				return result
+			}
+			this.toneCheckCache.set(revId, null)
+			return null
+		} catch (error) {
+			console.error(`Failed to get tone check prediction for revision ${revId}:`, error)
+			this.toneCheckCache.set(revId, null)
+			return null
+		}
 	}
 
 	/**
