@@ -37,6 +37,7 @@
 			:show-arrow-in-top-right="false"
 			:show-recommendation-flags="showRecommendationFlags"
 			:show-edit-check-other-flag="showEditCheckOtherFlag"
+			:show-tone-check-flag="showToneCheckFlag"
 			:show-debug-checks="showDebugChecks"
 			:flags-below-username="true"
 			:simplified-timestamp="true"
@@ -68,6 +69,7 @@ const {
 	showOnWatchlistLabel,
 	showRecommendationFlags,
 	showEditCheckOtherFlag,
+	showToneCheckFlag,
 	showDebugChecks,
 } = useFeedModule()
 </script>

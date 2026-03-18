@@ -367,6 +367,19 @@ export interface FWReferenceNeedPrediction {
 	rn_score: number
 }
 
+/** Tone Check prediction from Lift Wing edit-check model. Detects promotional, derogatory, or subjective language. */
+export interface FWToneCheckPrediction {
+	prediction: boolean
+	probability: number
+	check_type?: string
+	language?: string
+	page_title?: string
+	model_name?: string
+	model_version?: string
+	status_code?: number
+	details?: Record<string, unknown>
+}
+
 /** Edit-types API: simple diff summary (counts per change type per action, e.g. Template: { change: 1 }, Wikilink: { insert: 1 }). */
 export type FWEditTypesDiffSummary = Record<string, Record<string, number>>
 

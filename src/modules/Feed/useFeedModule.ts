@@ -8,6 +8,7 @@ const SHOW_REVERT_RISK_FLAGS_KEY = `${STORAGE_PREFIX}show-revert-risk-flags`
 const SHOW_REVERTED_FLAG_KEY = `${STORAGE_PREFIX}show-reverted-flag`
 const SHOW_RECOMMENDATION_FLAGS_KEY = `${STORAGE_PREFIX}show-recommendation-flags`
 const SHOW_EDIT_CHECK_OTHER_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-other-flag`
+const SHOW_TONE_CHECK_FLAG_KEY = `${STORAGE_PREFIX}show-tone-check-flag`
 const SHOW_DEBUG_CHECKS_KEY = `${STORAGE_PREFIX}show-debug-checks`
 const SHOW_ON_WATCHLIST_LABEL_KEY = `${STORAGE_PREFIX}show-on-watchlist-label`
 const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
@@ -91,48 +92,28 @@ export const FEED_CHECKBOX_CONFIG = [
 	{ key: "showRecommendationFlags", label: "Recommendation flags", section: "Flag types" },
 	{ key: "showRevertedFlag", label: "Reverted flag", section: "Flag types" },
 	{ key: "showEditCheckOtherFlag", label: "Reference check flag", section: "Flag types" },
+	{ key: "showToneCheckFlag", label: "Tone check flag", section: "Flag types" },
 ] as const
 
 let moduleInstance: ReturnType<typeof createFeedModule> | null = null
 
 function createFeedModule() {
-	const showRevertRiskInFeed = ref(
-		getStoredBoolean(SHOW_REVERT_RISK_KEY, false)
-	)
-	const showRevertRiskFlags = ref(
-		getStoredBoolean(SHOW_REVERT_RISK_FLAGS_KEY, false)
-	)
-	const showRevertedFlag = ref(
-		getStoredBoolean(SHOW_REVERTED_FLAG_KEY, false)
-	)
-	const showOnWatchlistLabel = ref(
-		getStoredBoolean(SHOW_ON_WATCHLIST_LABEL_KEY, false)
-	)
-	const showRecommendationFlags = ref(
-		getStoredBoolean(SHOW_RECOMMENDATION_FLAGS_KEY, false)
-	)
-	const showEditCheckOtherFlag = ref(
-		getStoredBoolean(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, false)
-	)
-	const showDebugChecks = ref(
-		getStoredBoolean(SHOW_DEBUG_CHECKS_KEY, false)
-	)
+	const showRevertRiskInFeed = ref(getStoredBoolean(SHOW_REVERT_RISK_KEY, false))
+	const showRevertRiskFlags = ref(getStoredBoolean(SHOW_REVERT_RISK_FLAGS_KEY, false))
+	const showRevertedFlag = ref(getStoredBoolean(SHOW_REVERTED_FLAG_KEY, false))
+	const showOnWatchlistLabel = ref(getStoredBoolean(SHOW_ON_WATCHLIST_LABEL_KEY, false))
+	const showRecommendationFlags = ref(getStoredBoolean(SHOW_RECOMMENDATION_FLAGS_KEY, false))
+	const showEditCheckOtherFlag = ref(getStoredBoolean(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, false))
+	const showToneCheckFlag = ref(getStoredBoolean(SHOW_TONE_CHECK_FLAG_KEY, false))
+	const showDebugChecks = ref(getStoredBoolean(SHOW_DEBUG_CHECKS_KEY, false))
 	const feedSource = ref<ReviewChangesSource>(getStoredFeedSource())
-	const mixedRecentChangesRatio = ref(
-		getStoredRatio(MIXED_RECENT_CHANGES_RATIO_KEY, 60)
-	)
-	const mixedPagesAndUsersRatio = ref(
-		getStoredRatio(MIXED_PAGES_AND_USERS_RATIO_KEY, 0)
-	)
+	const mixedRecentChangesRatio = ref(getStoredRatio(MIXED_RECENT_CHANGES_RATIO_KEY, 60))
+	const mixedPagesAndUsersRatio = ref(getStoredRatio(MIXED_PAGES_AND_USERS_RATIO_KEY, 0))
 	const mixedPagesAndUsersLatestRatio = ref(
 		getStoredRatio(MIXED_PAGES_AND_USERS_LATEST_RATIO_KEY, 20)
 	)
-	const mixedRelatedChangesRatio = ref(
-		getStoredRatio(MIXED_RELATED_CHANGES_RATIO_KEY, 20)
-	)
-	const mixedCollaboratorsRatio = ref(
-		getStoredRatio(MIXED_COLLABORATORS_RATIO_KEY, 20)
-	)
+	const mixedRelatedChangesRatio = ref(getStoredRatio(MIXED_RELATED_CHANGES_RATIO_KEY, 20))
+	const mixedCollaboratorsRatio = ref(getStoredRatio(MIXED_COLLABORATORS_RATIO_KEY, 20))
 	const standaloneRecentChangesRatio = ref(
 		getStoredRatio(STANDALONE_RECENT_CHANGES_RATIO_KEY, 60)
 	)
@@ -218,6 +199,14 @@ function createFeedModule() {
 	watch(showEditCheckOtherFlag, enabled => {
 		try {
 			localStorage.setItem(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
+
+	watch(showToneCheckFlag, enabled => {
+		try {
+			localStorage.setItem(SHOW_TONE_CHECK_FLAG_KEY, String(enabled))
 		} catch {
 			// ignore
 		}
@@ -317,6 +306,7 @@ function createFeedModule() {
 		showOnWatchlistLabel.value = false
 		showRecommendationFlags.value = false
 		showEditCheckOtherFlag.value = false
+		showToneCheckFlag.value = false
 		showDebugChecks.value = false
 		feedSource.value = "recentChanges"
 		mixedRecentChangesRatio.value = 60
@@ -354,6 +344,7 @@ function createFeedModule() {
 		showOnWatchlistLabel,
 		showRecommendationFlags,
 		showEditCheckOtherFlag,
+		showToneCheckFlag,
 		showDebugChecks,
 		sourceOptions,
 		feedSourceId,

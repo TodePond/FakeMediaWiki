@@ -77,6 +77,16 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "revId", description: "Revision ID" },
       { key: "lang", description: "Language code (e.g. \"en\"). If not provided, derived from base URL" }
   ] },
+  { name: "getToneCheckPrediction", description: "Get Tone Check prediction from Lift Wing edit-check model.\nDetects promotional, derogatory, or subjective language in text.", category: undefined, params: [
+      { key: "originalText", description: "Text before the edit" },
+      { key: "modifiedText", description: "Text after the edit (the new content to check)" },
+      { key: "options", description: "Optional lang (default from wiki) and pageTitle (default \"\")" }
+  ] },
+  { name: "getToneCheckForRevision", description: "Get Tone Check prediction for a revision by comparing it with its parent.\nFetches the diff, extracts only changed lines (no context), and runs tone check.", category: undefined, params: [
+      { key: "pageName", description: "Page title" },
+      { key: "revId", description: "Revision ID to check" },
+      { key: "options", description: "Optional lang (default from wiki) and pageTitle (default pageName)" }
+  ] },
   { name: "clearPageHistoryCache", description: "Clear the page history cache for a page (or all pages if no name given).\nUse when you need fresh data, e.g. when opening the inline history view.", category: undefined, params: [
       { key: "pageName" }
   ] },

@@ -97,6 +97,14 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 	getRevisionPredictions: { resultHint: "json" },
 	getRevisionPredictionsFromOres: { resultHint: "json" },
 	getReferenceNeedPrediction: { resultHint: "json" },
+	getToneCheckPrediction: {
+		resultHint: "json",
+		optionsParamKeys: ["lang", "pageTitle"],
+	},
+	getToneCheckForRevision: {
+		resultHint: "json",
+		optionsParamKeys: ["lang", "pageTitle"],
+	},
 	getEditTypesSummary: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
 	getEditTypesDetails: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },
 	getEditTypesDebug: { resultHint: "json", optionsParamKeys: ["lang", "content_type"] },

@@ -157,6 +157,18 @@ const METHOD_PARAM_DEFAULTS: Record<string, Record<string, string | number | boo
 	getStructuredDeltasFromSummary: {
 		summary: '{"Sentence":{"change":1},"Punctuation":{"remove":1}}',
 	},
+	getToneCheckPrediction: {
+		originalText: "The band formed in 2020.",
+		modifiedText: "The band is the most talented and revolutionary group of our generation.",
+		lang: "en",
+		pageTitle: "Example band",
+	},
+	getToneCheckForRevision: {
+		pageName: "Corsica Studios",
+		revId: 1337619110,
+		lang: "en",
+		pageTitle: "Corsica Studios",
+	},
 	normalizeStructuredDeltaSummary: {
 		raw: '{"summary":{"Sentence":{"change":2,"remove":1},"Punctuation":{"remove":1},"Whitespace":{"change":1},"Comment":{"insert":"2"}},"debug":{"traceId":"demo"}}',
 	},
@@ -172,6 +184,8 @@ const METHOD_CATEGORY_OVERRIDES: Record<string, string> = {
 	getDaysOfActivity: "Users",
 	getDeltaClass: "Revisions and diffs",
 	getEditSummaryHtml: "Formatting",
+	getToneCheckPrediction: "Predictions",
+	getToneCheckForRevision: "Predictions",
 	getMediawikiBase: "URLs",
 	getOnThisDay: "Pages and content",
 	getTableFromEditSummary: "Formatting",

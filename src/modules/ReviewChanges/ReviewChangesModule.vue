@@ -36,6 +36,7 @@
 			:show-arrow-in-top-right="showArrowInTopRight"
 			:show-recommendation-flags="showRecommendationFlags"
 			:show-edit-check-other-flag="showEditCheckOtherFlag"
+			:show-tone-check-flag="showToneCheckFlag"
 			:show-debug-checks="showDebugChecks"
 			:flags-below-username="flagsBelowUsername"
 			:simplified-timestamp="simplifiedTimestamp"
@@ -86,6 +87,7 @@ const {
 	showEmptyEditSummary,
 	showRecommendationFlags,
 	showEditCheckOtherFlag,
+	showToneCheckFlag,
 	showDebugChecks,
 	flagsBelowUsername,
 	simplifiedTimestamp,

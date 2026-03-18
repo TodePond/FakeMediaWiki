@@ -36,6 +36,7 @@ import type {
 	FWRevisionPredictions,
 	FWRevisionWithLinkType,
 	FWReferenceNeedPrediction,
+	FWToneCheckPrediction,
 	FWStructuredDeltaCandidate,
 	FWStructuredDeltaCanonicalType,
 	FWStructuredDeltaKind,
@@ -1262,6 +1263,145 @@ export class FakeWiki {
 			console.error(`Failed to get reference need prediction for revision ${revId}:`, error)
 			return null
 		}
+	}
+
+	/**
+	 * Get Tone Check prediction from Lift Wing edit-check model.
+	 * Detects promotional, derogatory, or subjective language in text.
+	 * @param originalText - Text before the edit
+	 * @param modifiedText - Text after the edit (the new content to check)
+	 * @param options - Optional lang (default from wiki) and pageTitle (default "")
+	 * @returns Tone Check prediction or null on error
+	 */
+	async getToneCheckPrediction(
+		originalText: string,
+		modifiedText: string,
+		options?: { lang?: string; pageTitle?: string }
+	): Promise<FWToneCheckPrediction | null> {
+		const lang = options?.lang ?? this.getEditTypesLang()
+		const pageTitle = options?.pageTitle ?? ""
+		const url = "https://api.wikimedia.org/service/lw/inference/v1/models/edit-check:predict"
+
+		try {
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
+				},
+				body: JSON.stringify({
+					instances: [
+						{
+							lang,
+							check_type: "tone",
+							page_title: pageTitle,
+							original_text: originalText,
+							modified_text: modifiedText,
+						},
+					],
+				}),
+			})
+
+			if (!response.ok) {
+				const message = await this.getPredictionApiErrorMessage(response)
+				console.warn(`Tone Check prediction unavailable: ${message}`)
+				return null
+			}
+
+			const data = (await response.json()) as { predictions?: FWToneCheckPrediction[] }
+			const pred = data.predictions?.[0]
+			if (pred && typeof pred.prediction === "boolean" && typeof pred.probability === "number") {
+				return pred
+			}
+			return null
+		} catch (error) {
+			console.error("Failed to get Tone Check prediction:", error)
+			return null
+		}
+	}
+
+	/**
+	 * Extract before/after text from diff lines, excluding context.
+	 * Only includes add (1), remove (2), and change (3) lines.
+	 * For change lines, uses highlightRanges to get just the changed segments.
+	 * @param diff - Diff lines from compare API
+	 * @returns { originalText, modifiedText } suitable for tone check
+	 */
+	private extractChangedSnippetsFromDiff(diff: FWDiffLine[]): {
+		originalText: string
+		modifiedText: string
+	} {
+		const originalParts: string[] = []
+		const modifiedParts: string[] = []
+
+		for (const line of diff ?? []) {
+			const text = line.text ?? ""
+			switch (line.type) {
+				case 1: // add
+					modifiedParts.push(text)
+					break
+				case 2: // remove
+					originalParts.push(text)
+					break
+				case 3: // change (and 4, 5 move)
+				case 4:
+				case 5: {
+					const segments = this.getDiffLineSegments(line)
+					const oldParts: string[] = []
+					const newParts: string[] = []
+					for (const seg of segments) {
+						if (seg.type === "remove") oldParts.push(seg.text)
+						else if (seg.type === "add") newParts.push(seg.text)
+						// null = context, exclude
+					}
+					const oldStr = oldParts.join("")
+					const newStr = newParts.join("")
+					if (oldStr || newStr) {
+						originalParts.push(oldStr)
+						modifiedParts.push(newStr)
+					} else if (text) {
+						// No highlightRanges: treat whole line as new (we lack old)
+						modifiedParts.push(text)
+						originalParts.push("")
+					}
+					break
+				}
+				default:
+					// type 0 = context, skip
+					break
+			}
+		}
+
+		return {
+			originalText: originalParts.join("\n"),
+			modifiedText: modifiedParts.join("\n"),
+		}
+	}
+
+	/**
+	 * Get Tone Check prediction for a revision by comparing it with its parent.
+	 * Fetches the diff, extracts only changed lines (no context), and runs tone check.
+	 * @param pageName - Page title
+	 * @param revId - Revision ID to check
+	 * @param options - Optional lang (default from wiki) and pageTitle (default pageName)
+	 * @returns Tone Check prediction or null when no changes, no parent, or on error
+	 */
+	async getToneCheckForRevision(
+		pageName: string,
+		revId: number,
+		options?: { lang?: string; pageTitle?: string }
+	): Promise<FWToneCheckPrediction | null> {
+		const diff = await this.getDiffSource(pageName, revId)
+		const { originalText, modifiedText } = this.extractChangedSnippetsFromDiff(diff.diff ?? [])
+
+		if (!originalText && !modifiedText) {
+			return null
+		}
+
+		return this.getToneCheckPrediction(originalText, modifiedText, {
+			lang: options?.lang,
+			pageTitle: options?.pageTitle ?? pageName,
+		})
 	}
 
 	/**

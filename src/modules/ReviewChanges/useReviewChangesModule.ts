@@ -23,6 +23,7 @@ const SHOW_EMPTY_EDIT_SUMMARY_KEY = `${STORAGE_PREFIX}show-empty-edit-summary`
 const LEGACY_HIDE_EMPTY_SUMMARY_KEY = `${LEGACY_PREFIX}hide-empty-summary`
 const SHOW_RECOMMENDATION_FLAGS_KEY = `${STORAGE_PREFIX}show-recommendation-flags`
 const SHOW_EDIT_CHECK_OTHER_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-other-flag`
+const SHOW_TONE_CHECK_FLAG_KEY = `${STORAGE_PREFIX}show-tone-check-flag`
 const SHOW_DEBUG_CHECKS_KEY = `${STORAGE_PREFIX}show-debug-checks`
 const SHOW_DISMISS_BUTTON_KEY = `${STORAGE_PREFIX}show-dismiss-button`
 const SHOW_HIGHLIGHT_UNVIEWED_KEY = `${STORAGE_PREFIX}show-highlight-unviewed`
@@ -241,6 +242,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showRecommendationFlags", label: "Recommendation flags", section: "Flag types" },
 	{ key: "showRevertedFlag", label: "Reverted flag", section: "Flag types" },
 	{ key: "showEditCheckOtherFlag", label: "Reference check flag", section: "Flag types" },
+	{ key: "showToneCheckFlag", label: "Tone check flag", section: "Flag types" },
 	{ key: "revertRiskFlagsInBox", label: "Flags in box", section: "Flag appearance" },
 	{ key: "verboseFlags", label: "Verbose flags", section: "Flag appearance" },
 	{ key: "showUsernameAtPrefix", label: "@ username", section: "User" },
@@ -318,6 +320,9 @@ function createReviewChangesModule() {
 	)
 	const showEditCheckOtherFlag = ref(
 		getStoredBoolean(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, SHOW_EDIT_CHECK_OTHER_FLAG_KEY, false)
+	)
+	const showToneCheckFlag = ref(
+		getStoredBoolean(SHOW_TONE_CHECK_FLAG_KEY, SHOW_TONE_CHECK_FLAG_KEY, false)
 	)
 	const showDebugChecks = ref(
 		getStoredBoolean(SHOW_DEBUG_CHECKS_KEY, SHOW_DEBUG_CHECKS_KEY, false)
@@ -596,6 +601,13 @@ function createReviewChangesModule() {
 			// ignore
 		}
 	})
+	watch(showToneCheckFlag, enabled => {
+		try {
+			localStorage.setItem(SHOW_TONE_CHECK_FLAG_KEY, String(enabled))
+		} catch {
+			// ignore
+		}
+	})
 	watch(showDebugChecks, enabled => {
 		try {
 			localStorage.setItem(SHOW_DEBUG_CHECKS_KEY, String(enabled))
@@ -775,6 +787,7 @@ function createReviewChangesModule() {
 		showEmptyEditSummary.value = true
 		showRecommendationFlags.value = true
 		showEditCheckOtherFlag.value = false
+		showToneCheckFlag.value = false
 		showDebugChecks.value = false
 		showDismissButton.value = false
 		showHighlightUnviewed.value = false
@@ -843,6 +856,7 @@ function createReviewChangesModule() {
 		showEmptyEditSummary,
 		showRecommendationFlags,
 		showEditCheckOtherFlag,
+		showToneCheckFlag,
 		showDebugChecks,
 		sourceOptions,
 		reviewChangesSourceId,
