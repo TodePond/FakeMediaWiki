@@ -72,52 +72,76 @@
 								aria-hidden="true"
 							/>
 							<span class="review-changes__page-cell">
-								<span class="review-changes__page-cell-heading">
-									<CdxIcon
-										v-if="showSourceIcons && getItemSource(change)"
-										:icon="
-											getItemSource(change) === 'pagesAndUsers' ||
-											getItemSource(change) === 'pagesAndUsersLatest'
-												? cdxIconUnStar
-												: getItemSource(change) === 'relatedChanges'
-													? cdxIconLightbulb
-													: getItemSource(change) === 'collaborators'
-														? cdxIconUserAvatar
-														: cdxIconClock
+								<template v-if="unifiedTitle">
+									<FeedItemTitle
+										:page-name="change.pageName ?? ''"
+										:short-description="
+											change.pageName
+												? shortDescriptionByPage.get(change.pageName) ?? null
+												: null
 										"
-										size="x-small"
-										:class="[
-											'review-changes__source-icon',
-											`review-changes__source-icon--${getItemSource(change)}`,
-										]"
-										:aria-label="
-											getItemSource(change) === 'pagesAndUsers'
-												? 'Watchlist'
-												: getItemSource(change) === 'pagesAndUsersLatest'
-													? 'Watchlist (latest revision)'
-													: getItemSource(change) === 'relatedChanges'
-														? 'Related changes'
-														: getItemSource(change) === 'collaborators'
-															? 'Mentor'
-															: 'Risky'
+										:timestamp="change.timestamp"
+										:formatted-timestamp="
+											timestampPosition === 'topRight'
+												? simplifiedTimestamp
+													? formatRelativeTime(change.timestamp)
+													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+												: undefined
 										"
+										:item-source="getItemSource(change)"
+										:show-source-icons="showSourceIcons"
+										:show-short-description="showShortDescription"
+										:show-short-description-separator="showShortDescriptionSeparator"
 									/>
-									<span class="review-changes__page">{{ change.pageName }}</span>
-									<span
-										v-if="
-											showShortDescription &&
-											change.pageName &&
-											shortDescriptionByPage.get(change.pageName)
-										"
-										class="review-changes__short-desc"
-										:class="{
-											'review-changes__short-desc--no-separator':
-												!showShortDescriptionSeparator,
-										}"
-									>
-										{{ shortDescriptionByPage.get(change.pageName) }}
+								</template>
+								<template v-else>
+									<span class="review-changes__page-cell-heading review-changes__page-cell-heading--separate">
+										<CdxIcon
+											v-if="showSourceIcons && getItemSource(change)"
+											:icon="
+												getItemSource(change) === 'pagesAndUsers' ||
+												getItemSource(change) === 'pagesAndUsersLatest'
+													? cdxIconUnStar
+													: getItemSource(change) === 'relatedChanges'
+														? cdxIconLightbulb
+														: getItemSource(change) === 'collaborators'
+															? cdxIconUserAvatar
+															: cdxIconClock
+											"
+											size="x-small"
+											:class="[
+												'review-changes__source-icon',
+												`review-changes__source-icon--${getItemSource(change)}`,
+											]"
+											:aria-label="
+												getItemSource(change) === 'pagesAndUsers'
+													? 'Watchlist'
+													: getItemSource(change) === 'pagesAndUsersLatest'
+														? 'Watchlist (latest revision)'
+														: getItemSource(change) === 'relatedChanges'
+															? 'Related changes'
+															: getItemSource(change) === 'collaborators'
+																? 'Mentor'
+																: 'Risky'
+											"
+										/>
+										<span class="review-changes__page">{{ change.pageName }}</span>
+										<span
+											v-if="
+												showShortDescription &&
+												change.pageName &&
+												shortDescriptionByPage.get(change.pageName)
+											"
+											class="review-changes__short-desc"
+											:class="{
+												'review-changes__short-desc--no-separator':
+													!showShortDescriptionSeparator,
+											}"
+										>
+											{{ shortDescriptionByPage.get(change.pageName) }}
+										</span>
 									</span>
-								</span>
+								</template>
 								<div
 									v-if="showSourceSubtitles && getItemSource(change)"
 									class="review-changes__source-subtitle"
@@ -134,9 +158,84 @@
 														: "From recent changes"
 									}}
 								</div>
+								<span
+									class="review-changes__user-time-group"
+									:class="{
+										'review-changes__user-time-group--timestamp-below':
+											timestampPosition === 'belowUsername',
+									}"
+								>
+									<span v-if="showUserIcon" class="review-changes__user-row">
+										<CdxButton
+											weight="quiet"
+											class="review-changes__user-icon-btn"
+											:aria-label="`User: ${change.user.name}`"
+											size="small"
+											@click.stop.prevent="openUserPopover($event, change)"
+										>
+											<CdxIcon
+												class="review-changes__user-icon"
+												:icon="
+													wiki.isTemporaryAccount(change.user.name)
+														? cdxIconUserTemporary
+														: cdxIconUserAvatar
+												"
+												size="x-small"
+												aria-hidden="true"
+											/>
+										</CdxButton>
+										<a
+											target="_blank"
+											rel="noopener noreferrer"
+											:href="wiki.getUserUrl(change.user.name)"
+											class="review-changes__user"
+											@click.stop
+										>
+											{{ showUsernameAtPrefix ? "@" : ""
+											}}{{ change.user.name }}
+										</a>
+									</span>
+									<a
+										v-else
+										target="_blank"
+										rel="noopener noreferrer"
+										:href="wiki.getUserUrl(change.user.name)"
+										class="review-changes__user"
+										@click.stop
+									>
+										{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
+									</a>
+									<template v-if="timestampPosition === 'rightOfUsername'">
+										<span class="review-changes__time-sep" aria-hidden="true">
+											·
+										</span>
+										<time
+											:datetime="change.timestamp"
+											class="review-changes__time"
+										>
+											{{
+												simplifiedTimestamp
+													? formatRelativeTime(change.timestamp)
+													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+											}}
+										</time>
+									</template>
+									<template v-else-if="timestampPosition === 'belowUsername'">
+										<time
+											:datetime="change.timestamp"
+											class="review-changes__time review-changes__time--block"
+										>
+											{{
+												simplifiedTimestamp
+													? formatRelativeTime(change.timestamp)
+													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+											}}
+										</time>
+									</template>
+								</span>
 							</span>
 							<time
-								v-if="timestampPosition === 'topRight'"
+								v-if="!unifiedTitle && timestampPosition === 'topRight'"
 								:datetime="change.timestamp"
 								class="review-changes__time"
 							>
@@ -216,82 +315,12 @@
 									!flagsBelowUsername,
 							}"
 						>
-							<div class="review-changes__user-actions-row">
-								<span
-									class="review-changes__user-time-group"
-									:class="{
-										'review-changes__user-time-group--timestamp-below':
-											timestampPosition === 'belowUsername',
-									}"
-								>
-									<span v-if="showUserIcon" class="review-changes__user-row">
-										<CdxButton
-											weight="quiet"
-											class="review-changes__user-icon-btn"
-											:aria-label="`User: ${change.user.name}`"
-											size="small"
-											@click.stop.prevent="openUserPopover($event, change)"
-										>
-											<CdxIcon
-												class="review-changes__user-icon"
-												:icon="
-													wiki.isTemporaryAccount(change.user.name)
-														? cdxIconUserTemporary
-														: cdxIconUserAvatar
-												"
-												size="x-small"
-												aria-hidden="true"
-											/>
-										</CdxButton>
-										<a
-											target="_blank"
-											rel="noopener noreferrer"
-											:href="wiki.getUserUrl(change.user.name)"
-											class="review-changes__user"
-											@click.stop
-										>
-											{{ showUsernameAtPrefix ? "@" : ""
-											}}{{ change.user.name }}
-										</a>
-									</span>
-									<a
-										v-else
-										target="_blank"
-										rel="noopener noreferrer"
-										:href="wiki.getUserUrl(change.user.name)"
-										class="review-changes__user"
-										@click.stop
-									>
-										{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
-									</a>
-									<template v-if="timestampPosition === 'rightOfUsername'">
-										<span class="review-changes__time-sep" aria-hidden="true">
-											·
-										</span>
-										<time
-											:datetime="change.timestamp"
-											class="review-changes__time"
-										>
-											{{
-												simplifiedTimestamp
-													? formatRelativeTime(change.timestamp)
-													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
-											}}
-										</time>
-									</template>
-									<template v-else-if="timestampPosition === 'belowUsername'">
-										<time
-											:datetime="change.timestamp"
-											class="review-changes__time review-changes__time--block"
-										>
-											{{
-												simplifiedTimestamp
-													? formatRelativeTime(change.timestamp)
-													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
-											}}
-										</time>
-									</template>
-								</span>
+							<div
+								v-if="
+									(showReviewButton || showDismissButton) && !hasAnyFlag(change)
+								"
+								class="review-changes__user-actions-row"
+							>
 								<span
 									v-if="
 										(showReviewButton || showDismissButton) &&
@@ -348,11 +377,7 @@
 									(showOnWatchlistLabel &&
 										change.pageName &&
 										isPageOnWatchlist(change.pageName)) ||
-									(showEditCheckToneFlag && hasToneCheck(change)) ||
-									(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
-									(showEditCheckOtherFlag && hasReferenceNeed(change)) ||
-									(showEditCheckNewContentFlag && hasEditCheckNewContent(change)) ||
-									(showEditSuggestionFlag && hasEditSuggestionSeen(change))
+									(showEditCheckOtherFlag && hasReferenceNeed(change))
 								"
 								class="review-changes__flags-actions-row"
 								:class="{
@@ -371,11 +396,7 @@
 										(showOnWatchlistLabel &&
 											change.pageName &&
 											isPageOnWatchlist(change.pageName)) ||
-										(showEditCheckToneFlag && hasToneCheck(change)) ||
-										(showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
-										(showEditCheckOtherFlag && hasReferenceNeed(change)) ||
-										(showEditCheckNewContentFlag && hasEditCheckNewContent(change)) ||
-										(showEditSuggestionFlag && hasEditSuggestionSeen(change))
+										(showEditCheckOtherFlag && hasReferenceNeed(change))
 									"
 									class="review-changes__flags-container"
 									:class="{
@@ -470,38 +491,6 @@
 										}}</span>
 									</div>
 									<div
-										v-if="showEditCheckToneFlag && hasToneCheck(change)"
-										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
-									>
-										<CdxIcon
-											:icon="cdxIconAlert"
-											size="small"
-											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-											aria-hidden="true"
-										/>
-										<span class="review-changes__revert-risk-notice-text">{{
-											verboseFlags
-												? "Tone check was detected; tone may need revising."
-												: "Needs a tone check"
-										}}</span>
-									</div>
-									<div
-										v-if="showEditCheckPasteFlag && hasEditCheckPaste(change)"
-										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
-									>
-										<CdxIcon
-											:icon="cdxIconAlert"
-											size="small"
-											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-											aria-hidden="true"
-										/>
-										<span class="review-changes__revert-risk-notice-text">{{
-											verboseFlags
-												? "Paste check was shown during editing."
-												: "Needs a paste check"
-										}}</span>
-									</div>
-									<div
 										v-if="showEditCheckOtherFlag && hasReferenceNeed(change)"
 										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
 									>
@@ -515,38 +504,6 @@
 											verboseFlags
 												? "Reference check was shown."
 												: "Reference check"
-										}}</span>
-									</div>
-									<div
-										v-if="showEditCheckNewContentFlag && hasEditCheckNewContent(change)"
-										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
-									>
-										<CdxIcon
-											:icon="cdxIconAlert"
-											size="small"
-											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-											aria-hidden="true"
-										/>
-										<span class="review-changes__revert-risk-notice-text">{{
-											verboseFlags
-												? "New content was added."
-												: "New content"
-										}}</span>
-									</div>
-									<div
-										v-if="showEditSuggestionFlag && hasEditSuggestionSeen(change)"
-										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
-									>
-										<CdxIcon
-											:icon="cdxIconAlert"
-											size="small"
-											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-											aria-hidden="true"
-										/>
-										<span class="review-changes__revert-risk-notice-text">{{
-											verboseFlags
-												? "Edit suggestion was seen."
-												: "Edit suggestion"
 										}}</span>
 									</div>
 								</div>
@@ -663,6 +620,7 @@
 </template>
 
 <script setup lang="ts">
+import FeedItemTitle from "@/components/ReviewChangesFeed/FeedItemTitle.vue"
 import {
 	clearRevisionsCallback,
 	setRevisionsCallback,
@@ -759,16 +717,8 @@ const props = withDefaults(
 		showDismissButton?: boolean
 		/** When true, shows recommendation reason for Related changes items (e.g. "Because you watch X and Y."). */
 		showRecommendationFlags?: boolean
-		/** When true, shows "Needs a tone check" flag for edits where tone check was detected (editcheck-tone, editcheck-tone-shown). */
-		showEditCheckToneFlag?: boolean
-		/** When true, shows "Needs a paste check" flag for edits where paste check was shown (editcheck-paste-shown). */
-		showEditCheckPasteFlag?: boolean
-		/** When true, shows "Reference check" flag for edits with reference check tags (editcheck-references, editcheck-newreference, editcheck-references-shown). */
+		/** When true, shows "Reference check" flag for edits where API delta indicates increased uncited content. */
 		showEditCheckOtherFlag?: boolean
-		/** When true, shows "New content" flag for edits with editcheck-newcontent tag. */
-		showEditCheckNewContentFlag?: boolean
-		/** When true, shows "Edit suggestion seen" flag for edits with editsuggestion-seen tag. */
-		showEditSuggestionFlag?: boolean
 		/** When true, unopened feed items display with a slight blue background. */
 		highlightUnviewed?: boolean
 		/** When true, unopened feed items display with blue vertical lines on left and right. */
@@ -785,8 +735,10 @@ const props = withDefaults(
 		showShortDescriptionSeparator?: boolean
 		/** When true, shows "On your watchlist" for any page in the watchlist set, regardless of feed source. */
 		showOnWatchlistLabel?: boolean
-		/** When true, shows debug scores for edit checks (reference need delta, tone check, tags). */
+		/** When true, shows debug scores for edit checks (reference need delta, tags). */
 		showDebugChecks?: boolean
+		/** When true, uses unified title component (page name + short desc + timestamp together). When false, uses separate elements (original Review Changes layout). */
+		unifiedTitle?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -799,7 +751,7 @@ const props = withDefaults(
 		showUserIcon: false,
 		flagsBelowUsername: true,
 		simplifiedTimestamp: false,
-		timestampPosition: "rightOfUsername",
+		timestampPosition: "topRight",
 		showDelta: true,
 		deltaFormatParentheses: false,
 		source: "recentChanges",
@@ -815,20 +767,17 @@ const props = withDefaults(
 		showReviewButton: false,
 		showDismissButton: false,
 		showRecommendationFlags: false,
-		showEditCheckToneFlag: false,
-		showEditCheckPasteFlag: false,
 		showEditCheckOtherFlag: false,
-		showEditCheckNewContentFlag: false,
-		showEditSuggestionFlag: false,
 		highlightUnviewed: false,
 		unviewedBorder: false,
 		viewedBorder: false,
 		lastClickedHighlight: false,
 		showArrowInTopRight: false,
 		showShortDescription: true,
-		showShortDescriptionSeparator: true,
+		showShortDescriptionSeparator: false,
 		showOnWatchlistLabel: false,
 		showDebugChecks: false,
+		unifiedTitle: false,
 	}
 )
 
@@ -883,68 +832,20 @@ function isReverted(change: FWRevision): boolean {
 	return tags.includes("mw-reverted") || tags.includes("reverted")
 }
 
-/** Edit check and similar tags. Tone Check is experimental (French/Japanese/Portuguese Wikipedias).
- * Paste/references may appear on en.wikipedia.org. */
-const EDIT_CHECK_TONE_TAGS = ["editcheck-tone", "editcheck-tone-shown"]
-const EDIT_CHECK_PASTE_TAGS = ["editcheck-paste-shown"]
+/** Edit check and similar tags. Paste/references may appear on en.wikipedia.org. */
 const EDIT_CHECK_OTHER_TAGS = [
 	"editcheck-references",
 	"editcheck-newreference",
 	"editcheck-references-shown",
 ]
-const EDIT_CHECK_NEWCONTENT_TAGS = ["editcheck-newcontent"]
-const EDIT_SUGGESTION_TAGS = ["editsuggestion-seen"]
-
-function hasEditCheckTone(change: FWRevision): boolean {
-	const tags = change.tags
-	if (!tags || tags.length === 0) return false
-	return EDIT_CHECK_TONE_TAGS.some(t => tags.includes(t))
-}
-
-function hasEditCheckPaste(change: FWRevision): boolean {
-	const tags = change.tags
-	if (!tags || tags.length === 0) return false
-	return EDIT_CHECK_PASTE_TAGS.some(t => tags.includes(t))
-}
-
-function hasEditCheckOther(change: FWRevision): boolean {
-	const tags = change.tags
-	if (!tags || tags.length === 0) return false
-	return EDIT_CHECK_OTHER_TAGS.some(t => tags.includes(t))
-}
-
-function hasEditCheckNewContent(change: FWRevision): boolean {
-	const tags = change.tags
-	if (!tags || tags.length === 0) return false
-	return EDIT_CHECK_NEWCONTENT_TAGS.some(t => tags.includes(t))
-}
-
-function hasEditSuggestionSeen(change: FWRevision): boolean {
-	const tags = change.tags
-	if (!tags || tags.length === 0) return false
-	return EDIT_SUGGESTION_TAGS.some(t => tags.includes(t))
-}
-
-/** Reference check: tags OR API delta above threshold (change increased uncited content). */
+/** Reference check: API delta above threshold (change increased uncited content). Only for positive deltas. Tags indicate tool use, not need. */
 function hasReferenceNeed(change: FWRevision): boolean {
-	if (hasEditCheckOther(change)) return true
 	const entry = referenceNeedByRevId.value.get(change.id)
 	return (
 		entry != null &&
 		!("error" in entry) &&
+		entry.delta > 0 &&
 		entry.delta >= REFERENCE_NEED_THRESHOLD
-	)
-}
-
-/** Tone check: tags OR API prediction true. */
-function hasToneCheck(change: FWRevision): boolean {
-	if (hasEditCheckTone(change)) return true
-	const entry = toneCheckByRevId.value.get(change.id)
-	return (
-		entry != null &&
-		!("error" in entry) &&
-		entry.prediction === true &&
-		entry.probability >= 0.5
 	)
 }
 
@@ -959,11 +860,7 @@ function hasAnyFlag(change: FWRevision): boolean {
 		(props.showOnWatchlistLabel &&
 			!!change.pageName &&
 			isPageOnWatchlist(change.pageName)) ||
-		(props.showEditCheckToneFlag && hasToneCheck(change)) ||
-		(props.showEditCheckPasteFlag && hasEditCheckPaste(change)) ||
-		(props.showEditCheckOtherFlag && hasReferenceNeed(change)) ||
-		(props.showEditCheckNewContentFlag && hasEditCheckNewContent(change)) ||
-		(props.showEditSuggestionFlag && hasEditSuggestionSeen(change))
+		(props.showEditCheckOtherFlag && hasReferenceNeed(change))
 	)
 }
 
@@ -1001,12 +898,7 @@ const referenceNeedByRevId = ref<
 >(new Map())
 const isLoadingReferenceNeed = ref(false)
 /** Delta threshold: show flag when change increased uncited content by this much (rn_after - rn_before). */
-const REFERENCE_NEED_THRESHOLD = 0.01
-
-const toneCheckByRevId = ref<
-	Map<number, { prediction: boolean; probability: number } | { error: true }>
->(new Map())
-const isLoadingToneCheck = ref(false)
+const REFERENCE_NEED_THRESHOLD = 0.001
 
 const REVERT_RISK_MODELS = [
 	{ key: "revertrisk" as const, label: "Revert risk (language-agnostic)" },
@@ -1038,11 +930,10 @@ function getRevertRiskLines(revId: number): Array<{ label: string; value: string
 }
 
 const EDIT_CHECK_DEBUG_TAGS = [
-	...EDIT_CHECK_TONE_TAGS,
-	...EDIT_CHECK_PASTE_TAGS,
 	...EDIT_CHECK_OTHER_TAGS,
-	...EDIT_CHECK_NEWCONTENT_TAGS,
-	...EDIT_SUGGESTION_TAGS,
+	"editcheck-paste-shown",
+	"editcheck-newcontent",
+	"editsuggestion-seen",
 ]
 
 function getEditCheckDebugLines(change: FWRevision): Array<{ label: string; value: string }> {
@@ -1074,27 +965,6 @@ function getEditCheckDebugLines(change: FWRevision): Array<{ label: string; valu
 		lines.push({ label: "Ref need before", value: "(n/a)" })
 		lines.push({ label: "Ref need after", value: "(n/a)" })
 		lines.push({ label: "Ref need Δ", value: "(n/a)" })
-	}
-
-	// Tone check (only for revisions with pageName)
-	if (change.pageName) {
-		if (isLoadingToneCheck.value) {
-			lines.push({ label: "Tone", value: "(loading)" })
-		} else {
-			const tcEntry = toneCheckByRevId.value.get(change.id)
-			if (tcEntry === undefined) {
-				lines.push({ label: "Tone", value: "(loading)" })
-			} else if (typeof tcEntry === "object" && "error" in tcEntry) {
-				lines.push({ label: "Tone", value: "(error)" })
-			} else {
-				lines.push({
-					label: "Tone",
-					value: `${tcEntry.prediction} (${(tcEntry.probability * 100).toFixed(0)}%)`,
-				})
-			}
-		}
-	} else {
-		lines.push({ label: "Tone", value: "(n/a)" })
 	}
 
 	// Edit check tags present on this revision
@@ -1274,54 +1144,6 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 		referenceNeedByRevId.value = next
 	} finally {
 		isLoadingReferenceNeed.value = false
-	}
-}
-
-async function fetchToneCheckForFeed(): Promise<void> {
-	const revs = selectedRevisionsForDisplay.value
-	if (revs.length === 0) return
-	const revsWithPage = revs.filter(r => r.pageName)
-	if (revsWithPage.length === 0) return
-	isLoadingToneCheck.value = true
-	toneCheckByRevId.value = new Map()
-	try {
-		const results = await Promise.all(
-			revsWithPage.map(async change => {
-				try {
-					const pred = await wiki.getToneCheckPrediction(
-						change.id,
-						change.pageName!,
-						undefined
-					)
-					return { revId: change.id, pred, error: false } as const
-				} catch {
-					return { revId: change.id, pred: null, error: true } as const
-				}
-			})
-		)
-		const next = new Map<
-			number,
-			{ prediction: boolean; probability: number } | { error: true }
-		>()
-		for (const { revId, pred, error } of results) {
-			if (error) {
-				next.set(revId, { error: true })
-			} else if (pred) {
-				next.set(revId, { prediction: pred.prediction, probability: pred.probability })
-			}
-		}
-		toneCheckByRevId.value = next
-	} catch {
-		const next = new Map<
-			number,
-			{ prediction: boolean; probability: number } | { error: true }
-		>()
-		for (const change of revsWithPage) {
-			next.set(change.id, { error: true })
-		}
-		toneCheckByRevId.value = next
-	} finally {
-		isLoadingToneCheck.value = false
 	}
 }
 
@@ -1565,15 +1387,6 @@ watch(
 	}
 )
 
-watch(
-	() => props.showEditCheckToneFlag || props.showDebugChecks,
-	enabled => {
-		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
-			fetchToneCheckForFeed()
-		}
-	}
-)
-
 let referenceNeedDebounceId: ReturnType<typeof setTimeout> | null = null
 watch(
 	() => [
@@ -1592,28 +1405,6 @@ watch(
 		referenceNeedDebounceId = setTimeout(() => {
 			referenceNeedDebounceId = null
 			fetchReferenceNeedForFeed()
-		}, 300)
-	}
-)
-
-let toneCheckDebounceId: ReturnType<typeof setTimeout> | null = null
-watch(
-	() => [
-		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
-		props.showEditCheckToneFlag || props.showDebugChecks,
-	],
-	([, enabled]) => {
-		if (
-			!enabled ||
-			props.source !== "mixed" ||
-			selectedRevisionsForDisplay.value.length === 0
-		) {
-			return
-		}
-		if (toneCheckDebounceId) clearTimeout(toneCheckDebounceId)
-		toneCheckDebounceId = setTimeout(() => {
-			toneCheckDebounceId = null
-			fetchToneCheckForFeed()
 		}, 300)
 	}
 )
@@ -1850,11 +1641,8 @@ async function loadFeed(append = false): Promise<void> {
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
-			if (props.showEditCheckOtherFlag) {
+			if (props.showEditCheckOtherFlag || props.showDebugChecks) {
 				fetchReferenceNeedForFeed()
-			}
-			if (props.showEditCheckToneFlag) {
-				fetchToneCheckForFeed()
 			}
 			return
 		}
@@ -1950,11 +1738,8 @@ async function loadFeed(append = false): Promise<void> {
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
-			if (props.showEditCheckOtherFlag) {
+			if (props.showEditCheckOtherFlag || props.showDebugChecks) {
 				fetchReferenceNeedForFeed()
-			}
-			if (props.showEditCheckToneFlag) {
-				fetchToneCheckForFeed()
 			}
 			return
 		}
@@ -1985,11 +1770,8 @@ async function loadFeed(append = false): Promise<void> {
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
-			if (props.showEditCheckOtherFlag) {
+			if (props.showEditCheckOtherFlag || props.showDebugChecks) {
 				fetchReferenceNeedForFeed()
-			}
-			if (props.showEditCheckToneFlag) {
-				fetchToneCheckForFeed()
 			}
 			return
 		} else if (props.source === "collaborators") {
@@ -2052,11 +1834,8 @@ async function loadFeed(append = false): Promise<void> {
 		if (props.showRevertRisk || props.showRevertRiskFlags) {
 			fetchRevertRiskForFeed()
 		}
-		if (props.showEditCheckOtherFlag) {
+		if (props.showEditCheckOtherFlag || props.showDebugChecks) {
 			fetchReferenceNeedForFeed()
-		}
-		if (props.showEditCheckToneFlag) {
-			fetchToneCheckForFeed()
 		}
 	} catch (e) {
 		isLoading.value = false

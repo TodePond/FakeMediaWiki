@@ -367,12 +367,6 @@ export interface FWReferenceNeedPrediction {
 	rn_score: number
 }
 
-/** Tone check prediction from Lift Wing edit-check model. */
-export interface FWToneCheckPrediction {
-	prediction: boolean
-	probability: number
-}
-
 /** Edit-types API: simple diff summary (counts per change type per action, e.g. Template: { change: 1 }, Wikilink: { insert: 1 }). */
 export type FWEditTypesDiffSummary = Record<string, Record<string, number>>
 

@@ -4,7 +4,7 @@
  * Run: npx tsx packages/fakewiki/scripts/test-edit-check-endpoints.ts
  *
  * Verifies which endpoints return revision tags (needed for edit check flags:
- * editcheck-tone, editcheck-paste-shown, editcheck-references, etc.)
+ * editcheck-paste-shown, editcheck-references, etc.)
  */
 
 import { FakeWiki } from "../FakeWiki"
@@ -20,8 +20,6 @@ function hasTags(rev: { tags?: string[] }): boolean {
 function hasEditCheckTags(rev: { tags?: string[] }): boolean {
 	const tags = rev.tags ?? []
 	const EDIT_CHECK_TAGS = [
-		"editcheck-tone",
-		"editcheck-tone-shown",
 		"editcheck-paste-shown",
 		"editcheck-references",
 		"editcheck-newreference",

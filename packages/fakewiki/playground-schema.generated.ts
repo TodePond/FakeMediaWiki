@@ -77,11 +77,6 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "revId", description: "Revision ID" },
       { key: "lang", description: "Language code (e.g. \"en\"). If not provided, derived from base URL" }
   ] },
-  { name: "getToneCheckPrediction", description: "Get tone check prediction for a revision from Lift Wing edit-check model.\nDetects promotional, derogatory, or subjective language in the edit.\nRequires fetching parent and current revision wikitext.", category: undefined, params: [
-      { key: "revId", description: "Revision ID" },
-      { key: "pageName", description: "Page title (needed to resolve parent revision)" },
-      { key: "lang", description: "Language code (e.g. \"en\"). If not provided, derived from base URL" }
-  ] },
   { name: "clearPageHistoryCache", description: "Clear the page history cache for a page (or all pages if no name given).\nUse when you need fresh data, e.g. when opening the inline history view.", category: undefined, params: [
       { key: "pageName" }
   ] },

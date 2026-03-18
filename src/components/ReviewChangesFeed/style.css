@@ -5,9 +5,10 @@
 }
 
 .review-changes__title {
-	padding: 0;
+	/* padding: 0; */
 	font-weight: bold;
 	font-size: 18px;
+	padding-bottom: 16px;
 }
 
 .review-changes__description {
@@ -373,21 +374,45 @@
 }
 
 .review-changes__page-cell {
-	/* display: flex; */
-	/* align-items: center; */
-	/* gap: 0.25rem; */
-	/* min-width: 0; */
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
 	flex-grow: 1;
+	min-width: 0;
 	overflow: hidden;
 }
-.review-changes__page-cell-heading {
-	display: flex;
+/* Separate layout (Review Changes module): inline flow, timestamp as sibling */
+.review-changes__page-cell-heading--separate {
+	display: inline;
 	align-items: center;
 	min-width: 0;
 	flex-grow: 1;
 	overflow: hidden;
-	/* font-size: 14px; */
-	/* font-size: 16px; */
+}
+
+/* Unified layout (Feed module): flex with timestamp on right */
+.review-changes__page-cell-heading--unified {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: nowrap;
+	gap: 0.5rem;
+	min-width: 0;
+	flex-grow: 1;
+	width: 100%;
+	overflow: hidden;
+}
+
+.review-changes__page-title-group {
+	display: flex;
+	align-items: baseline;
+	min-width: 0;
+	flex-grow: 1;
+	overflow: hidden;
+}
+
+.review-changes__page-cell-heading--unified .review-changes__time {
+	flex-shrink: 0;
+	margin-left: auto;
 }
 
 .review-changes__source-icon {
@@ -421,17 +446,29 @@
 	flex-shrink: 1;
 }
 
+/* Unified layout: bold page title + truncation */
+.review-changes__page-cell-heading--unified .review-changes__page {
+	font-weight: bold;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .review-changes__short-desc {
 	color: var(--color-base--subtle, #54595d);
 	font-weight: normal;
 	line-height: var(--line-height-content);
-	margin-left: 0px;
+	margin-left: 6px;
+}
+
+.review-changes__page-cell-heading--unified .review-changes__short-desc {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .review-changes__short-desc::before {
-	content: "·";
-	margin-right: 6px;
-	margin-left: 6px;
+	content: none;
 }
 
 .review-changes__short-desc--no-separator::before {

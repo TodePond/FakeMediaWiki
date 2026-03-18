@@ -2,7 +2,10 @@
 	<div class="view">
 		<div
 			class="special-view"
-			:class="{ 'special-view--review-changes': prototypeName === 'ReviewChanges' }"
+			:class="{
+				'special-view--review-changes': prototypeName === 'ReviewChanges',
+				'special-view--feed': prototypeName === 'Feed',
+			}"
 		>
 			<!-- Desktop/tablet nav -->
 			<nav class="nav-desktop">

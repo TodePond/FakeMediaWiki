@@ -1,0 +1,103 @@
+/* Feed module - standalone layout */
+.feed-module-wrapper {
+	min-width: 0;
+	padding: 0;
+}
+
+.feed-module-wrapper .review-changes {
+	min-width: 0;
+	padding: 0;
+}
+
+/* Controls: source select + checkbox */
+.feed-controls {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.feed-controls__checkboxes {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.feed-controls__section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.feed-controls__section-title {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--color-base--subtle, #54595d);
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+.feed-controls__section-checkboxes {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.feed-controls__section-widget {
+	margin-bottom: 0.25rem;
+	width: 100%;
+}
+
+.feed-controls__section-widget :deep(.cdx-select-vue),
+.feed-controls__section-widget :deep(.cdx-select-vue__handle) {
+	width: 100%;
+	min-width: 0;
+}
+
+.ratio-sliders {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.25rem 0.5rem;
+	align-items: center;
+	width: 100%;
+}
+
+.ratio-sliders--standalone {
+	grid-template-columns: 1fr;
+}
+
+.ratio-slider-row {
+	display: contents;
+}
+
+.ratio-slider-label {
+	font-size: 0.8125rem;
+}
+
+.ratio-slider-line {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.ratio-slider {
+	flex: 1 1 0;
+	min-width: 0;
+	width: 100%;
+}
+
+.ratio-slider-value {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	min-width: 2.25em;
+	flex-shrink: 0;
+}
+
+.feed-controls__buttons {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}

@@ -13,7 +13,7 @@
 		</div>
 		<!-- Mobile: simplified card modules -->
 		<div class="dashboard-mobile-cards">
-			<RouterLink to="/Chrome/ReviewChanges" class="mobile-card mobile-card--link">
+			<RouterLink to="/Chrome/Feed" class="mobile-card mobile-card--link">
 				<div class="mobile-card__header">
 					<span class="mobile-card__title">Review changes</span>
 					<CdxIcon :icon="cdxIconArrowNext" size="medium" class="mobile-card__arrow" />
@@ -102,22 +102,23 @@
 		<!-- Desktop: full dashboard -->
 		<div class="dashboard-main">
 			<ReviewChangesFeed
+				:unified-title="true"
+				:hide-description="true"
 				:show-revert-risk="showRevertRiskInFeed"
 				:show-revert-risk-flags="showRevertRiskFlags"
-				:revert-risk-flags-in-box="revertRiskFlagsInBox"
-				:verbose-flags="verboseFlags"
+				:revert-risk-flags-in-box="true"
+				:verbose-flags="false"
 				:show-reverted-flag="showRevertedFlag"
-				:show-source-icons="showSourceIcons"
-				:show-source-subtitles="showSourceSubtitles"
-				:show-username-at-prefix="showUsernameAtPrefix"
-				:show-user-icon="showUserIcon"
-				:show-summary-cutout="summaryCutout"
-				:show-empty-edit-summary="showEmptyEditSummary"
-				:show-delta="showDelta"
-				:show-short-description="showShortDescription"
-				:show-short-description-separator="showShortDescriptionSeparator"
+				:show-source-icons="false"
+				:show-source-subtitles="true"
+				:show-username-at-prefix="false"
+				:show-user-icon="true"
+				:show-summary-cutout="false"
+				:show-empty-edit-summary="true"
+				:show-delta="false"
+				:show-short-description="true"
+				:show-short-description-separator="true"
 				:show-on-watchlist-label="showOnWatchlistLabel"
-				:delta-format-parentheses="false"
 				:source="feedSource"
 				:recent-changes-ratio="recentChangesRatio"
 				:pages-and-users-ratio="pagesAndUsersRatio"
@@ -126,20 +127,20 @@
 				:related-changes-ratio="relatedChangesRatio"
 				:feed-cap="10"
 				title="Review changes"
-				:show-module-border="showModuleBorder"
-				:show-review-button="showReviewButton"
-				:show-dismiss-button="showDismissButton"
-				:highlight-unviewed="showHighlightUnviewed"
-				:unviewed-border="showUnviewedBorder"
-				:viewed-border="showViewedBorder"
-				:last-clicked-highlight="showLastClickedHighlight"
-				:show-arrow-in-top-right="showArrowInTopRight"
+				:show-review-button="false"
+				:show-dismiss-button="false"
+				:highlight-unviewed="false"
+				:unviewed-border="false"
+				:viewed-border="false"
+				:last-clicked-highlight="false"
+				:show-arrow-in-top-right="false"
 				:show-recommendation-flags="showRecommendationFlags"
 				:show-edit-check-other-flag="showEditCheckOtherFlag"
 				:show-debug-checks="showDebugChecks"
-				:flags-below-username="flagsBelowUsername"
-				:simplified-timestamp="simplifiedTimestamp"
-				:timestamp-position="timestampPosition"
+				:flags-below-username="true"
+				:simplified-timestamp="true"
+				timestamp-position="topRight"
+				:show-module-border="true"
 				@preview-update="onPreviewUpdate"
 			/>
 
@@ -178,9 +179,9 @@
 					</div>
 				</section>
 
-				<section class="sidebar-card review-changes-controls-card">
+				<section class="sidebar-card feed-controls-card">
 					<div class="sidebar-card__title">Prototype settings</div>
-					<ReviewChangesControls show-prototype-only-controls />
+					<FeedControls />
 				</section>
 
 				<section class="sidebar-card policies">
@@ -252,8 +253,8 @@
 
 <script setup lang="ts">
 import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
-import ReviewChangesControls from "@/modules/ReviewChanges/ReviewChangesControls.vue"
-import { useReviewChangesModule } from "@/modules/ReviewChanges/useReviewChangesModule"
+import FeedControls from "@/modules/Feed/FeedControls.vue"
+import { useFeedModule } from "@/modules/Feed/useFeedModule"
 import {
 	CdxIcon,
 	CdxProgressBar,
@@ -280,42 +281,20 @@ const thanksLogUrl = computed(
 )
 
 const {
-		feedSource,
-		showModuleBorder,
-		showReviewButton,
-		showDismissButton,
-		showHighlightUnviewed,
-		showUnviewedBorder,
-		showViewedBorder,
-		showLastClickedHighlight,
-		showArrowInTopRight,
-		recentChangesRatio,
-		pagesAndUsersRatio,
-		pagesAndUsersLatestRatio,
-		collaboratorsRatio,
-		relatedChangesRatio,
-		showRevertRiskInFeed,
-		showRevertRiskFlags,
-		revertRiskFlagsInBox,
-		verboseFlags,
-		showRevertedFlag,
-		showDelta,
-		showShortDescription,
-		showShortDescriptionSeparator,
-		showOnWatchlistLabel,
-		showSourceIcons,
-		showSourceSubtitles,
-		showUsernameAtPrefix,
-		showUserIcon,
-		summaryCutout,
-		showEmptyEditSummary,
-		showRecommendationFlags,
-		showEditCheckOtherFlag,
-		showDebugChecks,
-		flagsBelowUsername,
-		simplifiedTimestamp,
-		timestampPosition,
-	} = useReviewChangesModule()
+	feedSource,
+	recentChangesRatio,
+	pagesAndUsersRatio,
+	pagesAndUsersLatestRatio,
+	collaboratorsRatio,
+	relatedChangesRatio,
+	showRevertRiskInFeed,
+	showRevertRiskFlags,
+	showRevertedFlag,
+	showOnWatchlistLabel,
+	showRecommendationFlags,
+	showEditCheckOtherFlag,
+	showDebugChecks,
+} = useFeedModule()
 
 const previewRevisions = ref<FWRevision[]>([])
 const isLoading = ref(false)
@@ -334,9 +313,9 @@ function formatPreviewDelta(delta: number | null | undefined): string {
 </script>
 
 <style scoped>
-@import "./style.css";
+@import "../PersonalDashboardClone/style.css";
 </style>
 
 <style>
-@import "./global.css";
+@import "../PersonalDashboardClone/global.css";
 </style>

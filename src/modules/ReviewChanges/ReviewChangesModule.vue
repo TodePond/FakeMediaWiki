@@ -35,11 +35,7 @@
 			:last-clicked-highlight="showLastClickedHighlight"
 			:show-arrow-in-top-right="showArrowInTopRight"
 			:show-recommendation-flags="showRecommendationFlags"
-			:show-edit-check-tone-flag="showEditCheckToneFlag"
-			:show-edit-check-paste-flag="showEditCheckPasteFlag"
 			:show-edit-check-other-flag="showEditCheckOtherFlag"
-			:show-edit-check-newcontent-flag="showEditCheckNewContentFlag"
-			:show-edit-suggestion-flag="showEditSuggestionFlag"
 			:show-debug-checks="showDebugChecks"
 			:flags-below-username="flagsBelowUsername"
 			:simplified-timestamp="simplifiedTimestamp"
@@ -89,11 +85,7 @@ const {
 	summaryCutout,
 	showEmptyEditSummary,
 	showRecommendationFlags,
-	showEditCheckToneFlag,
-	showEditCheckPasteFlag,
 	showEditCheckOtherFlag,
-	showEditCheckNewContentFlag,
-	showEditSuggestionFlag,
 	showDebugChecks,
 	flagsBelowUsername,
 	simplifiedTimestamp,

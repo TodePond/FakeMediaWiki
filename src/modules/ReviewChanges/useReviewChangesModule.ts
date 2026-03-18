@@ -22,11 +22,7 @@ const LEGACY_CARD_AS_LINK_KEY = `${LEGACY_PREFIX}card-as-link`
 const SHOW_EMPTY_EDIT_SUMMARY_KEY = `${STORAGE_PREFIX}show-empty-edit-summary`
 const LEGACY_HIDE_EMPTY_SUMMARY_KEY = `${LEGACY_PREFIX}hide-empty-summary`
 const SHOW_RECOMMENDATION_FLAGS_KEY = `${STORAGE_PREFIX}show-recommendation-flags`
-const SHOW_EDIT_CHECK_TONE_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-tone-flag`
-const SHOW_EDIT_CHECK_PASTE_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-paste-flag`
 const SHOW_EDIT_CHECK_OTHER_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-other-flag`
-const SHOW_EDIT_CHECK_NEWCONTENT_FLAG_KEY = `${STORAGE_PREFIX}show-edit-check-newcontent-flag`
-const SHOW_EDIT_SUGGESTION_FLAG_KEY = `${STORAGE_PREFIX}show-edit-suggestion-flag`
 const SHOW_DEBUG_CHECKS_KEY = `${STORAGE_PREFIX}show-debug-checks`
 const SHOW_DISMISS_BUTTON_KEY = `${STORAGE_PREFIX}show-dismiss-button`
 const SHOW_HIGHLIGHT_UNVIEWED_KEY = `${STORAGE_PREFIX}show-highlight-unviewed`
@@ -154,7 +150,7 @@ function getStoredRatio(key: string, legacyKey: string, fallback: number): numbe
 }
 
 function getStoredFeedSource(): ReviewChangesSource {
-	const stored = getStored(FEED_SOURCE_KEY, LEGACY_KEYS[FEED_SOURCE_KEY], "recentChanges")
+	const stored = getStored(FEED_SOURCE_KEY, LEGACY_KEYS[FEED_SOURCE_KEY], "mixed")
 	if (
 		stored === "recentChanges" ||
 		stored === "pagesAndUsers" ||
@@ -165,7 +161,7 @@ function getStoredFeedSource(): ReviewChangesSource {
 	) {
 		return stored
 	}
-	return "recentChanges"
+	return "mixed"
 }
 
 export const sourceOptions: Array<{
@@ -223,7 +219,7 @@ function getStoredTimestampPosition(): TimestampPosition {
 	} catch {
 		// ignore
 	}
-	return "rightOfUsername"
+	return "topRight"
 }
 
 /**
@@ -244,11 +240,7 @@ export const REVIEW_CHANGES_CHECKBOX_CONFIG = [
 	{ key: "showRevertRiskFlags", label: "Revert risk flags", section: "Flag types" },
 	{ key: "showRecommendationFlags", label: "Recommendation flags", section: "Flag types" },
 	{ key: "showRevertedFlag", label: "Reverted flag", section: "Flag types" },
-	{ key: "showEditCheckToneFlag", label: "Tone check flag", section: "Flag types" },
-	{ key: "showEditCheckPasteFlag", label: "Paste check flag", section: "Flag types" },
 	{ key: "showEditCheckOtherFlag", label: "Reference check flag", section: "Flag types" },
-	{ key: "showEditCheckNewContentFlag", label: "New content flag", section: "Flag types" },
-	{ key: "showEditSuggestionFlag", label: "Edit suggestion flag", section: "Flag types" },
 	{ key: "revertRiskFlagsInBox", label: "Flags in box", section: "Flag appearance" },
 	{ key: "verboseFlags", label: "Verbose flags", section: "Flag appearance" },
 	{ key: "showUsernameAtPrefix", label: "@ username", section: "User" },
@@ -274,7 +266,7 @@ function createReviewChangesModule() {
 		getStoredBoolean(SHOW_REVERT_RISK_KEY, LEGACY_KEYS[SHOW_REVERT_RISK_KEY], false)
 	)
 	const showRevertRiskFlags = ref(
-		getStoredBoolean(SHOW_REVERT_RISK_FLAGS_KEY, LEGACY_KEYS[SHOW_REVERT_RISK_FLAGS_KEY], false)
+		getStoredBoolean(SHOW_REVERT_RISK_FLAGS_KEY, LEGACY_KEYS[SHOW_REVERT_RISK_FLAGS_KEY], true)
 	)
 	const revertRiskFlagsInBox = ref(
 		getStoredBoolean(
@@ -289,12 +281,12 @@ function createReviewChangesModule() {
 	const verboseFlags = ref(
 		getStoredBoolean(VERBOSE_FLAGS_KEY, LEGACY_KEYS[VERBOSE_FLAGS_KEY], false)
 	)
-	const showDelta = ref(getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], true))
+	const showDelta = ref(getStoredBoolean(SHOW_DELTA_KEY, LEGACY_KEYS[SHOW_DELTA_KEY], false))
 	const showShortDescription = ref(
 		getStoredBoolean(SHOW_SHORT_DESCRIPTION_KEY, SHOW_SHORT_DESCRIPTION_KEY, true)
 	)
 	const showShortDescriptionSeparator = ref(
-		getStoredBoolean(SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY, SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY, true)
+		getStoredBoolean(SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY, SHOW_SHORT_DESCRIPTION_SEPARATOR_KEY, false)
 	)
 	const showSourceIcons = ref(
 		getStoredBoolean(SHOW_SOURCE_ICONS_KEY, LEGACY_KEYS[SHOW_SOURCE_ICONS_KEY], false)
@@ -322,22 +314,10 @@ function createReviewChangesModule() {
 	const showReviewButton = ref(getStoredShowReviewButton())
 	const showEmptyEditSummary = ref(getStoredShowEmptyEditSummary())
 	const showRecommendationFlags = ref(
-		getStoredBoolean(SHOW_RECOMMENDATION_FLAGS_KEY, SHOW_RECOMMENDATION_FLAGS_KEY, false)
-	)
-	const showEditCheckToneFlag = ref(
-		getStoredBoolean(SHOW_EDIT_CHECK_TONE_FLAG_KEY, SHOW_EDIT_CHECK_TONE_FLAG_KEY, false)
-	)
-	const showEditCheckPasteFlag = ref(
-		getStoredBoolean(SHOW_EDIT_CHECK_PASTE_FLAG_KEY, SHOW_EDIT_CHECK_PASTE_FLAG_KEY, false)
+		getStoredBoolean(SHOW_RECOMMENDATION_FLAGS_KEY, SHOW_RECOMMENDATION_FLAGS_KEY, true)
 	)
 	const showEditCheckOtherFlag = ref(
 		getStoredBoolean(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, SHOW_EDIT_CHECK_OTHER_FLAG_KEY, false)
-	)
-	const showEditCheckNewContentFlag = ref(
-		getStoredBoolean(SHOW_EDIT_CHECK_NEWCONTENT_FLAG_KEY, SHOW_EDIT_CHECK_NEWCONTENT_FLAG_KEY, false)
-	)
-	const showEditSuggestionFlag = ref(
-		getStoredBoolean(SHOW_EDIT_SUGGESTION_FLAG_KEY, SHOW_EDIT_SUGGESTION_FLAG_KEY, false)
 	)
 	const showDebugChecks = ref(
 		getStoredBoolean(SHOW_DEBUG_CHECKS_KEY, SHOW_DEBUG_CHECKS_KEY, false)
@@ -372,7 +352,7 @@ function createReviewChangesModule() {
 		getStoredRatio(
 			MIXED_RECENT_CHANGES_RATIO_KEY,
 			LEGACY_KEYS[MIXED_RECENT_CHANGES_RATIO_KEY],
-			60
+			20
 		)
 	)
 	const mixedPagesAndUsersRatio = ref(
@@ -609,39 +589,9 @@ function createReviewChangesModule() {
 		}
 	})
 
-	watch(showEditCheckToneFlag, enabled => {
-		try {
-			localStorage.setItem(SHOW_EDIT_CHECK_TONE_FLAG_KEY, String(enabled))
-		} catch {
-			// ignore
-		}
-	})
-
-	watch(showEditCheckPasteFlag, enabled => {
-		try {
-			localStorage.setItem(SHOW_EDIT_CHECK_PASTE_FLAG_KEY, String(enabled))
-		} catch {
-			// ignore
-		}
-	})
-
 	watch(showEditCheckOtherFlag, enabled => {
 		try {
 			localStorage.setItem(SHOW_EDIT_CHECK_OTHER_FLAG_KEY, String(enabled))
-		} catch {
-			// ignore
-		}
-	})
-	watch(showEditCheckNewContentFlag, enabled => {
-		try {
-			localStorage.setItem(SHOW_EDIT_CHECK_NEWCONTENT_FLAG_KEY, String(enabled))
-		} catch {
-			// ignore
-		}
-	})
-	watch(showEditSuggestionFlag, enabled => {
-		try {
-			localStorage.setItem(SHOW_EDIT_SUGGESTION_FLAG_KEY, String(enabled))
 		} catch {
 			// ignore
 		}
@@ -807,13 +757,13 @@ function createReviewChangesModule() {
 
 	function resetToDefaults(): void {
 		showRevertRiskInFeed.value = false
-		showRevertRiskFlags.value = false
+		showRevertRiskFlags.value = true
 		revertRiskFlagsInBox.value = true
 		showRevertedFlag.value = false
 		verboseFlags.value = false
-		showDelta.value = true
+		showDelta.value = false
 		showShortDescription.value = true
-		showShortDescriptionSeparator.value = true
+		showShortDescriptionSeparator.value = false
 		showSourceIcons.value = false
 		showSourceSubtitles.value = false
 		showOnWatchlistLabel.value = false
@@ -823,12 +773,8 @@ function createReviewChangesModule() {
 		showModuleBorder.value = true
 		showReviewButton.value = false
 		showEmptyEditSummary.value = true
-		showRecommendationFlags.value = false
-		showEditCheckToneFlag.value = false
-		showEditCheckPasteFlag.value = false
+		showRecommendationFlags.value = true
 		showEditCheckOtherFlag.value = false
-		showEditCheckNewContentFlag.value = false
-		showEditSuggestionFlag.value = false
 		showDebugChecks.value = false
 		showDismissButton.value = false
 		showHighlightUnviewed.value = false
@@ -838,9 +784,9 @@ function createReviewChangesModule() {
 		showArrowInTopRight.value = false
 		flagsBelowUsername.value = true
 		simplifiedTimestamp.value = false
-		timestampPosition.value = "rightOfUsername"
-		feedSource.value = "recentChanges"
-		mixedRecentChangesRatio.value = 60
+		timestampPosition.value = "topRight"
+		feedSource.value = "mixed"
+		mixedRecentChangesRatio.value = 20
 		mixedPagesAndUsersRatio.value = 0
 		mixedPagesAndUsersLatestRatio.value = 20
 		mixedRelatedChangesRatio.value = 20
@@ -896,11 +842,7 @@ function createReviewChangesModule() {
 		timestampPosition,
 		showEmptyEditSummary,
 		showRecommendationFlags,
-		showEditCheckToneFlag,
-		showEditCheckPasteFlag,
 		showEditCheckOtherFlag,
-		showEditCheckNewContentFlag,
-		showEditSuggestionFlag,
 		showDebugChecks,
 		sourceOptions,
 		reviewChangesSourceId,
