@@ -3,7 +3,8 @@
 		<div
 			class="special-view"
 			:class="{
-				'special-view--review-changes': prototypeName === 'ReviewChanges',
+				'special-view--review-changes':
+					prototypeName === 'ReviewChanges' || prototypeName === 'ReviewChangesPlus',
 				'special-view--feed': prototypeName === 'Feed',
 			}"
 		>

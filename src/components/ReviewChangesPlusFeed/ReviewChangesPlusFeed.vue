@@ -1,0 +1,2143 @@
+<template>
+	<section class="review-changes" :class="{ 'review-changes--no-border': !showModuleBorder }">
+		<div v-if="title" class="review-changes__title">{{ title }}</div>
+		<p
+			v-if="!hideDescription"
+			class="review-changes__description"
+			:class="{ 'review-changes__description--with-title': !!title }"
+		>
+			Help keep Wikipedia reliable by opening the following edits which may need attention.
+		</p>
+		<div v-if="errors.length > 0" class="review-changes__errors">
+			<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
+		</div>
+		<div v-if="isLoading" class="review-changes__loading">
+			<CdxProgressBar inline />
+		</div>
+		<ul v-else ref="feedRef" class="review-changes__feed" @focusout="onFeedFocusOut">
+			<template v-for="dateGroup in revisionsByDateCapped" :key="dateGroup.dateKey">
+				<li
+					v-for="change in dateGroup.revisions"
+					:key="`${change.pageName}-${change.timestamp}-${change.id}`"
+					class="review-changes__item"
+					:class="{
+						'review-changes__item--last-clicked':
+							viewedBorder && change.id === lastClickedRevisionId,
+						'review-changes__item--unviewed':
+							unviewedBorder && !isRevisionViewed(change),
+					}"
+				>
+					<span
+						v-if="viewedBorder && change.id === lastClickedRevisionId"
+						class="review-changes__item-line review-changes__item-line--last-clicked review-changes__item-line--left"
+						aria-hidden="true"
+					/>
+					<span
+						v-if="unviewedBorder && !isRevisionViewed(change)"
+						class="review-changes__item-line review-changes__item-line--unviewed review-changes__item-line--left"
+						aria-hidden="true"
+					/>
+					<component
+						:is="change.pageName ? 'a' : 'div'"
+						:href="
+							change.pageName
+								? wiki.getRevisionUrl(change.id, change.pageName)
+								: undefined
+						"
+						:target="change.pageName ? '_blank' : undefined"
+						:rel="change.pageName ? 'noopener noreferrer' : undefined"
+						class="review-changes__item-link"
+						:class="{
+							'review-changes__item-link--not-link': !change.pageName,
+							'review-changes__item-link--unviewed':
+								highlightUnviewed && !isRevisionViewed(change),
+							'review-changes__item-link--last-clicked':
+								lastClickedHighlight && change.id === lastClickedRevisionId,
+						}"
+						:aria-label="
+							change.pageName
+								? `Open diff for ${change.pageName ?? 'page'}`
+								: undefined
+						"
+						@click="change.pageName && markRevisionAsViewed(change)"
+						@pointerdown.capture="onCardPointerDown"
+						@mousedown.capture="onCardPointerDown"
+					>
+						<div class="review-changes__item-header">
+							<CdxIcon
+								v-if="showArrowInTopRight"
+								:icon="cdxIconArrowNext"
+								size="medium"
+								class="review-changes__arrow-in-top-right"
+								aria-hidden="true"
+							/>
+							<span class="review-changes__page-cell">
+								<template v-if="unifiedTitle">
+									<FeedItemTitle
+										:page-name="change.pageName ?? ''"
+										:short-description="
+											change.pageName
+												? (shortDescriptionByPage.get(change.pageName) ??
+													null)
+												: null
+										"
+										:timestamp="change.timestamp"
+										:formatted-timestamp="
+											timestampPosition === 'topRight'
+												? simplifiedTimestamp
+													? formatRelativeTime(change.timestamp)
+													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+												: undefined
+										"
+										:item-source="getItemSource(change)"
+										:show-source-icons="showSourceIcons"
+										:show-short-description="showShortDescription"
+										:show-short-description-separator="
+											showShortDescriptionSeparator
+										"
+									/>
+								</template>
+								<template v-else>
+									<span
+										class="review-changes__page-cell-heading review-changes__page-cell-heading--separate"
+									>
+										<CdxIcon
+											v-if="showSourceIcons && getItemSource(change)"
+											:icon="
+												getItemSource(change) === 'pagesAndUsers' ||
+												getItemSource(change) === 'pagesAndUsersLatest'
+													? cdxIconUnStar
+													: getItemSource(change) === 'relatedChanges'
+														? cdxIconLightbulb
+														: getItemSource(change) === 'collaborators'
+															? cdxIconUserAvatar
+															: cdxIconClock
+											"
+											size="x-small"
+											:class="[
+												'review-changes__source-icon',
+												`review-changes__source-icon--${getItemSource(change)}`,
+											]"
+											:aria-label="
+												getItemSource(change) === 'pagesAndUsers'
+													? 'Watchlist'
+													: getItemSource(change) ===
+														  'pagesAndUsersLatest'
+														? 'Watchlist (latest revision)'
+														: getItemSource(change) === 'relatedChanges'
+															? 'Related changes'
+															: getItemSource(change) ===
+																  'collaborators'
+																? 'Mentor'
+																: 'Risky'
+											"
+										/>
+										<span class="review-changes__page">{{
+											change.pageName
+										}}</span>
+										<span
+											v-if="
+												showShortDescription &&
+												change.pageName &&
+												shortDescriptionByPage.get(change.pageName)
+											"
+											class="review-changes__short-desc"
+											:class="{
+												'review-changes__short-desc--no-separator':
+													!showShortDescriptionSeparator,
+											}"
+										>
+											{{ shortDescriptionByPage.get(change.pageName) }}
+										</span>
+									</span>
+								</template>
+								<div
+									v-if="showSourceSubtitles && getItemSource(change)"
+									class="review-changes__source-subtitle"
+								>
+									{{
+										getItemSource(change) === "pagesAndUsers"
+											? "From your watchlist"
+											: getItemSource(change) === "pagesAndUsersLatest"
+												? "From your watchlist (latest)"
+												: getItemSource(change) === "relatedChanges"
+													? "From recommendations"
+													: getItemSource(change) === "collaborators"
+														? "By your mentor"
+														: "From recent changes"
+									}}
+								</div>
+								<span
+									class="review-changes__user-time-group"
+									:class="{
+										'review-changes__user-time-group--timestamp-below':
+											timestampPosition === 'belowUsername',
+									}"
+								>
+									<span v-if="showUserIcon" class="review-changes__user-row">
+										<CdxButton
+											weight="quiet"
+											class="review-changes__user-icon-btn"
+											:aria-label="`User: ${change.user.name}`"
+											size="small"
+											@click.stop.prevent="openUserPopover($event, change)"
+										>
+											<CdxIcon
+												class="review-changes__user-icon"
+												:icon="
+													wiki.isTemporaryAccount(change.user.name)
+														? cdxIconUserTemporary
+														: cdxIconUserAvatar
+												"
+												size="x-small"
+												aria-hidden="true"
+											/>
+										</CdxButton>
+										<a
+											target="_blank"
+											rel="noopener noreferrer"
+											:href="wiki.getUserUrl(change.user.name)"
+											class="review-changes__user"
+											@click.stop
+										>
+											{{ showUsernameAtPrefix ? "@" : ""
+											}}{{ change.user.name }}
+										</a>
+									</span>
+									<a
+										v-else
+										target="_blank"
+										rel="noopener noreferrer"
+										:href="wiki.getUserUrl(change.user.name)"
+										class="review-changes__user"
+										@click.stop
+									>
+										{{ showUsernameAtPrefix ? "@" : "" }}{{ change.user.name }}
+									</a>
+									<template v-if="timestampPosition === 'rightOfUsername'">
+										<span class="review-changes__time-sep" aria-hidden="true">
+											·
+										</span>
+										<time
+											:datetime="change.timestamp"
+											class="review-changes__time"
+										>
+											{{
+												simplifiedTimestamp
+													? formatRelativeTime(change.timestamp)
+													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+											}}
+										</time>
+									</template>
+									<template v-else-if="timestampPosition === 'belowUsername'">
+										<time
+											:datetime="change.timestamp"
+											class="review-changes__time review-changes__time--block"
+										>
+											{{
+												simplifiedTimestamp
+													? formatRelativeTime(change.timestamp)
+													: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+											}}
+										</time>
+									</template>
+								</span>
+							</span>
+							<time
+								v-if="!unifiedTitle && timestampPosition === 'topRight'"
+								:datetime="change.timestamp"
+								class="review-changes__time"
+							>
+								{{
+									simplifiedTimestamp
+										? formatRelativeTime(change.timestamp)
+										: `${formatTime(change.timestamp)}, ${formatTimeLabel(change.timestamp)}`
+								}}
+							</time>
+						</div>
+
+						<div
+							v-if="
+								!!(change?.summary?.comment || change?.comment) ||
+								showDelta ||
+								showEmptyEditSummary
+							"
+							class="review-changes__summary"
+						>
+							<template v-if="showDelta">
+								<span
+									class="review-changes__summary-prefix"
+									:class="wiki.getDeltaClass(change.delta ?? 0, false)"
+									>{{ formatDelta(change.delta) }}</span
+								>
+								<span
+									v-if="
+										!!(change?.summary?.comment || change?.comment) ||
+										showEmptyEditSummary
+									"
+									class="review-changes__summary-sep"
+									aria-hidden="true"
+									>&nbsp;·&nbsp;</span
+								></template
+							><template v-if="change?.summary?.comment"
+								><span
+									v-if="showDelta"
+									:class="[
+										'review-changes__comment',
+										{
+											'review-changes__comment--no-cutout':
+												!showSummaryCutout,
+										},
+									]"
+									v-html="change.summary.comment"
+								></span
+								><span
+									v-else
+									:class="[
+										'review-changes__comment',
+										{
+											'review-changes__comment--no-cutout':
+												!showSummaryCutout,
+										},
+									]"
+									v-html="change.summary.comment"
+								></span></template
+							><span
+								v-else-if="change?.comment"
+								:class="[
+									'review-changes__comment',
+									{
+										'review-changes__comment--no-cutout': !showSummaryCutout,
+									},
+								]"
+								>{{ change.comment }}</span
+							><em
+								v-else-if="showEmptyEditSummary"
+								class="review-changes__comment review-changes__comment--empty"
+								>{{ showDelta ? "" : "" }}No edit summary</em
+							>
+						</div>
+						<div
+							class="review-changes__user-flags-wrapper"
+							:class="{
+								'review-changes__user-flags-wrapper--flags-above':
+									!flagsBelowUsername,
+							}"
+						>
+							<div
+								v-if="
+									(showReviewButton || showDismissButton) && !hasAnyFlag(change)
+								"
+								class="review-changes__user-actions-row"
+							>
+								<span
+									v-if="
+										(showReviewButton || showDismissButton) &&
+										!hasAnyFlag(change)
+									"
+									class="review-changes__action-buttons"
+								>
+									<CdxButton
+										v-if="showReviewButton"
+										:action="
+											isRevisionViewed(change)
+												? 'default'
+												: isLatestRevision(change)
+													? 'progressive'
+													: 'default'
+										"
+										size="small"
+										weight="quiet"
+										class="review-changes__view-change-btn"
+										:class="{
+											'review-changes__view-change-btn--viewed':
+												isRevisionViewed(change),
+										}"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="openDiffInNewTab(change)"
+									>
+										<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
+										Open
+									</CdxButton>
+									<CdxButton
+										v-if="showDismissButton"
+										action="default"
+										size="small"
+										weight="quiet"
+										class="review-changes__dismiss-btn"
+										aria-label="Dismiss"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="dismissRevision(change)"
+									>
+										<CdxIcon :icon="cdxIconCheck" size="x-small" />
+										Dismiss
+									</CdxButton>
+								</span>
+							</div>
+							<div
+								v-if="
+									(showRevertRiskFlags && getRevertRiskNotice(change)) ||
+									(showRevertedFlag && isReverted(change)) ||
+									(showRecommendationFlags &&
+										getItemSource(change) === 'relatedChanges' &&
+										getRecommendationSourcePageNames(change).length) ||
+									(showOnWatchlistLabel &&
+										change.pageName &&
+										isPageOnWatchlist(change.pageName)) ||
+									(showEditCheckOtherFlag && hasReferenceNeed(change)) ||
+									(showToneCheckFlag && hasToneCheckFlag(change))
+								"
+								class="review-changes__flags-actions-row"
+								:class="{
+									'review-changes__flags-actions-row--flags-only': !(
+										showReviewButton || showDismissButton
+									),
+								}"
+							>
+								<div
+									v-if="
+										(showRevertRiskFlags && getRevertRiskNotice(change)) ||
+										(showRevertedFlag && isReverted(change)) ||
+										(showRecommendationFlags &&
+											getItemSource(change) === 'relatedChanges' &&
+											getRecommendationSourcePageNames(change).length) ||
+										(showOnWatchlistLabel &&
+											change.pageName &&
+											isPageOnWatchlist(change.pageName)) ||
+										(showEditCheckOtherFlag && hasReferenceNeed(change)) ||
+										(showToneCheckFlag && hasToneCheckFlag(change))
+									"
+									class="review-changes__flags-container"
+									:class="{
+										'review-changes__flags-container--no-box':
+											!revertRiskFlagsInBox,
+										'review-changes__flags-container--no-summary-above':
+											!hasSummaryAbove(change),
+									}"
+								>
+									<div
+										v-if="
+											showOnWatchlistLabel &&
+											change.pageName &&
+											isPageOnWatchlist(change.pageName)
+										"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconUnStar"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text"
+											>On your watchlist</span
+										>
+									</div>
+									<div
+										v-if="
+											showRecommendationFlags &&
+											getItemSource(change) === 'relatedChanges' &&
+											getRecommendationReason(
+												getRecommendationSourcePageNames(change)
+											)
+										"
+										class="review-changes__recommendation-notice"
+									>
+										<CdxIcon
+											:icon="cdxIconLightbulb"
+											size="small"
+											class="review-changes__recommendation-notice-icon"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__recommendation-notice-text">{{
+											getRecommendationReason(
+												getRecommendationSourcePageNames(change)
+											)
+										}}</span>
+									</div>
+									<div
+										v-if="showRevertedFlag && isReverted(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
+									>
+										<CdxIcon
+											:icon="cdxIconEditUndo"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--reverted"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags ? "This change was reverted" : "Reverted"
+										}}</span>
+									</div>
+									<div
+										v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
+										class="review-changes__revert-risk-notice"
+									>
+										<CdxIcon
+											:icon="
+												['low', 'mediumLow'].includes(
+													getRevertRiskNotice(change)?.band ?? ''
+												)
+													? cdxIconSuccess
+													: cdxIconAlert
+											"
+											size="small"
+											class="review-changes__revert-risk-notice-icon"
+											:class="{
+												'review-changes__revert-risk-notice-icon--very-high':
+													getRevertRiskNotice(change)?.band === 'high',
+												'review-changes__revert-risk-notice-icon--high':
+													getRevertRiskNotice(change)?.band ===
+													'mediumHigh',
+												'review-changes__revert-risk-notice-icon--low':
+													getRevertRiskNotice(change)?.band === 'low',
+												'review-changes__revert-risk-notice-icon--medium-low':
+													getRevertRiskNotice(change)?.band ===
+													'mediumLow',
+											}"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											getRevertRiskNotice(change)!.text
+										}}</span>
+									</div>
+									<div
+										v-if="showEditCheckOtherFlag && hasReferenceNeed(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconAlert"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags
+												? "Reference check was shown."
+												: "Reference check"
+										}}</span>
+									</div>
+									<div
+										v-if="showToneCheckFlag && hasToneCheckFlag(change)"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+									>
+										<CdxIcon
+											:icon="cdxIconAlert"
+											size="small"
+											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__revert-risk-notice-text">{{
+											verboseFlags
+												? "Tone check: promotional or subjective language detected."
+												: "Revise tone?"
+										}}</span>
+									</div>
+								</div>
+								<span
+									v-if="
+										(showReviewButton || showDismissButton) &&
+										hasAnyFlag(change)
+									"
+									class="review-changes__action-buttons"
+								>
+									<CdxButton
+										v-if="showReviewButton"
+										:action="
+											isRevisionViewed(change)
+												? 'default'
+												: isLatestRevision(change)
+													? 'progressive'
+													: 'default'
+										"
+										size="small"
+										weight="quiet"
+										class="review-changes__view-change-btn"
+										:class="{
+											'review-changes__view-change-btn--viewed':
+												isRevisionViewed(change),
+										}"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="openDiffInNewTab(change)"
+									>
+										<CdxIcon :icon="cdxIconLinkExternal" size="x-small" />
+										Open
+									</CdxButton>
+									<CdxButton
+										v-if="showDismissButton"
+										action="default"
+										size="small"
+										weight="quiet"
+										class="review-changes__dismiss-btn"
+										aria-label="Dismiss"
+										@pointerdown.stop
+										@mousedown.stop
+										@click.stop="dismissRevision(change)"
+									>
+										<CdxIcon :icon="cdxIconCheck" size="x-small" />
+										Dismiss
+									</CdxButton>
+								</span>
+							</div>
+						</div>
+						<span v-if="showRevertRisk" class="review-changes__revert-risk">
+							<span
+								v-for="line in getRevertRiskLines(change.id)"
+								:key="line.label"
+								class="review-changes__revert-risk-line"
+								:class="{
+									'review-changes__revert-risk-line--loading':
+										line.value === '(loading)',
+									'review-changes__revert-risk-line--error':
+										line.value === '(error)' || line.value === '(missing)',
+								}"
+								>{{ line.label }}: {{ line.value }}</span
+							>
+						</span>
+						<span v-if="showDebugChecks" class="review-changes__revert-risk">
+							<span
+								v-for="line in getEditCheckDebugLines(change)"
+								:key="line.label"
+								class="review-changes__revert-risk-line"
+								:class="{
+									'review-changes__revert-risk-line--loading':
+										line.value === '(loading)',
+									'review-changes__revert-risk-line--error':
+										line.value === '(error)',
+								}"
+								>{{ line.label }}: {{ line.value }}</span
+							>
+						</span>
+					</component>
+					<span
+						v-if="viewedBorder && change.id === lastClickedRevisionId"
+						class="review-changes__item-line review-changes__item-line--last-clicked review-changes__item-line--right"
+						aria-hidden="true"
+					/>
+					<span
+						v-if="unviewedBorder && !isRevisionViewed(change)"
+						class="review-changes__item-line review-changes__item-line--unviewed review-changes__item-line--right"
+						aria-hidden="true"
+					/>
+				</li>
+			</template>
+		</ul>
+		<div v-if="!isLoading" class="review-changes__view-more">
+			Open more edits in the
+			<a
+				target="_blank"
+				rel="noopener noreferrer"
+				:href="wiki.getPageUrl('Special:RecentChanges')"
+				class="review-changes__view-more-link"
+				>recent changes page</a
+			>.
+		</div>
+		<CdxPopover
+			v-model:open="showUserPopover"
+			:anchor="userPopoverAnchor"
+			placement="bottom-start"
+			:render-in-place="true"
+			title="User"
+			:use-close-button="true"
+		>
+			This is where the user information goes!
+		</CdxPopover>
+	</section>
+</template>
+
+<script setup lang="ts">
+import FeedItemTitle from "./FeedItemTitle.vue"
+import {
+	clearRevisionsCallback,
+	setRevisionsCallback,
+	useReviewChangesPlusProgress,
+} from "@/modules/ReviewChangesPlus/useReviewChangesPlusProgress"
+import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex"
+import {
+	cdxIconAlert,
+	cdxIconArrowNext,
+	cdxIconCheck,
+	cdxIconClock,
+	cdxIconEditUndo,
+	cdxIconLightbulb,
+	cdxIconLinkExternal,
+	cdxIconSuccess,
+	cdxIconUnStar,
+	cdxIconUserAvatar,
+	cdxIconUserTemporary,
+} from "@wikimedia/codex-icons"
+import { FakeWiki } from "fakewiki"
+import type {
+	FWLiftWingPrediction,
+	FWPageHistoryRevision,
+	FWPredictionByModel,
+	FWPredictionModel,
+	FWRevision,
+	FWToneCheckPrediction,
+} from "fakewiki/types"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
+
+export type ReviewChangesSource =
+	| "recentChanges"
+	| "pagesAndUsers"
+	| "pagesAndUsersLatest"
+	| "relatedChanges"
+	| "collaborators"
+	| "mixed"
+
+export type ItemSource =
+	| "recentChanges"
+	| "pagesAndUsers"
+	| "pagesAndUsersLatest"
+	| "relatedChanges"
+	| "collaborators"
+
+const props = withDefaults(
+	defineProps<{
+		showRevertRisk: boolean
+		/** When true, shows "High revert risk" notice flags on feed items. */
+		showRevertRiskFlags?: boolean
+		/** When true, flag notices have border and padding (box style). When false, no border/padding. */
+		revertRiskFlagsInBox?: boolean
+		/** When true, shows verbose flag text ("This change has very high revert risk", "This change was reverted", "Because you watch X and Y."). When false, shows simple text ("High revert risk", "Reverted", "Because you watch X and Y."). */
+		verboseFlags?: boolean
+		/** When true, shows "Reverted" flag for edits that have been reverted. */
+		showRevertedFlag?: boolean
+		showSourceIcons?: boolean
+		showSourceSubtitles?: boolean
+		showDelta?: boolean
+		/** If false, deltas are shown as +120 / -4 instead of (+120) / (-4). */
+		deltaFormatParentheses?: boolean
+		source?: ReviewChangesSource
+		/** 0–100, used when source is "mixed". 0 = exclude recent changes. */
+		recentChangesRatio?: number
+		/** 0–100, used when source is "mixed". 0 = exclude pages/users. */
+		pagesAndUsersRatio?: number
+		/** 0–100, used when source is "mixed". 0 = exclude related changes. */
+		relatedChangesRatio?: number
+		/** 0–100, used when source is "mixed". 0 = exclude collaborators. */
+		collaboratorsRatio?: number
+		/** 0–100, used when source is "mixed" or "pagesAndUsersLatest". 0 = exclude watchlist latest. */
+		pagesAndUsersLatestRatio?: number
+		title?: string
+		/** When true, hides the "Help keep Wikipedia reliable..." description line. */
+		hideDescription?: boolean
+		/** When true, shows @ before usernames. */
+		showUsernameAtPrefix?: boolean
+		/** When true, shows user icon (head and shoulders) to the left of username. */
+		showUserIcon?: boolean
+		/** When true, flags (revert risk, reverted, recommendations) appear below the username. Default on. */
+		flagsBelowUsername?: boolean
+		/** When true, timestamps show relative format ("2 minutes ago", "3 days ago") instead of time + date. */
+		simplifiedTimestamp?: boolean
+		/** Where to show the timestamp: "topRight" (header), "rightOfUsername", or "belowUsername". */
+		timestampPosition?: "topRight" | "rightOfUsername" | "belowUsername"
+		/** When true, edit summaries appear with white bg, border and shadow (cutout style). */
+		showSummaryCutout?: boolean
+		/** When true, show "No edit summary" when there is no edit summary. When false, hide it (delta still shown if enabled). */
+		showEmptyEditSummary?: boolean
+		/** When true, shows the outer border around the module (for dashboard embedding). */
+		showModuleBorder?: boolean
+		/** When true, shows an Open button in addition to the card being a link. */
+		showReviewButton?: boolean
+		/** When true, shows a Dismiss button to the right of the View button. */
+		showDismissButton?: boolean
+		/** When true, shows recommendation reason for Related changes items (e.g. "Because you watch X and Y."). */
+		showRecommendationFlags?: boolean
+		/** When true, shows "Reference check" flag for edits where API delta indicates increased uncited content. */
+		showEditCheckOtherFlag?: boolean
+		/** When true, shows "Tone check" flag for edits where tone check prediction is above threshold. */
+		showToneCheckFlag?: boolean
+		/** When true, unopened feed items display with a slight blue background. */
+		highlightUnviewed?: boolean
+		/** When true, unopened feed items display with blue vertical lines on left and right. */
+		unviewedBorder?: boolean
+		/** When true, the most recently opened feed item displays with black vertical lines until focus leaves the feed. */
+		viewedBorder?: boolean
+		/** When true, the most recently opened feed item displays with a subtle background until focus leaves the feed. */
+		lastClickedHighlight?: boolean
+		/** When true, displays a right arrow in the top right of each card. */
+		showArrowInTopRight?: boolean
+		/** When true, displays the page's short description to the right of the page name. */
+		showShortDescription?: boolean
+		/** When true, displays a separator (·) between the page name and short description. */
+		showShortDescriptionSeparator?: boolean
+		/** When true, shows "On your watchlist" for any page in the watchlist set, regardless of feed source. */
+		showOnWatchlistLabel?: boolean
+		/** When true, shows debug scores for edit checks (reference need delta, tags). */
+		showDebugChecks?: boolean
+		/** When true, uses unified title component (page name + short desc + timestamp together). When false, uses separate elements (original Review Changes layout). */
+		unifiedTitle?: boolean
+	}>(),
+	{
+		showRevertRiskFlags: false,
+		revertRiskFlagsInBox: true,
+		verboseFlags: true,
+		showRevertedFlag: true,
+		showSourceIcons: false,
+		showSourceSubtitles: false,
+		showUsernameAtPrefix: false,
+		showUserIcon: false,
+		flagsBelowUsername: true,
+		simplifiedTimestamp: false,
+		timestampPosition: "topRight",
+		showDelta: true,
+		deltaFormatParentheses: false,
+		source: "recentChanges",
+		recentChangesRatio: 50,
+		pagesAndUsersRatio: 50,
+		relatedChangesRatio: 30,
+		collaboratorsRatio: 20,
+		pagesAndUsersLatestRatio: 20,
+		hideDescription: false,
+		showSummaryCutout: true,
+		showEmptyEditSummary: true,
+		showModuleBorder: true,
+		showReviewButton: false,
+		showDismissButton: false,
+		showRecommendationFlags: false,
+		showEditCheckOtherFlag: false,
+		showToneCheckFlag: false,
+		highlightUnviewed: false,
+		unviewedBorder: false,
+		viewedBorder: false,
+		lastClickedHighlight: false,
+		showArrowInTopRight: false,
+		showShortDescription: true,
+		showShortDescriptionSeparator: false,
+		showOnWatchlistLabel: false,
+		showDebugChecks: false,
+		unifiedTitle: false,
+	}
+)
+
+const wiki = new FakeWiki()
+
+const {
+	isRevisionViewed,
+	markRevisionAsViewed,
+	dismissedRevisionIds,
+	dismissRevision,
+	lastClickedRevisionId,
+	clearLastClickedRevisionId,
+} = useReviewChangesPlusProgress()
+
+const feedRef = ref<HTMLElement | null>(null)
+
+function onFeedFocusOut(event: FocusEvent): void {
+	const relatedTarget = event.relatedTarget as Node | null
+	if (feedRef.value && relatedTarget && !feedRef.value.contains(relatedTarget)) {
+		clearLastClickedRevisionId()
+	}
+}
+
+const userPopoverAnchor = ref<HTMLElement | null>(null)
+const showUserPopover = ref(false)
+
+function openUserPopover(event: MouseEvent, _change: FWRevision): void {
+	userPopoverAnchor.value = event.currentTarget as HTMLElement
+	showUserPopover.value = true
+}
+
+function openDiffInNewTab(change: FWRevision): void {
+	if (change.pageName) {
+		markRevisionAsViewed(change)
+		window.open(wiki.getRevisionUrl(change.id, change.pageName), "_blank")
+	}
+}
+
+/** Prevent pointer/mouse events from the action buttons (View, Dismiss) from activating the card link.
+ * Uses capture phase so we run when the event arrives at the link (before it reaches the buttons).
+ * We only preventDefault so the event still reaches the buttons; preventDefault stops the link from activating. */
+function onCardPointerDown(event: PointerEvent | MouseEvent): void {
+	if ((event.target as Element)?.closest(".review-changes__action-buttons")) {
+		event.preventDefault()
+	}
+}
+
+/** Check if a revision has been reverted (mw-reverted or reverted tag). */
+function isReverted(change: FWRevision): boolean {
+	const tags = change.tags
+	if (!tags || tags.length === 0) return false
+	return tags.includes("mw-reverted") || tags.includes("reverted")
+}
+
+/** Edit check and similar tags. Paste/references may appear on en.wikipedia.org. */
+const EDIT_CHECK_OTHER_TAGS = [
+	"editcheck-references",
+	"editcheck-newreference",
+	"editcheck-references-shown",
+]
+/** Reference check: API delta above threshold (change increased uncited content). Only for positive deltas. Tags indicate tool use, not need. */
+function hasReferenceNeed(change: FWRevision): boolean {
+	const entry = referenceNeedByRevId.value.get(change.id)
+	return (
+		entry != null &&
+		!("error" in entry) &&
+		entry.delta > 0 &&
+		entry.delta >= REFERENCE_NEED_THRESHOLD
+	)
+}
+
+/** Tone check: prediction indicates promotional/subjective language above threshold. */
+function hasToneCheckFlag(change: FWRevision): boolean {
+	const entry = toneCheckByRevId.value.get(change.id)
+	if (entry == null || "error" in entry) return false
+	return (
+		entry.prediction === true &&
+		typeof entry.probability === "number" &&
+		entry.probability >= TONE_CHECK_THRESHOLD
+	)
+}
+
+/** Whether any flag is shown for this change (revert risk, reverted, recommendation, edit check, tone check, on watchlist). */
+function hasAnyFlag(change: FWRevision): boolean {
+	return (
+		(props.showRevertRiskFlags && !!getRevertRiskNotice(change)) ||
+		(props.showRevertedFlag && isReverted(change)) ||
+		(props.showRecommendationFlags &&
+			getItemSource(change) === "relatedChanges" &&
+			getRecommendationSourcePageNames(change).length > 0) ||
+		(props.showOnWatchlistLabel && !!change.pageName && isPageOnWatchlist(change.pageName)) ||
+		(props.showEditCheckOtherFlag && hasReferenceNeed(change)) ||
+		(props.showToneCheckFlag && hasToneCheckFlag(change))
+	)
+}
+
+/** Whether there is summary content (comment, delta, or empty-edit placeholder) above the flags. */
+function hasSummaryAbove(change: FWRevision): boolean {
+	return (
+		!!(change?.summary?.comment || change?.comment) ||
+		props.showDelta ||
+		props.showEmptyEditSummary
+	)
+}
+
+/** Enrich revisions that lack tags by fetching from the API (for page history, related changes). */
+async function enrichRevisionsWithTags(revisions: FWRevision[]): Promise<FWRevision[]> {
+	const revIdsToFetch = revisions
+		.filter(r => r.id > 0 && (!r.tags || r.tags.length === 0))
+		.map(r => r.id)
+	if (revIdsToFetch.length === 0) return revisions
+
+	const tagsMap = await wiki.getRevisionTags(revIdsToFetch)
+	if (tagsMap.size === 0) return revisions
+
+	return revisions.map(r => {
+		const tags = tagsMap.get(r.id)
+		if (!tags) return r
+		return { ...r, tags }
+	})
+}
+
+const revertRiskByRevId = ref<Map<number, FWPredictionByModel | { error: true }>>(new Map())
+const isLoadingRevertRisk = ref(false)
+
+const referenceNeedByRevId = ref<
+	Map<number, { delta: number; before: number; after: number } | { error: true }>
+>(new Map())
+const isLoadingReferenceNeed = ref(false)
+/** Delta threshold: show flag when change increased uncited content by this much (rn_after - rn_before). */
+const REFERENCE_NEED_THRESHOLD = 0.001
+
+const toneCheckByRevId = ref<Map<number, FWToneCheckPrediction | { error: true } | null>>(new Map())
+const isLoadingToneCheck = ref(false)
+/** Show tone check flag when prediction is true and probability >= this (0–1). */
+const TONE_CHECK_THRESHOLD = 0.55
+
+const REVERT_RISK_MODELS = [
+	{ key: "revertrisk" as const, label: "Revert risk (language-agnostic)" },
+	{ key: "revertrisk-multilingual" as const, label: "Revert risk (multilingual)" },
+]
+
+function formatRevertRiskPercent(prediction: FWLiftWingPrediction): number {
+	const p = prediction.probability?.true
+	return typeof p === "number" ? Math.round(p * 100) : 0
+}
+
+function getRevertRiskLines(revId: number): Array<{ label: string; value: string }> {
+	if (isLoadingRevertRisk.value) {
+		return REVERT_RISK_MODELS.map(m => ({ label: m.label, value: "(loading)" }))
+	}
+	const entry = revertRiskByRevId.value.get(revId)
+	if (!entry) {
+		return REVERT_RISK_MODELS.map(m => ({ label: m.label, value: "(loading)" }))
+	}
+	if ("error" in entry && entry.error) {
+		return REVERT_RISK_MODELS.map(m => ({ label: m.label, value: "(error)" }))
+	}
+	const byModel = entry as FWPredictionByModel
+	return REVERT_RISK_MODELS.map(m => {
+		const pred = byModel[m.key]
+		const value = pred ? `${formatRevertRiskPercent(pred)}%` : "(missing)"
+		return { label: m.label, value }
+	})
+}
+
+const EDIT_CHECK_DEBUG_TAGS = [
+	...EDIT_CHECK_OTHER_TAGS,
+	"editcheck-paste-shown",
+	"editcheck-newcontent",
+	"editsuggestion-seen",
+]
+
+function getEditCheckDebugLines(change: FWRevision): Array<{ label: string; value: string }> {
+	const lines: Array<{ label: string; value: string }> = []
+
+	// Reference need: before, after, delta (only for revisions with pageName)
+	if (change.pageName) {
+		if (isLoadingReferenceNeed.value) {
+			lines.push({ label: "Ref need before", value: "(loading)" })
+			lines.push({ label: "Ref need after", value: "(loading)" })
+			lines.push({ label: "Ref need Δ", value: "(loading)" })
+		} else {
+			const rnEntry = referenceNeedByRevId.value.get(change.id)
+			if (rnEntry === undefined) {
+				lines.push({ label: "Ref need before", value: "(loading)" })
+				lines.push({ label: "Ref need after", value: "(loading)" })
+				lines.push({ label: "Ref need Δ", value: "(loading)" })
+			} else if (typeof rnEntry === "object" && "error" in rnEntry) {
+				lines.push({ label: "Ref need before", value: "(error)" })
+				lines.push({ label: "Ref need after", value: "(error)" })
+				lines.push({ label: "Ref need Δ", value: "(error)" })
+			} else {
+				lines.push({ label: "Ref need before", value: rnEntry.before.toFixed(3) })
+				lines.push({ label: "Ref need after", value: rnEntry.after.toFixed(3) })
+				lines.push({ label: "Ref need Δ", value: rnEntry.delta.toFixed(3) })
+			}
+		}
+	} else {
+		lines.push({ label: "Ref need before", value: "(n/a)" })
+		lines.push({ label: "Ref need after", value: "(n/a)" })
+		lines.push({ label: "Ref need Δ", value: "(n/a)" })
+	}
+
+	// Tone check: prediction and probability (only for revisions with pageName)
+	if (change.pageName) {
+		if (isLoadingToneCheck.value) {
+			lines.push({ label: "Tone check", value: "(loading)" })
+		} else {
+			const tcEntry = toneCheckByRevId.value.get(change.id)
+			if (tcEntry === undefined) {
+				lines.push({ label: "Tone check", value: "(loading)" })
+			} else if (tcEntry !== null && "error" in tcEntry) {
+				lines.push({ label: "Tone check", value: "(error)" })
+			} else if (tcEntry === null) {
+				lines.push({ label: "Tone check", value: "(no changes)" })
+			} else {
+				const pred = tcEntry.prediction ? "yes" : "no"
+				const prob = (tcEntry.probability * 100).toFixed(1)
+				lines.push({ label: "Tone check", value: `${pred}, ${prob}%` })
+			}
+		}
+	} else {
+		lines.push({ label: "Tone check", value: "(n/a)" })
+	}
+
+	// Edit check tags present on this revision
+	const tags = change.tags ?? []
+	const editCheckTags = tags.filter(t => EDIT_CHECK_DEBUG_TAGS.includes(t))
+	lines.push({
+		label: "Tags",
+		value: editCheckTags.length > 0 ? editCheckTags.join(", ") : "(none)",
+	})
+
+	return lines
+}
+
+/** Band thresholds for language-agnostic revert risk: above 80% = yellow, above 90% = red; below 25% = green, below 45% = blue */
+const REVERT_RISK_THRESHOLDS = {
+	lowerTight: 0.25,
+	lowerLoose: 0.45,
+	upperLoose: 0.8,
+	upperTight: 0.9,
+} as const
+
+type RevertRiskBand = "high" | "mediumHigh" | "low" | "mediumLow"
+
+function getRiskFromPrediction(pred: FWLiftWingPrediction): number {
+	const p = pred.probability?.true
+	return typeof p === "number" ? p : 0
+}
+
+function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRiskBand } | null {
+	if (isLoadingRevertRisk.value) return null
+	const entry = revertRiskByRevId.value.get(change.id)
+	if (!entry || ("error" in entry && entry.error)) return null
+	const byModel = entry as FWPredictionByModel
+	const pred = byModel.revertrisk
+	if (!pred) return null
+	const risk = getRiskFromPrediction(pred)
+	const verbose = props.verboseFlags
+	if (risk > REVERT_RISK_THRESHOLDS.upperTight) {
+		return {
+			text: verbose
+				? `This change ${isReverted(change) ? "had" : "has"} very high revert risk.`
+				: "Very high revert risk",
+			band: "high",
+		}
+	}
+	if (risk > REVERT_RISK_THRESHOLDS.upperLoose) {
+		return {
+			text: verbose
+				? `This change ${isReverted(change) ? "had" : "has"} high revert risk.`
+				: "High revert risk",
+			band: "mediumHigh",
+		}
+	}
+	if (risk < REVERT_RISK_THRESHOLDS.lowerTight) {
+		return {
+			text: verbose
+				? `This change ${isReverted(change) ? "had" : "has"} very low revert risk.`
+				: "Very low revert risk",
+			band: "low",
+		}
+	}
+	if (risk < REVERT_RISK_THRESHOLDS.lowerLoose) {
+		return {
+			text: verbose
+				? `This change ${isReverted(change) ? "had" : "has"} low revert risk.`
+				: "Low revert risk",
+			band: "mediumLow",
+		}
+	}
+	return null
+}
+
+function getRecommendationSourcePageNames(change: RevisionWithSource): string[] {
+	return (
+		(change as { recommendationSourcePageNames?: string[] }).recommendationSourcePageNames ?? []
+	)
+}
+
+function getRecommendationReason(sourcePageNames: string[]): string {
+	if (!sourcePageNames?.length) return ""
+	const intro = "Because you watch "
+	if (sourcePageNames.length === 1) {
+		return `${intro}${sourcePageNames[0]}.`
+	}
+	if (sourcePageNames.length === 2) {
+		return `${intro}${sourcePageNames[0]} and ${sourcePageNames[1]}.`
+	}
+	const last = sourcePageNames[sourcePageNames.length - 1]
+	const rest = sourcePageNames.slice(0, -1).join(", ")
+	return `${intro}${rest}, and ${last}.`
+}
+
+async function fetchRevertRiskForFeed(): Promise<void> {
+	const revs = selectedRevisionsForDisplay.value
+	if (revs.length === 0) return
+	const revIds = revs.map(r => r.id)
+	isLoadingRevertRisk.value = true
+	revertRiskByRevId.value = new Map()
+	const models: FWPredictionModel[] = props.showRevertRisk
+		? ["revertrisk", "revertrisk-multilingual"]
+		: ["revertrisk"]
+	try {
+		const predictions = await wiki.getRevisionPredictions(revIds, models)
+		const next = new Map<number, FWPredictionByModel | { error: true }>()
+		for (const revId of revIds) {
+			const byModel = predictions[revId] ?? {}
+			next.set(revId, byModel)
+		}
+		revertRiskByRevId.value = next
+	} catch {
+		const next = new Map<number, FWPredictionByModel | { error: true }>()
+		for (const revId of revIds) {
+			next.set(revId, { error: true })
+		}
+		revertRiskByRevId.value = next
+	} finally {
+		isLoadingRevertRisk.value = false
+	}
+}
+
+async function fetchReferenceNeedForFeed(): Promise<void> {
+	const revs = selectedRevisionsForDisplay.value
+	if (revs.length === 0) return
+	const revsWithPage = revs.filter(r => r.pageName)
+	if (revsWithPage.length === 0) return
+	isLoadingReferenceNeed.value = true
+	referenceNeedByRevId.value = new Map()
+	try {
+		const results = await Promise.all(
+			revsWithPage.map(async change => {
+				try {
+					const parentId = await wiki.getParentRevisionId(change.pageName!, change.id)
+					const [beforePred, afterPred] = await Promise.all([
+						parentId != null ? wiki.getReferenceNeedPrediction(parentId) : null,
+						wiki.getReferenceNeedPrediction(change.id),
+					])
+					const rnBefore = beforePred?.rn_score ?? 0
+					const rnAfter = afterPred?.rn_score ?? null
+					if (typeof rnAfter !== "number")
+						return { revId: change.id, delta: null, error: true } as const
+					const delta = rnAfter - rnBefore
+					return {
+						revId: change.id,
+						before: rnBefore,
+						after: rnAfter,
+						delta,
+						error: false,
+					} as const
+				} catch {
+					return { revId: change.id, delta: null, error: true } as const
+				}
+			})
+		)
+		const next = new Map<
+			number,
+			{ delta: number; before: number; after: number } | { error: true }
+		>()
+		for (const result of results) {
+			if (result.error) {
+				next.set(result.revId, { error: true })
+			} else if (typeof result.delta === "number") {
+				next.set(result.revId, {
+					before: result.before,
+					after: result.after,
+					delta: result.delta,
+				})
+			}
+		}
+		referenceNeedByRevId.value = next
+	} catch {
+		const next = new Map<
+			number,
+			{ delta: number; before: number; after: number } | { error: true }
+		>()
+		for (const change of revsWithPage) {
+			next.set(change.id, { error: true })
+		}
+		referenceNeedByRevId.value = next
+	} finally {
+		isLoadingReferenceNeed.value = false
+	}
+}
+
+async function fetchToneCheckForFeed(): Promise<void> {
+	const revs = selectedRevisionsForDisplay.value
+	if (revs.length === 0) return
+	const revsWithPage = revs.filter(r => r.pageName)
+	if (revsWithPage.length === 0) return
+	isLoadingToneCheck.value = true
+	toneCheckByRevId.value = new Map()
+	try {
+		const results = await Promise.all(
+			revsWithPage.map(async change => {
+				try {
+					const pred = await wiki.getToneCheckForRevision(change.pageName!, change.id)
+					return { revId: change.id, pred } as const
+				} catch {
+					return { revId: change.id, pred: { error: true } as const } as const
+				}
+			})
+		)
+		const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
+		for (const { revId, pred } of results) {
+			next.set(revId, pred)
+		}
+		toneCheckByRevId.value = next
+	} catch {
+		const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
+		for (const change of revsWithPage) {
+			next.set(change.id, { error: true })
+		}
+		toneCheckByRevId.value = next
+	} finally {
+		isLoadingToneCheck.value = false
+	}
+}
+
+const allRevisionsData = ref<FWRevision[]>([])
+const selectedRevisions = ref<FWRevision[]>([])
+/** Cached data for mixed mode; ratio is applied client-side only */
+/** Recent changes split into 4 segments across the watchlist time range; we slice from these in parallel when displaying */
+const mixedRecentChangesBySegment = ref<FWRevision[][]>([])
+const mixedPagesAndUsersData = ref<FWRevision[]>([])
+const mixedPagesAndUsersLatestData = ref<FWRevision[]>([])
+const mixedCollaboratorsData = ref<FWRevision[]>([])
+const mixedRelatedChangesData = ref<FWRevision[]>([])
+
+type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
+
+const NUM_RC_SEGMENTS = 4
+
+function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
+	if (props.source !== "mixed") {
+		let all = selectedRevisions.value
+		if (props.source === "relatedChanges") {
+			all = [...all].sort((a, b) => {
+				const scoreA = (a as FWRevision & { score?: number }).score ?? -Infinity
+				const scoreB = (b as FWRevision & { score?: number }).score ?? -Infinity
+				if (scoreB !== scoreA) return scoreB - scoreA
+				return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			})
+		}
+		const ratioPercent =
+			props.source === "recentChanges"
+				? Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
+				: props.source === "pagesAndUsers"
+					? Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50))
+					: props.source === "pagesAndUsersLatest"
+						? Math.max(0, Math.min(100, props.pagesAndUsersLatestRatio ?? 20))
+						: props.source === "collaborators"
+							? Math.max(0, Math.min(100, props.collaboratorsRatio ?? 20))
+							: Math.max(0, Math.min(100, props.relatedChangesRatio ?? 30))
+		const count = Math.min(Math.floor((RECENT_CHANGES_LIMIT * ratioPercent) / 100), all.length)
+		const toShow = all.slice(0, count)
+		return toShow.map(r => ({ ...r, itemSource: props.source as ItemSource }))
+	}
+	const rcSegments = mixedRecentChangesBySegment.value // RC0, RC1, RC2, RC3
+	const wl = mixedPagesAndUsersData.value
+	const wlLatest = mixedPagesAndUsersLatestData.value
+	const collaborators = mixedCollaboratorsData.value
+	const related = mixedRelatedChangesData.value
+	const rcRatioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
+	const wlRatioPercent = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50))
+	const wlLatestRatioPercent = Math.max(0, Math.min(100, props.pagesAndUsersLatestRatio ?? 20))
+	const collaboratorsRatioPercent = Math.max(0, Math.min(100, props.collaboratorsRatio ?? 20))
+	const relatedRatioPercent = Math.max(0, Math.min(100, props.relatedChangesRatio ?? 30))
+
+	// 0% all: show nothing
+	if (
+		rcRatioPercent === 0 &&
+		wlRatioPercent === 0 &&
+		wlLatestRatioPercent === 0 &&
+		collaboratorsRatioPercent === 0 &&
+		relatedRatioPercent === 0
+	)
+		return []
+
+	// RC: order segments by newest first (segment whose most recent item is newest overall),
+	// then round-robin: newest from each segment, then 2nd newest from each, etc.
+	const segments = [
+		rcSegments[0] ?? [],
+		rcSegments[1] ?? [],
+		rcSegments[2] ?? [],
+		rcSegments[3] ?? [],
+	].filter(s => s.length > 0)
+	const segmentsByNewest = [...segments].sort((a, b) => {
+		const aNewest = a[0]?.timestamp ?? ""
+		const bNewest = b[0]?.timestamp ?? ""
+		return bNewest.localeCompare(aNewest)
+	})
+	const rcOrdered: FWRevision[] = []
+	const maxSegLen = Math.max(...segmentsByNewest.map(s => s.length), 0)
+	for (let i = 0; i < maxSegLen; i++) {
+		for (const seg of segmentsByNewest) {
+			if (seg[i]) rcOrdered.push(seg[i])
+		}
+	}
+	const rcCount = Math.min(
+		Math.floor((RECENT_CHANGES_LIMIT * rcRatioPercent) / 100),
+		rcOrdered.length
+	)
+	const rcSliced = rcOrdered.slice(0, rcCount)
+
+	const wlCount = Math.min(Math.floor((RECENT_CHANGES_LIMIT * wlRatioPercent) / 100), wl.length)
+	const wlSliced = wl.slice(0, wlCount)
+
+	const wlLatestCount = Math.min(
+		Math.floor((RECENT_CHANGES_LIMIT * wlLatestRatioPercent) / 100),
+		wlLatest.length
+	)
+	const wlLatestSliced = wlLatest.slice(0, wlLatestCount)
+
+	const collaboratorsCount = Math.min(
+		Math.floor((RECENT_CHANGES_LIMIT * collaboratorsRatioPercent) / 100),
+		collaborators.length
+	)
+	const collaboratorsSliced = collaborators.slice(0, collaboratorsCount)
+
+	// Related: order by score (higher first), then by recency (newest first) within same score
+	const relatedSorted = [...related].sort((a, b) => {
+		const scoreA = (a as FWRevision & { score?: number }).score ?? -Infinity
+		const scoreB = (b as FWRevision & { score?: number }).score ?? -Infinity
+		if (scoreB !== scoreA) return scoreB - scoreA
+		return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+	})
+	const relatedCount = Math.min(
+		Math.floor((RECENT_CHANGES_LIMIT * relatedRatioPercent) / 100),
+		relatedSorted.length
+	)
+	const relatedSliced = relatedSorted.slice(0, relatedCount)
+
+	// Round-robin across 5 pools: RC, WL, WL latest, collaborators, relatedChanges
+	const pools = [
+		rcSliced.map(r => ({ ...r, itemSource: "recentChanges" as const })),
+		wlSliced.map(r => ({ ...r, itemSource: "pagesAndUsers" as const })),
+		wlLatestSliced.map(r => ({ ...r, itemSource: "pagesAndUsersLatest" as const })),
+		collaboratorsSliced.map(r => ({ ...r, itemSource: "collaborators" as const })),
+		relatedSliced.map(r => ({ ...r, itemSource: "relatedChanges" as const })),
+	]
+	const maxLen = Math.max(...pools.map(p => p.length))
+	const merged: RevisionWithSource[] = []
+	for (let i = 0; i < maxLen; i++) {
+		for (const pool of pools) {
+			if (pool[i]) merged.push(pool[i])
+		}
+	}
+	return merged
+}
+
+function getItemSource(change: RevisionWithSource): ItemSource | undefined {
+	return change.itemSource
+}
+
+function isPageOnWatchlist(pageName: string | undefined): boolean {
+	if (!pageName) return false
+	const lower = pageName.toLowerCase()
+	return HARDCODED_PAGE_NAMES.some(p => p.toLowerCase() === lower)
+}
+
+/** Latest revision ID per page for watchlist (pagesAndUsers) source. */
+function buildLatestRevIdByPage(revisions: FWRevision[]): Map<string, number> {
+	const map = new Map<string, number>()
+	for (const rev of revisions) {
+		const page = rev.pageName
+		if (!page) continue
+		const current = map.get(page)
+		if (current === undefined || rev.id > current) {
+			map.set(page, rev.id)
+		}
+	}
+	return map
+}
+
+const latestRevIdByPageWatchlist = computed(() => {
+	if (props.source === "mixed") {
+		return buildLatestRevIdByPage(mixedPagesAndUsersData.value)
+	}
+	if (props.source === "pagesAndUsers") {
+		return buildLatestRevIdByPage(allRevisionsData.value)
+	}
+	return new Map<string, number>()
+})
+
+const latestRevIdByPageCollaborators = computed(() => {
+	if (props.source === "mixed") {
+		return buildLatestRevIdByPage(mixedCollaboratorsData.value)
+	}
+	if (props.source === "collaborators") {
+		return buildLatestRevIdByPage(allRevisionsData.value)
+	}
+	return new Map<string, number>()
+})
+
+function isLatestRevision(change: RevisionWithSource): boolean {
+	const source = change.itemSource ?? props.source
+	if (
+		source === "recentChanges" ||
+		source === "relatedChanges" ||
+		source === "pagesAndUsersLatest"
+	)
+		return true
+	if (!change.pageName) return false
+	const latestMap =
+		source === "pagesAndUsers"
+			? latestRevIdByPageWatchlist.value
+			: latestRevIdByPageCollaborators.value
+	return latestMap.get(change.pageName) === change.id
+}
+
+const selectedRevisionsForDisplay = computed(() => getSelectedRevisionsForDisplay())
+
+const shortDescriptionByPage = ref<Map<string, string | null>>(new Map())
+
+async function fetchShortDescriptionsForFeed(): Promise<void> {
+	if (!props.showShortDescription) return
+	const revs = selectedRevisionsForDisplay.value
+	const pageNames = [...new Set(revs.map(r => r.pageName).filter((p): p is string => !!p))]
+	const toFetch = pageNames.filter(p => !shortDescriptionByPage.value.has(p))
+	if (toFetch.length === 0) return
+	const results = await Promise.all(
+		toFetch.map(async pageName => {
+			const desc = await wiki.getShortDescription(pageName)
+			return { pageName, desc } as const
+		})
+	)
+	const next = new Map(shortDescriptionByPage.value)
+	for (const { pageName, desc } of results) {
+		next.set(pageName, desc)
+	}
+	shortDescriptionByPage.value = next
+}
+
+watch(
+	() => [
+		props.showShortDescription,
+		selectedRevisionsForDisplay.value.map(r => r.pageName).join(","),
+	],
+	() => {
+		fetchShortDescriptionsForFeed()
+	}
+)
+
+watch(
+	() => props.showRevertRisk || props.showRevertRiskFlags,
+	enabled => {
+		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
+			fetchRevertRiskForFeed()
+		}
+	}
+)
+
+watch(
+	() => props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks,
+	enabled => {
+		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
+			fetchReferenceNeedForFeed()
+			fetchToneCheckForFeed()
+		}
+	}
+)
+
+let referenceNeedDebounceId: ReturnType<typeof setTimeout> | null = null
+watch(
+	() => [
+		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
+		props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks,
+	],
+	([, enabled]) => {
+		if (
+			!enabled ||
+			props.source !== "mixed" ||
+			selectedRevisionsForDisplay.value.length === 0
+		) {
+			return
+		}
+		if (referenceNeedDebounceId) clearTimeout(referenceNeedDebounceId)
+		referenceNeedDebounceId = setTimeout(() => {
+			referenceNeedDebounceId = null
+			fetchReferenceNeedForFeed()
+			fetchToneCheckForFeed()
+		}, 300)
+	}
+)
+
+let revertRiskDebounceId: ReturnType<typeof setTimeout> | null = null
+watch(
+	() => [
+		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
+		props.showRevertRisk || props.showRevertRiskFlags,
+	],
+	([, enabled]) => {
+		if (
+			!enabled ||
+			props.source !== "mixed" ||
+			selectedRevisionsForDisplay.value.length === 0
+		) {
+			return
+		}
+		if (revertRiskDebounceId) clearTimeout(revertRiskDebounceId)
+		revertRiskDebounceId = setTimeout(() => {
+			revertRiskDebounceId = null
+			fetchRevertRiskForFeed()
+		}, 300)
+	}
+)
+
+const rccontinue = ref<string | undefined>(undefined)
+const useNeedsReviewFilter = ref(true)
+const isLoading = ref(false)
+const errors = ref<string[]>([])
+
+const RECENT_CHANGES_LIMIT = 10
+const RELATED_CHANGES_TOP_N = 10
+
+/** Hardcoded pages and users for source="pagesAndUsers" (matches DeltaSnippets / Structured deltas) */
+const HARDCODED_PAGE_NAMES = [
+	"Confidence Man (band)",
+	"Algorave",
+	"Little Mix",
+	"Gorillaz",
+	"Jade Thirlwall",
+	"Wet Leg",
+]
+const HARDCODED_USER_NAMES = ["Samwalton9"]
+
+/** Select top N pages by score; on ties, randomly pick among tying pages. */
+function selectTopNByScoreWithRandomTies(
+	pages: Array<{ title: string; score: number }>,
+	n: number
+): Array<{ title: string; score: number }> {
+	const filtered = pages.filter(p => !/^(Help|File):/i.test(p.title))
+	if (filtered.length <= n) return filtered
+	const sorted = [...filtered].sort((a, b) => b.score - a.score)
+	const byScore = new Map<number, Array<{ title: string; score: number }>>()
+	for (const p of sorted) {
+		const arr = byScore.get(p.score) ?? []
+		arr.push(p)
+		byScore.set(p.score, arr)
+	}
+	const sortedScores = [...byScore.keys()].sort((a, b) => b - a)
+	const result: Array<{ title: string; score: number }> = []
+	for (const score of sortedScores) {
+		const tier = byScore.get(score) ?? []
+		const remaining = n - result.length
+		if (tier.length <= remaining) {
+			result.push(...tier)
+		} else {
+			const shuffled = [...tier]
+			for (let i = shuffled.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1))
+				;[shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!]
+			}
+			result.push(...shuffled.slice(0, remaining))
+			break
+		}
+	}
+	return result
+}
+
+async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
+	const { pages: pagesWithScores, changes } = await wiki.getTopRelatedPages(
+		HARDCODED_PAGE_NAMES,
+		{
+			percentage: 100,
+			limit: 50,
+		}
+	)
+	const sourcePageNamesByPage = new Map<string, string[]>()
+	for (const c of changes) {
+		const pageName = c.pageName?.trim()
+		if (pageName && c.sourcePageNames?.length) {
+			const existing = sourcePageNamesByPage.get(pageName) ?? []
+			const combined = [...new Set([...existing, ...c.sourcePageNames])]
+			sourcePageNamesByPage.set(pageName, combined)
+		}
+	}
+	const watchlistTitles = new Set(HARDCODED_PAGE_NAMES.map(t => t.toLowerCase()))
+	const pagesExcludingWatchlist = pagesWithScores.filter(
+		p => !watchlistTitles.has(p.title.toLowerCase())
+	)
+	const selected = selectTopNByScoreWithRandomTies(pagesExcludingWatchlist, RELATED_CHANGES_TOP_N)
+	const recommendedTitles = selected.map(p => p.title)
+	if (recommendedTitles.length === 0) return []
+	const scoreByPage = new Map(selected.map(p => [p.title, p.score]))
+	const latestRevisions: Array<FWPageHistoryRevision & { pageName?: string }> = []
+	for (const pageName of recommendedTitles) {
+		const history = await wiki.getPageHistory(pageName, { limit: 1 })
+		const rev = history.revisions?.[0]
+		if (rev) {
+			latestRevisions.push({ ...rev, pageName })
+		}
+	}
+	const processed = await processRevisions(latestRevisions)
+	const enriched = await enrichRevisionsWithTags(processed)
+	return enriched.map(r => {
+		const score = scoreByPage.get(r.pageName ?? "")
+		const recommendationSourcePageNames = sourcePageNamesByPage.get(r.pageName ?? "")
+		return {
+			...r,
+			...(score !== undefined && { score }),
+			...(recommendationSourcePageNames !== undefined && {
+				recommendationSourcePageNames,
+			}),
+		}
+	})
+}
+
+async function loadWatchlistLatestRevisions(): Promise<FWRevision[]> {
+	const latestRevisions: Array<FWPageHistoryRevision & { pageName?: string }> = []
+	for (const pageName of HARDCODED_PAGE_NAMES) {
+		const history = await wiki.getPageHistory(pageName, { limit: 1 })
+		const rev = history.revisions?.[0]
+		if (rev) {
+			latestRevisions.push({ ...rev, pageName })
+		}
+	}
+	const processed = await processRevisions(latestRevisions)
+	const enriched = await enrichRevisionsWithTags(processed)
+	return enriched.sort(
+		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+	)
+}
+
+async function processRevisions(
+	revisions: Array<{
+		id: number
+		timestamp: string
+		comment: string
+		user: { name: string }
+		delta: number | null
+		pageName?: string
+	}>
+): Promise<FWRevision[]> {
+	return Promise.all(
+		revisions.map(async revision => {
+			const pageName =
+				(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
+			const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
+			const toolbar = wiki.parseToolbarEditSummary(_summary)
+			const summary = toolbar
+				? toolbar
+				: {
+						comment: _summary,
+						hashtags: [],
+						other: [],
+						suggestedBy: null,
+						useThisBot: null,
+						reportBugs: null,
+					}
+			const commentText = summary.comment
+				? summary.comment +
+					(summary.suggestedBy
+						? " Suggested by [[User:" +
+							summary.suggestedBy +
+							"|" +
+							summary.suggestedBy +
+							"]]"
+						: "")
+				: ""
+			summary.comment = commentText
+				? await wiki.transformWikitextToHtml(commentText, pageName)
+				: ""
+			if (summary.comment) {
+				summary.comment = stripLinksFromHtml(summary.comment)
+			}
+			summary.hashtags = Array.isArray(summary.hashtags)
+				? summary.hashtags.join(" ")
+				: summary.hashtags
+			const processedRevision: FWRevision = {
+				...revision,
+				comment: revision.comment || "",
+				summary,
+				pageName,
+				avatarUrl: null,
+			}
+			return processedRevision
+		})
+	)
+}
+
+async function loadFeed(append = false): Promise<void> {
+	if (!append) {
+		isLoading.value = true
+		errors.value = []
+	}
+
+	try {
+		let revisions: Array<{
+			id: number
+			timestamp: string
+			comment: string
+			user: { name: string }
+			delta: number | null
+			pageName?: string
+		}>
+
+		if (props.source === "relatedChanges") {
+			if (append) {
+				isLoading.value = false
+				return
+			}
+			const relatedRevisions = await loadRelatedChangesRevisions()
+			const sorted = relatedRevisions.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+			allRevisionsData.value = sorted
+			selectedRevisions.value = sorted
+			mixedRecentChangesBySegment.value = []
+			mixedPagesAndUsersData.value = []
+			mixedPagesAndUsersLatestData.value = []
+			mixedCollaboratorsData.value = []
+			mixedRelatedChangesData.value = []
+			isLoading.value = false
+			if (props.showRevertRisk || props.showRevertRiskFlags) {
+				fetchRevertRiskForFeed()
+			}
+			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
+				fetchReferenceNeedForFeed()
+				fetchToneCheckForFeed()
+			}
+			return
+		}
+
+		if (props.source === "mixed") {
+			if (append) {
+				isLoading.value = false
+				return
+			}
+			// Fetch watchlist (pages only), watchlist latest, and collaborators (users only) separately
+			const [pagesRevisions, collaboratorsRevisions, watchlistLatestRevisions] =
+				await Promise.all([
+					wiki.getCombinedFeed({
+						pageNames: HARDCODED_PAGE_NAMES,
+						limit: RECENT_CHANGES_LIMIT,
+					}),
+					wiki.getCombinedFeed({
+						userNames: HARDCODED_USER_NAMES,
+						limit: RECENT_CHANGES_LIMIT,
+					}),
+					loadWatchlistLatestRevisions(),
+				])
+			const processedPages = await enrichRevisionsWithTags(
+				await processRevisions(pagesRevisions)
+			)
+			const processedCollaborators = await processRevisions(collaboratorsRevisions)
+			const sortedPages = processedPages.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+			const sortedCollaborators = processedCollaborators.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+			mixedPagesAndUsersData.value = sortedPages
+			mixedPagesAndUsersLatestData.value = watchlistLatestRevisions
+			mixedCollaboratorsData.value = sortedCollaborators
+
+			// Divide time range into 4 segments, query each in parallel
+			const LIMIT_PER_QUERY = Math.ceil(RECENT_CHANGES_LIMIT / NUM_RC_SEGMENTS)
+			let processedBySegment: FWRevision[][] = []
+			let rangeStart: number
+			let rangeEnd: number
+			if (sortedPages.length > 0) {
+				const timestamps = sortedPages.map(r => new Date(r.timestamp).getTime())
+				const earliest = Math.min(...timestamps)
+				const latest = Math.max(...timestamps)
+				const bufferMs = 12 * 60 * 60 * 1000 // 12 hours each direction
+				rangeStart = earliest - bufferMs
+				rangeEnd = latest + bufferMs
+			} else {
+				// Watchlist empty: use default range (last 7 days) so we still get 4 segments of RC
+				const now = Date.now()
+				const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+				rangeEnd = now
+				rangeStart = now - sevenDaysMs
+			}
+			const rangeMs = rangeEnd - rangeStart
+			const segmentDuration = rangeMs / NUM_RC_SEGMENTS
+			const queries = Array.from({ length: NUM_RC_SEGMENTS }, (_, i) => {
+				const segEnd = rangeStart + (i + 1) * segmentDuration
+				const segStart = rangeStart + i * segmentDuration
+				return {
+					rcstart: new Date(segEnd).toISOString(),
+					rcend: new Date(segStart).toISOString(),
+				}
+			})
+			const results = await Promise.all(
+				queries.map(q =>
+					wiki.getRecentChanges({
+						limit: LIMIT_PER_QUERY,
+						onlyNeedsReview: true,
+						rcstart: q.rcstart,
+						rcend: q.rcend,
+					})
+				)
+			)
+			processedBySegment = await Promise.all(results.map(r => processRevisions(r.revisions)))
+			processedBySegment = processedBySegment.map(seg =>
+				seg.sort(
+					(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+				)
+			)
+			mixedRecentChangesBySegment.value = processedBySegment
+
+			// Fetch related changes (latest revision per recommended page) - loadRelatedChangesRevisions already enriches with tags
+			const relatedRevisions = await loadRelatedChangesRevisions()
+			mixedRelatedChangesData.value = relatedRevisions.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+
+			allRevisionsData.value = []
+			selectedRevisions.value = []
+			isLoading.value = false
+			if (props.showRevertRisk || props.showRevertRiskFlags) {
+				fetchRevertRiskForFeed()
+			}
+			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
+				fetchReferenceNeedForFeed()
+				fetchToneCheckForFeed()
+			}
+			return
+		}
+
+		if (props.source === "pagesAndUsers") {
+			if (append) {
+				isLoading.value = false
+				return
+			}
+			revisions = await wiki.getCombinedFeed({
+				pageNames: HARDCODED_PAGE_NAMES,
+				limit: RECENT_CHANGES_LIMIT,
+			})
+		} else if (props.source === "pagesAndUsersLatest") {
+			if (append) {
+				isLoading.value = false
+				return
+			}
+			const watchlistLatestRevisions = await loadWatchlistLatestRevisions()
+			allRevisionsData.value = watchlistLatestRevisions
+			selectedRevisions.value = watchlistLatestRevisions
+			mixedRecentChangesBySegment.value = []
+			mixedPagesAndUsersData.value = []
+			mixedPagesAndUsersLatestData.value = []
+			mixedCollaboratorsData.value = []
+			mixedRelatedChangesData.value = []
+			isLoading.value = false
+			if (props.showRevertRisk || props.showRevertRiskFlags) {
+				fetchRevertRiskForFeed()
+			}
+			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
+				fetchReferenceNeedForFeed()
+				fetchToneCheckForFeed()
+			}
+			return
+		} else if (props.source === "collaborators") {
+			if (append) {
+				isLoading.value = false
+				return
+			}
+			revisions = await wiki.getCombinedFeed({
+				userNames: HARDCODED_USER_NAMES,
+				limit: RECENT_CHANGES_LIMIT,
+			})
+		} else {
+			const onlyNeedsReview = append ? useNeedsReviewFilter.value : true
+			let result = await wiki.getRecentChanges({
+				limit: RECENT_CHANGES_LIMIT,
+				onlyNeedsReview,
+				rccontinue: append ? rccontinue.value : undefined,
+			})
+
+			// Fallback: if "needs review" filter returns empty, show any recent changes
+			if (result.revisions.length === 0 && !append && onlyNeedsReview) {
+				result = await wiki.getRecentChanges({
+					limit: RECENT_CHANGES_LIMIT,
+					onlyNeedsReview: false,
+				})
+			}
+
+			revisions = result.revisions
+			if (revisions.length === 0 && !append) {
+				throw new Error("No edits that need review were returned. Try again later.")
+			}
+			rccontinue.value = result.rccontinue
+		}
+
+		let processed = await processRevisions(revisions)
+		// Enrich with tags: page history (REST API) and related changes (Atom feed) don't include tags.
+		// User contribs and recent changes include tags; enrichRevisionsWithTags skips revs that already have them.
+		processed = await enrichRevisionsWithTags(processed)
+		mixedRecentChangesBySegment.value = []
+		mixedPagesAndUsersData.value = []
+		mixedPagesAndUsersLatestData.value = []
+		mixedCollaboratorsData.value = []
+		mixedRelatedChangesData.value = []
+
+		if (append && props.source === "recentChanges") {
+			const existingIds = new Set(allRevisionsData.value.map(r => r.id))
+			const newRevisions = processed.filter(r => !existingIds.has(r.id))
+			allRevisionsData.value = [...allRevisionsData.value, ...newRevisions].sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+		} else {
+			allRevisionsData.value = processed.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
+		}
+
+		selectedRevisions.value = allRevisionsData.value
+
+		isLoading.value = false
+		if (props.showRevertRisk || props.showRevertRiskFlags) {
+			fetchRevertRiskForFeed()
+		}
+		if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
+			fetchReferenceNeedForFeed()
+			fetchToneCheckForFeed()
+		}
+	} catch (e) {
+		isLoading.value = false
+		const errorObj = e as Error
+		if (!append) {
+			errors.value = [errorObj.message]
+			allRevisionsData.value = []
+			selectedRevisions.value = []
+		}
+	}
+}
+
+function stripLinksFromHtml(html: string): string {
+	if (typeof document === "undefined") return html
+	const div = document.createElement("div")
+	div.innerHTML = html
+	// Remove <base> tags – they change document base URL and break relative links (e.g. RouterLink)
+	div.querySelectorAll("base").forEach(el => el.remove())
+	const links = Array.from(div.querySelectorAll("a"))
+	links.forEach(a => {
+		const span = document.createElement("span")
+		span.innerHTML = a.innerHTML
+		a.parentNode?.replaceChild(span, a)
+	})
+	return div.innerHTML
+}
+
+function getDateKey(timestamp: string): string {
+	const d = new Date(timestamp)
+	const year = d.getFullYear()
+	const month = (d.getMonth() + 1).toString().padStart(2, "0")
+	const day = d.getDate().toString().padStart(2, "0")
+	return `${year}-${month}-${day}`
+}
+
+function formatDate(timestamp: string): string {
+	const d = new Date(timestamp)
+	const day = d.getDate()
+	const monthNames = [
+		"January",
+		"February",
+		"March",
+		"April",
+		"May",
+		"June",
+		"July",
+		"August",
+		"September",
+		"October",
+		"November",
+		"December",
+	]
+	const month = monthNames[d.getMonth()]
+	const year = d.getFullYear()
+	return `${day} ${month} ${year}`
+}
+
+function formatTime(timestamp: string): string {
+	const d = new Date(timestamp)
+	const hours = d.getHours()
+	const minutes = d.getMinutes()
+	return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
+}
+
+function daysAgo(timestamp: string): number {
+	const d = new Date(timestamp)
+	const today = new Date()
+	const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+	const pastStart = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+	return Math.floor((todayStart.getTime() - pastStart.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function formatRelativeTime(timestamp: string): string {
+	const d = new Date(timestamp)
+	const now = new Date()
+	const diffMs = now.getTime() - d.getTime()
+	const diffSec = Math.floor(diffMs / 1000)
+	const diffMin = Math.floor(diffSec / 60)
+	const diffHour = Math.floor(diffMin / 60)
+	const diffDay = Math.floor(diffHour / 24)
+	const diffWeek = Math.floor(diffDay / 7)
+	const diffMonth = Math.floor(diffDay / 30)
+	const diffYear = Math.floor(diffDay / 365)
+
+	if (diffSec < 60) return "just now"
+	if (diffMin < 60) return diffMin === 1 ? "1 minute ago" : `${diffMin} minutes ago`
+	if (diffHour < 24) return diffHour === 1 ? "1 hour ago" : `${diffHour} hours ago`
+	if (diffDay < 7) return diffDay === 1 ? "1 day ago" : `${diffDay} days ago`
+	if (diffWeek < 4) return diffWeek === 1 ? "1 week ago" : `${diffWeek} weeks ago`
+	if (diffMonth < 12) return diffMonth === 1 ? "1 month ago" : `${diffMonth} months ago`
+	return diffYear === 1 ? "1 year ago" : `${diffYear} years ago`
+}
+
+const RELATIVE_DAYS_CAP = 6
+
+function formatTimeLabel(timestamp: string): string {
+	const days = daysAgo(timestamp)
+	if (days === 0) return "Today"
+	if (days === 1) return "Yesterday"
+	if (days >= 2 && days <= RELATIVE_DAYS_CAP) return `${days} days ago`
+	return formatDate(timestamp)
+}
+
+function formatDelta(delta: number | null | undefined): string {
+	const n = delta != null ? Number(delta) : 0
+	if (Number.isNaN(n)) return props.deltaFormatParentheses ? "(0)" : "0"
+	const sign = n >= 0 ? "+" : ""
+	return props.deltaFormatParentheses ? `(${sign}${n})` : `${sign}${n}`
+}
+
+const revisionsByDate = computed(() => {
+	const grouped = new Map<string, { dateLabel: string; revisions: FWRevision[] }>()
+	const source = selectedRevisionsForDisplay.value.filter(
+		revision => !dismissedRevisionIds.value.has(revision.id)
+	)
+
+	source.forEach(revision => {
+		const dateKey = getDateKey(revision.timestamp)
+		const dateLabel = formatDate(revision.timestamp)
+
+		if (!grouped.has(dateKey)) {
+			grouped.set(dateKey, { dateLabel, revisions: [] })
+		}
+
+		grouped.get(dateKey)!.revisions.push(revision)
+	})
+
+	return Array.from(grouped.entries())
+		.sort((a, b) => b[0].localeCompare(a[0]))
+		.map(([dateKey, data]) => ({
+			dateKey,
+			dateLabel: data.dateLabel,
+			revisions: [...data.revisions].sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			),
+		}))
+})
+
+const revisionsByDateCapped = computed(() => revisionsByDate.value)
+
+const revisionsOnScreen = computed(() => revisionsByDateCapped.value.flatMap(g => g.revisions))
+
+const sampleRevision = computed(
+	() =>
+		selectedRevisionsForDisplay.value.filter(r => !dismissedRevisionIds.value.has(r.id))[0] ??
+		null
+)
+
+const previewRevisions = computed(() =>
+	selectedRevisionsForDisplay.value.filter(r => !dismissedRevisionIds.value.has(r.id)).slice(0, 3)
+)
+
+defineExpose({ sampleRevision, previewRevisions, isLoading })
+
+const emit = defineEmits<{
+	previewUpdate: [payload: { revisions: FWRevision[]; isLoading: boolean }]
+}>()
+
+watch(
+	[previewRevisions, isLoading],
+	([revisions, loading]) => {
+		emit("previewUpdate", {
+			revisions: (revisions as FWRevision[]) ?? [],
+			isLoading: (loading as boolean) ?? false,
+		})
+	},
+	{ immediate: true }
+)
+
+onMounted(() => {
+	loadFeed()
+	setRevisionsCallback(() => revisionsOnScreen.value)
+})
+
+onUnmounted(() => {
+	clearRevisionsCallback()
+})
+
+watch(
+	() => props.source,
+	() => {
+		loadFeed()
+	}
+)
+</script>
+
+<style scoped>
+@import "./style.css";
+</style>
+
+<style>
+@import "./global.css";
+</style>
