@@ -578,7 +578,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 	{
 		type: "prototype",
 		id: "PersonalDashboardClone",
-		name: "Personal dashboard",
+		name: "Personal dashboard playground",
 		description: "A clone of the personal dashboard.",
 		category: "dashboard",
 		wrapper: "Special",
@@ -605,17 +605,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Chrome",
 		title: "Review changes feed",
 		hidden: true,
-	},
-	{
-		type: "prototype",
-		id: "FeedDashboard",
-		name: "Personal dashboard plus",
-		description: "An exploration on what the personal dashboard could become.",
-		category: "dashboard",
-		wrapper: "Special",
-		title: "Personal dashboard plus",
-		status: "wip",
-		featured: true,
 	},
 	{
 		type: "prototype",
