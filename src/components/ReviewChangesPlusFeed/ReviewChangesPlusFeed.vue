@@ -1,13 +1,6 @@
 <template>
 	<section class="review-changes" :class="{ 'review-changes--no-border': !showModuleBorder }">
 		<div v-if="title" class="review-changes__title">{{ title }}</div>
-		<p
-			v-if="!hideDescription"
-			class="review-changes__description"
-			:class="{ 'review-changes__description--with-title': !!title }"
-		>
-			Help keep Wikipedia reliable by opening the following edits which may need attention.
-		</p>
 		<div v-if="errors.length > 0" class="review-changes__errors">
 			<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
 		</div>
@@ -624,14 +617,7 @@
 			</template>
 		</ul>
 		<div v-if="!isLoading" class="review-changes__view-more">
-			Open more edits in the
-			<a
-				target="_blank"
-				rel="noopener noreferrer"
-				:href="wiki.getPageUrl('Special:RecentChanges')"
-				class="review-changes__view-more-link"
-				>recent changes page</a
-			>.
+			<RouterLink to="/Special:RecentChanges">More changes...</RouterLink>
 		</div>
 		<CdxPopover
 			v-model:open="showUserPopover"
@@ -647,7 +633,6 @@
 </template>
 
 <script setup lang="ts">
-import FeedItemTitle from "./FeedItemTitle.vue"
 import {
 	clearRevisionsCallback,
 	setRevisionsCallback,
@@ -677,6 +662,7 @@ import type {
 	FWToneCheckPrediction,
 } from "fakewiki/types"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
+import FeedItemTitle from "./FeedItemTitle.vue"
 
 export type ReviewChangesSource =
 	| "recentChanges"

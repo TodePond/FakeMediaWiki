@@ -219,7 +219,7 @@
 	min-width: 0;
 	border: 1px solid var(--border-color-subtle, #a2a9b1);
 	border-radius: 2px;
-	padding: 1rem;
+	/* padding: 1rem; */
 }
 
 .personal-dashboard-clone .review-changes.review-changes--no-border {
