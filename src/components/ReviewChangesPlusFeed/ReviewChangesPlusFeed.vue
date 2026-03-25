@@ -235,6 +235,64 @@
 										</time>
 									</template>
 								</span>
+								<div
+									v-if="
+										!!(change?.summary?.comment || change?.comment) ||
+										showDelta ||
+										showEmptyEditSummary
+									"
+									class="review-changes__summary"
+								>
+									<template v-if="showDelta">
+										<span
+											class="review-changes__summary-prefix"
+											:class="wiki.getDeltaClass(change.delta ?? 0, false)"
+											>{{ formatDelta(change.delta) }}</span
+										>
+										<span
+											v-if="
+												!!(change?.summary?.comment || change?.comment) ||
+												showEmptyEditSummary
+											"
+											class="review-changes__summary-sep"
+											aria-hidden="true"
+											>&nbsp;·&nbsp;</span
+										></template
+									><template v-if="change?.summary?.comment"
+										><span
+											v-if="showDelta"
+											:class="[
+												'review-changes__comment',
+												{
+													'review-changes__comment--no-cutout':
+														!showSummaryCutout,
+												},
+											]"
+											v-html="change.summary.comment"
+										></span
+										><span
+											v-else
+											:class="[
+												'review-changes__comment',
+												{
+													'review-changes__comment--no-cutout':
+														!showSummaryCutout,
+												},
+											]"
+											v-html="change.summary.comment"
+										></span></template
+									><span
+										v-else-if="change?.comment"
+										:class="[
+											'review-changes__comment',
+											{
+												'review-changes__comment--no-cutout':
+													!showSummaryCutout,
+											},
+										]"
+										>{{ change.comment }}</span
+									>
+								</div>
 							</span>
 							<time
 								v-if="!unifiedTitle && timestampPosition === 'topRight'"
@@ -249,67 +307,6 @@
 							</time>
 						</div>
 
-						<div
-							v-if="
-								!!(change?.summary?.comment || change?.comment) ||
-								showDelta ||
-								showEmptyEditSummary
-							"
-							class="review-changes__summary"
-						>
-							<template v-if="showDelta">
-								<span
-									class="review-changes__summary-prefix"
-									:class="wiki.getDeltaClass(change.delta ?? 0, false)"
-									>{{ formatDelta(change.delta) }}</span
-								>
-								<span
-									v-if="
-										!!(change?.summary?.comment || change?.comment) ||
-										showEmptyEditSummary
-									"
-									class="review-changes__summary-sep"
-									aria-hidden="true"
-									>&nbsp;·&nbsp;</span
-								></template
-							><template v-if="change?.summary?.comment"
-								><span
-									v-if="showDelta"
-									:class="[
-										'review-changes__comment',
-										{
-											'review-changes__comment--no-cutout':
-												!showSummaryCutout,
-										},
-									]"
-									v-html="change.summary.comment"
-								></span
-								><span
-									v-else
-									:class="[
-										'review-changes__comment',
-										{
-											'review-changes__comment--no-cutout':
-												!showSummaryCutout,
-										},
-									]"
-									v-html="change.summary.comment"
-								></span></template
-							><span
-								v-else-if="change?.comment"
-								:class="[
-									'review-changes__comment',
-									{
-										'review-changes__comment--no-cutout': !showSummaryCutout,
-									},
-								]"
-								>{{ change.comment }}</span
-							><em
-								v-else-if="showEmptyEditSummary"
-								class="review-changes__comment review-changes__comment--empty"
-								>{{ showDelta ? "" : "" }}No edit summary</em
-							>
-						</div>
 						<div
 							class="review-changes__user-flags-wrapper"
 							:class="{
@@ -428,28 +425,7 @@
 											>On your watchlist</span
 										>
 									</div>
-									<div
-										v-if="
-											showRecommendationFlags &&
-											getItemSource(change) === 'relatedChanges' &&
-											getRecommendationReason(
-												getRecommendationSourcePageNames(change)
-											)
-										"
-										class="review-changes__recommendation-notice"
-									>
-										<CdxIcon
-											:icon="cdxIconLightbulb"
-											size="small"
-											class="review-changes__recommendation-notice-icon"
-											aria-hidden="true"
-										/>
-										<span class="review-changes__recommendation-notice-text">{{
-											getRecommendationReason(
-												getRecommendationSourcePageNames(change)
-											)
-										}}</span>
-									</div>
+
 									<div
 										v-if="showRevertedFlag && isReverted(change)"
 										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
@@ -524,6 +500,28 @@
 											verboseFlags
 												? "Tone check: promotional or subjective language detected."
 												: "Revise tone?"
+										}}</span>
+									</div>
+									<div
+										v-if="
+											showRecommendationFlags &&
+											getItemSource(change) === 'relatedChanges' &&
+											getRecommendationReason(
+												getRecommendationSourcePageNames(change)
+											)
+										"
+										class="review-changes__recommendation-notice"
+									>
+										<CdxIcon
+											:icon="cdxIconLightbulb"
+											size="small"
+											class="review-changes__recommendation-notice-icon"
+											aria-hidden="true"
+										/>
+										<span class="review-changes__recommendation-notice-text">{{
+											getRecommendationReason(
+												getRecommendationSourcePageNames(change)
+											)
 										}}</span>
 									</div>
 								</div>
@@ -617,7 +615,7 @@
 			</template>
 		</ul>
 		<div v-if="!isLoading" class="review-changes__view-more">
-			<RouterLink to="/Special:RecentChanges">More changes...</RouterLink>
+			<RouterLink to="/Special/RecentChanges">More changes...</RouterLink>
 		</div>
 		<CdxPopover
 			v-model:open="showUserPopover"

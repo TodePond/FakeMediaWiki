@@ -63,7 +63,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 0.25rem;
+	/* gap: 0.25rem; */
 	min-width: 0;
 	padding: 16px;
 	/* padding: 12px 12px; */
@@ -265,11 +265,11 @@
 }
 
 .review-changes__flags-container {
-	/* margin-top: 0.125rem; */
-	margin-bottom: 0.125rem;
+	margin-top: 8px;
+	/* margin-bottom: 0.125rem; */
 	display: flex;
 	flex-direction: column;
-	gap: 0.125rem;
+	/* gap: 0.125rem; */
 	align-items: flex-start;
 	flex: 1 1 0;
 	min-width: 0;
@@ -291,9 +291,9 @@
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
-	padding: 0px 4px;
-	background-color: var(--background-color-base, #fff);
-	border: 1px solid var(--border-color-base);
+	/* padding: 0px 4px; */
+	/* background-color: var(--background-color-base, #fff); */
+	/* border: 1px solid var(--border-color-base); */
 	border-radius: 2px;
 	line-height: var(--line-height-content);
 }
@@ -390,7 +390,7 @@
 .review-changes__page-cell {
 	display: flex;
 	flex-direction: column;
-	gap: 0.125rem;
+	gap: 2px;
 	flex-grow: 1;
 	min-width: 0;
 	overflow: hidden;
@@ -453,9 +453,52 @@
 	color: #202122;
 }
 
+.review-changes__item-link--unviewed {
+	.review-changes__page {
+		color: var(--color-emphasized);
+	}
+
+	.review-changes__short-desc {
+		color: var(--color-emphasized);
+	}
+
+	.review-changes__time {
+		color: var(--color-emphasized);
+	}
+
+	.review-changes__time-sep {
+		color: var(--color-emphasized);
+	}
+
+	.review-changes__user {
+		color: var(--color-emphasized);
+		font-weight: bold;
+	}
+
+	.review-changes__user-row .cdx-icon {
+		color: var(--color-emphasized);
+	}
+
+	.review-changes__summary {
+		color: var(--color-emphasized);
+	}
+}
+
+.review-changes__user {
+	color: var(--color-base--subtle);
+}
+
+.review-changes__summary {
+	color: var(--color-base--subtle);
+}
+
+.review-changes__user-row .cdx-icon {
+	color: var(--color-base--subtle);
+}
+
 .review-changes__page {
 	font-weight: 700;
-	color: var(--color-base, #202122);
+	color: var(--color-base--subtle);
 	line-height: var(--line-height-content);
 	flex-shrink: 1;
 }
@@ -511,7 +554,6 @@
 
 .review-changes__summary {
 	line-height: 1.4;
-	color: var(--color-base);
 	display: flex;
 	align-items: baseline;
 	flex-wrap: wrap;
@@ -531,7 +573,6 @@
 	display: inline-block;
 	background-color: var(--background-color-base);
 	border: 1px solid var(--border-color-base);
-	color: var(--color-base);
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 	padding: 0px 4px;
 	max-width: 100%;
