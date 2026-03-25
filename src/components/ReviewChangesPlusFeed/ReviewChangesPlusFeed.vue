@@ -33,7 +33,7 @@
 			class="review-changes__empty-cache-notice"
 			role="status"
 		>
-			Nothing cached yet. Use refresh to load.
+			Click the refresh button to load changes.
 		</div>
 		<ul v-else ref="feedRef" class="review-changes__feed" @focusout="onFeedFocusOut">
 			<template v-for="dateGroup in revisionsByDateCapped" :key="dateGroup.dateKey">
@@ -78,8 +78,9 @@
 								!isRevisionViewed(change) &&
 								getPrimaryFeedFlag(change)?.tier === 'toneReference',
 							'review-changes__item-link--primary-unviewed-revert':
-								!isRevisionViewed(change) &&
-								getPrimaryFeedFlag(change)?.tier === 'revertRisk',
+								!isRevisionViewed(change) && isPrimaryRevertVeryHigh(change),
+							'review-changes__item-link--primary-unviewed-revert-warn':
+								!isRevisionViewed(change) && isPrimaryRevertHigh(change),
 							'review-changes__item-link--primary-unviewed-recommendation':
 								!isRevisionViewed(change) &&
 								getPrimaryFeedFlag(change)?.tier === 'recommendation',
@@ -536,10 +537,19 @@
 											)
 										"
 										class="review-changes__recommendation-notice"
+										:class="{
+											'review-changes__recommendation-notice--primary':
+												isRecommendationPrimaryFlag(change),
+											'review-changes__recommendation-notice--secondary':
+												!isRecommendationPrimaryFlag(change),
+											'review-changes__recommendation-notice--viewed':
+												!isRecommendationPrimaryFlag(change) &&
+												isRevisionViewed(change),
+										}"
 									>
-										<span class="review-changes__recommendation-notice-text"
-											><strong>Recommendation.&nbsp;</strong
-											>{{
+										<span class="review-changes__recommendation-notice-text">
+											<strong>Recommendation.</strong>
+											{{
 												getRecommendationDetailText(
 													getRecommendationSourcePageNames(change)
 												)
@@ -637,7 +647,7 @@
 			</template>
 		</ul>
 		<div v-if="!isLoading && hasFeedItems" class="review-changes__view-more">
-			<RouterLink class="review-changes__view-more-link" to="/Special/RecentChanges">
+			<RouterLink class="review-changes__view-more-link" to="/Special/ReviewChangesPlus">
 				More changes...
 			</RouterLink>
 		</div>
@@ -671,6 +681,7 @@ import {
 	cdxIconLightbulb,
 	cdxIconLinkExternal,
 	cdxIconReload,
+	cdxIconStar,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
 	cdxIconUserTemporary,
@@ -1064,7 +1075,7 @@ function getEditCheckDebugLines(change: FWRevision): Array<{ label: string; valu
 const REVERT_RISK_THRESHOLDS = {
 	lowerTight: 0.25,
 	lowerLoose: 0.45,
-	upperLoose: 0.8,
+	upperLoose: 0.9,
 	upperTight: 0.9,
 } as const
 
@@ -1136,14 +1147,14 @@ function getRecommendationSourcePageNames(change: RevisionWithSource): string[] 
 function getRecommendationDetailText(sourcePageNames: string[]): string {
 	if (!sourcePageNames?.length) return ""
 	if (sourcePageNames.length === 1) {
-		return `Related to ${sourcePageNames[0]}.`
+		return `Shown because you watch ${sourcePageNames[0]}.`
 	}
 	if (sourcePageNames.length === 2) {
-		return `Related to ${sourcePageNames[0]} and ${sourcePageNames[1]}.`
+		return `Shown because you watch ${sourcePageNames[0]} and ${sourcePageNames[1]}.`
 	}
 	const last = sourcePageNames[sourcePageNames.length - 1]
 	const rest = sourcePageNames.slice(0, -1).join(", ")
-	return `Related to ${rest}, and ${last}.`
+	return `Shown because you watch ${rest}, and ${last}.`
 }
 
 function revertRiskCacheCoversRevisionIds(revIds: number[]): boolean {
@@ -1442,7 +1453,7 @@ function getItemSource(change: RevisionWithSource): ItemSource | undefined {
 
 type PrimaryFeedFlag =
 	| { tier: "toneReference" }
-	| { tier: "revertRisk" }
+	| { tier: "revertRisk"; band: "high" | "mediumHigh" }
 	| { tier: "recommendation" }
 
 /** Highest-priority feed alert for header icon and (when unviewed) card border: tone/ref > elevated revert risk > recommendation. Low/very-low revert risk does not count toward primary. */
@@ -1454,9 +1465,8 @@ function getPrimaryFeedFlag(change: RevisionWithSource): PrimaryFeedFlag | null 
 	}
 	if (props.showRevertRiskFlags) {
 		const notice = getRevertRiskNotice(change)
-		if (notice?.band === "high" || notice?.band === "mediumHigh") {
-			return { tier: "revertRisk" }
-		}
+		if (notice?.band === "high") return { tier: "revertRisk", band: "high" }
+		if (notice?.band === "mediumHigh") return { tier: "revertRisk", band: "mediumHigh" }
 	}
 	if (
 		props.showRecommendationFlags &&
@@ -1468,20 +1478,40 @@ function getPrimaryFeedFlag(change: RevisionWithSource): PrimaryFeedFlag | null 
 	return null
 }
 
+function isPrimaryRevertVeryHigh(change: RevisionWithSource): boolean {
+	const p = getPrimaryFeedFlag(change)
+	return p?.tier === "revertRisk" && p.band === "high"
+}
+
+function isPrimaryRevertHigh(change: RevisionWithSource): boolean {
+	const p = getPrimaryFeedFlag(change)
+	return p?.tier === "revertRisk" && p.band === "mediumHigh"
+}
+
 function primaryFlagCdxIcon(change: RevisionWithSource): Icon {
 	const p = getPrimaryFeedFlag(change)
 	if (!p) return cdxIconAlert
 	if (p.tier === "toneReference") return cdxIconAlert
-	if (p.tier === "revertRisk") return cdxIconError
-	return cdxIconUnStar
+	if (p.tier === "revertRisk") {
+		return p.band === "high" ? cdxIconError : cdxIconAlert
+	}
+	return cdxIconStar
 }
 
 function primaryFlagIconModifierClass(change: RevisionWithSource): string {
 	const p = getPrimaryFeedFlag(change)
 	if (!p) return ""
 	if (p.tier === "toneReference") return "review-changes__primary-flag-icon--tone"
-	if (p.tier === "revertRisk") return "review-changes__primary-flag-icon--revert"
+	if (p.tier === "revertRisk") {
+		return p.band === "high"
+			? "review-changes__primary-flag-icon--revert"
+			: "review-changes__primary-flag-icon--revert-warn"
+	}
 	return "review-changes__primary-flag-icon--recommendation"
+}
+
+function isRecommendationPrimaryFlag(change: RevisionWithSource): boolean {
+	return getPrimaryFeedFlag(change)?.tier === "recommendation"
 }
 
 function isPageOnWatchlist(pageName: string | undefined): boolean {
@@ -1705,7 +1735,9 @@ function parsePersistedFeedBundleJson(raw: string): PersistedFeedBundleV1 | null
 	}
 }
 
-function loadPersistedFeedBundleForSource(source: ReviewChangesSource): PersistedFeedBundleV1 | null {
+function loadPersistedFeedBundleForSource(
+	source: ReviewChangesSource
+): PersistedFeedBundleV1 | null {
 	try {
 		const raw = localStorage.getItem(storageKeyForFeed(source))
 		if (!raw) return null
@@ -2099,19 +2131,17 @@ async function loadFeed(append = false): Promise<void> {
 				isLoading.value = false
 				return
 			}
-			// Fetch watchlist (pages only), watchlist latest, and collaborators (users only) separately
-			const [pagesRevisions, collaboratorsRevisions, watchlistLatestRevisions] =
-				await Promise.all([
-					wiki.getCombinedFeed({
-						pageNames: HARDCODED_PAGE_NAMES,
-						limit: RECENT_CHANGES_LIMIT,
-					}),
-					wiki.getCombinedFeed({
-						userNames: HARDCODED_USER_NAMES,
-						limit: RECENT_CHANGES_LIMIT,
-					}),
-					loadWatchlistLatestRevisions(),
-				])
+			// Serialize page vs user combined feeds so we never stack 3× REST history + 3× usercontribs
+			// (Wikimedia: ≤3 concurrent API requests total across Action + REST).
+			const pagesRevisions = await wiki.getCombinedFeed({
+				pageNames: HARDCODED_PAGE_NAMES,
+				limit: RECENT_CHANGES_LIMIT,
+			})
+			const collaboratorsRevisions = await wiki.getCombinedFeed({
+				userNames: HARDCODED_USER_NAMES,
+				limit: RECENT_CHANGES_LIMIT,
+			})
+			const watchlistLatestRevisions = await loadWatchlistLatestRevisions()
 			const processedPages = await enrichRevisionsWithTags(
 				await processRevisions(pagesRevisions)
 			)
@@ -2440,9 +2470,7 @@ const revisionsByDate = computed(() => {
 
 const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
-const hasFeedItems = computed(() =>
-	revisionsByDateCapped.value.some(g => g.revisions.length > 0)
-)
+const hasFeedItems = computed(() => revisionsByDateCapped.value.some(g => g.revisions.length > 0))
 
 const showEmptyCacheNotice = computed(
 	() => !isLoading.value && errors.value.length === 0 && !hasFeedItems.value

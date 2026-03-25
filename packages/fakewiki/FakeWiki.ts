@@ -1095,7 +1095,7 @@ export class FakeWiki {
 	/**
 	 * Get contributions for multiple users by calling getUserHistory for each.
 	 * Uses caching to avoid fetching the same data twice.
-	 * Fetches user histories in parallel.
+	 * Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).
 	 * @param userNames - Array of usernames
 	 * @param options - Options
 	 * @param options.limit - Limit per user (default: DEFAULT_USER_CONTRIBS_LIMIT)
@@ -1111,18 +1111,18 @@ export class FakeWiki {
 			return new Map()
 		}
 
-		// Call getUserHistory for each user in parallel
-		const userPromises = userNames.map(async userName => {
-			try {
-				const history = await this.getUserHistory(userName, options)
-				return { userName, history }
-			} catch (e) {
-				// Silently skip users that fail
-				return { userName, history: { revisions: [] } as FWPageHistoryResponse }
+		const userResults = await this.runWithConcurrency(
+			userNames,
+			COMBINED_FEED_HISTORY_CONCURRENCY,
+			async userName => {
+				try {
+					const history = await this.getUserHistory(userName, options)
+					return { userName, history }
+				} catch {
+					return { userName, history: { revisions: [] } as FWPageHistoryResponse }
+				}
 			}
-		})
-
-		const userResults = await Promise.all(userPromises)
+		)
 		const allResults = new Map<string, FWPageHistoryResponse>()
 
 		for (const { userName, history } of userResults) {

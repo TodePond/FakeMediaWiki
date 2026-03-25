@@ -1863,19 +1863,17 @@ async function loadFeed(append = false): Promise<void> {
 				isLoading.value = false
 				return
 			}
-			// Fetch watchlist (pages only), watchlist latest, and collaborators (users only) separately
-			const [pagesRevisions, collaboratorsRevisions, watchlistLatestRevisions] =
-				await Promise.all([
-					wiki.getCombinedFeed({
-						pageNames: HARDCODED_PAGE_NAMES,
-						limit: RECENT_CHANGES_LIMIT,
-					}),
-					wiki.getCombinedFeed({
-						userNames: HARDCODED_USER_NAMES,
-						limit: RECENT_CHANGES_LIMIT,
-					}),
-					loadWatchlistLatestRevisions(),
-				])
+			// Serialize page vs user combined feeds so we never stack 3× REST history + 3× usercontribs
+			// (Wikimedia: ≤3 concurrent API requests total across Action + REST).
+			const pagesRevisions = await wiki.getCombinedFeed({
+				pageNames: HARDCODED_PAGE_NAMES,
+				limit: RECENT_CHANGES_LIMIT,
+			})
+			const collaboratorsRevisions = await wiki.getCombinedFeed({
+				userNames: HARDCODED_USER_NAMES,
+				limit: RECENT_CHANGES_LIMIT,
+			})
+			const watchlistLatestRevisions = await loadWatchlistLatestRevisions()
 			const processedPages = await enrichRevisionsWithTags(
 				await processRevisions(pagesRevisions)
 			)

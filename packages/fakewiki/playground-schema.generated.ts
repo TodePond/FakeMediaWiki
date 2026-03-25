@@ -60,7 +60,7 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "userName", description: "Username" },
       { key: "options", description: "Options" }
   ] },
-  { name: "getUsersHistory", description: "Get contributions for multiple users by calling getUserHistory for each.\nUses caching to avoid fetching the same data twice.\nFetches user histories in parallel.", category: undefined, params: [
+  { name: "getUsersHistory", description: "Get contributions for multiple users by calling getUserHistory for each.\nUses caching to avoid fetching the same data twice.\nUses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).", category: undefined, params: [
       { key: "userNames", description: "Array of usernames" },
       { key: "options", description: "Options" }
   ] },
