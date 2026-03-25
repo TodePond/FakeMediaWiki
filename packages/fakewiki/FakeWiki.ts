@@ -56,11 +56,22 @@ import type {
 	FWUserTypeConfig,
 } from "./types"
 
+import { FakeWikiHttpError } from "./httpError"
+
 import type { Icon } from "@wikimedia/codex-icons"
 import { cdxIconHeart, cdxIconUnStar } from "@wikimedia/codex-icons"
 
 /** MediaWiki REST API page history returns this many revisions per request; used as default and max for getPageHistory and getCombinedFeed. */
 const PAGE_HISTORY_REVISIONS_PER_REQUEST = 20
+
+/** Max concurrent REST page-history / user-history fetches in getCombinedFeed (Wikimedia: ≤3 concurrent requests). */
+const COMBINED_FEED_HISTORY_CONCURRENCY = 3
+
+/** Max concurrent Lift Wing prediction requests per model in getRevisionPredictions. */
+const LIFT_WING_REVISION_CONCURRENCY = 3
+
+/** Max concurrent ORES chunk requests (ORES guidance: ≤4 parallel). */
+const ORES_CHUNK_CONCURRENCY = 4
 
 /** Default limit for search endpoints (searchTitles, searchPages, searchUsers). */
 const DEFAULT_SEARCH_LIMIT = 20
@@ -433,6 +444,132 @@ export class FakeWiki {
 	}
 
 	/**
+	 * Short label for Action API URLs (origin + path + key query params).
+	 */
+	private summarizeActionApiUrl(requestUrl: string): string {
+		try {
+			const u = new URL(requestUrl)
+			const action = u.searchParams.get("action")
+			const list = u.searchParams.get("list")
+			const meta = u.searchParams.get("meta")
+			const prop = u.searchParams.get("prop")
+			const parts: string[] = [`${u.origin}${u.pathname}`]
+			if (action) parts.push(`action=${action}`)
+			if (list) parts.push(`list=${list}`)
+			if (meta) parts.push(`meta=${meta}`)
+			if (prop) parts.push(`prop=${prop}`)
+			return parts.join(" ")
+		} catch {
+			return requestUrl.length > 180 ? `${requestUrl.slice(0, 177)}…` : requestUrl
+		}
+	}
+
+	private summarizeGenericUrl(requestUrl: string): string {
+		try {
+			const u = new URL(requestUrl)
+			const path = u.pathname + u.search
+			const full = `${u.origin}${path}`
+			return full.length > 200 ? `${full.slice(0, 197)}…` : full
+		} catch {
+			return requestUrl.length > 180 ? `${requestUrl.slice(0, 177)}…` : requestUrl
+		}
+	}
+
+	private formatRetryAfterSecondsForMessage(seconds: number): string {
+		if (seconds < 60) return ` Retry after ${seconds}s.`
+		const totalMins = Math.max(1, Math.round(seconds / 60))
+		const hrs = Math.floor(totalMins / 60)
+		const remMins = totalMins % 60
+		let human: string
+		if (hrs >= 1) {
+			human = hrs === 1 ? "~1 hour" : `~${hrs} hours`
+			if (remMins > 0) human += ` ${remMins} min`
+		} else {
+			human = `~${totalMins} minute${totalMins === 1 ? "" : "s"}`
+		}
+		return ` Retry after ${human} (${seconds}s).`
+	}
+
+	private formatRetryAfterForMessage(header: string | null): string {
+		if (!header?.trim()) return ""
+		const s = header.trim()
+		const asNum = parseInt(s, 10)
+		if (!Number.isNaN(asNum) && String(asNum) === s) {
+			return this.formatRetryAfterSecondsForMessage(asNum)
+		}
+		return ` Retry after: ${s}.`
+	}
+
+	/**
+	 * Throw FakeWikiHttpError for a failed fetch with a user-visible message and endpoint context.
+	 */
+	private async throwHttpErrorFromResponse(
+		response: Response,
+		requestUrl: string,
+		context: {
+			api?: "action" | "mediawiki" | "wikimedia"
+			restPath?: string
+		}
+	): Promise<never> {
+		const status = response.status
+		const finalUrl = response.url || requestUrl
+
+		let endpointSummary: string
+		if (context.api === "action" || finalUrl.includes("/w/api.php")) {
+			endpointSummary = this.summarizeActionApiUrl(finalUrl)
+		} else if (context.restPath && context.api) {
+			const pathBase = context.restPath.split("?")[0]
+			endpointSummary = `${context.api} REST: ${pathBase}`
+		} else {
+			endpointSummary = this.summarizeGenericUrl(finalUrl)
+		}
+
+		let bodyHint = ""
+		try {
+			const text = await response.clone().text()
+			const trimmed = text?.trim() ?? ""
+			if (trimmed.length > 0 && trimmed.length <= 800) {
+				try {
+					const j = trimmed ? (JSON.parse(trimmed) as { error?: { info?: string } }) : null
+					const info = j?.error?.info
+					if (typeof info === "string" && info.trim()) bodyHint = info.trim()
+				} catch {
+					bodyHint = trimmed.replace(/\s+/g, " ").slice(0, 200)
+				}
+			} else if (trimmed.length > 800) {
+				try {
+					const j = JSON.parse(trimmed.slice(0, 500)) as { error?: { info?: string } }
+					const info = j?.error?.info
+					if (typeof info === "string" && info.trim()) bodyHint = info.trim()
+				} catch {
+					bodyHint = trimmed.replace(/\s+/g, " ").slice(0, 200)
+				}
+			}
+		} catch {
+			// ignore body read errors
+		}
+
+		const retryAfterHeader = status === 429 ? response.headers.get("Retry-After") : null
+		const retryAfterFromHeader =
+			status === 429 ? this.formatRetryAfterForMessage(retryAfterHeader) : ""
+		/** Wikimedia: honour Retry-After when present; otherwise wait ≥5s per rate-limits guidance. */
+		const retryGuidance =
+			status === 429
+				? retryAfterFromHeader || " Wait at least 5 seconds before trying again."
+				: ""
+
+		let message: string
+		if (status === 429) {
+			message = `Rate limited (HTTP 429) by ${endpointSummary}.${retryGuidance}`
+		} else {
+			message = `Request failed (HTTP ${status}) at ${endpointSummary}.`
+			if (bodyHint) message += ` ${bodyHint}`
+		}
+
+		throw new FakeWikiHttpError(message.trim(), status, finalUrl, endpointSummary)
+	}
+
+	/**
 	 * Handle REST API requests (Wikimedia or MediaWiki)
 	 * @param options - REST API options
 	 * @returns JSON or text response
@@ -462,7 +599,7 @@ export class FakeWiki {
 			})
 
 			if (!response.ok) {
-				throw new Error(`${response.status}`)
+				await this.throwHttpErrorFromResponse(response, url, { api, restPath: path })
 			}
 
 			return type === "json" ? await response.json() : await response.text()
@@ -520,7 +657,7 @@ export class FakeWiki {
 			const response = await fetch(url, { headers })
 
 			if (!response.ok) {
-				throw new Error(`${response.status}`)
+				await this.throwHttpErrorFromResponse(response, url, { api: "action" })
 			}
 
 			const data = (await response.json()) as {
@@ -1024,22 +1161,25 @@ export class FakeWiki {
 
 		// Fetch user contributions - per-user cursor from afterMap (look up rev id in cache for timestamp).
 		if (userNames.length > 0) {
-			const userPromises = userNames.map(async userName => {
-				let userOptions: FWHistoryOptions = {
-					limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
-				}
-				const afterRevId = afterMap?.[userName]
-				if (afterRevId) {
-					const cached = this.userHistoryCache.get(userName) || []
-					const rev = cached.find(r => r.id === parseInt(afterRevId, 10))
-					if (rev) {
-						userOptions.older_than = rev.timestamp
+			const userResults = await this.runWithConcurrency(
+				userNames,
+				COMBINED_FEED_HISTORY_CONCURRENCY,
+				async userName => {
+					let userOptions: FWHistoryOptions = {
+						limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
 					}
+					const afterRevId = afterMap?.[userName]
+					if (afterRevId) {
+						const cached = this.userHistoryCache.get(userName) || []
+						const rev = cached.find(r => r.id === parseInt(afterRevId, 10))
+						if (rev) {
+							userOptions.older_than = rev.timestamp
+						}
+					}
+					const history = await this.getUserHistory(userName, userOptions)
+					return { userName, history }
 				}
-				const history = await this.getUserHistory(userName, userOptions)
-				return { userName, history }
-			})
-			const userResults = await Promise.all(userPromises)
+			)
 			for (const { history } of userResults) {
 				if (history.revisions) {
 					for (const rev of history.revisions) {
@@ -1054,21 +1194,23 @@ export class FakeWiki {
 
 		// Fetch page histories - per-page cursor from afterMap.
 		if (pageNames.length > 0) {
-			const pagePromises = pageNames.map(async pageName => {
-				try {
-					const options: FWHistoryOptions = {}
-					const pageAfter = afterMap?.[pageName]
-					if (pageAfter) {
-						options.older_than = pageAfter
+			const pageResults = await this.runWithConcurrency(
+				pageNames,
+				COMBINED_FEED_HISTORY_CONCURRENCY,
+				async pageName => {
+					try {
+						const options: FWHistoryOptions = {}
+						const pageAfter = afterMap?.[pageName]
+						if (pageAfter) {
+							options.older_than = pageAfter
+						}
+						const history = await this.getPageHistory(pageName, options)
+						return { pageName, revisions: history.revisions || [] }
+					} catch {
+						return { pageName, revisions: [] }
 					}
-					const history = await this.getPageHistory(pageName, options)
-					return { pageName, revisions: history.revisions || [] }
-				} catch (e) {
-					return { pageName, revisions: [] }
 				}
-			})
-
-			const pageResults = await Promise.all(pagePromises)
+			)
 			for (const { pageName, revisions } of pageResults) {
 				for (const rev of revisions) {
 					if (rev.id && !seenIds.has(rev.id)) {
@@ -1892,7 +2034,9 @@ export class FakeWiki {
 					"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
 				},
 			})
-			if (!response.ok) throw new Error(`${response.status}`)
+			if (!response.ok) {
+				await this.throwHttpErrorFromResponse(response, url, { api: "action" })
+			}
 			const text = await response.text()
 			// console.log("text", text)
 			const parser = new DOMParser()
@@ -3647,19 +3791,15 @@ export class FakeWiki {
 			return combined
 		}
 
-		const modelResults = await Promise.all(
-			normalizedModels.map(async model => {
-				const byRevision = await Promise.all(
-					revisionIds.map(async revId => ({
-						revId,
-						prediction: await this.fetchRevisionPrediction(revId, model, wiki),
-					}))
-				)
-				return { model, byRevision }
-			})
-		)
-
-		for (const { model, byRevision } of modelResults) {
+		for (const model of normalizedModels) {
+			const byRevision = await this.runWithConcurrency(
+				revisionIds,
+				LIFT_WING_REVISION_CONCURRENCY,
+				async revId => ({
+					revId,
+					prediction: await this.fetchRevisionPrediction(revId, model, wiki),
+				})
+			)
 			for (const { revId, prediction } of byRevision) {
 				if (!prediction) continue
 				if (!combined[revId]) combined[revId] = {}
@@ -3762,29 +3902,27 @@ export class FakeWiki {
 
 		const userAgent = this.apiUserAgent ?? DEFAULT_API_USER_AGENT
 
-		const results = await Promise.all(
-			chunks.map(async chunk => {
-				const revids = chunk.join("|")
-				const url = `https://ores.wikimedia.org/v3/scores/${wikiCode}/?models=damaging|goodfaith&revids=${encodeURIComponent(revids)}`
-				try {
-					const response = await fetch(url, {
-						method: "GET",
-						headers: {
-							"Api-User-Agent": userAgent,
-						},
-					})
-					if (!response.ok) {
-						const message = await this.getPredictionApiErrorMessage(response, "ORES")
-						throw new Error(message)
-					}
-					return (await response.json()) as FWLiftWingResponse
-				} catch (error) {
-					if (error instanceof Error) throw error
-					console.error(`ORES request failed for revids ${revids}:`, error)
-					return null
+		const results = await this.runWithConcurrency(chunks, ORES_CHUNK_CONCURRENCY, async chunk => {
+			const revids = chunk.join("|")
+			const url = `https://ores.wikimedia.org/v3/scores/${wikiCode}/?models=damaging|goodfaith&revids=${encodeURIComponent(revids)}`
+			try {
+				const response = await fetch(url, {
+					method: "GET",
+					headers: {
+						"Api-User-Agent": userAgent,
+					},
+				})
+				if (!response.ok) {
+					const message = await this.getPredictionApiErrorMessage(response, "ORES")
+					throw new Error(message)
 				}
-			})
-		)
+				return (await response.json()) as FWLiftWingResponse
+			} catch (error) {
+				if (error instanceof Error) throw error
+				console.error(`ORES request failed for revids ${revids}:`, error)
+				return null
+			}
+		})
 
 		for (const data of results) {
 			if (!data?.[wikiCode]?.scores) continue

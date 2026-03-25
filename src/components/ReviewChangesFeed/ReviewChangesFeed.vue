@@ -10,6 +10,14 @@
 		</p>
 		<div v-if="errors.length > 0" class="review-changes__errors">
 			<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
+			<div v-if="showRestoreLastLoadedData" class="review-changes__errors-actions">
+				<CdxButton action="default" @click="restoreLastSuccessfulFeed">
+					Show last loaded data
+				</CdxButton>
+			</div>
+		</div>
+		<div v-if="lastLoadedDataNotice" class="review-changes__last-loaded-notice">
+			{{ lastLoadedDataNotice }}
 		</div>
 		<div v-if="isLoading" class="review-changes__loading">
 			<CdxProgressBar inline />
@@ -667,7 +675,7 @@ import {
 	cdxIconUserAvatar,
 	cdxIconUserTemporary,
 } from "@wikimedia/codex-icons"
-import { FakeWiki } from "fakewiki"
+import { FakeWiki, FakeWikiHttpError } from "fakewiki"
 import type {
 	FWLiftWingPrediction,
 	FWPageHistoryRevision,
@@ -677,6 +685,10 @@ import type {
 	FWToneCheckPrediction,
 } from "fakewiki/types"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
+
+const PROCESS_REVISIONS_CONCURRENCY = 4
+const RC_SEGMENTS_FETCH_CONCURRENCY = 2
+const REFERENCE_NEED_AND_TONE_CONCURRENCY = 4
 
 export type ReviewChangesSource =
 	| "recentChanges"
@@ -1161,8 +1173,10 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 	isLoadingReferenceNeed.value = true
 	referenceNeedByRevId.value = new Map()
 	try {
-		const results = await Promise.all(
-			revsWithPage.map(async change => {
+		const results = await wiki.runWithConcurrency(
+			revsWithPage,
+			REFERENCE_NEED_AND_TONE_CONCURRENCY,
+			async change => {
 				try {
 					const parentId = await wiki.getParentRevisionId(change.pageName!, change.id)
 					const [beforePred, afterPred] = await Promise.all([
@@ -1184,7 +1198,7 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 				} catch {
 					return { revId: change.id, delta: null, error: true } as const
 				}
-			})
+			}
 		)
 		const next = new Map<
 			number,
@@ -1224,15 +1238,17 @@ async function fetchToneCheckForFeed(): Promise<void> {
 	isLoadingToneCheck.value = true
 	toneCheckByRevId.value = new Map()
 	try {
-		const results = await Promise.all(
-			revsWithPage.map(async change => {
+		const results = await wiki.runWithConcurrency(
+			revsWithPage,
+			REFERENCE_NEED_AND_TONE_CONCURRENCY,
+			async change => {
 				try {
 					const pred = await wiki.getToneCheckForRevision(change.pageName!, change.id)
 					return { revId: change.id, pred } as const
 				} catch {
 					return { revId: change.id, pred: { error: true } as const } as const
 				}
-			})
+			}
 		)
 		const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
 		for (const { revId, pred } of results) {
@@ -1544,6 +1560,87 @@ const useNeedsReviewFilter = ref(true)
 const isLoading = ref(false)
 const errors = ref<string[]>([])
 
+type ReviewChangesFeedSnapshot = {
+	allRevisionsData: FWRevision[]
+	selectedRevisions: FWRevision[]
+	mixedRecentChangesBySegment: FWRevision[][]
+	mixedPagesAndUsersData: FWRevision[]
+	mixedPagesAndUsersLatestData: FWRevision[]
+	mixedCollaboratorsData: FWRevision[]
+	mixedRelatedChangesData: FWRevision[]
+	rccontinue?: string
+}
+
+const lastSuccessfulFeedSnapshot = ref<ReviewChangesFeedSnapshot | null>(null)
+const lastFeedErrorWasRateLimit = ref(false)
+const lastLoadedDataNotice = ref("")
+
+/** Plain-data clone for snapshots. `structuredClone` throws on Vue reactive Proxies. */
+function cloneForFeedSnapshot<T>(value: T): T {
+	return JSON.parse(JSON.stringify(value)) as T
+}
+
+function isFeedSnapshotNonEmpty(s: ReviewChangesFeedSnapshot): boolean {
+	return (
+		s.allRevisionsData.length > 0 ||
+		s.mixedPagesAndUsersData.length > 0 ||
+		s.mixedPagesAndUsersLatestData.length > 0 ||
+		s.mixedCollaboratorsData.length > 0 ||
+		s.mixedRelatedChangesData.length > 0 ||
+		s.mixedRecentChangesBySegment.some(seg => seg.length > 0)
+	)
+}
+
+function persistLastSuccessfulFeedSnapshot(): void {
+	lastSuccessfulFeedSnapshot.value = {
+		allRevisionsData: cloneForFeedSnapshot(allRevisionsData.value),
+		selectedRevisions: cloneForFeedSnapshot(selectedRevisions.value),
+		mixedRecentChangesBySegment: mixedRecentChangesBySegment.value.map(seg =>
+			cloneForFeedSnapshot(seg)
+		),
+		mixedPagesAndUsersData: cloneForFeedSnapshot(mixedPagesAndUsersData.value),
+		mixedPagesAndUsersLatestData: cloneForFeedSnapshot(mixedPagesAndUsersLatestData.value),
+		mixedCollaboratorsData: cloneForFeedSnapshot(mixedCollaboratorsData.value),
+		mixedRelatedChangesData: cloneForFeedSnapshot(mixedRelatedChangesData.value),
+		rccontinue: rccontinue.value,
+	}
+}
+
+const showRestoreLastLoadedData = computed(
+	() =>
+		lastFeedErrorWasRateLimit.value &&
+		lastSuccessfulFeedSnapshot.value !== null &&
+		isFeedSnapshotNonEmpty(lastSuccessfulFeedSnapshot.value)
+)
+
+function restoreLastSuccessfulFeed(): void {
+	const snap = lastSuccessfulFeedSnapshot.value
+	if (!snap || !isFeedSnapshotNonEmpty(snap)) return
+	allRevisionsData.value = cloneForFeedSnapshot(snap.allRevisionsData)
+	selectedRevisions.value = cloneForFeedSnapshot(snap.selectedRevisions)
+	mixedRecentChangesBySegment.value = snap.mixedRecentChangesBySegment.map(seg =>
+		cloneForFeedSnapshot(seg)
+	)
+	mixedPagesAndUsersData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersData)
+	mixedPagesAndUsersLatestData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersLatestData)
+	mixedCollaboratorsData.value = cloneForFeedSnapshot(snap.mixedCollaboratorsData)
+	mixedRelatedChangesData.value = cloneForFeedSnapshot(snap.mixedRelatedChangesData)
+	rccontinue.value = snap.rccontinue
+	errors.value = []
+	lastFeedErrorWasRateLimit.value = false
+	lastLoadedDataNotice.value = "Showing data from before this refresh."
+	revertRiskByRevId.value = new Map()
+	referenceNeedByRevId.value = new Map()
+	toneCheckByRevId.value = new Map()
+	if (props.showRevertRisk || props.showRevertRiskFlags) {
+		void fetchRevertRiskForFeed()
+	}
+	if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
+		void fetchReferenceNeedForFeed()
+		void fetchToneCheckForFeed()
+	}
+}
+
 const RECENT_CHANGES_LIMIT = 10
 const RELATED_CHANGES_TOP_N = 10
 
@@ -1666,8 +1763,10 @@ async function processRevisions(
 		pageName?: string
 	}>
 ): Promise<FWRevision[]> {
-	return Promise.all(
-		revisions.map(async revision => {
+	return wiki.runWithConcurrency(
+		revisions,
+		PROCESS_REVISIONS_CONCURRENCY,
+		async revision => {
 			const pageName =
 				(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
 			const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
@@ -1709,7 +1808,7 @@ async function processRevisions(
 				avatarUrl: null,
 			}
 			return processedRevision
-		})
+		}
 	)
 }
 
@@ -1717,6 +1816,8 @@ async function loadFeed(append = false): Promise<void> {
 	if (!append) {
 		isLoading.value = true
 		errors.value = []
+		lastLoadedDataNotice.value = ""
+		lastFeedErrorWasRateLimit.value = false
 	}
 
 	try {
@@ -1746,6 +1847,7 @@ async function loadFeed(append = false): Promise<void> {
 			mixedCollaboratorsData.value = []
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
+			persistLastSuccessfulFeedSnapshot()
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
@@ -1817,17 +1919,22 @@ async function loadFeed(append = false): Promise<void> {
 					rcend: new Date(segStart).toISOString(),
 				}
 			})
-			const results = await Promise.all(
-				queries.map(q =>
+			const results = await wiki.runWithConcurrency(
+				queries,
+				RC_SEGMENTS_FETCH_CONCURRENCY,
+				q =>
 					wiki.getRecentChanges({
 						limit: LIMIT_PER_QUERY,
 						onlyNeedsReview: true,
 						rcstart: q.rcstart,
 						rcend: q.rcend,
 					})
-				)
 			)
-			processedBySegment = await Promise.all(results.map(r => processRevisions(r.revisions)))
+			processedBySegment = await wiki.runWithConcurrency(
+				results,
+				PROCESS_REVISIONS_CONCURRENCY,
+				r => processRevisions(r.revisions)
+			)
 			processedBySegment = processedBySegment.map(seg =>
 				seg.sort(
 					(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -1844,6 +1951,7 @@ async function loadFeed(append = false): Promise<void> {
 			allRevisionsData.value = []
 			selectedRevisions.value = []
 			isLoading.value = false
+			persistLastSuccessfulFeedSnapshot()
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
@@ -1877,6 +1985,7 @@ async function loadFeed(append = false): Promise<void> {
 			mixedCollaboratorsData.value = []
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
+			persistLastSuccessfulFeedSnapshot()
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
@@ -1949,13 +2058,21 @@ async function loadFeed(append = false): Promise<void> {
 			fetchReferenceNeedForFeed()
 			fetchToneCheckForFeed()
 		}
+		persistLastSuccessfulFeedSnapshot()
 	} catch (e) {
 		isLoading.value = false
 		const errorObj = e as Error
 		if (!append) {
+			lastFeedErrorWasRateLimit.value =
+				e instanceof FakeWikiHttpError && e.status === 429
 			errors.value = [errorObj.message]
 			allRevisionsData.value = []
 			selectedRevisions.value = []
+			mixedRecentChangesBySegment.value = []
+			mixedPagesAndUsersData.value = []
+			mixedPagesAndUsersLatestData.value = []
+			mixedCollaboratorsData.value = []
+			mixedRelatedChangesData.value = []
 		}
 	}
 }

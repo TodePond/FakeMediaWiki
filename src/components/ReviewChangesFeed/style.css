@@ -26,6 +26,18 @@
 .review-changes__errors {
 	color: var(--color-destructive, #b32424);
 	margin-bottom: 1rem;
+	overflow-wrap: break-word;
+	word-break: break-word;
+}
+
+.review-changes__errors-actions {
+	margin-top: 0.5rem;
+}
+
+.review-changes__last-loaded-notice {
+	color: var(--color-base--subtle, #54595d);
+	margin-bottom: 1rem;
+	font-size: 0.875rem;
 }
 
 .review-changes__loading {

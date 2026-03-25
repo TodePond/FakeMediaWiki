@@ -1,11 +1,39 @@
 <template>
 	<section class="review-changes" :class="{ 'review-changes--no-border': !showModuleBorder }">
-		<div v-if="title" class="review-changes__title">{{ title }}</div>
+		<div class="review-changes__title-row">
+			<div v-if="title" class="review-changes__title">{{ title }}</div>
+			<div v-else class="review-changes__title-spacer" aria-hidden="true" />
+			<CdxButton
+				type="button"
+				weight="quiet"
+				:disabled="isLoading"
+				aria-label="Refresh"
+				class="review-changes__refresh"
+				@click="refreshFeed"
+			>
+				<CdxIcon :icon="cdxIconReload" />
+			</CdxButton>
+		</div>
 		<div v-if="errors.length > 0" class="review-changes__errors">
 			<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
+			<div v-if="showRestoreLastLoadedData" class="review-changes__errors-actions">
+				<CdxButton action="default" @click="restoreLastSuccessfulFeed">
+					Show last loaded data
+				</CdxButton>
+			</div>
+		</div>
+		<div v-if="lastLoadedDataNotice" class="review-changes__last-loaded-notice">
+			{{ lastLoadedDataNotice }}
 		</div>
 		<div v-if="isLoading" class="review-changes__loading">
 			<CdxProgressBar inline />
+		</div>
+		<div
+			v-else-if="showEmptyCacheNotice"
+			class="review-changes__empty-cache-notice"
+			role="status"
+		>
+			Nothing cached yet. Use refresh to load.
 		</div>
 		<ul v-else ref="feedRef" class="review-changes__feed" @focusout="onFeedFocusOut">
 			<template v-for="dateGroup in revisionsByDateCapped" :key="dateGroup.dateKey">
@@ -46,6 +74,15 @@
 								highlightUnviewed && !isRevisionViewed(change),
 							'review-changes__item-link--last-clicked':
 								lastClickedHighlight && change.id === lastClickedRevisionId,
+							'review-changes__item-link--primary-unviewed-tone':
+								!isRevisionViewed(change) &&
+								getPrimaryFeedFlag(change)?.tier === 'toneReference',
+							'review-changes__item-link--primary-unviewed-revert':
+								!isRevisionViewed(change) &&
+								getPrimaryFeedFlag(change)?.tier === 'revertRisk',
+							'review-changes__item-link--primary-unviewed-recommendation':
+								!isRevisionViewed(change) &&
+								getPrimaryFeedFlag(change)?.tier === 'recommendation',
 						}"
 						:aria-label="
 							change.pageName
@@ -56,9 +93,25 @@
 						@pointerdown.capture="onCardPointerDown"
 						@mousedown.capture="onCardPointerDown"
 					>
-						<div class="review-changes__item-header">
+						<div
+							class="review-changes__item-header"
+							:class="{
+								'review-changes__item-header--has-primary-flag':
+									!!getPrimaryFeedFlag(change),
+							}"
+						>
 							<CdxIcon
-								v-if="showArrowInTopRight"
+								v-if="getPrimaryFeedFlag(change)"
+								:icon="primaryFlagCdxIcon(change)"
+								size="medium"
+								:class="[
+									'review-changes__primary-flag-icon',
+									primaryFlagIconModifierClass(change),
+								]"
+								aria-hidden="true"
+							/>
+							<CdxIcon
+								v-else-if="showArrowInTopRight"
 								:icon="cdxIconArrowNext"
 								size="medium"
 								class="review-changes__arrow-in-top-right"
@@ -237,9 +290,7 @@
 								</span>
 								<div
 									v-if="
-										!!(change?.summary?.comment || change?.comment) ||
-										showDelta ||
-										showEmptyEditSummary
+										!!(change?.summary?.comment || change?.comment) || showDelta
 									"
 									class="review-changes__summary"
 								>
@@ -415,12 +466,6 @@
 										"
 										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
 									>
-										<CdxIcon
-											:icon="cdxIconUnStar"
-											size="small"
-											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-											aria-hidden="true"
-										/>
 										<span class="review-changes__revert-risk-notice-text"
 											>On your watchlist</span
 										>
@@ -430,11 +475,6 @@
 										v-if="showRevertedFlag && isReverted(change)"
 										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--reverted"
 									>
-										<CdxIcon
-											:icon="cdxIconEditUndo"
-											size="small"
-											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--reverted"
-										/>
 										<span class="review-changes__revert-risk-notice-text">{{
 											verboseFlags ? "This change was reverted" : "Reverted"
 										}}</span>
@@ -442,87 +482,69 @@
 									<div
 										v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
 										class="review-changes__revert-risk-notice"
+										:class="{
+											'review-changes__revert-risk-notice--very-high':
+												getRevertRiskNotice(change)?.band === 'high',
+											'review-changes__revert-risk-notice--high':
+												getRevertRiskNotice(change)?.band === 'mediumHigh',
+											'review-changes__revert-risk-notice--low':
+												getRevertRiskNotice(change)?.band === 'low',
+											'review-changes__revert-risk-notice--medium-low':
+												getRevertRiskNotice(change)?.band === 'mediumLow',
+										}"
 									>
-										<CdxIcon
-											:icon="
-												['low', 'mediumLow'].includes(
-													getRevertRiskNotice(change)?.band ?? ''
-												)
-													? cdxIconSuccess
-													: cdxIconAlert
-											"
-											size="small"
-											class="review-changes__revert-risk-notice-icon"
-											:class="{
-												'review-changes__revert-risk-notice-icon--very-high':
-													getRevertRiskNotice(change)?.band === 'high',
-												'review-changes__revert-risk-notice-icon--high':
-													getRevertRiskNotice(change)?.band ===
-													'mediumHigh',
-												'review-changes__revert-risk-notice-icon--low':
-													getRevertRiskNotice(change)?.band === 'low',
-												'review-changes__revert-risk-notice-icon--medium-low':
-													getRevertRiskNotice(change)?.band ===
-													'mediumLow',
-											}"
-										/>
-										<span class="review-changes__revert-risk-notice-text">{{
-											getRevertRiskNotice(change)!.text
-										}}</span>
+										<span class="review-changes__revert-risk-notice-text"
+											><strong
+												>{{
+													getRevertRiskNotice(change)!.label
+												}}&nbsp;</strong
+											>{{ getRevertRiskNotice(change)!.description }}</span
+										>
 									</div>
 									<div
 										v-if="showEditCheckOtherFlag && hasReferenceNeed(change)"
-										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--tone-ref"
 									>
-										<CdxIcon
-											:icon="cdxIconAlert"
-											size="small"
-											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-											aria-hidden="true"
-										/>
-										<span class="review-changes__revert-risk-notice-text">{{
-											verboseFlags
-												? "Reference check was shown."
-												: "Reference check"
-										}}</span>
+										<span class="review-changes__revert-risk-notice-text"
+											><strong>Reference issue.&nbsp;</strong
+											>{{
+												verboseFlags
+													? "This edit added uncited content that may need references."
+													: "Added content may need citations to reliable sources."
+											}}</span
+										>
 									</div>
 									<div
 										v-if="showToneCheckFlag && hasToneCheckFlag(change)"
-										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--edit-check"
+										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--tone-ref"
 									>
-										<CdxIcon
-											:icon="cdxIconAlert"
-											size="small"
-											class="review-changes__revert-risk-notice-icon review-changes__revert-risk-notice-icon--edit-check"
-											aria-hidden="true"
-										/>
-										<span class="review-changes__revert-risk-notice-text">{{
-											verboseFlags
-												? "Tone check: promotional or subjective language detected."
-												: "Revise tone?"
-										}}</span>
+										<span class="review-changes__revert-risk-notice-text"
+											><strong>Tone issue.&nbsp;</strong
+											>{{
+												verboseFlags
+													? "Tone check: promotional or subjective language detected."
+													: "This is subjective praise rather than neutral description."
+											}}</span
+										>
 									</div>
 									<div
 										v-if="
 											showRecommendationFlags &&
 											getItemSource(change) === 'relatedChanges' &&
-											getRecommendationReason(
+											getRecommendationDetailText(
 												getRecommendationSourcePageNames(change)
 											)
 										"
 										class="review-changes__recommendation-notice"
 									>
-										<CdxIcon
-											:icon="cdxIconLightbulb"
-											size="small"
-											class="review-changes__recommendation-notice-icon"
-											aria-hidden="true"
-										/>
-										<span class="review-changes__recommendation-notice-text">{{
-											getRecommendationReason(
-												getRecommendationSourcePageNames(change)
-											)
-										}}</span>
+										<span class="review-changes__recommendation-notice-text"
+											><strong>Recommendation.&nbsp;</strong
+											>{{
+												getRecommendationDetailText(
+													getRecommendationSourcePageNames(change)
+												)
+											}}</span
+										>
 									</div>
 								</div>
 								<span
@@ -614,8 +636,10 @@
 				</li>
 			</template>
 		</ul>
-		<div v-if="!isLoading" class="review-changes__view-more">
-			<RouterLink to="/Special/RecentChanges">More changes...</RouterLink>
+		<div v-if="!isLoading && hasFeedItems" class="review-changes__view-more">
+			<RouterLink class="review-changes__view-more-link" to="/Special/RecentChanges">
+				More changes...
+			</RouterLink>
 		</div>
 		<CdxPopover
 			v-model:open="showUserPopover"
@@ -638,19 +662,20 @@ import {
 } from "@/modules/ReviewChangesPlus/useReviewChangesPlusProgress"
 import { CdxButton, CdxIcon, CdxPopover, CdxProgressBar } from "@wikimedia/codex"
 import {
+	type Icon,
 	cdxIconAlert,
 	cdxIconArrowNext,
 	cdxIconCheck,
 	cdxIconClock,
-	cdxIconEditUndo,
+	cdxIconError,
 	cdxIconLightbulb,
 	cdxIconLinkExternal,
-	cdxIconSuccess,
+	cdxIconReload,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
 	cdxIconUserTemporary,
 } from "@wikimedia/codex-icons"
-import { FakeWiki } from "fakewiki"
+import { FakeWiki, FakeWikiHttpError } from "fakewiki"
 import type {
 	FWLiftWingPrediction,
 	FWPageHistoryRevision,
@@ -661,6 +686,11 @@ import type {
 } from "fakewiki/types"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import FeedItemTitle from "./FeedItemTitle.vue"
+
+/** Align with Wikimedia guidance (≤3 concurrent API requests); parse + Lift Wing bursts use modest pools. */
+const PROCESS_REVISIONS_CONCURRENCY = 4
+const RC_SEGMENTS_FETCH_CONCURRENCY = 2
+const REFERENCE_NEED_AND_TONE_CONCURRENCY = 4
 
 export type ReviewChangesSource =
 	| "recentChanges"
@@ -1045,7 +1075,9 @@ function getRiskFromPrediction(pred: FWLiftWingPrediction): number {
 	return typeof p === "number" ? p : 0
 }
 
-function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRiskBand } | null {
+function getRevertRiskNotice(
+	change: FWRevision
+): { label: string; description: string; band: RevertRiskBand } | null {
 	if (isLoadingRevertRisk.value) return null
 	const entry = revertRiskByRevId.value.get(change.id)
 	if (!entry || ("error" in entry && entry.error)) return null
@@ -1054,35 +1086,40 @@ function getRevertRiskNotice(change: FWRevision): { text: string; band: RevertRi
 	if (!pred) return null
 	const risk = getRiskFromPrediction(pred)
 	const verbose = props.verboseFlags
+	const revWord = isReverted(change) ? "had" : "has"
 	if (risk > REVERT_RISK_THRESHOLDS.upperTight) {
 		return {
-			text: verbose
-				? `This change ${isReverted(change) ? "had" : "has"} very high revert risk.`
-				: "Very high revert risk",
+			label: "High revert risk.",
+			description: verbose
+				? `This change ${revWord} high revert risk.`
+				: "This edit has a high chance of getting undone.",
 			band: "high",
 		}
 	}
 	if (risk > REVERT_RISK_THRESHOLDS.upperLoose) {
 		return {
-			text: verbose
-				? `This change ${isReverted(change) ? "had" : "has"} high revert risk.`
-				: "High revert risk",
+			label: "High revert risk.",
+			description: verbose
+				? `This change ${revWord} high revert risk.`
+				: "This edit has a high chance of getting undone.",
 			band: "mediumHigh",
 		}
 	}
 	if (risk < REVERT_RISK_THRESHOLDS.lowerTight) {
 		return {
-			text: verbose
-				? `This change ${isReverted(change) ? "had" : "has"} very low revert risk.`
-				: "Very low revert risk",
+			label: "Very low revert risk.",
+			description: verbose
+				? `This change ${revWord} very low revert risk.`
+				: "This edit is unlikely to be reverted.",
 			band: "low",
 		}
 	}
 	if (risk < REVERT_RISK_THRESHOLDS.lowerLoose) {
 		return {
-			text: verbose
-				? `This change ${isReverted(change) ? "had" : "has"} low revert risk.`
-				: "Low revert risk",
+			label: "Low revert risk.",
+			description: verbose
+				? `This change ${revWord} low revert risk.`
+				: "This edit has a low chance of getting undone.",
 			band: "mediumLow",
 		}
 	}
@@ -1095,24 +1132,46 @@ function getRecommendationSourcePageNames(change: RevisionWithSource): string[] 
 	)
 }
 
-function getRecommendationReason(sourcePageNames: string[]): string {
+/** Body text for recommendation flag (after bold "Recommendation."). */
+function getRecommendationDetailText(sourcePageNames: string[]): string {
 	if (!sourcePageNames?.length) return ""
-	const intro = "Because you watch "
 	if (sourcePageNames.length === 1) {
-		return `${intro}${sourcePageNames[0]}.`
+		return `Related to ${sourcePageNames[0]}.`
 	}
 	if (sourcePageNames.length === 2) {
-		return `${intro}${sourcePageNames[0]} and ${sourcePageNames[1]}.`
+		return `Related to ${sourcePageNames[0]} and ${sourcePageNames[1]}.`
 	}
 	const last = sourcePageNames[sourcePageNames.length - 1]
 	const rest = sourcePageNames.slice(0, -1).join(", ")
-	return `${intro}${rest}, and ${last}.`
+	return `Related to ${rest}, and ${last}.`
+}
+
+function revertRiskCacheCoversRevisionIds(revIds: number[]): boolean {
+	if (revIds.length === 0) return true
+	const m = revertRiskByRevId.value
+	if (m.size !== revIds.length) return false
+	return revIds.every(id => m.has(id))
+}
+
+function referenceNeedCacheCoversRevisionIds(revIds: number[]): boolean {
+	if (revIds.length === 0) return true
+	const m = referenceNeedByRevId.value
+	if (m.size !== revIds.length) return false
+	return revIds.every(id => m.has(id))
+}
+
+function toneCheckCacheCoversRevisionIds(revIds: number[]): boolean {
+	if (revIds.length === 0) return true
+	const m = toneCheckByRevId.value
+	if (m.size !== revIds.length) return false
+	return revIds.every(id => m.has(id))
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
 	const revs = selectedRevisionsForDisplay.value
 	if (revs.length === 0) return
 	const revIds = revs.map(r => r.id)
+	if (revertRiskCacheCoversRevisionIds(revIds)) return
 	isLoadingRevertRisk.value = true
 	revertRiskByRevId.value = new Map()
 	const models: FWPredictionModel[] = props.showRevertRisk
@@ -1134,6 +1193,7 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 		revertRiskByRevId.value = next
 	} finally {
 		isLoadingRevertRisk.value = false
+		schedulePersistFeedBundleSave()
 	}
 }
 
@@ -1142,11 +1202,15 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
 	if (revsWithPage.length === 0) return
+	const refRevIds = revsWithPage.map(r => r.id)
+	if (referenceNeedCacheCoversRevisionIds(refRevIds)) return
 	isLoadingReferenceNeed.value = true
 	referenceNeedByRevId.value = new Map()
 	try {
-		const results = await Promise.all(
-			revsWithPage.map(async change => {
+		const results = await wiki.runWithConcurrency(
+			revsWithPage,
+			REFERENCE_NEED_AND_TONE_CONCURRENCY,
+			async change => {
 				try {
 					const parentId = await wiki.getParentRevisionId(change.pageName!, change.id)
 					const [beforePred, afterPred] = await Promise.all([
@@ -1168,7 +1232,7 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 				} catch {
 					return { revId: change.id, delta: null, error: true } as const
 				}
-			})
+			}
 		)
 		const next = new Map<
 			number,
@@ -1197,6 +1261,7 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 		referenceNeedByRevId.value = next
 	} finally {
 		isLoadingReferenceNeed.value = false
+		schedulePersistFeedBundleSave()
 	}
 }
 
@@ -1205,18 +1270,22 @@ async function fetchToneCheckForFeed(): Promise<void> {
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
 	if (revsWithPage.length === 0) return
+	const toneRevIds = revsWithPage.map(r => r.id)
+	if (toneCheckCacheCoversRevisionIds(toneRevIds)) return
 	isLoadingToneCheck.value = true
 	toneCheckByRevId.value = new Map()
 	try {
-		const results = await Promise.all(
-			revsWithPage.map(async change => {
+		const results = await wiki.runWithConcurrency(
+			revsWithPage,
+			REFERENCE_NEED_AND_TONE_CONCURRENCY,
+			async change => {
 				try {
 					const pred = await wiki.getToneCheckForRevision(change.pageName!, change.id)
 					return { revId: change.id, pred } as const
 				} catch {
 					return { revId: change.id, pred: { error: true } as const } as const
 				}
-			})
+			}
 		)
 		const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
 		for (const { revId, pred } of results) {
@@ -1231,6 +1300,7 @@ async function fetchToneCheckForFeed(): Promise<void> {
 		toneCheckByRevId.value = next
 	} finally {
 		isLoadingToneCheck.value = false
+		schedulePersistFeedBundleSave()
 	}
 }
 
@@ -1370,6 +1440,50 @@ function getItemSource(change: RevisionWithSource): ItemSource | undefined {
 	return change.itemSource
 }
 
+type PrimaryFeedFlag =
+	| { tier: "toneReference" }
+	| { tier: "revertRisk" }
+	| { tier: "recommendation" }
+
+/** Highest-priority feed alert for header icon and (when unviewed) card border: tone/ref > elevated revert risk > recommendation. Low/very-low revert risk does not count toward primary. */
+function getPrimaryFeedFlag(change: RevisionWithSource): PrimaryFeedFlag | null {
+	const tone = props.showToneCheckFlag && hasToneCheckFlag(change)
+	const reference = props.showEditCheckOtherFlag && hasReferenceNeed(change)
+	if (tone || reference) {
+		return { tier: "toneReference" }
+	}
+	if (props.showRevertRiskFlags) {
+		const notice = getRevertRiskNotice(change)
+		if (notice?.band === "high" || notice?.band === "mediumHigh") {
+			return { tier: "revertRisk" }
+		}
+	}
+	if (
+		props.showRecommendationFlags &&
+		getItemSource(change) === "relatedChanges" &&
+		getRecommendationSourcePageNames(change).length > 0
+	) {
+		return { tier: "recommendation" }
+	}
+	return null
+}
+
+function primaryFlagCdxIcon(change: RevisionWithSource): Icon {
+	const p = getPrimaryFeedFlag(change)
+	if (!p) return cdxIconAlert
+	if (p.tier === "toneReference") return cdxIconAlert
+	if (p.tier === "revertRisk") return cdxIconError
+	return cdxIconUnStar
+}
+
+function primaryFlagIconModifierClass(change: RevisionWithSource): string {
+	const p = getPrimaryFeedFlag(change)
+	if (!p) return ""
+	if (p.tier === "toneReference") return "review-changes__primary-flag-icon--tone"
+	if (p.tier === "revertRisk") return "review-changes__primary-flag-icon--revert"
+	return "review-changes__primary-flag-icon--recommendation"
+}
+
 function isPageOnWatchlist(pageName: string | undefined): boolean {
 	if (!pageName) return false
 	const lower = pageName.toLowerCase()
@@ -1447,6 +1561,7 @@ async function fetchShortDescriptionsForFeed(): Promise<void> {
 		next.set(pageName, desc)
 	}
 	shortDescriptionByPage.value = next
+	schedulePersistFeedBundleSave()
 }
 
 watch(
@@ -1527,6 +1642,245 @@ const rccontinue = ref<string | undefined>(undefined)
 const useNeedsReviewFilter = ref(true)
 const isLoading = ref(false)
 const errors = ref<string[]>([])
+
+type ReviewChangesFeedSnapshot = {
+	allRevisionsData: FWRevision[]
+	selectedRevisions: FWRevision[]
+	mixedRecentChangesBySegment: FWRevision[][]
+	mixedPagesAndUsersData: FWRevision[]
+	mixedPagesAndUsersLatestData: FWRevision[]
+	mixedCollaboratorsData: FWRevision[]
+	mixedRelatedChangesData: FWRevision[]
+	rccontinue?: string
+}
+
+type PersistedFeedBundleV1 = {
+	version: 1
+	snapshot: ReviewChangesFeedSnapshot
+	shortDescriptions: [string, string | null][]
+	revertRiskEntries: [number, FWPredictionByModel | { error: true }][]
+	referenceNeedEntries: [
+		number,
+		{ delta: number; before: number; after: number } | { error: true },
+	][]
+	toneCheckEntries: [number, FWToneCheckPrediction | { error: true } | null][]
+}
+
+const PERSISTED_FEED_KEY_PREFIX = "review-changes-plus-feed-v1:"
+
+function storageKeyForFeed(source: ReviewChangesSource): string {
+	return `${PERSISTED_FEED_KEY_PREFIX}${source}`
+}
+
+function parsePersistedFeedBundleJson(raw: string): PersistedFeedBundleV1 | null {
+	try {
+		const o = JSON.parse(raw) as Record<string, unknown>
+		if (o.version !== 1 || !o.snapshot || typeof o.snapshot !== "object") return null
+		const snap = o.snapshot as ReviewChangesFeedSnapshot
+		if (!Array.isArray(snap.allRevisionsData)) return null
+		if (!Array.isArray(snap.selectedRevisions)) return null
+		if (!Array.isArray(snap.mixedRecentChangesBySegment)) return null
+		if (!Array.isArray(snap.mixedPagesAndUsersData)) return null
+		if (!Array.isArray(snap.mixedPagesAndUsersLatestData)) return null
+		if (!Array.isArray(snap.mixedCollaboratorsData)) return null
+		if (!Array.isArray(snap.mixedRelatedChangesData)) return null
+		return {
+			version: 1,
+			snapshot: JSON.parse(JSON.stringify(snap)) as ReviewChangesFeedSnapshot,
+			shortDescriptions: (Array.isArray(o.shortDescriptions)
+				? o.shortDescriptions
+				: []) as PersistedFeedBundleV1["shortDescriptions"],
+			revertRiskEntries: (Array.isArray(o.revertRiskEntries)
+				? o.revertRiskEntries
+				: []) as PersistedFeedBundleV1["revertRiskEntries"],
+			referenceNeedEntries: (Array.isArray(o.referenceNeedEntries)
+				? o.referenceNeedEntries
+				: []) as PersistedFeedBundleV1["referenceNeedEntries"],
+			toneCheckEntries: (Array.isArray(o.toneCheckEntries)
+				? o.toneCheckEntries
+				: []) as PersistedFeedBundleV1["toneCheckEntries"],
+		}
+	} catch {
+		return null
+	}
+}
+
+function loadPersistedFeedBundleForSource(source: ReviewChangesSource): PersistedFeedBundleV1 | null {
+	try {
+		const raw = localStorage.getItem(storageKeyForFeed(source))
+		if (!raw) return null
+		return parsePersistedFeedBundleJson(raw)
+	} catch {
+		return null
+	}
+}
+
+const lastSuccessfulFeedSnapshot = ref<ReviewChangesFeedSnapshot | null>(null)
+const lastFeedErrorWasRateLimit = ref(false)
+const lastLoadedDataNotice = ref("")
+
+/** Plain-data clone for snapshots. `structuredClone` throws on Vue reactive Proxies. */
+function cloneForFeedSnapshot<T>(value: T): T {
+	return JSON.parse(JSON.stringify(value)) as T
+}
+
+function isFeedSnapshotNonEmpty(s: ReviewChangesFeedSnapshot): boolean {
+	return (
+		s.allRevisionsData.length > 0 ||
+		s.mixedPagesAndUsersData.length > 0 ||
+		s.mixedPagesAndUsersLatestData.length > 0 ||
+		s.mixedCollaboratorsData.length > 0 ||
+		s.mixedRelatedChangesData.length > 0 ||
+		s.mixedRecentChangesBySegment.some(seg => seg.length > 0)
+	)
+}
+
+function snapshotFromCurrentRefs(): ReviewChangesFeedSnapshot {
+	return {
+		allRevisionsData: cloneForFeedSnapshot(allRevisionsData.value),
+		selectedRevisions: cloneForFeedSnapshot(selectedRevisions.value),
+		mixedRecentChangesBySegment: mixedRecentChangesBySegment.value.map(seg =>
+			cloneForFeedSnapshot(seg)
+		),
+		mixedPagesAndUsersData: cloneForFeedSnapshot(mixedPagesAndUsersData.value),
+		mixedPagesAndUsersLatestData: cloneForFeedSnapshot(mixedPagesAndUsersLatestData.value),
+		mixedCollaboratorsData: cloneForFeedSnapshot(mixedCollaboratorsData.value),
+		mixedRelatedChangesData: cloneForFeedSnapshot(mixedRelatedChangesData.value),
+		rccontinue: rccontinue.value,
+	}
+}
+
+function persistLastSuccessfulFeedSnapshot(): void {
+	lastSuccessfulFeedSnapshot.value = snapshotFromCurrentRefs()
+	schedulePersistFeedBundleSave()
+}
+
+const showRestoreLastLoadedData = computed(
+	() =>
+		lastFeedErrorWasRateLimit.value &&
+		lastSuccessfulFeedSnapshot.value !== null &&
+		isFeedSnapshotNonEmpty(lastSuccessfulFeedSnapshot.value)
+)
+
+function restoreLastSuccessfulFeed(): void {
+	const snap = lastSuccessfulFeedSnapshot.value
+	if (!snap || !isFeedSnapshotNonEmpty(snap)) return
+	allRevisionsData.value = cloneForFeedSnapshot(snap.allRevisionsData)
+	selectedRevisions.value = cloneForFeedSnapshot(snap.selectedRevisions)
+	mixedRecentChangesBySegment.value = snap.mixedRecentChangesBySegment.map(seg =>
+		cloneForFeedSnapshot(seg)
+	)
+	mixedPagesAndUsersData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersData)
+	mixedPagesAndUsersLatestData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersLatestData)
+	mixedCollaboratorsData.value = cloneForFeedSnapshot(snap.mixedCollaboratorsData)
+	mixedRelatedChangesData.value = cloneForFeedSnapshot(snap.mixedRelatedChangesData)
+	rccontinue.value = snap.rccontinue
+	errors.value = []
+	lastFeedErrorWasRateLimit.value = false
+	lastLoadedDataNotice.value = "Showing data from before this refresh."
+	revertRiskByRevId.value = new Map()
+	referenceNeedByRevId.value = new Map()
+	toneCheckByRevId.value = new Map()
+	if (props.showRevertRisk || props.showRevertRiskFlags) {
+		void fetchRevertRiskForFeed()
+	}
+	if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
+		void fetchReferenceNeedForFeed()
+		void fetchToneCheckForFeed()
+	}
+	if (
+		!(props.showRevertRisk || props.showRevertRiskFlags) &&
+		!(props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks)
+	) {
+		schedulePersistFeedBundleSave()
+	}
+}
+
+let persistFeedBundleDebounceId: ReturnType<typeof setTimeout> | null = null
+
+function savePersistedFeedBundleNow(): void {
+	try {
+		const snap = snapshotFromCurrentRefs()
+		if (!isFeedSnapshotNonEmpty(snap)) return
+		const bundle: PersistedFeedBundleV1 = {
+			version: 1,
+			snapshot: cloneForFeedSnapshot(snap),
+			shortDescriptions: [...shortDescriptionByPage.value.entries()],
+			revertRiskEntries: [...revertRiskByRevId.value.entries()],
+			referenceNeedEntries: [...referenceNeedByRevId.value.entries()],
+			toneCheckEntries: [...toneCheckByRevId.value.entries()],
+		}
+		localStorage.setItem(
+			storageKeyForFeed(props.source ?? "recentChanges"),
+			JSON.stringify(bundle)
+		)
+	} catch {
+		// ignore quota / private mode
+	}
+}
+
+function schedulePersistFeedBundleSave(): void {
+	if (persistFeedBundleDebounceId) clearTimeout(persistFeedBundleDebounceId)
+	persistFeedBundleDebounceId = setTimeout(() => {
+		persistFeedBundleDebounceId = null
+		savePersistedFeedBundleNow()
+	}, 300)
+}
+
+function applyPersistedFeedBundle(bundle: PersistedFeedBundleV1): void {
+	const snap = bundle.snapshot
+	allRevisionsData.value = cloneForFeedSnapshot(snap.allRevisionsData)
+	selectedRevisions.value = cloneForFeedSnapshot(snap.selectedRevisions)
+	mixedRecentChangesBySegment.value = snap.mixedRecentChangesBySegment.map(seg =>
+		cloneForFeedSnapshot(seg)
+	)
+	mixedPagesAndUsersData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersData)
+	mixedPagesAndUsersLatestData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersLatestData)
+	mixedCollaboratorsData.value = cloneForFeedSnapshot(snap.mixedCollaboratorsData)
+	mixedRelatedChangesData.value = cloneForFeedSnapshot(snap.mixedRelatedChangesData)
+	rccontinue.value = snap.rccontinue
+	lastSuccessfulFeedSnapshot.value = cloneForFeedSnapshot(snap)
+	revertRiskByRevId.value = new Map(bundle.revertRiskEntries)
+	referenceNeedByRevId.value = new Map(bundle.referenceNeedEntries)
+	toneCheckByRevId.value = new Map(bundle.toneCheckEntries)
+	shortDescriptionByPage.value = new Map(bundle.shortDescriptions)
+	errors.value = []
+	lastFeedErrorWasRateLimit.value = false
+	lastLoadedDataNotice.value = ""
+}
+
+function clearFeedToEmptyState(): void {
+	allRevisionsData.value = []
+	selectedRevisions.value = []
+	mixedRecentChangesBySegment.value = []
+	mixedPagesAndUsersData.value = []
+	mixedPagesAndUsersLatestData.value = []
+	mixedCollaboratorsData.value = []
+	mixedRelatedChangesData.value = []
+	rccontinue.value = undefined
+	shortDescriptionByPage.value = new Map()
+	revertRiskByRevId.value = new Map()
+	referenceNeedByRevId.value = new Map()
+	toneCheckByRevId.value = new Map()
+	lastSuccessfulFeedSnapshot.value = null
+	errors.value = []
+	lastFeedErrorWasRateLimit.value = false
+	lastLoadedDataNotice.value = ""
+}
+
+function tryHydrateFromPersistedCache(): void {
+	const source = props.source ?? "recentChanges"
+	const bundle = loadPersistedFeedBundleForSource(source)
+	if (bundle && isFeedSnapshotNonEmpty(bundle.snapshot)) {
+		applyPersistedFeedBundle(bundle)
+		return
+	}
+	clearFeedToEmptyState()
+}
+
+function refreshFeed(): void {
+	void loadFeed(false)
+}
 
 const RECENT_CHANGES_LIMIT = 10
 const RELATED_CHANGES_TOP_N = 10
@@ -1650,57 +2004,56 @@ async function processRevisions(
 		pageName?: string
 	}>
 ): Promise<FWRevision[]> {
-	return Promise.all(
-		revisions.map(async revision => {
-			const pageName =
-				(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
-			const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-			const toolbar = wiki.parseToolbarEditSummary(_summary)
-			const summary = toolbar
-				? toolbar
-				: {
-						comment: _summary,
-						hashtags: [],
-						other: [],
-						suggestedBy: null,
-						useThisBot: null,
-						reportBugs: null,
-					}
-			const commentText = summary.comment
-				? summary.comment +
-					(summary.suggestedBy
-						? " Suggested by [[User:" +
-							summary.suggestedBy +
-							"|" +
-							summary.suggestedBy +
-							"]]"
-						: "")
-				: ""
-			summary.comment = commentText
-				? await wiki.transformWikitextToHtml(commentText, pageName)
-				: ""
-			if (summary.comment) {
-				summary.comment = stripLinksFromHtml(summary.comment)
-			}
-			summary.hashtags = Array.isArray(summary.hashtags)
-				? summary.hashtags.join(" ")
-				: summary.hashtags
-			const processedRevision: FWRevision = {
-				...revision,
-				comment: revision.comment || "",
-				summary,
-				pageName,
-				avatarUrl: null,
-			}
-			return processedRevision
-		})
-	)
+	return wiki.runWithConcurrency(revisions, PROCESS_REVISIONS_CONCURRENCY, async revision => {
+		const pageName = (revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
+		const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
+		const toolbar = wiki.parseToolbarEditSummary(_summary)
+		const summary = toolbar
+			? toolbar
+			: {
+					comment: _summary,
+					hashtags: [],
+					other: [],
+					suggestedBy: null,
+					useThisBot: null,
+					reportBugs: null,
+				}
+		const commentText = summary.comment
+			? summary.comment +
+				(summary.suggestedBy
+					? " Suggested by [[User:" +
+						summary.suggestedBy +
+						"|" +
+						summary.suggestedBy +
+						"]]"
+					: "")
+			: ""
+		summary.comment = commentText
+			? await wiki.transformWikitextToHtml(commentText, pageName)
+			: ""
+		if (summary.comment) {
+			summary.comment = stripLinksFromHtml(summary.comment)
+		}
+		summary.hashtags = Array.isArray(summary.hashtags)
+			? summary.hashtags.join(" ")
+			: summary.hashtags
+		const processedRevision: FWRevision = {
+			...revision,
+			comment: revision.comment || "",
+			summary,
+			pageName,
+			avatarUrl: null,
+		}
+		return processedRevision
+	})
 }
 
 async function loadFeed(append = false): Promise<void> {
 	if (!append) {
 		isLoading.value = true
 		errors.value = []
+		lastLoadedDataNotice.value = ""
+		lastFeedErrorWasRateLimit.value = false
 	}
 
 	try {
@@ -1730,6 +2083,7 @@ async function loadFeed(append = false): Promise<void> {
 			mixedCollaboratorsData.value = []
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
+			persistLastSuccessfulFeedSnapshot()
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
@@ -1801,17 +2155,22 @@ async function loadFeed(append = false): Promise<void> {
 					rcend: new Date(segStart).toISOString(),
 				}
 			})
-			const results = await Promise.all(
-				queries.map(q =>
+			const results = await wiki.runWithConcurrency(
+				queries,
+				RC_SEGMENTS_FETCH_CONCURRENCY,
+				q =>
 					wiki.getRecentChanges({
 						limit: LIMIT_PER_QUERY,
 						onlyNeedsReview: true,
 						rcstart: q.rcstart,
 						rcend: q.rcend,
 					})
-				)
 			)
-			processedBySegment = await Promise.all(results.map(r => processRevisions(r.revisions)))
+			processedBySegment = await wiki.runWithConcurrency(
+				results,
+				PROCESS_REVISIONS_CONCURRENCY,
+				r => processRevisions(r.revisions)
+			)
 			processedBySegment = processedBySegment.map(seg =>
 				seg.sort(
 					(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -1828,6 +2187,7 @@ async function loadFeed(append = false): Promise<void> {
 			allRevisionsData.value = []
 			selectedRevisions.value = []
 			isLoading.value = false
+			persistLastSuccessfulFeedSnapshot()
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
@@ -1861,6 +2221,7 @@ async function loadFeed(append = false): Promise<void> {
 			mixedCollaboratorsData.value = []
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
+			persistLastSuccessfulFeedSnapshot()
 			if (props.showRevertRisk || props.showRevertRiskFlags) {
 				fetchRevertRiskForFeed()
 			}
@@ -1933,13 +2294,20 @@ async function loadFeed(append = false): Promise<void> {
 			fetchReferenceNeedForFeed()
 			fetchToneCheckForFeed()
 		}
+		persistLastSuccessfulFeedSnapshot()
 	} catch (e) {
 		isLoading.value = false
 		const errorObj = e as Error
 		if (!append) {
+			lastFeedErrorWasRateLimit.value = e instanceof FakeWikiHttpError && e.status === 429
 			errors.value = [errorObj.message]
 			allRevisionsData.value = []
 			selectedRevisions.value = []
+			mixedRecentChangesBySegment.value = []
+			mixedPagesAndUsersData.value = []
+			mixedPagesAndUsersLatestData.value = []
+			mixedCollaboratorsData.value = []
+			mixedRelatedChangesData.value = []
 		}
 	}
 }
@@ -2072,6 +2440,14 @@ const revisionsByDate = computed(() => {
 
 const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
+const hasFeedItems = computed(() =>
+	revisionsByDateCapped.value.some(g => g.revisions.length > 0)
+)
+
+const showEmptyCacheNotice = computed(
+	() => !isLoading.value && errors.value.length === 0 && !hasFeedItems.value
+)
+
 const revisionsOnScreen = computed(() => revisionsByDateCapped.value.flatMap(g => g.revisions))
 
 const sampleRevision = computed(
@@ -2102,18 +2478,20 @@ watch(
 )
 
 onMounted(() => {
-	loadFeed()
+	tryHydrateFromPersistedCache()
 	setRevisionsCallback(() => revisionsOnScreen.value)
 })
 
 onUnmounted(() => {
+	if (persistFeedBundleDebounceId) clearTimeout(persistFeedBundleDebounceId)
+	persistFeedBundleDebounceId = null
 	clearRevisionsCallback()
 })
 
 watch(
 	() => props.source,
 	() => {
-		loadFeed()
+		tryHydrateFromPersistedCache()
 	}
 )
 </script>
