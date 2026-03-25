@@ -101,6 +101,18 @@ function createReviewChangesPlusProgress() {
 		saveLastClickedRevisionId(null)
 	}
 
+	/** Clears viewed state (and last-clicked highlight); dismissals unchanged. */
+	function clearViewedRevisions(): void {
+		viewedRevisionIds.value = new Set()
+		lastClickedRevisionId.value = null
+		try {
+			localStorage.removeItem(VIEWED_REVISIONS_STORAGE_KEY)
+			localStorage.removeItem(LAST_CLICKED_REVISION_KEY)
+		} catch {
+			// Ignore
+		}
+	}
+
 	function isRevisionDismissed(change: FWRevision): boolean {
 		return dismissedRevisionIds.value.has(change.id)
 	}
@@ -130,6 +142,7 @@ function createReviewChangesPlusProgress() {
 		dismissedRevisionIds,
 		lastClickedRevisionId,
 		clearLastClickedRevisionId,
+		clearViewedRevisions,
 		isRevisionViewed,
 		markRevisionAsViewed,
 		markRevisionsAsViewed,

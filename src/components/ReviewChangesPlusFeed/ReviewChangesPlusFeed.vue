@@ -3,16 +3,27 @@
 		<div class="review-changes__title-row">
 			<div v-if="title" class="review-changes__title">{{ title }}</div>
 			<div v-else class="review-changes__title-spacer" aria-hidden="true" />
-			<CdxButton
-				type="button"
-				weight="quiet"
-				:disabled="isLoading"
-				aria-label="Refresh"
-				class="review-changes__refresh"
-				@click="refreshFeed"
-			>
-				<CdxIcon :icon="cdxIconReload" />
-			</CdxButton>
+			<div class="review-changes__title-actions">
+				<CdxButton
+					type="button"
+					weight="quiet"
+					aria-label="Reset which diffs are marked as opened"
+					class="review-changes__refresh review-changes__refresh--reset-opened"
+					@click="clearViewedRevisions"
+				>
+					<CdxIcon :icon="cdxIconReload" />
+				</CdxButton>
+				<CdxButton
+					type="button"
+					weight="quiet"
+					:disabled="isLoading"
+					aria-label="Refresh"
+					class="review-changes__refresh"
+					@click="refreshFeed"
+				>
+					<CdxIcon :icon="cdxIconReload" />
+				</CdxButton>
+			</div>
 		</div>
 		<div v-if="errors.length > 0" class="review-changes__errors">
 			<div v-for="(error, index) in errors" :key="index">{{ error }}</div>
@@ -291,7 +302,8 @@
 								</span>
 								<div
 									v-if="
-										!!(change?.summary?.comment || change?.comment) || showDelta
+										// !!(change?.summary?.comment || change?.comment) || showDelta
+										true
 									"
 									class="review-changes__summary"
 								>
@@ -481,7 +493,11 @@
 										}}</span>
 									</div>
 									<div
-										v-if="showRevertRiskFlags && getRevertRiskNotice(change)"
+										v-if="
+											showRevertRiskFlags &&
+											getRevertRiskNotice(change) &&
+											shouldShowFlagNoticeText(change, 'revertRisk')
+										"
 										class="review-changes__revert-risk-notice"
 										:class="{
 											'review-changes__revert-risk-notice--very-high':
@@ -503,28 +519,30 @@
 										>
 									</div>
 									<div
-										v-if="showEditCheckOtherFlag && hasReferenceNeed(change)"
+										v-if="
+											showEditCheckOtherFlag &&
+											hasReferenceNeed(change) &&
+											shouldShowFlagNoticeText(change, 'reference')
+										"
 										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--tone-ref"
 									>
 										<span class="review-changes__revert-risk-notice-text"
 											><strong>Reference issue.&nbsp;</strong
-											>{{
-												verboseFlags
-													? "This edit added uncited content that may need references."
-													: "Added content may need citations to reliable sources."
-											}}</span
+											>{{ "Citations might be needed." }}</span
 										>
 									</div>
 									<div
-										v-if="showToneCheckFlag && hasToneCheckFlag(change)"
+										v-if="
+											showToneCheckFlag &&
+											hasToneCheckFlag(change) &&
+											shouldShowFlagNoticeText(change, 'tone')
+										"
 										class="review-changes__revert-risk-notice review-changes__revert-risk-notice--tone-ref"
 									>
 										<span class="review-changes__revert-risk-notice-text"
 											><strong>Tone issue.&nbsp;</strong
 											>{{
-												verboseFlags
-													? "Tone check: promotional or subjective language detected."
-													: "This is subjective praise rather than neutral description."
+												"Might need revising to a more neutral tone."
 											}}</span
 										>
 									</div>
@@ -534,7 +552,8 @@
 											getItemSource(change) === 'relatedChanges' &&
 											getRecommendationDetailText(
 												getRecommendationSourcePageNames(change)
-											)
+											) &&
+											shouldShowFlagNoticeText(change, 'recommendation')
 										"
 										class="review-changes__recommendation-notice"
 										:class="{
@@ -799,7 +818,7 @@ const props = withDefaults(
 		showRevertRiskFlags: false,
 		revertRiskFlagsInBox: true,
 		verboseFlags: true,
-		showRevertedFlag: true,
+		showRevertedFlag: false,
 		showSourceIcons: false,
 		showSourceSubtitles: false,
 		showUsernameAtPrefix: false,
@@ -846,6 +865,7 @@ const {
 	dismissRevision,
 	lastClickedRevisionId,
 	clearLastClickedRevisionId,
+	clearViewedRevisions,
 } = useReviewChangesPlusProgress()
 
 const feedRef = ref<HTMLElement | null>(null)
@@ -964,7 +984,7 @@ const referenceNeedByRevId = ref<
 >(new Map())
 const isLoadingReferenceNeed = ref(false)
 /** Delta threshold: show flag when change increased uncited content by this much (rn_after - rn_before). */
-const REFERENCE_NEED_THRESHOLD = 0.001
+const REFERENCE_NEED_THRESHOLD = 0.002
 
 const toneCheckByRevId = ref<Map<number, FWToneCheckPrediction | { error: true } | null>>(new Map())
 const isLoadingToneCheck = ref(false)
@@ -1075,8 +1095,8 @@ function getEditCheckDebugLines(change: FWRevision): Array<{ label: string; valu
 const REVERT_RISK_THRESHOLDS = {
 	lowerTight: 0.25,
 	lowerLoose: 0.45,
-	upperLoose: 0.9,
-	upperTight: 0.9,
+	upperLoose: 0.86,
+	upperTight: 0.86,
 } as const
 
 type RevertRiskBand = "high" | "mediumHigh" | "low" | "mediumLow"
@@ -1495,6 +1515,7 @@ function primaryFlagCdxIcon(change: RevisionWithSource): Icon {
 	if (p.tier === "revertRisk") {
 		return p.band === "high" ? cdxIconError : cdxIconAlert
 	}
+	// return cdxIconLightbulb
 	return cdxIconStar
 }
 
@@ -1512,6 +1533,29 @@ function primaryFlagIconModifierClass(change: RevisionWithSource): string {
 
 function isRecommendationPrimaryFlag(change: RevisionWithSource): boolean {
 	return getPrimaryFeedFlag(change)?.tier === "recommendation"
+}
+
+/** When a primary alert exists, show only that notice (e.g. revert risk hides reference/tone/recommendation text). Watchlist and reverted stay visible. */
+function shouldShowFlagNoticeText(
+	change: RevisionWithSource,
+	which: "revertRisk" | "reference" | "tone" | "recommendation"
+): boolean {
+	const p = getPrimaryFeedFlag(change)
+	if (!p) return true
+	if (p.tier === "recommendation") return which === "recommendation"
+	if (p.tier === "revertRisk") return which === "revertRisk"
+	if (p.tier === "toneReference") {
+		if (which === "recommendation" || which === "revertRisk") return false
+		if (which === "tone") {
+			return !!(props.showToneCheckFlag && hasToneCheckFlag(change))
+		}
+		if (which === "reference") {
+			if (!(props.showEditCheckOtherFlag && hasReferenceNeed(change))) return false
+			if (props.showToneCheckFlag && hasToneCheckFlag(change)) return false
+			return true
+		}
+	}
+	return false
 }
 
 function isPageOnWatchlist(pageName: string | undefined): boolean {
@@ -1911,6 +1955,7 @@ function tryHydrateFromPersistedCache(): void {
 }
 
 function refreshFeed(): void {
+	clearViewedRevisions()
 	void loadFeed(false)
 }
 

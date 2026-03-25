@@ -28,8 +28,24 @@
 	min-height: 0;
 }
 
+.review-changes__title-actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
+}
+
 .review-changes__refresh {
 	flex-shrink: 0;
+}
+
+.review-changes__refresh--reset-opened {
+	color: var(--color-subtle, #a2a9b1);
+	opacity: var(--opacity-icon-placeholder, 0.51);
+}
+
+.review-changes__refresh--reset-opened:hover {
+	opacity: var(--opacity-icon-subtle, 0.67);
 }
 
 .review-changes__empty-cache-notice {
@@ -120,8 +136,11 @@
 	/* border-bottom: 1px solid var(--border-color-subtle, #a2a9b1); */
 }
 
-.review-changes__item-link:hover {
-	background-color: var(--background-color-progressive-subtle--hover, #d9e2ff);
+/* Only when no coarse pointer */
+@media (pointer: fine) {
+	.review-changes__item-link:hover {
+		background-color: var(--background-color-progressive-subtle, #d9e2ff);
+	}
 }
 
 .review-changes__item-link--not-link {
@@ -155,9 +174,11 @@
 
 .review-changes__primary-flag-icon {
 	position: absolute;
-	top: 12px;
-	right: 12px;
+	top: 18px;
+	right: 16px;
 	pointer-events: none;
+	height: 24px;
+	width: 24px;
 }
 
 .review-changes__primary-flag-icon--tone {
@@ -173,7 +194,15 @@
 }
 
 .review-changes__primary-flag-icon--recommendation {
-	color: var(--color-progressive, #36c);
+	/* color: var(--color-progressive, #36c); */
+}
+
+.review-changes__primary-flag-icon--recommendation {
+	color: var(--color-base--subtle);
+}
+
+.review-changes__item-link--unviewed .review-changes__primary-flag-icon--recommendation {
+	color: var(--color-emphasized);
 }
 
 .review-changes__item-link--primary-unviewed-tone {
@@ -305,9 +334,9 @@
 	text-decoration: none;
 }
 
-.review-changes__user:visited {
-	color: var(--color-progressive, #36c);
-}
+/* .review-changes__user:visited { */
+/* color: var(--color-progressive, #36c); */
+/* } */
 
 .review-changes__user:hover {
 	color: var(--color-progressive--hover, #3056a9);
@@ -343,7 +372,7 @@
 }
 
 .review-changes__flags-container {
-	margin-top: 12px;
+	margin-top: 8px;
 	/* margin-bottom: 0.125rem; */
 	display: flex;
 	flex-direction: column;
@@ -407,6 +436,8 @@
 .review-changes__revert-risk-notice--tone-ref {
 	color: var(--color-warning, #886425);
 }
+
+/* .review-changes__recommendation-notice {} */
 
 .review-changes__recommendation-notice--primary {
 	color: var(--color-progressive, #36c);
@@ -594,6 +625,12 @@
 	color: var(--color-base--subtle);
 	line-height: var(--line-height-content);
 	flex-shrink: 1;
+}
+
+.review-changes__page-cell-heading {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 /* Unified layout: bold page title + truncation */
