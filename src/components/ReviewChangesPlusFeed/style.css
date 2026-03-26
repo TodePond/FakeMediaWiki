@@ -176,11 +176,11 @@
 
 .review-changes__primary-flag-icon {
 	position: absolute;
-	top: 18px;
+	top: 16px;
 	right: 16px;
 	pointer-events: none;
-	height: 24px;
-	width: 24px;
+	height: 22px;
+	width: 22px;
 }
 
 .review-changes__primary-flag-icon--tone {
@@ -212,7 +212,7 @@
 .review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--revert,
 .review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--revert-warn,
 .review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--recommendation {
-	color: var(--color-base--subtle, #54595d);
+	color: var(--color-icon-notice, #54595d);
 }
 
 .review-changes__item-link--revision-viewed .review-changes__revert-risk-notice--very-high,
@@ -794,6 +794,17 @@
 
 .review-changes__structured-delta-placeholder {
 	color: var(--color-subtle);
+}
+
+/* Viewed cards: keep structured deltas visible but de-emphasized */
+.review-changes__structured-delta-row--viewed {
+	color: var(--color-base--subtle, #54595d);
+}
+
+.review-changes__structured-delta-row--viewed .change-types-delta-add,
+.review-changes__structured-delta-row--viewed .change-types-delta-remove,
+.review-changes__structured-delta-row--viewed .change-types-delta-change {
+	color: var(--color-base--subtle, #54595d);
 }
 
 .change-types-delta-add {

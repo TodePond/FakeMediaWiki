@@ -303,11 +303,13 @@
 								</span>
 								<div
 									v-if="
-										showStructuredDeltasForFlaggedUnviewed &&
-										hasAnyFlag(change) &&
-										!isRevisionViewed(change)
+										showStructuredDeltasForFlaggedUnviewed && hasAnyFlag(change)
 									"
 									class="review-changes__structured-delta-row"
+									:class="{
+										'review-changes__structured-delta-row--viewed':
+											isRevisionViewed(change),
+									}"
 								>
 									<template v-if="getStructuredDeltaSegments(change.id)?.length"
 										><span :class="structuredDeltaOpenParenClass(change.id)"
@@ -1015,9 +1017,7 @@ function hasSummaryAbove(change: FWRevision): boolean {
 		!!(change?.summary?.comment || change?.comment) ||
 		props.showDelta ||
 		props.showEmptyEditSummary ||
-		(props.showStructuredDeltasForFlaggedUnviewed &&
-			hasAnyFlag(change) &&
-			!isRevisionViewed(change))
+		(props.showStructuredDeltasForFlaggedUnviewed && hasAnyFlag(change))
 	)
 }
 
@@ -1046,7 +1046,7 @@ const referenceNeedByRevId = ref<
 >(new Map())
 const isLoadingReferenceNeed = ref(false)
 /** Delta threshold: show flag when change increased uncited content by this much (rn_after - rn_before). */
-const REFERENCE_NEED_THRESHOLD = 0.1
+const REFERENCE_NEED_THRESHOLD = 0.01
 
 const toneCheckByRevId = ref<Map<number, FWToneCheckPrediction | { error: true } | null>>(new Map())
 const isLoadingToneCheck = ref(false)
@@ -1258,6 +1258,29 @@ function revertRiskScoreMeetsUpperThreshold(revision: FWRevision): boolean {
 	return getRiskFromPrediction(pred) > REVERT_RISK_THRESHOLDS.upperLoose
 }
 
+/** Keep in risky-feed mode if revert risk is high or ref/tone checks flag an issue (when those checks are enabled). */
+function recentChangeQualifiesForRiskyFeed(revision: FWRevision): boolean {
+	return (
+		revertRiskScoreMeetsUpperThreshold(revision) ||
+		(props.showEditCheckOtherFlag && hasReferenceNeed(revision)) ||
+		(props.showToneCheckFlag && hasToneCheckFlag(revision))
+	)
+}
+
+function pickFirstNQualifyingRevisions(
+	ordered: FWRevision[],
+	target: number,
+	qualifies: (r: FWRevision) => boolean
+): FWRevision[] {
+	if (target <= 0) return []
+	const out: FWRevision[] = []
+	for (const r of ordered) {
+		if (out.length >= target) break
+		if (qualifies(r)) out.push(r)
+	}
+	return out
+}
+
 function referenceNeedEntryValid(
 	entry: { delta: number; before: number; after: number } | { error: true } | undefined
 ): entry is { delta: number; before: number; after: number } {
@@ -1277,14 +1300,14 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
 	if (props.requireRecentChangesMeetRevertRiskThresholds) {
 		if (props.source === "mixed") {
-			const rcCandidates = getMixedRecentChangesSlicedRevisions()
+			const rcCandidates = getMixedRecentChangesFullyOrdered()
 			const byId = new Map<number, FWRevision>(revs.map(r => [r.id, r]))
 			for (const r of rcCandidates) {
 				if (!byId.has(r.id)) byId.set(r.id, r)
 			}
 			revs = [...byId.values()]
 		} else if (props.source === "recentChanges") {
-			const rcCandidates = getStandaloneRecentChangesSlicedRevisions()
+			const rcCandidates = getStandaloneRecentChangesCandidatePool()
 			const byId = new Map<number, FWRevision>(revs.map(r => [r.id, r]))
 			for (const r of rcCandidates) {
 				if (!byId.has(r.id)) byId.set(r.id, r)
@@ -1334,7 +1357,24 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 }
 
 async function fetchReferenceNeedForFeed(): Promise<void> {
-	const revs = selectedRevisionsForDisplay.value
+	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
+	if (props.requireRecentChangesMeetRevertRiskThresholds) {
+		if (props.source === "mixed") {
+			const rcCandidates = getMixedRecentChangesFullyOrdered()
+			const byId = new Map(revs.map(r => [r.id, r]))
+			for (const r of rcCandidates) {
+				if (!byId.has(r.id)) byId.set(r.id, r)
+			}
+			revs = [...byId.values()]
+		} else if (props.source === "recentChanges") {
+			const rcCandidates = getStandaloneRecentChangesCandidatePool()
+			const byId = new Map(revs.map(r => [r.id, r]))
+			for (const r of rcCandidates) {
+				if (!byId.has(r.id)) byId.set(r.id, r)
+			}
+			revs = [...byId.values()]
+		}
+	}
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
 	if (revsWithPage.length === 0) return
@@ -1414,7 +1454,24 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 }
 
 async function fetchToneCheckForFeed(): Promise<void> {
-	const revs = selectedRevisionsForDisplay.value
+	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
+	if (props.requireRecentChangesMeetRevertRiskThresholds) {
+		if (props.source === "mixed") {
+			const rcCandidates = getMixedRecentChangesFullyOrdered()
+			const byId = new Map(revs.map(r => [r.id, r]))
+			for (const r of rcCandidates) {
+				if (!byId.has(r.id)) byId.set(r.id, r)
+			}
+			revs = [...byId.values()]
+		} else if (props.source === "recentChanges") {
+			const rcCandidates = getStandaloneRecentChangesCandidatePool()
+			const byId = new Map(revs.map(r => [r.id, r]))
+			for (const r of rcCandidates) {
+				if (!byId.has(r.id)) byId.set(r.id, r)
+			}
+			revs = [...byId.values()]
+		}
+	}
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
 	if (revsWithPage.length === 0) return
@@ -1478,8 +1535,8 @@ type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
 
 const NUM_RC_SEGMENTS = 4
 
-/** Pre-filter recent-changes slice for mixed mode (same ordering as the feed). */
-function getMixedRecentChangesSlicedRevisions(): FWRevision[] {
+/** Full interleaved recent-changes ordering for mixed mode (segment round-robin); not capped by ratio. */
+function getMixedRecentChangesFullyOrdered(): FWRevision[] {
 	const rcSegments = mixedRecentChangesBySegment.value
 	const rcRatioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
 	if (rcRatioPercent === 0) return []
@@ -1501,20 +1558,31 @@ function getMixedRecentChangesSlicedRevisions(): FWRevision[] {
 			if (seg[i]) rcOrdered.push(seg[i])
 		}
 	}
-	const rcCount = Math.min(
+	return rcOrdered
+}
+
+/** Target slot count for recent changes in mixed mode (ratio of RECENT_CHANGES_LIMIT). */
+function getMixedRecentChangesTargetCount(): number {
+	const rcOrdered = getMixedRecentChangesFullyOrdered()
+	const rcRatioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
+	if (rcRatioPercent === 0) return 0
+	return Math.min(
 		Math.floor((RECENT_CHANGES_LIMIT * rcRatioPercent) / 100),
 		rcOrdered.length
 	)
-	return rcOrdered.slice(0, rcCount)
 }
 
-/** Pre-filter slice when source is standalone recent changes. */
-function getStandaloneRecentChangesSlicedRevisions(): FWRevision[] {
+/** Pre-filter recent-changes slice for mixed mode when not using risky-feed backfill (same ordering as the feed). */
+function getMixedRecentChangesSlicedRevisions(): FWRevision[] {
+	const rcOrdered = getMixedRecentChangesFullyOrdered()
+	const target = getMixedRecentChangesTargetCount()
+	return rcOrdered.slice(0, target)
+}
+
+/** Full candidate pool for standalone recent changes (time order), for prediction fetch and backfill. */
+function getStandaloneRecentChangesCandidatePool(): FWRevision[] {
 	if (props.source !== "recentChanges") return []
-	const all = selectedRevisions.value
-	const ratioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
-	const count = Math.min(Math.floor((RECENT_CHANGES_LIMIT * ratioPercent) / 100), all.length)
-	return all.slice(0, count)
+	return selectedRevisions.value
 }
 
 function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
@@ -1539,10 +1607,10 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 							? Math.max(0, Math.min(100, props.collaboratorsRatio ?? 20))
 							: Math.max(0, Math.min(100, props.relatedChangesRatio ?? 30))
 		const count = Math.min(Math.floor((RECENT_CHANGES_LIMIT * ratioPercent) / 100), all.length)
-		let toShow = all.slice(0, count)
-		if (props.requireRecentChangesMeetRevertRiskThresholds && props.source === "recentChanges") {
-			toShow = toShow.filter(revertRiskScoreMeetsUpperThreshold)
-		}
+		let toShow =
+			props.requireRecentChangesMeetRevertRiskThresholds && props.source === "recentChanges"
+				? pickFirstNQualifyingRevisions(all, count, recentChangeQualifiesForRiskyFeed)
+				: all.slice(0, count)
 		return toShow.map(r => ({ ...r, itemSource: props.source as ItemSource }))
 	}
 	const wl = mixedPagesAndUsersData.value
@@ -1565,10 +1633,13 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	)
 		return []
 
-	let rcSliced = getMixedRecentChangesSlicedRevisions()
-	if (props.requireRecentChangesMeetRevertRiskThresholds) {
-		rcSliced = rcSliced.filter(revertRiskScoreMeetsUpperThreshold)
-	}
+	let rcSliced = props.requireRecentChangesMeetRevertRiskThresholds
+		? pickFirstNQualifyingRevisions(
+				getMixedRecentChangesFullyOrdered(),
+				getMixedRecentChangesTargetCount(),
+				recentChangeQualifiesForRiskyFeed
+			)
+		: getMixedRecentChangesSlicedRevisions()
 
 	const wlCount = Math.min(Math.floor((RECENT_CHANGES_LIMIT * wlRatioPercent) / 100), wl.length)
 	const wlSliced = wl.slice(0, wlCount)
@@ -1806,8 +1877,9 @@ watch(
 		if (!enabled) return
 		const hasRcCandidates =
 			props.requireRecentChangesMeetRevertRiskThresholds &&
-			((props.source === "mixed" && getMixedRecentChangesSlicedRevisions().length > 0) ||
-				(props.source === "recentChanges" && getStandaloneRecentChangesSlicedRevisions().length > 0))
+			((props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0) ||
+				(props.source === "recentChanges" &&
+					getStandaloneRecentChangesCandidatePool().length > 0))
 		if (selectedRevisionsForDisplay.value.length > 0 || hasRcCandidates) {
 			void fetchRevertRiskForFeed()
 		}
@@ -1817,7 +1889,13 @@ watch(
 watch(
 	() => props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks,
 	enabled => {
-		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
+		if (!enabled) return
+		const hasRcCandidates =
+			props.requireRecentChangesMeetRevertRiskThresholds &&
+			((props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0) ||
+				(props.source === "recentChanges" &&
+					getStandaloneRecentChangesCandidatePool().length > 0))
+		if (selectedRevisionsForDisplay.value.length > 0 || hasRcCandidates) {
 			fetchReferenceNeedForFeed()
 			fetchToneCheckForFeed()
 		}
@@ -1829,13 +1907,31 @@ watch(
 	() => [
 		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
 		props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks,
+		props.requireRecentChangesMeetRevertRiskThresholds && props.source === "mixed"
+			? getMixedRecentChangesFullyOrdered()
+					.map(r => r.id)
+					.join(",")
+			: props.requireRecentChangesMeetRevertRiskThresholds && props.source === "recentChanges"
+				? getStandaloneRecentChangesCandidatePool()
+						.map(r => r.id)
+						.join(",")
+				: "",
 	],
 	([, enabled]) => {
-		if (
-			!enabled ||
-			props.source !== "mixed" ||
-			selectedRevisionsForDisplay.value.length === 0
-		) {
+		if (!enabled) return
+		const thresholdRc =
+			props.requireRecentChangesMeetRevertRiskThresholds &&
+			(props.source === "mixed" || props.source === "recentChanges")
+		const hasMixedPool =
+			props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0
+		const hasStandalonePool =
+			props.source === "recentChanges" &&
+			getStandaloneRecentChangesCandidatePool().length > 0
+		if (props.source === "mixed") {
+			if (!hasMixedPool && selectedRevisionsForDisplay.value.length === 0) return
+		} else if (thresholdRc && props.source === "recentChanges") {
+			if (!hasStandalonePool && selectedRevisionsForDisplay.value.length === 0) return
+		} else {
 			return
 		}
 		if (referenceNeedDebounceId) clearTimeout(referenceNeedDebounceId)
@@ -1855,11 +1951,11 @@ watch(
 			props.showRevertRiskFlags ||
 			props.requireRecentChangesMeetRevertRiskThresholds,
 		props.requireRecentChangesMeetRevertRiskThresholds && props.source === "mixed"
-			? getMixedRecentChangesSlicedRevisions()
+			? getMixedRecentChangesFullyOrdered()
 					.map(r => r.id)
 					.join(",")
 			: props.requireRecentChangesMeetRevertRiskThresholds && props.source === "recentChanges"
-				? getStandaloneRecentChangesSlicedRevisions()
+				? getStandaloneRecentChangesCandidatePool()
 						.map(r => r.id)
 						.join(",")
 				: "",
@@ -1872,8 +1968,9 @@ watch(
 		if (!isMixedOrFilteredRc) return
 		const hasRcCandidates =
 			props.requireRecentChangesMeetRevertRiskThresholds &&
-			((props.source === "mixed" && getMixedRecentChangesSlicedRevisions().length > 0) ||
-				(props.source === "recentChanges" && getStandaloneRecentChangesSlicedRevisions().length > 0))
+			((props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0) ||
+				(props.source === "recentChanges" &&
+					getStandaloneRecentChangesCandidatePool().length > 0))
 		if (selectedRevisionsForDisplay.value.length === 0 && !hasRcCandidates) return
 		if (revertRiskDebounceId) clearTimeout(revertRiskDebounceId)
 		revertRiskDebounceId = setTimeout(() => {
@@ -2095,7 +2192,11 @@ function restoreLastSuccessfulFeed(): void {
 		)
 	}
 	if (
-		!(props.showRevertRisk || props.showRevertRiskFlags || props.requireRecentChangesMeetRevertRiskThresholds) &&
+		!(
+			props.showRevertRisk ||
+			props.showRevertRiskFlags ||
+			props.requireRecentChangesMeetRevertRiskThresholds
+		) &&
 		!(props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks)
 	) {
 		schedulePersistFeedBundleSave()
@@ -2871,7 +2972,7 @@ const revisionsOnScreen = computed(() => revisionsByDateCapped.value.flatMap(g =
 
 const structuredDeltaRevisionIds = computed(() =>
 	props.showStructuredDeltasForFlaggedUnviewed
-		? revisionsOnScreen.value.filter(r => hasAnyFlag(r) && !isRevisionViewed(r)).map(r => r.id)
+		? revisionsOnScreen.value.filter(r => hasAnyFlag(r)).map(r => r.id)
 		: []
 )
 
