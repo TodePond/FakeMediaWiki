@@ -3,6 +3,8 @@
  * Mirrors prototype settings from the dashboard playground screenshots.
  */
 export const reviewChangesPlusFeedProps = {
+	/** Only show recent-changes items above Lift Wing REVERT_RISK_THRESHOLDS.upperLoose (dashboard + playground). */
+	requireRecentChangesMeetRevertRiskThresholds: true,
 	showRevertRisk: false,
 	showRevertRiskFlags: true,
 	revertRiskFlagsInBox: true,
@@ -43,4 +45,5 @@ export const reviewChangesPlusFeedProps = {
 	showShortDescriptionSeparator: true,
 	showOnWatchlistLabel: false,
 	unifiedTitle: false,
+	showStructuredDeltasForFlaggedUnviewed: true,
 }

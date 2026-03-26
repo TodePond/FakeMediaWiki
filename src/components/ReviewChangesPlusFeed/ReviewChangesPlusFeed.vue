@@ -81,6 +81,7 @@
 						class="review-changes__item-link"
 						:class="{
 							'review-changes__item-link--not-link': !change.pageName,
+							'review-changes__item-link--revision-viewed': isRevisionViewed(change),
 							'review-changes__item-link--unviewed':
 								highlightUnviewed && !isRevisionViewed(change),
 							'review-changes__item-link--last-clicked':
@@ -300,6 +301,51 @@
 										</time>
 									</template>
 								</span>
+								<div
+									v-if="
+										showStructuredDeltasForFlaggedUnviewed &&
+										hasAnyFlag(change) &&
+										!isRevisionViewed(change)
+									"
+									class="review-changes__structured-delta-row"
+								>
+									<template v-if="getStructuredDeltaSegments(change.id)?.length"
+										><span :class="structuredDeltaOpenParenClass(change.id)"
+											>(</span
+										><template
+											v-for="(seg, i) in getStructuredDeltaSegments(
+												change.id
+											)!"
+											:key="i"
+										>
+											<span :class="seg.deltaClass">{{ seg.text }}</span
+											><span
+												v-if="
+													i <
+													getStructuredDeltaSegments(change.id)!.length -
+														1
+												"
+												:class="seg.deltaClass"
+												>,
+											</span> </template
+										><span :class="structuredDeltaCloseParenClass(change.id)"
+											>)</span
+										></template
+									>
+									<template
+										v-else-if="isStructuredDeltaLoadingForRevision(change.id)"
+									>
+										<span class="review-changes__structured-delta-placeholder"
+											>(…)</span
+										>
+									</template>
+									<template v-else>
+										<span
+											:class="wiki.getDeltaClass(change.delta ?? 0, false)"
+											>{{ formatDelta(change.delta) }}</span
+										>
+									</template>
+								</div>
 								<div
 									v-if="
 										// !!(change?.summary?.comment || change?.comment) || showDelta
@@ -705,8 +751,9 @@ import {
 	cdxIconUserAvatar,
 	cdxIconUserTemporary,
 } from "@wikimedia/codex-icons"
-import { FakeWiki, FakeWikiHttpError } from "fakewiki"
+import { FakeWiki, FakeWikiHttpError, useStructuredDeltas } from "fakewiki"
 import type {
+	FWEditTypesDiffSummary,
 	FWLiftWingPrediction,
 	FWPageHistoryRevision,
 	FWPredictionByModel,
@@ -813,6 +860,13 @@ const props = withDefaults(
 		showDebugChecks?: boolean
 		/** When true, uses unified title component (page name + short desc + timestamp together). When false, uses separate elements (original Review Changes layout). */
 		unifiedTitle?: boolean
+		/** When true, show structured edit-types deltas in the summary row for items that are flagged and not yet viewed. */
+		showStructuredDeltasForFlaggedUnviewed?: boolean
+		/**
+		 * When true, only show recent-changes-sourced items whose Lift Wing revertrisk score is above
+		 * REVERT_RISK_THRESHOLDS.upperLoose (same bar as elevated “High revert risk” notices).
+		 */
+		requireRecentChangesMeetRevertRiskThresholds?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -853,10 +907,15 @@ const props = withDefaults(
 		showOnWatchlistLabel: false,
 		showDebugChecks: false,
 		unifiedTitle: false,
+		showStructuredDeltasForFlaggedUnviewed: false,
+		requireRecentChangesMeetRevertRiskThresholds: false,
 	}
 )
 
 const wiki = new FakeWiki()
+
+/** Set after `useStructuredDeltas` below; used by persist/restore helpers. */
+let structuredDeltas: ReturnType<typeof useStructuredDeltas> | null = null
 
 const {
 	isRevisionViewed,
@@ -955,7 +1014,10 @@ function hasSummaryAbove(change: FWRevision): boolean {
 	return (
 		!!(change?.summary?.comment || change?.comment) ||
 		props.showDelta ||
-		props.showEmptyEditSummary
+		props.showEmptyEditSummary ||
+		(props.showStructuredDeltasForFlaggedUnviewed &&
+			hasAnyFlag(change) &&
+			!isRevisionViewed(change))
 	)
 }
 
@@ -984,7 +1046,7 @@ const referenceNeedByRevId = ref<
 >(new Map())
 const isLoadingReferenceNeed = ref(false)
 /** Delta threshold: show flag when change increased uncited content by this much (rn_after - rn_before). */
-const REFERENCE_NEED_THRESHOLD = 0.002
+const REFERENCE_NEED_THRESHOLD = 0.1
 
 const toneCheckByRevId = ref<Map<number, FWToneCheckPrediction | { error: true } | null>>(new Map())
 const isLoadingToneCheck = ref(false)
@@ -1177,49 +1239,92 @@ function getRecommendationDetailText(sourcePageNames: string[]): string {
 	return `Shown because you watch ${rest}, and ${last}.`
 }
 
-function revertRiskCacheCoversRevisionIds(revIds: number[]): boolean {
-	if (revIds.length === 0) return true
-	const m = revertRiskByRevId.value
-	if (m.size !== revIds.length) return false
-	return revIds.every(id => m.has(id))
+function revertRiskEntryIsComplete(
+	entry: FWPredictionByModel | { error: true } | undefined,
+	models: FWPredictionModel[]
+): boolean {
+	if (!entry || ("error" in entry && entry.error)) return false
+	const by = entry as FWPredictionByModel
+	return models.every(m => by[m] != null)
 }
 
-function referenceNeedCacheCoversRevisionIds(revIds: number[]): boolean {
-	if (revIds.length === 0) return true
-	const m = referenceNeedByRevId.value
-	if (m.size !== revIds.length) return false
-	return revIds.every(id => m.has(id))
+/** Same upper band as elevated revert-risk notices; false if prediction missing or incomplete. */
+function revertRiskScoreMeetsUpperThreshold(revision: FWRevision): boolean {
+	const entry = revertRiskByRevId.value.get(revision.id)
+	if (!entry || ("error" in entry && entry.error)) return false
+	const byModel = entry as FWPredictionByModel
+	const pred = byModel.revertrisk
+	if (!pred) return false
+	return getRiskFromPrediction(pred) > REVERT_RISK_THRESHOLDS.upperLoose
 }
 
-function toneCheckCacheCoversRevisionIds(revIds: number[]): boolean {
-	if (revIds.length === 0) return true
-	const m = toneCheckByRevId.value
-	if (m.size !== revIds.length) return false
-	return revIds.every(id => m.has(id))
+function referenceNeedEntryValid(
+	entry: { delta: number; before: number; after: number } | { error: true } | undefined
+): entry is { delta: number; before: number; after: number } {
+	if (entry == null) return false
+	return !("error" in entry && entry.error)
+}
+
+function toneCheckEntryValid(
+	entry: FWToneCheckPrediction | { error: true } | null | undefined
+): boolean {
+	if (entry == null) return false
+	if (typeof entry === "object" && "error" in entry && entry.error) return false
+	return true
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
-	const revs = selectedRevisionsForDisplay.value
+	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
+	if (props.requireRecentChangesMeetRevertRiskThresholds) {
+		if (props.source === "mixed") {
+			const rcCandidates = getMixedRecentChangesSlicedRevisions()
+			const byId = new Map<number, FWRevision>(revs.map(r => [r.id, r]))
+			for (const r of rcCandidates) {
+				if (!byId.has(r.id)) byId.set(r.id, r)
+			}
+			revs = [...byId.values()]
+		} else if (props.source === "recentChanges") {
+			const rcCandidates = getStandaloneRecentChangesSlicedRevisions()
+			const byId = new Map<number, FWRevision>(revs.map(r => [r.id, r]))
+			for (const r of rcCandidates) {
+				if (!byId.has(r.id)) byId.set(r.id, r)
+			}
+			revs = [...byId.values()]
+		}
+	}
 	if (revs.length === 0) return
 	const revIds = revs.map(r => r.id)
-	if (revertRiskCacheCoversRevisionIds(revIds)) return
-	isLoadingRevertRisk.value = true
-	revertRiskByRevId.value = new Map()
+	const prev = revertRiskByRevId.value
 	const models: FWPredictionModel[] = props.showRevertRisk
 		? ["revertrisk", "revertrisk-multilingual"]
 		: ["revertrisk"]
+	const toFetch = revIds.filter(id => !revertRiskEntryIsComplete(prev.get(id), models))
+	if (toFetch.length === 0) {
+		const pruned = new Map<number, FWPredictionByModel | { error: true }>()
+		for (const id of revIds) {
+			const e = prev.get(id)
+			if (revertRiskEntryIsComplete(e, models)) pruned.set(id, e as FWPredictionByModel)
+		}
+		revertRiskByRevId.value = pruned
+		schedulePersistFeedBundleSave()
+		return
+	}
+	isLoadingRevertRisk.value = true
+	const next = new Map<number, FWPredictionByModel | { error: true }>()
+	for (const id of revIds) {
+		const e = prev.get(id)
+		if (revertRiskEntryIsComplete(e, models)) next.set(id, e as FWPredictionByModel)
+	}
 	try {
-		const predictions = await wiki.getRevisionPredictions(revIds, models)
-		const next = new Map<number, FWPredictionByModel | { error: true }>()
-		for (const revId of revIds) {
+		const predictions = await wiki.getRevisionPredictions(toFetch, models)
+		for (const revId of toFetch) {
 			const byModel = predictions[revId] ?? {}
 			next.set(revId, byModel)
 		}
 		revertRiskByRevId.value = next
 	} catch {
-		const next = new Map<number, FWPredictionByModel | { error: true }>()
-		for (const revId of revIds) {
-			next.set(revId, { error: true })
+		for (const revId of toFetch) {
+			if (!next.has(revId)) next.set(revId, { error: true })
 		}
 		revertRiskByRevId.value = next
 	} finally {
@@ -1233,13 +1338,33 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
 	if (revsWithPage.length === 0) return
-	const refRevIds = revsWithPage.map(r => r.id)
-	if (referenceNeedCacheCoversRevisionIds(refRevIds)) return
+	const prev = referenceNeedByRevId.value
+	const toFetch = revsWithPage.filter(c => !referenceNeedEntryValid(prev.get(c.id)))
+	if (toFetch.length === 0) {
+		const pruned = new Map<
+			number,
+			{ delta: number; before: number; after: number } | { error: true }
+		>()
+		for (const c of revsWithPage) {
+			const e = prev.get(c.id)
+			if (referenceNeedEntryValid(e)) pruned.set(c.id, e)
+		}
+		referenceNeedByRevId.value = pruned
+		schedulePersistFeedBundleSave()
+		return
+	}
 	isLoadingReferenceNeed.value = true
-	referenceNeedByRevId.value = new Map()
+	const next = new Map<
+		number,
+		{ delta: number; before: number; after: number } | { error: true }
+	>()
+	for (const c of revsWithPage) {
+		const e = prev.get(c.id)
+		if (referenceNeedEntryValid(e)) next.set(c.id, e)
+	}
 	try {
 		const results = await wiki.runWithConcurrency(
-			revsWithPage,
+			toFetch,
 			REFERENCE_NEED_AND_TONE_CONCURRENCY,
 			async change => {
 				try {
@@ -1265,10 +1390,6 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 				}
 			}
 		)
-		const next = new Map<
-			number,
-			{ delta: number; before: number; after: number } | { error: true }
-		>()
 		for (const result of results) {
 			if (result.error) {
 				next.set(result.revId, { error: true })
@@ -1282,12 +1403,8 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 		}
 		referenceNeedByRevId.value = next
 	} catch {
-		const next = new Map<
-			number,
-			{ delta: number; before: number; after: number } | { error: true }
-		>()
-		for (const change of revsWithPage) {
-			next.set(change.id, { error: true })
+		for (const change of toFetch) {
+			if (!next.has(change.id)) next.set(change.id, { error: true })
 		}
 		referenceNeedByRevId.value = next
 	} finally {
@@ -1301,13 +1418,27 @@ async function fetchToneCheckForFeed(): Promise<void> {
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
 	if (revsWithPage.length === 0) return
-	const toneRevIds = revsWithPage.map(r => r.id)
-	if (toneCheckCacheCoversRevisionIds(toneRevIds)) return
+	const prev = toneCheckByRevId.value
+	const toFetch = revsWithPage.filter(c => !toneCheckEntryValid(prev.get(c.id)))
+	if (toFetch.length === 0) {
+		const pruned = new Map<number, FWToneCheckPrediction | { error: true } | null>()
+		for (const c of revsWithPage) {
+			const e = prev.get(c.id)
+			if (toneCheckEntryValid(e)) pruned.set(c.id, e as FWToneCheckPrediction)
+		}
+		toneCheckByRevId.value = pruned
+		schedulePersistFeedBundleSave()
+		return
+	}
 	isLoadingToneCheck.value = true
-	toneCheckByRevId.value = new Map()
+	const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
+	for (const c of revsWithPage) {
+		const e = prev.get(c.id)
+		if (toneCheckEntryValid(e)) next.set(c.id, e as FWToneCheckPrediction)
+	}
 	try {
 		const results = await wiki.runWithConcurrency(
-			revsWithPage,
+			toFetch,
 			REFERENCE_NEED_AND_TONE_CONCURRENCY,
 			async change => {
 				try {
@@ -1318,15 +1449,13 @@ async function fetchToneCheckForFeed(): Promise<void> {
 				}
 			}
 		)
-		const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
 		for (const { revId, pred } of results) {
 			next.set(revId, pred)
 		}
 		toneCheckByRevId.value = next
 	} catch {
-		const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
-		for (const change of revsWithPage) {
-			next.set(change.id, { error: true })
+		for (const change of toFetch) {
+			if (!next.has(change.id)) next.set(change.id, { error: true })
 		}
 		toneCheckByRevId.value = next
 	} finally {
@@ -1348,6 +1477,45 @@ const mixedRelatedChangesData = ref<FWRevision[]>([])
 type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
 
 const NUM_RC_SEGMENTS = 4
+
+/** Pre-filter recent-changes slice for mixed mode (same ordering as the feed). */
+function getMixedRecentChangesSlicedRevisions(): FWRevision[] {
+	const rcSegments = mixedRecentChangesBySegment.value
+	const rcRatioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
+	if (rcRatioPercent === 0) return []
+	const segments = [
+		rcSegments[0] ?? [],
+		rcSegments[1] ?? [],
+		rcSegments[2] ?? [],
+		rcSegments[3] ?? [],
+	].filter(s => s.length > 0)
+	const segmentsByNewest = [...segments].sort((a, b) => {
+		const aNewest = a[0]?.timestamp ?? ""
+		const bNewest = b[0]?.timestamp ?? ""
+		return bNewest.localeCompare(aNewest)
+	})
+	const rcOrdered: FWRevision[] = []
+	const maxSegLen = Math.max(...segmentsByNewest.map(s => s.length), 0)
+	for (let i = 0; i < maxSegLen; i++) {
+		for (const seg of segmentsByNewest) {
+			if (seg[i]) rcOrdered.push(seg[i])
+		}
+	}
+	const rcCount = Math.min(
+		Math.floor((RECENT_CHANGES_LIMIT * rcRatioPercent) / 100),
+		rcOrdered.length
+	)
+	return rcOrdered.slice(0, rcCount)
+}
+
+/** Pre-filter slice when source is standalone recent changes. */
+function getStandaloneRecentChangesSlicedRevisions(): FWRevision[] {
+	if (props.source !== "recentChanges") return []
+	const all = selectedRevisions.value
+	const ratioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
+	const count = Math.min(Math.floor((RECENT_CHANGES_LIMIT * ratioPercent) / 100), all.length)
+	return all.slice(0, count)
+}
 
 function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	if (props.source !== "mixed") {
@@ -1371,10 +1539,12 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 							? Math.max(0, Math.min(100, props.collaboratorsRatio ?? 20))
 							: Math.max(0, Math.min(100, props.relatedChangesRatio ?? 30))
 		const count = Math.min(Math.floor((RECENT_CHANGES_LIMIT * ratioPercent) / 100), all.length)
-		const toShow = all.slice(0, count)
+		let toShow = all.slice(0, count)
+		if (props.requireRecentChangesMeetRevertRiskThresholds && props.source === "recentChanges") {
+			toShow = toShow.filter(revertRiskScoreMeetsUpperThreshold)
+		}
 		return toShow.map(r => ({ ...r, itemSource: props.source as ItemSource }))
 	}
-	const rcSegments = mixedRecentChangesBySegment.value // RC0, RC1, RC2, RC3
 	const wl = mixedPagesAndUsersData.value
 	const wlLatest = mixedPagesAndUsersLatestData.value
 	const collaborators = mixedCollaboratorsData.value
@@ -1395,31 +1565,10 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	)
 		return []
 
-	// RC: order segments by newest first (segment whose most recent item is newest overall),
-	// then round-robin: newest from each segment, then 2nd newest from each, etc.
-	const segments = [
-		rcSegments[0] ?? [],
-		rcSegments[1] ?? [],
-		rcSegments[2] ?? [],
-		rcSegments[3] ?? [],
-	].filter(s => s.length > 0)
-	const segmentsByNewest = [...segments].sort((a, b) => {
-		const aNewest = a[0]?.timestamp ?? ""
-		const bNewest = b[0]?.timestamp ?? ""
-		return bNewest.localeCompare(aNewest)
-	})
-	const rcOrdered: FWRevision[] = []
-	const maxSegLen = Math.max(...segmentsByNewest.map(s => s.length), 0)
-	for (let i = 0; i < maxSegLen; i++) {
-		for (const seg of segmentsByNewest) {
-			if (seg[i]) rcOrdered.push(seg[i])
-		}
+	let rcSliced = getMixedRecentChangesSlicedRevisions()
+	if (props.requireRecentChangesMeetRevertRiskThresholds) {
+		rcSliced = rcSliced.filter(revertRiskScoreMeetsUpperThreshold)
 	}
-	const rcCount = Math.min(
-		Math.floor((RECENT_CHANGES_LIMIT * rcRatioPercent) / 100),
-		rcOrdered.length
-	)
-	const rcSliced = rcOrdered.slice(0, rcCount)
 
 	const wlCount = Math.min(Math.floor((RECENT_CHANGES_LIMIT * wlRatioPercent) / 100), wl.length)
 	const wlSliced = wl.slice(0, wlCount)
@@ -1649,10 +1798,18 @@ watch(
 )
 
 watch(
-	() => props.showRevertRisk || props.showRevertRiskFlags,
+	() =>
+		props.showRevertRisk ||
+		props.showRevertRiskFlags ||
+		props.requireRecentChangesMeetRevertRiskThresholds,
 	enabled => {
-		if (enabled && selectedRevisionsForDisplay.value.length > 0) {
-			fetchRevertRiskForFeed()
+		if (!enabled) return
+		const hasRcCandidates =
+			props.requireRecentChangesMeetRevertRiskThresholds &&
+			((props.source === "mixed" && getMixedRecentChangesSlicedRevisions().length > 0) ||
+				(props.source === "recentChanges" && getStandaloneRecentChangesSlicedRevisions().length > 0))
+		if (selectedRevisionsForDisplay.value.length > 0 || hasRcCandidates) {
+			void fetchRevertRiskForFeed()
 		}
 	}
 )
@@ -1694,20 +1851,34 @@ let revertRiskDebounceId: ReturnType<typeof setTimeout> | null = null
 watch(
 	() => [
 		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
-		props.showRevertRisk || props.showRevertRiskFlags,
+		props.showRevertRisk ||
+			props.showRevertRiskFlags ||
+			props.requireRecentChangesMeetRevertRiskThresholds,
+		props.requireRecentChangesMeetRevertRiskThresholds && props.source === "mixed"
+			? getMixedRecentChangesSlicedRevisions()
+					.map(r => r.id)
+					.join(",")
+			: props.requireRecentChangesMeetRevertRiskThresholds && props.source === "recentChanges"
+				? getStandaloneRecentChangesSlicedRevisions()
+						.map(r => r.id)
+						.join(",")
+				: "",
 	],
 	([, enabled]) => {
-		if (
-			!enabled ||
-			props.source !== "mixed" ||
-			selectedRevisionsForDisplay.value.length === 0
-		) {
-			return
-		}
+		if (!enabled) return
+		const isMixedOrFilteredRc =
+			props.source === "mixed" ||
+			(props.source === "recentChanges" && props.requireRecentChangesMeetRevertRiskThresholds)
+		if (!isMixedOrFilteredRc) return
+		const hasRcCandidates =
+			props.requireRecentChangesMeetRevertRiskThresholds &&
+			((props.source === "mixed" && getMixedRecentChangesSlicedRevisions().length > 0) ||
+				(props.source === "recentChanges" && getStandaloneRecentChangesSlicedRevisions().length > 0))
+		if (selectedRevisionsForDisplay.value.length === 0 && !hasRcCandidates) return
 		if (revertRiskDebounceId) clearTimeout(revertRiskDebounceId)
 		revertRiskDebounceId = setTimeout(() => {
 			revertRiskDebounceId = null
-			fetchRevertRiskForFeed()
+			void fetchRevertRiskForFeed()
 		}, 300)
 	}
 )
@@ -1728,6 +1899,37 @@ type ReviewChangesFeedSnapshot = {
 	rccontinue?: string
 }
 
+function collectRevisionIdsFromSnapshot(s: ReviewChangesFeedSnapshot): Set<number> {
+	const ids = new Set<number>()
+	for (const r of s.allRevisionsData) ids.add(r.id)
+	for (const r of s.selectedRevisions) ids.add(r.id)
+	for (const r of s.mixedPagesAndUsersData) ids.add(r.id)
+	for (const r of s.mixedPagesAndUsersLatestData) ids.add(r.id)
+	for (const r of s.mixedCollaboratorsData) ids.add(r.id)
+	for (const r of s.mixedRelatedChangesData) ids.add(r.id)
+	for (const seg of s.mixedRecentChangesBySegment) {
+		for (const r of seg) ids.add(r.id)
+	}
+	return ids
+}
+
+function collectPageNamesFromSnapshot(s: ReviewChangesFeedSnapshot): Set<string> {
+	const names = new Set<string>()
+	const add = (r: FWRevision) => {
+		if (r.pageName) names.add(r.pageName)
+	}
+	for (const r of s.allRevisionsData) add(r)
+	for (const r of s.selectedRevisions) add(r)
+	for (const r of s.mixedPagesAndUsersData) add(r)
+	for (const r of s.mixedPagesAndUsersLatestData) add(r)
+	for (const r of s.mixedCollaboratorsData) add(r)
+	for (const r of s.mixedRelatedChangesData) add(r)
+	for (const seg of s.mixedRecentChangesBySegment) {
+		for (const r of seg) add(r)
+	}
+	return names
+}
+
 type PersistedFeedBundleV1 = {
 	version: 1
 	snapshot: ReviewChangesFeedSnapshot
@@ -1738,6 +1940,9 @@ type PersistedFeedBundleV1 = {
 		{ delta: number; before: number; after: number } | { error: true },
 	][]
 	toneCheckEntries: [number, FWToneCheckPrediction | { error: true } | null][]
+	/** Normalized edit-types summaries for structured deltas (revision ids in current feed). */
+	editTypesSummaries?: [number, FWEditTypesDiffSummary | null][]
+	editTypesErrors?: [number, string][]
 }
 
 const PERSISTED_FEED_KEY_PREFIX = "review-changes-plus-feed-v1:"
@@ -1773,6 +1978,12 @@ function parsePersistedFeedBundleJson(raw: string): PersistedFeedBundleV1 | null
 			toneCheckEntries: (Array.isArray(o.toneCheckEntries)
 				? o.toneCheckEntries
 				: []) as PersistedFeedBundleV1["toneCheckEntries"],
+			editTypesSummaries: (Array.isArray(o.editTypesSummaries)
+				? o.editTypesSummaries
+				: []) as NonNullable<PersistedFeedBundleV1["editTypesSummaries"]>,
+			editTypesErrors: (Array.isArray(o.editTypesErrors)
+				? o.editTypesErrors
+				: []) as NonNullable<PersistedFeedBundleV1["editTypesErrors"]>,
 		}
 	} catch {
 		return null
@@ -1828,7 +2039,9 @@ function snapshotFromCurrentRefs(): ReviewChangesFeedSnapshot {
 
 function persistLastSuccessfulFeedSnapshot(): void {
 	lastSuccessfulFeedSnapshot.value = snapshotFromCurrentRefs()
-	schedulePersistFeedBundleSave()
+	// Do not schedulePersistFeedBundleSave() here: loadFeed calls this while revert risk /
+	// reference need / tone fetches are still running; an immediate debounced save would
+	// persist empty prediction maps and overwrite good data on reload.
 }
 
 const showRestoreLastLoadedData = computed(
@@ -1857,15 +2070,32 @@ function restoreLastSuccessfulFeed(): void {
 	revertRiskByRevId.value = new Map()
 	referenceNeedByRevId.value = new Map()
 	toneCheckByRevId.value = new Map()
-	if (props.showRevertRisk || props.showRevertRiskFlags) {
+	if (
+		props.showRevertRisk ||
+		props.showRevertRiskFlags ||
+		props.requireRecentChangesMeetRevertRiskThresholds
+	) {
 		void fetchRevertRiskForFeed()
 	}
 	if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
 		void fetchReferenceNeedForFeed()
 		void fetchToneCheckForFeed()
 	}
+	const persistedForRestore = loadPersistedFeedBundleForSource(props.source ?? "recentChanges")
 	if (
-		!(props.showRevertRisk || props.showRevertRiskFlags) &&
+		props.showStructuredDeltasForFlaggedUnviewed &&
+		structuredDeltas &&
+		persistedForRestore &&
+		(persistedForRestore.editTypesSummaries?.length ||
+			persistedForRestore.editTypesErrors?.length)
+	) {
+		structuredDeltas.hydrateFromEntries(
+			persistedForRestore.editTypesSummaries ?? [],
+			persistedForRestore.editTypesErrors ?? []
+		)
+	}
+	if (
+		!(props.showRevertRisk || props.showRevertRiskFlags || props.requireRecentChangesMeetRevertRiskThresholds) &&
 		!(props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks)
 	) {
 		schedulePersistFeedBundleSave()
@@ -1878,18 +2108,92 @@ function savePersistedFeedBundleNow(): void {
 	try {
 		const snap = snapshotFromCurrentRefs()
 		if (!isFeedSnapshotNonEmpty(snap)) return
+		const allowedRevIds = collectRevisionIdsFromSnapshot(snap)
+		const allowedPageNames = collectPageNamesFromSnapshot(snap)
+		const storageKey = storageKeyForFeed(props.source ?? "recentChanges")
+		const prevBundle = loadPersistedFeedBundleForSource(props.source ?? "recentChanges")
+
+		const predictionModels: FWPredictionModel[] = props.showRevertRisk
+			? ["revertrisk", "revertrisk-multilingual"]
+			: ["revertrisk"]
+
+		const revertRisk = new Map(revertRiskByRevId.value)
+		if (prevBundle) {
+			for (const [id, entry] of prevBundle.revertRiskEntries) {
+				if (!allowedRevIds.has(id)) continue
+				if (
+					revertRiskEntryIsComplete(revertRisk.get(id), predictionModels) ||
+					!revertRiskEntryIsComplete(entry, predictionModels)
+				) {
+					continue
+				}
+				revertRisk.set(id, entry)
+			}
+		}
+
+		const referenceNeed = new Map(referenceNeedByRevId.value)
+		if (prevBundle) {
+			for (const [id, entry] of prevBundle.referenceNeedEntries) {
+				if (!allowedRevIds.has(id)) continue
+				if (
+					referenceNeedEntryValid(referenceNeed.get(id)) ||
+					!referenceNeedEntryValid(entry)
+				) {
+					continue
+				}
+				referenceNeed.set(id, entry)
+			}
+		}
+
+		const toneCheck = new Map(toneCheckByRevId.value)
+		if (prevBundle) {
+			for (const [id, entry] of prevBundle.toneCheckEntries) {
+				if (!allowedRevIds.has(id)) continue
+				if (toneCheckEntryValid(toneCheck.get(id)) || !toneCheckEntryValid(entry)) continue
+				toneCheck.set(id, entry)
+			}
+		}
+
+		const shortDesc = new Map(shortDescriptionByPage.value)
+		if (prevBundle) {
+			for (const [page, desc] of prevBundle.shortDescriptions) {
+				if (!allowedPageNames.has(page)) continue
+				if (shortDesc.has(page)) continue
+				shortDesc.set(page, desc)
+			}
+		}
+
+		let editTypesSummaries: [number, FWEditTypesDiffSummary | null][] = []
+		let editTypesErrors: [number, string][] = []
+		if (props.showStructuredDeltasForFlaggedUnviewed && structuredDeltas) {
+			const summ = new Map(structuredDeltas.editTypesByRevId.value)
+			const err = new Map(structuredDeltas.editTypesErrorByRevId.value)
+			if (prevBundle) {
+				for (const [id, v] of prevBundle.editTypesSummaries ?? []) {
+					if (!allowedRevIds.has(id)) continue
+					if (!summ.has(id)) summ.set(id, v)
+				}
+				for (const [id, msg] of prevBundle.editTypesErrors ?? []) {
+					if (!allowedRevIds.has(id)) continue
+					if (!err.has(id)) err.set(id, msg)
+				}
+			}
+			editTypesSummaries = [...summ.entries()].filter(([id]) => allowedRevIds.has(id))
+			editTypesErrors = [...err.entries()].filter(([id]) => allowedRevIds.has(id))
+		}
 		const bundle: PersistedFeedBundleV1 = {
 			version: 1,
 			snapshot: cloneForFeedSnapshot(snap),
-			shortDescriptions: [...shortDescriptionByPage.value.entries()],
-			revertRiskEntries: [...revertRiskByRevId.value.entries()],
-			referenceNeedEntries: [...referenceNeedByRevId.value.entries()],
-			toneCheckEntries: [...toneCheckByRevId.value.entries()],
+			shortDescriptions: [...shortDesc.entries()].filter(([p]) => allowedPageNames.has(p)),
+			revertRiskEntries: [...revertRisk.entries()].filter(([id]) => allowedRevIds.has(id)),
+			referenceNeedEntries: [...referenceNeed.entries()].filter(([id]) =>
+				allowedRevIds.has(id)
+			),
+			toneCheckEntries: [...toneCheck.entries()].filter(([id]) => allowedRevIds.has(id)),
+			editTypesSummaries,
+			editTypesErrors,
 		}
-		localStorage.setItem(
-			storageKeyForFeed(props.source ?? "recentChanges"),
-			JSON.stringify(bundle)
-		)
+		localStorage.setItem(storageKey, JSON.stringify(bundle))
 	} catch {
 		// ignore quota / private mode
 	}
@@ -1901,6 +2205,21 @@ function schedulePersistFeedBundleSave(): void {
 		persistFeedBundleDebounceId = null
 		savePersistedFeedBundleNow()
 	}, 300)
+}
+
+/** When no revert / reference / tone fetches run after loadFeed, persist snapshot here. */
+function schedulePersistFeedBundleIfSkippingPredictionFetches(): void {
+	if (
+		props.showRevertRisk ||
+		props.showRevertRiskFlags ||
+		props.requireRecentChangesMeetRevertRiskThresholds ||
+		props.showEditCheckOtherFlag ||
+		props.showToneCheckFlag ||
+		props.showDebugChecks
+	) {
+		return
+	}
+	schedulePersistFeedBundleSave()
 }
 
 function applyPersistedFeedBundle(bundle: PersistedFeedBundleV1): void {
@@ -1923,6 +2242,12 @@ function applyPersistedFeedBundle(bundle: PersistedFeedBundleV1): void {
 	errors.value = []
 	lastFeedErrorWasRateLimit.value = false
 	lastLoadedDataNotice.value = ""
+	if (props.showStructuredDeltasForFlaggedUnviewed && structuredDeltas) {
+		structuredDeltas.hydrateFromEntries(
+			bundle.editTypesSummaries ?? [],
+			bundle.editTypesErrors ?? []
+		)
+	}
 }
 
 function clearFeedToEmptyState(): void {
@@ -1942,6 +2267,7 @@ function clearFeedToEmptyState(): void {
 	errors.value = []
 	lastFeedErrorWasRateLimit.value = false
 	lastLoadedDataNotice.value = ""
+	structuredDeltas?.resetStructuredDeltaState()
 }
 
 function tryHydrateFromPersistedCache(): void {
@@ -2161,13 +2487,18 @@ async function loadFeed(append = false): Promise<void> {
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
 			persistLastSuccessfulFeedSnapshot()
-			if (props.showRevertRisk || props.showRevertRiskFlags) {
-				fetchRevertRiskForFeed()
+			if (
+				props.showRevertRisk ||
+				props.showRevertRiskFlags ||
+				props.requireRecentChangesMeetRevertRiskThresholds
+			) {
+				void fetchRevertRiskForFeed()
 			}
 			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
 				fetchReferenceNeedForFeed()
 				fetchToneCheckForFeed()
 			}
+			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
 		}
 
@@ -2263,13 +2594,18 @@ async function loadFeed(append = false): Promise<void> {
 			selectedRevisions.value = []
 			isLoading.value = false
 			persistLastSuccessfulFeedSnapshot()
-			if (props.showRevertRisk || props.showRevertRiskFlags) {
-				fetchRevertRiskForFeed()
+			if (
+				props.showRevertRisk ||
+				props.showRevertRiskFlags ||
+				props.requireRecentChangesMeetRevertRiskThresholds
+			) {
+				void fetchRevertRiskForFeed()
 			}
 			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
 				fetchReferenceNeedForFeed()
 				fetchToneCheckForFeed()
 			}
+			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
 		}
 
@@ -2297,13 +2633,18 @@ async function loadFeed(append = false): Promise<void> {
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
 			persistLastSuccessfulFeedSnapshot()
-			if (props.showRevertRisk || props.showRevertRiskFlags) {
-				fetchRevertRiskForFeed()
+			if (
+				props.showRevertRisk ||
+				props.showRevertRiskFlags ||
+				props.requireRecentChangesMeetRevertRiskThresholds
+			) {
+				void fetchRevertRiskForFeed()
 			}
 			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
 				fetchReferenceNeedForFeed()
 				fetchToneCheckForFeed()
 			}
+			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
 		} else if (props.source === "collaborators") {
 			if (append) {
@@ -2362,14 +2703,19 @@ async function loadFeed(append = false): Promise<void> {
 		selectedRevisions.value = allRevisionsData.value
 
 		isLoading.value = false
-		if (props.showRevertRisk || props.showRevertRiskFlags) {
-			fetchRevertRiskForFeed()
+		if (
+			props.showRevertRisk ||
+			props.showRevertRiskFlags ||
+			props.requireRecentChangesMeetRevertRiskThresholds
+		) {
+			void fetchRevertRiskForFeed()
 		}
 		if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
 			fetchReferenceNeedForFeed()
 			fetchToneCheckForFeed()
 		}
 		persistLastSuccessfulFeedSnapshot()
+		schedulePersistFeedBundleIfSkippingPredictionFetches()
 	} catch (e) {
 		isLoading.value = false
 		const errorObj = e as Error
@@ -2522,6 +2868,51 @@ const showEmptyCacheNotice = computed(
 )
 
 const revisionsOnScreen = computed(() => revisionsByDateCapped.value.flatMap(g => g.revisions))
+
+const structuredDeltaRevisionIds = computed(() =>
+	props.showStructuredDeltasForFlaggedUnviewed
+		? revisionsOnScreen.value.filter(r => hasAnyFlag(r) && !isRevisionViewed(r)).map(r => r.id)
+		: []
+)
+
+structuredDeltas = useStructuredDeltas({
+	wiki,
+	revisionIds: structuredDeltaRevisionIds,
+	loadConcurrency: 1,
+	autoLoad: true,
+})
+
+function getStructuredDeltaSegments(
+	changeId: number
+): Array<{ text: string; deltaClass: string }> | null {
+	if (!props.showStructuredDeltasForFlaggedUnviewed || !structuredDeltas) return null
+	return structuredDeltas.getMostSignificantSegments(changeId)
+}
+
+function isStructuredDeltaLoadingForRevision(changeId: number): boolean {
+	if (!props.showStructuredDeltasForFlaggedUnviewed || !structuredDeltas) return false
+	return structuredDeltas.isMostSignificantLoading(changeId)
+}
+
+function structuredDeltaOpenParenClass(changeId: number): string {
+	return getStructuredDeltaSegments(changeId)?.[0]?.deltaClass ?? ""
+}
+
+function structuredDeltaCloseParenClass(changeId: number): string {
+	const segs = getStructuredDeltaSegments(changeId)
+	if (!segs?.length) return ""
+	return segs[segs.length - 1]!.deltaClass
+}
+
+watch(
+	[
+		() => structuredDeltas?.editTypesByRevId.value,
+		() => structuredDeltas?.editTypesErrorByRevId.value,
+	],
+	() => {
+		if (props.showStructuredDeltasForFlaggedUnviewed) schedulePersistFeedBundleSave()
+	}
+)
 
 const sampleRevision = computed(
 	() =>

@@ -102,6 +102,7 @@
 		<!-- Desktop: full dashboard -->
 		<div class="dashboard-main">
 			<ReviewChangesFeed
+				require-manual-refresh
 				:show-revert-risk="showRevertRiskInFeed"
 				:show-revert-risk-flags="showRevertRiskFlags"
 				:revert-risk-flags-in-box="revertRiskFlagsInBox"

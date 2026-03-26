@@ -1,6 +1,31 @@
 <template>
 	<section class="review-changes" :class="{ 'review-changes--no-border': !showModuleBorder }">
-		<div v-if="title" class="review-changes__title">{{ title }}</div>
+		<div v-if="requireManualRefresh" class="review-changes__title-row">
+			<div v-if="title" class="review-changes__title">{{ title }}</div>
+			<div v-else class="review-changes__title-spacer" aria-hidden="true" />
+			<div class="review-changes__title-actions">
+				<CdxButton
+					type="button"
+					weight="quiet"
+					aria-label="Reset which diffs are marked as opened"
+					class="review-changes__refresh review-changes__refresh--reset-opened"
+					@click="clearViewedRevisions"
+				>
+					<CdxIcon :icon="cdxIconReload" />
+				</CdxButton>
+				<CdxButton
+					type="button"
+					weight="quiet"
+					:disabled="isLoading"
+					aria-label="Refresh"
+					class="review-changes__refresh"
+					@click="refreshFeed"
+				>
+					<CdxIcon :icon="cdxIconReload" />
+				</CdxButton>
+			</div>
+		</div>
+		<div v-else-if="title" class="review-changes__title">{{ title }}</div>
 		<p
 			v-if="!hideDescription"
 			class="review-changes__description"
@@ -21,6 +46,13 @@
 		</div>
 		<div v-if="isLoading" class="review-changes__loading">
 			<CdxProgressBar inline />
+		</div>
+		<div
+			v-else-if="showManualEmptyNotice"
+			class="review-changes__empty-cache-notice"
+			role="status"
+		>
+			Click the refresh button to load changes.
 		</div>
 		<ul v-else ref="feedRef" class="review-changes__feed" @focusout="onFeedFocusOut">
 			<template v-for="dateGroup in revisionsByDateCapped" :key="dateGroup.dateKey">
@@ -631,7 +663,7 @@
 				</li>
 			</template>
 		</ul>
-		<div v-if="!isLoading" class="review-changes__view-more">
+		<div v-if="!isLoading && hasFeedItems" class="review-changes__view-more">
 			Open more edits in the
 			<a
 				target="_blank"
@@ -670,6 +702,7 @@ import {
 	cdxIconEditUndo,
 	cdxIconLightbulb,
 	cdxIconLinkExternal,
+	cdxIconReload,
 	cdxIconSuccess,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
@@ -781,6 +814,8 @@ const props = withDefaults(
 		showDebugChecks?: boolean
 		/** When true, uses unified title component (page name + short desc + timestamp together). When false, uses separate elements (original Review Changes layout). */
 		unifiedTitle?: boolean
+		/** When true, do not fetch on mount; show refresh controls and empty hint until user refreshes. */
+		requireManualRefresh?: boolean
 	}>(),
 	{
 		showRevertRiskFlags: false,
@@ -821,6 +856,7 @@ const props = withDefaults(
 		showOnWatchlistLabel: false,
 		showDebugChecks: false,
 		unifiedTitle: false,
+		requireManualRefresh: false,
 	}
 )
 
@@ -833,6 +869,7 @@ const {
 	dismissRevision,
 	lastClickedRevisionId,
 	clearLastClickedRevisionId,
+	clearViewedRevisions,
 } = useReviewChangesProgress()
 
 const feedRef = ref<HTMLElement | null>(null)
@@ -1137,32 +1174,63 @@ function getRecommendationReason(sourcePageNames: string[]): string {
 	return `${intro}${rest}, and ${last}.`
 }
 
+function revertRiskEntryIsComplete(
+	entry: FWPredictionByModel | { error: true } | undefined,
+	models: FWPredictionModel[]
+): boolean {
+	if (!entry || ("error" in entry && entry.error)) return false
+	const by = entry as FWPredictionByModel
+	return models.every(m => by[m] != null)
+}
+
 async function fetchRevertRiskForFeed(): Promise<void> {
 	const revs = selectedRevisionsForDisplay.value
 	if (revs.length === 0) return
 	const revIds = revs.map(r => r.id)
-	isLoadingRevertRisk.value = true
-	revertRiskByRevId.value = new Map()
+	const prev = revertRiskByRevId.value
 	const models: FWPredictionModel[] = props.showRevertRisk
 		? ["revertrisk", "revertrisk-multilingual"]
 		: ["revertrisk"]
+	const toFetch = revIds.filter(id => !revertRiskEntryIsComplete(prev.get(id), models))
+	if (toFetch.length === 0) {
+		const pruned = new Map<number, FWPredictionByModel | { error: true }>()
+		for (const id of revIds) {
+			const e = prev.get(id)
+			if (revertRiskEntryIsComplete(e, models)) pruned.set(id, e as FWPredictionByModel)
+		}
+		revertRiskByRevId.value = pruned
+		schedulePersistFeedBundleSave()
+		return
+	}
+	isLoadingRevertRisk.value = true
+	const next = new Map<number, FWPredictionByModel | { error: true }>()
+	for (const id of revIds) {
+		const e = prev.get(id)
+		if (revertRiskEntryIsComplete(e, models)) next.set(id, e as FWPredictionByModel)
+	}
 	try {
-		const predictions = await wiki.getRevisionPredictions(revIds, models)
-		const next = new Map<number, FWPredictionByModel | { error: true }>()
-		for (const revId of revIds) {
+		const predictions = await wiki.getRevisionPredictions(toFetch, models)
+		for (const revId of toFetch) {
 			const byModel = predictions[revId] ?? {}
 			next.set(revId, byModel)
 		}
 		revertRiskByRevId.value = next
 	} catch {
-		const next = new Map<number, FWPredictionByModel | { error: true }>()
-		for (const revId of revIds) {
-			next.set(revId, { error: true })
+		for (const revId of toFetch) {
+			if (!next.has(revId)) next.set(revId, { error: true })
 		}
 		revertRiskByRevId.value = next
 	} finally {
 		isLoadingRevertRisk.value = false
+		schedulePersistFeedBundleSave()
 	}
+}
+
+function referenceNeedEntryValid(
+	entry: { delta: number; before: number; after: number } | { error: true } | undefined
+): entry is { delta: number; before: number; after: number } {
+	if (entry == null) return false
+	return !("error" in entry && entry.error)
 }
 
 async function fetchReferenceNeedForFeed(): Promise<void> {
@@ -1170,11 +1238,33 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
 	if (revsWithPage.length === 0) return
+	const prev = referenceNeedByRevId.value
+	const toFetch = revsWithPage.filter(c => !referenceNeedEntryValid(prev.get(c.id)))
+	if (toFetch.length === 0) {
+		const pruned = new Map<
+			number,
+			{ delta: number; before: number; after: number } | { error: true }
+		>()
+		for (const c of revsWithPage) {
+			const e = prev.get(c.id)
+			if (referenceNeedEntryValid(e)) pruned.set(c.id, e)
+		}
+		referenceNeedByRevId.value = pruned
+		schedulePersistFeedBundleSave()
+		return
+	}
 	isLoadingReferenceNeed.value = true
-	referenceNeedByRevId.value = new Map()
+	const next = new Map<
+		number,
+		{ delta: number; before: number; after: number } | { error: true }
+	>()
+	for (const c of revsWithPage) {
+		const e = prev.get(c.id)
+		if (referenceNeedEntryValid(e)) next.set(c.id, e)
+	}
 	try {
 		const results = await wiki.runWithConcurrency(
-			revsWithPage,
+			toFetch,
 			REFERENCE_NEED_AND_TONE_CONCURRENCY,
 			async change => {
 				try {
@@ -1200,10 +1290,6 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 				}
 			}
 		)
-		const next = new Map<
-			number,
-			{ delta: number; before: number; after: number } | { error: true }
-		>()
 		for (const result of results) {
 			if (result.error) {
 				next.set(result.revId, { error: true })
@@ -1217,17 +1303,22 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 		}
 		referenceNeedByRevId.value = next
 	} catch {
-		const next = new Map<
-			number,
-			{ delta: number; before: number; after: number } | { error: true }
-		>()
-		for (const change of revsWithPage) {
-			next.set(change.id, { error: true })
+		for (const change of toFetch) {
+			if (!next.has(change.id)) next.set(change.id, { error: true })
 		}
 		referenceNeedByRevId.value = next
 	} finally {
 		isLoadingReferenceNeed.value = false
+		schedulePersistFeedBundleSave()
 	}
+}
+
+function toneCheckEntryValid(
+	entry: FWToneCheckPrediction | { error: true } | null | undefined
+): boolean {
+	if (entry == null) return false
+	if (typeof entry === "object" && "error" in entry && entry.error) return false
+	return true
 }
 
 async function fetchToneCheckForFeed(): Promise<void> {
@@ -1235,11 +1326,27 @@ async function fetchToneCheckForFeed(): Promise<void> {
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
 	if (revsWithPage.length === 0) return
+	const prev = toneCheckByRevId.value
+	const toFetch = revsWithPage.filter(c => !toneCheckEntryValid(prev.get(c.id)))
+	if (toFetch.length === 0) {
+		const pruned = new Map<number, FWToneCheckPrediction | { error: true } | null>()
+		for (const c of revsWithPage) {
+			const e = prev.get(c.id)
+			if (toneCheckEntryValid(e)) pruned.set(c.id, e as FWToneCheckPrediction)
+		}
+		toneCheckByRevId.value = pruned
+		schedulePersistFeedBundleSave()
+		return
+	}
 	isLoadingToneCheck.value = true
-	toneCheckByRevId.value = new Map()
+	const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
+	for (const c of revsWithPage) {
+		const e = prev.get(c.id)
+		if (toneCheckEntryValid(e)) next.set(c.id, e as FWToneCheckPrediction)
+	}
 	try {
 		const results = await wiki.runWithConcurrency(
-			revsWithPage,
+			toFetch,
 			REFERENCE_NEED_AND_TONE_CONCURRENCY,
 			async change => {
 				try {
@@ -1250,19 +1357,18 @@ async function fetchToneCheckForFeed(): Promise<void> {
 				}
 			}
 		)
-		const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
 		for (const { revId, pred } of results) {
 			next.set(revId, pred)
 		}
 		toneCheckByRevId.value = next
 	} catch {
-		const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
-		for (const change of revsWithPage) {
-			next.set(change.id, { error: true })
+		for (const change of toFetch) {
+			if (!next.has(change.id)) next.set(change.id, { error: true })
 		}
 		toneCheckByRevId.value = next
 	} finally {
 		isLoadingToneCheck.value = false
+		schedulePersistFeedBundleSave()
 	}
 }
 
@@ -1479,6 +1585,7 @@ async function fetchShortDescriptionsForFeed(): Promise<void> {
 		next.set(pageName, desc)
 	}
 	shortDescriptionByPage.value = next
+	schedulePersistFeedBundleSave()
 }
 
 watch(
@@ -1641,6 +1748,239 @@ function restoreLastSuccessfulFeed(): void {
 	}
 }
 
+function collectRevisionIdsFromSnapshot(s: ReviewChangesFeedSnapshot): Set<number> {
+	const ids = new Set<number>()
+	for (const r of s.allRevisionsData) ids.add(r.id)
+	for (const r of s.selectedRevisions) ids.add(r.id)
+	for (const r of s.mixedPagesAndUsersData) ids.add(r.id)
+	for (const r of s.mixedPagesAndUsersLatestData) ids.add(r.id)
+	for (const r of s.mixedCollaboratorsData) ids.add(r.id)
+	for (const r of s.mixedRelatedChangesData) ids.add(r.id)
+	for (const seg of s.mixedRecentChangesBySegment) {
+		for (const r of seg) ids.add(r.id)
+	}
+	return ids
+}
+
+function collectPageNamesFromSnapshot(s: ReviewChangesFeedSnapshot): Set<string> {
+	const names = new Set<string>()
+	const add = (r: FWRevision) => {
+		if (r.pageName) names.add(r.pageName)
+	}
+	for (const r of s.allRevisionsData) add(r)
+	for (const r of s.selectedRevisions) add(r)
+	for (const r of s.mixedPagesAndUsersData) add(r)
+	for (const r of s.mixedPagesAndUsersLatestData) add(r)
+	for (const r of s.mixedCollaboratorsData) add(r)
+	for (const r of s.mixedRelatedChangesData) add(r)
+	for (const seg of s.mixedRecentChangesBySegment) {
+		for (const r of seg) add(r)
+	}
+	return names
+}
+
+type PersistedFeedBundleV1 = {
+	version: 1
+	snapshot: ReviewChangesFeedSnapshot
+	shortDescriptions: [string, string | null][]
+	revertRiskEntries: [number, FWPredictionByModel | { error: true }][]
+	referenceNeedEntries: [
+		number,
+		{ delta: number; before: number; after: number } | { error: true },
+	][]
+	toneCheckEntries: [number, FWToneCheckPrediction | { error: true } | null][]
+}
+
+/** Non-plus feed cache key (separate from `review-changes-plus-feed-v1:`). */
+const PERSISTED_FEED_KEY_PREFIX = "review-changes-feed-v1:"
+
+function storageKeyForFeed(source: ReviewChangesSource): string {
+	return `${PERSISTED_FEED_KEY_PREFIX}${source}`
+}
+
+function parsePersistedFeedBundleJson(raw: string): PersistedFeedBundleV1 | null {
+	try {
+		const o = JSON.parse(raw) as Record<string, unknown>
+		if (o.version !== 1 || !o.snapshot || typeof o.snapshot !== "object") return null
+		const snap = o.snapshot as ReviewChangesFeedSnapshot
+		if (!Array.isArray(snap.allRevisionsData)) return null
+		if (!Array.isArray(snap.selectedRevisions)) return null
+		if (!Array.isArray(snap.mixedRecentChangesBySegment)) return null
+		if (!Array.isArray(snap.mixedPagesAndUsersData)) return null
+		if (!Array.isArray(snap.mixedPagesAndUsersLatestData)) return null
+		if (!Array.isArray(snap.mixedCollaboratorsData)) return null
+		if (!Array.isArray(snap.mixedRelatedChangesData)) return null
+		return {
+			version: 1,
+			snapshot: JSON.parse(JSON.stringify(snap)) as ReviewChangesFeedSnapshot,
+			shortDescriptions: (Array.isArray(o.shortDescriptions)
+				? o.shortDescriptions
+				: []) as PersistedFeedBundleV1["shortDescriptions"],
+			revertRiskEntries: (Array.isArray(o.revertRiskEntries)
+				? o.revertRiskEntries
+				: []) as PersistedFeedBundleV1["revertRiskEntries"],
+			referenceNeedEntries: (Array.isArray(o.referenceNeedEntries)
+				? o.referenceNeedEntries
+				: []) as PersistedFeedBundleV1["referenceNeedEntries"],
+			toneCheckEntries: (Array.isArray(o.toneCheckEntries)
+				? o.toneCheckEntries
+				: []) as PersistedFeedBundleV1["toneCheckEntries"],
+		}
+	} catch {
+		return null
+	}
+}
+
+function loadPersistedFeedBundleForSource(
+	source: ReviewChangesSource
+): PersistedFeedBundleV1 | null {
+	try {
+		const raw = localStorage.getItem(storageKeyForFeed(source))
+		if (!raw) return null
+		return parsePersistedFeedBundleJson(raw)
+	} catch {
+		return null
+	}
+}
+
+function snapshotFromCurrentRefs(): ReviewChangesFeedSnapshot {
+	return {
+		allRevisionsData: cloneForFeedSnapshot(allRevisionsData.value),
+		selectedRevisions: cloneForFeedSnapshot(selectedRevisions.value),
+		mixedRecentChangesBySegment: mixedRecentChangesBySegment.value.map(seg =>
+			cloneForFeedSnapshot(seg)
+		),
+		mixedPagesAndUsersData: cloneForFeedSnapshot(mixedPagesAndUsersData.value),
+		mixedPagesAndUsersLatestData: cloneForFeedSnapshot(mixedPagesAndUsersLatestData.value),
+		mixedCollaboratorsData: cloneForFeedSnapshot(mixedCollaboratorsData.value),
+		mixedRelatedChangesData: cloneForFeedSnapshot(mixedRelatedChangesData.value),
+		rccontinue: rccontinue.value,
+	}
+}
+
+let persistFeedBundleDebounceId: ReturnType<typeof setTimeout> | null = null
+
+function savePersistedFeedBundleNow(): void {
+	if (!props.requireManualRefresh) return
+	try {
+		const snap = snapshotFromCurrentRefs()
+		if (!isFeedSnapshotNonEmpty(snap)) return
+		const allowedRevIds = collectRevisionIdsFromSnapshot(snap)
+		const allowedPageNames = collectPageNamesFromSnapshot(snap)
+		const storageKey = storageKeyForFeed(props.source ?? "recentChanges")
+		const prevBundle = loadPersistedFeedBundleForSource(props.source ?? "recentChanges")
+
+		const predictionModels: FWPredictionModel[] = props.showRevertRisk
+			? ["revertrisk", "revertrisk-multilingual"]
+			: ["revertrisk"]
+
+		const revertRisk = new Map(revertRiskByRevId.value)
+		if (prevBundle) {
+			for (const [id, entry] of prevBundle.revertRiskEntries) {
+				if (!allowedRevIds.has(id)) continue
+				if (
+					revertRiskEntryIsComplete(revertRisk.get(id), predictionModels) ||
+					!revertRiskEntryIsComplete(entry, predictionModels)
+				) {
+					continue
+				}
+				revertRisk.set(id, entry)
+			}
+		}
+
+		const referenceNeed = new Map(referenceNeedByRevId.value)
+		if (prevBundle) {
+			for (const [id, entry] of prevBundle.referenceNeedEntries) {
+				if (!allowedRevIds.has(id)) continue
+				if (
+					referenceNeedEntryValid(referenceNeed.get(id)) ||
+					!referenceNeedEntryValid(entry)
+				) {
+					continue
+				}
+				referenceNeed.set(id, entry)
+			}
+		}
+
+		const toneCheck = new Map(toneCheckByRevId.value)
+		if (prevBundle) {
+			for (const [id, entry] of prevBundle.toneCheckEntries) {
+				if (!allowedRevIds.has(id)) continue
+				if (toneCheckEntryValid(toneCheck.get(id)) || !toneCheckEntryValid(entry)) continue
+				toneCheck.set(id, entry)
+			}
+		}
+
+		const shortDesc = new Map(shortDescriptionByPage.value)
+		if (prevBundle) {
+			for (const [page, desc] of prevBundle.shortDescriptions) {
+				if (!allowedPageNames.has(page)) continue
+				if (shortDesc.has(page)) continue
+				shortDesc.set(page, desc)
+			}
+		}
+
+		const bundle: PersistedFeedBundleV1 = {
+			version: 1,
+			snapshot: cloneForFeedSnapshot(snap),
+			shortDescriptions: [...shortDesc.entries()].filter(([p]) => allowedPageNames.has(p)),
+			revertRiskEntries: [...revertRisk.entries()].filter(([id]) => allowedRevIds.has(id)),
+			referenceNeedEntries: [...referenceNeed.entries()].filter(([id]) =>
+				allowedRevIds.has(id)
+			),
+			toneCheckEntries: [...toneCheck.entries()].filter(([id]) => allowedRevIds.has(id)),
+		}
+		localStorage.setItem(storageKey, JSON.stringify(bundle))
+	} catch {
+		// ignore quota / private mode
+	}
+}
+
+function schedulePersistFeedBundleSave(): void {
+	if (!props.requireManualRefresh) return
+	if (persistFeedBundleDebounceId) clearTimeout(persistFeedBundleDebounceId)
+	persistFeedBundleDebounceId = setTimeout(() => {
+		persistFeedBundleDebounceId = null
+		savePersistedFeedBundleNow()
+	}, 300)
+}
+
+function schedulePersistFeedBundleIfSkippingPredictionFetches(): void {
+	if (!props.requireManualRefresh) return
+	if (
+		props.showRevertRisk ||
+		props.showRevertRiskFlags ||
+		props.showEditCheckOtherFlag ||
+		props.showToneCheckFlag ||
+		props.showDebugChecks
+	) {
+		return
+	}
+	schedulePersistFeedBundleSave()
+}
+
+function applyPersistedFeedBundle(bundle: PersistedFeedBundleV1): void {
+	const snap = bundle.snapshot
+	allRevisionsData.value = cloneForFeedSnapshot(snap.allRevisionsData)
+	selectedRevisions.value = cloneForFeedSnapshot(snap.selectedRevisions)
+	mixedRecentChangesBySegment.value = snap.mixedRecentChangesBySegment.map(seg =>
+		cloneForFeedSnapshot(seg)
+	)
+	mixedPagesAndUsersData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersData)
+	mixedPagesAndUsersLatestData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersLatestData)
+	mixedCollaboratorsData.value = cloneForFeedSnapshot(snap.mixedCollaboratorsData)
+	mixedRelatedChangesData.value = cloneForFeedSnapshot(snap.mixedRelatedChangesData)
+	rccontinue.value = snap.rccontinue
+	lastSuccessfulFeedSnapshot.value = cloneForFeedSnapshot(snap)
+	revertRiskByRevId.value = new Map(bundle.revertRiskEntries)
+	referenceNeedByRevId.value = new Map(bundle.referenceNeedEntries)
+	toneCheckByRevId.value = new Map(bundle.toneCheckEntries)
+	shortDescriptionByPage.value = new Map(bundle.shortDescriptions)
+	errors.value = []
+	lastFeedErrorWasRateLimit.value = false
+	lastLoadedDataNotice.value = ""
+}
+
 const RECENT_CHANGES_LIMIT = 10
 const RELATED_CHANGES_TOP_N = 10
 
@@ -1763,53 +2103,48 @@ async function processRevisions(
 		pageName?: string
 	}>
 ): Promise<FWRevision[]> {
-	return wiki.runWithConcurrency(
-		revisions,
-		PROCESS_REVISIONS_CONCURRENCY,
-		async revision => {
-			const pageName =
-				(revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
-			const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
-			const toolbar = wiki.parseToolbarEditSummary(_summary)
-			const summary = toolbar
-				? toolbar
-				: {
-						comment: _summary,
-						hashtags: [],
-						other: [],
-						suggestedBy: null,
-						useThisBot: null,
-						reportBugs: null,
-					}
-			const commentText = summary.comment
-				? summary.comment +
-					(summary.suggestedBy
-						? " Suggested by [[User:" +
-							summary.suggestedBy +
-							"|" +
-							summary.suggestedBy +
-							"]]"
-						: "")
-				: ""
-			summary.comment = commentText
-				? await wiki.transformWikitextToHtml(commentText, pageName)
-				: ""
-			if (summary.comment) {
-				summary.comment = stripLinksFromHtml(summary.comment)
-			}
-			summary.hashtags = Array.isArray(summary.hashtags)
-				? summary.hashtags.join(" ")
-				: summary.hashtags
-			const processedRevision: FWRevision = {
-				...revision,
-				comment: revision.comment || "",
-				summary,
-				pageName,
-				avatarUrl: null,
-			}
-			return processedRevision
+	return wiki.runWithConcurrency(revisions, PROCESS_REVISIONS_CONCURRENCY, async revision => {
+		const pageName = (revision as FWPageHistoryRevision & { pageName?: string }).pageName || ""
+		const _summary = wiki.preprocessEditSummary(revision.comment || "", pageName)
+		const toolbar = wiki.parseToolbarEditSummary(_summary)
+		const summary = toolbar
+			? toolbar
+			: {
+					comment: _summary,
+					hashtags: [],
+					other: [],
+					suggestedBy: null,
+					useThisBot: null,
+					reportBugs: null,
+				}
+		const commentText = summary.comment
+			? summary.comment +
+				(summary.suggestedBy
+					? " Suggested by [[User:" +
+						summary.suggestedBy +
+						"|" +
+						summary.suggestedBy +
+						"]]"
+					: "")
+			: ""
+		summary.comment = commentText
+			? await wiki.transformWikitextToHtml(commentText, pageName)
+			: ""
+		if (summary.comment) {
+			summary.comment = stripLinksFromHtml(summary.comment)
 		}
-	)
+		summary.hashtags = Array.isArray(summary.hashtags)
+			? summary.hashtags.join(" ")
+			: summary.hashtags
+		const processedRevision: FWRevision = {
+			...revision,
+			comment: revision.comment || "",
+			summary,
+			pageName,
+			avatarUrl: null,
+		}
+		return processedRevision
+	})
 }
 
 async function loadFeed(append = false): Promise<void> {
@@ -1855,6 +2190,7 @@ async function loadFeed(append = false): Promise<void> {
 				fetchReferenceNeedForFeed()
 				fetchToneCheckForFeed()
 			}
+			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
 		}
 
@@ -1957,6 +2293,7 @@ async function loadFeed(append = false): Promise<void> {
 				fetchReferenceNeedForFeed()
 				fetchToneCheckForFeed()
 			}
+			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
 		}
 
@@ -1991,6 +2328,7 @@ async function loadFeed(append = false): Promise<void> {
 				fetchReferenceNeedForFeed()
 				fetchToneCheckForFeed()
 			}
+			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
 		} else if (props.source === "collaborators") {
 			if (append) {
@@ -2057,12 +2395,12 @@ async function loadFeed(append = false): Promise<void> {
 			fetchToneCheckForFeed()
 		}
 		persistLastSuccessfulFeedSnapshot()
+		schedulePersistFeedBundleIfSkippingPredictionFetches()
 	} catch (e) {
 		isLoading.value = false
 		const errorObj = e as Error
 		if (!append) {
-			lastFeedErrorWasRateLimit.value =
-				e instanceof FakeWikiHttpError && e.status === 429
+			lastFeedErrorWasRateLimit.value = e instanceof FakeWikiHttpError && e.status === 429
 			errors.value = [errorObj.message]
 			allRevisionsData.value = []
 			selectedRevisions.value = []
@@ -2073,6 +2411,45 @@ async function loadFeed(append = false): Promise<void> {
 			mixedRelatedChangesData.value = []
 		}
 	}
+}
+
+function refreshFeed(): void {
+	clearViewedRevisions()
+	void loadFeed(false)
+}
+
+function resetFeedToEmptyForManualMode(): void {
+	allRevisionsData.value = []
+	selectedRevisions.value = []
+	mixedRecentChangesBySegment.value = []
+	mixedPagesAndUsersData.value = []
+	mixedPagesAndUsersLatestData.value = []
+	mixedCollaboratorsData.value = []
+	mixedRelatedChangesData.value = []
+	rccontinue.value = undefined
+	shortDescriptionByPage.value = new Map()
+	revertRiskByRevId.value = new Map()
+	referenceNeedByRevId.value = new Map()
+	toneCheckByRevId.value = new Map()
+	lastSuccessfulFeedSnapshot.value = null
+	errors.value = []
+	lastFeedErrorWasRateLimit.value = false
+	lastLoadedDataNotice.value = ""
+	isLoading.value = false
+	isLoadingRevertRisk.value = false
+	isLoadingReferenceNeed.value = false
+	isLoadingToneCheck.value = false
+}
+
+function tryHydrateFromPersistedCache(): void {
+	if (!props.requireManualRefresh) return
+	const source = props.source ?? "recentChanges"
+	const bundle = loadPersistedFeedBundleForSource(source)
+	if (bundle && isFeedSnapshotNonEmpty(bundle.snapshot)) {
+		applyPersistedFeedBundle(bundle)
+		return
+	}
+	resetFeedToEmptyForManualMode()
 }
 
 function stripLinksFromHtml(html: string): string {
@@ -2203,6 +2580,16 @@ const revisionsByDate = computed(() => {
 
 const revisionsByDateCapped = computed(() => revisionsByDate.value)
 
+const hasFeedItems = computed(() => revisionsByDateCapped.value.some(g => g.revisions.length > 0))
+
+const showManualEmptyNotice = computed(
+	() =>
+		!!props.requireManualRefresh &&
+		!isLoading.value &&
+		errors.value.length === 0 &&
+		!hasFeedItems.value
+)
+
 const revisionsOnScreen = computed(() => revisionsByDateCapped.value.flatMap(g => g.revisions))
 
 const sampleRevision = computed(
@@ -2233,18 +2620,28 @@ watch(
 )
 
 onMounted(() => {
-	loadFeed()
+	if (props.requireManualRefresh) {
+		tryHydrateFromPersistedCache()
+	} else {
+		loadFeed()
+	}
 	setRevisionsCallback(() => revisionsOnScreen.value)
 })
 
 onUnmounted(() => {
+	if (persistFeedBundleDebounceId) clearTimeout(persistFeedBundleDebounceId)
+	persistFeedBundleDebounceId = null
 	clearRevisionsCallback()
 })
 
 watch(
 	() => props.source,
 	() => {
-		loadFeed()
+		if (props.requireManualRefresh) {
+			resetFeedToEmptyForManualMode()
+		} else {
+			loadFeed()
+		}
 	}
 )
 </script>

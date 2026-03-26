@@ -7,12 +7,12 @@
 
 .review-changes .review-changes__comment p {
 	display: inline;
-	line-height: var(--line-height-content);
+	line-height: inherit;
 }
 
 .review-changes .review-changes__comment section {
 	display: inline;
-	line-height: var(--line-height-content);
+	line-height: inherit;
 }
 
 .review-changes .review-changes__comment table {

@@ -4,8 +4,56 @@
 	padding: 0;
 }
 
+.review-changes__title-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	/* padding: 16px 20px; */
+	box-sizing: border-box;
+}
+
+.review-changes__title-row .review-changes__title {
+	padding: 0;
+	margin: 0;
+	flex: 1;
+	min-width: 0;
+}
+
+.review-changes__title-spacer {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+}
+
+.review-changes__title-actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
+}
+
+.review-changes__refresh {
+	flex-shrink: 0;
+}
+
+.review-changes__refresh--reset-opened {
+	color: var(--color-subtle, #a2a9b1);
+	opacity: var(--opacity-icon-placeholder, 0.51);
+}
+
+.review-changes__refresh--reset-opened:hover {
+	opacity: var(--opacity-icon-subtle, 0.67);
+}
+
+.review-changes__empty-cache-notice {
+	color: var(--color-base--subtle, #54595d);
+	font-size: 0.875rem;
+	/* padding: 1rem 20px 1.25rem; */
+	margin: 0;
+}
+
 .review-changes__title {
-	/* padding: 0; */
 	font-weight: bold;
 	font-size: 18px;
 	padding-bottom: 16px;

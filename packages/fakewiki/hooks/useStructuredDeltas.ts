@@ -8,21 +8,37 @@ import type {
 import type { Ref } from "vue"
 import { computed, ref, watch } from "vue"
 
+export type EditTypesSummaryEntries = [number, FWEditTypesDiffSummary | null][]
+export type EditTypesErrorEntries = [number, string][]
+
 export interface UseStructuredDeltasArgs {
 	wiki: FakeWiki
 	revisionIds: Ref<number[]>
 	initialSettings?: Partial<FWStructuredDeltaSettings>
+	/** Max parallel edit-types requests; default 1 (sequential). */
+	loadConcurrency?: number
 	autoLoad?: boolean
+	/** Hydrate cache on creation (e.g. from persisted feed bundle). */
+	initialEditTypesSummaries?: EditTypesSummaryEntries
+	initialEditTypesErrors?: EditTypesErrorEntries
 }
 
 export function useStructuredDeltas({
 	wiki,
 	revisionIds,
 	initialSettings,
+	loadConcurrency: loadConcurrencyArg,
 	autoLoad = true,
+	initialEditTypesSummaries,
+	initialEditTypesErrors,
 }: UseStructuredDeltasArgs) {
 	const defaults = wiki.DEFAULT_STRUCTURED_DELTA_SETTINGS
 	const maxHighlightCount = wiki.STRUCTURED_DELTA_MAX_HIGHLIGHT_COUNT
+
+	const effectiveConcurrency = Math.max(
+		1,
+		Math.floor(loadConcurrencyArg ?? 1)
+	)
 
 	const highlightCount = ref(
 		Math.max(
@@ -40,15 +56,46 @@ export function useStructuredDeltas({
 		initialSettings?.smartFilteringEnabled ?? defaults.smartFilteringEnabled
 	)
 
-	const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(new Map())
-	const editTypesErrorByRevId = ref<Map<number, string>>(new Map())
+	const editTypesByRevId = ref<Map<number, FWEditTypesDiffSummary | null>>(
+		new Map(initialEditTypesSummaries ?? [])
+	)
+	const editTypesErrorByRevId = ref<Map<number, string>>(new Map(initialEditTypesErrors ?? []))
 	const loadingEditTypesIds = ref<Set<number>>(new Set())
 
-	function loadEditTypesSummary(revId: number): void {
-		if (editTypesByRevId.value.has(revId) || editTypesErrorByRevId.value.has(revId)) return
-		loadingEditTypesIds.value = new Set(loadingEditTypesIds.value).add(revId)
-		wiki.getEditTypesSummary(revId)
-			.then(summary => {
+	/** Bumps when a newer fetch pass starts; stale passes must not mutate maps. */
+	let fetchPassGeneration = 0
+
+	function idsToFetchFromList(ids: number[]): number[] {
+		const seen = new Set<number>()
+		const out: number[] = []
+		for (const id of ids) {
+			if (seen.has(id)) continue
+			seen.add(id)
+			if (editTypesByRevId.value.has(id) || editTypesErrorByRevId.value.has(id)) continue
+			if (loadingEditTypesIds.value.has(id)) continue
+			out.push(id)
+		}
+		return out
+	}
+
+	async function runFetchPass(ids: number[]): Promise<void> {
+		const idsToFetch = idsToFetchFromList(ids)
+		if (idsToFetch.length === 0) return
+
+		const gen = ++fetchPassGeneration
+		loadingEditTypesIds.value = new Set([
+			...loadingEditTypesIds.value,
+			...idsToFetch,
+		])
+
+		await wiki.runWithConcurrency(idsToFetch, effectiveConcurrency, async revId => {
+			try {
+				const summary = await wiki.getEditTypesSummary(revId)
+				if (gen !== fetchPassGeneration) {
+					loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
+					loadingEditTypesIds.value.delete(revId)
+					return
+				}
 				const normalized = wiki.normalizeStructuredDeltaSummary(summary as Record<string, unknown>)
 				editTypesByRevId.value = new Map(editTypesByRevId.value).set(
 					revId,
@@ -56,28 +103,62 @@ export function useStructuredDeltas({
 				)
 				editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value)
 				editTypesErrorByRevId.value.delete(revId)
-				loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
-				loadingEditTypesIds.value.delete(revId)
-			})
-			.catch(e => {
+			} catch (e) {
+				if (gen !== fetchPassGeneration) {
+					loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
+					loadingEditTypesIds.value.delete(revId)
+					return
+				}
 				const msg = e instanceof Error ? e.message : String(e)
 				editTypesErrorByRevId.value = new Map(editTypesErrorByRevId.value).set(revId, msg)
 				editTypesByRevId.value = new Map(editTypesByRevId.value).set(revId, null)
-				loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
-				loadingEditTypesIds.value.delete(revId)
-			})
+			} finally {
+				if (gen === fetchPassGeneration) {
+					loadingEditTypesIds.value = new Set(loadingEditTypesIds.value)
+					loadingEditTypesIds.value.delete(revId)
+				}
+			}
+		})
+	}
+
+	function scheduleFetchForRevisionIds(candidateIds: number[]): void {
+		const merged = [...new Set(candidateIds)]
+		void runFetchPass(merged)
+	}
+
+	function loadEditTypesSummary(revId: number): void {
+		scheduleFetchForRevisionIds([...revisionIds.value, revId])
 	}
 
 	function loadEditTypesSummaries(revisionIdList: number[]): void {
-		for (const revisionId of revisionIdList) {
-			loadEditTypesSummary(revisionId)
-		}
+		scheduleFetchForRevisionIds([...revisionIds.value, ...revisionIdList])
 	}
 
 	function resetStructuredDeltaState(): void {
+		fetchPassGeneration++
 		editTypesByRevId.value = new Map()
 		editTypesErrorByRevId.value = new Map()
 		loadingEditTypesIds.value = new Set()
+	}
+
+	function hydrateFromEntries(
+		summaries?: EditTypesSummaryEntries,
+		errors?: EditTypesErrorEntries
+	): void {
+		if (summaries?.length) {
+			const next = new Map(editTypesByRevId.value)
+			for (const [revId, summary] of summaries) {
+				next.set(revId, summary)
+			}
+			editTypesByRevId.value = next
+		}
+		if (errors?.length) {
+			const nextErr = new Map(editTypesErrorByRevId.value)
+			for (const [revId, msg] of errors) {
+				nextErr.set(revId, msg)
+			}
+			editTypesErrorByRevId.value = nextErr
+		}
 	}
 
 	const structuredDeltasByRevId = computed(() => {
@@ -110,7 +191,6 @@ export function useStructuredDeltas({
 		return structuredDeltasByRevId.value.get(revId)?.highlightedCandidates ?? null
 	}
 
-	/** All candidates (not limited by slider). Use for snippet lookup when snippets are enabled. */
 	function getCandidatesForSnippets(revId: number): FWStructuredDeltaCandidate[] | null {
 		return structuredDeltasByRevId.value.get(revId)?.candidates ?? null
 	}
@@ -131,7 +211,7 @@ export function useStructuredDeltas({
 			() => revisionIds.value,
 			ids => {
 				if (!ids || ids.length === 0) return
-				loadEditTypesSummaries(ids)
+				scheduleFetchForRevisionIds(ids)
 			},
 			{ immediate: true }
 		)
@@ -150,6 +230,7 @@ export function useStructuredDeltas({
 		loadEditTypesSummary,
 		loadEditTypesSummaries,
 		resetStructuredDeltaState,
+		hydrateFromEntries,
 		getMostSignificantSegments,
 		getHighlightedCandidates,
 		getCandidatesForSnippets,

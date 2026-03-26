@@ -115,6 +115,7 @@
 	/* padding-right: 16px; */
 }
 
+/* Feed item card body: one ruleset for row typography (tokens: src/style/tokens.css). */
 .review-changes__item-link {
 	position: relative;
 	display: flex;
@@ -129,7 +130,8 @@
 	text-decoration: none;
 	background-color: var(--background-color-neutral-subtle);
 	color: inherit;
-	line-height: 22px;
+	font-size: var(--font-size-small);
+	line-height: var(--line-height-small);
 	cursor: pointer;
 	/* border: 1px solid var(--border-color-muted); */
 	border: 1px solid transparent;
@@ -203,6 +205,26 @@
 
 .review-changes__item-link--unviewed .review-changes__primary-flag-icon--recommendation {
 	color: var(--color-emphasized);
+}
+
+/* After the user opens the diff, soften header icon and flag copy to body grey. */
+.review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--tone,
+.review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--revert,
+.review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--revert-warn,
+.review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--recommendation {
+	color: var(--color-base--subtle, #54595d);
+}
+
+.review-changes__item-link--revision-viewed .review-changes__revert-risk-notice--very-high,
+.review-changes__item-link--revision-viewed .review-changes__revert-risk-notice--high,
+.review-changes__item-link--revision-viewed .review-changes__revert-risk-notice--low,
+.review-changes__item-link--revision-viewed .review-changes__revert-risk-notice--medium-low,
+.review-changes__item-link--revision-viewed .review-changes__revert-risk-notice--tone-ref {
+	color: var(--color-base--subtle, #54595d);
+}
+
+.review-changes__item-link--revision-viewed .review-changes__recommendation-notice--primary {
+	color: var(--color-base--subtle, #54595d);
 }
 
 .review-changes__item-link--primary-unviewed-tone {
@@ -346,7 +368,6 @@
 .review-changes__revert-risk {
 	display: flex;
 	flex-direction: column;
-	font-size: 0.875em;
 	color: var(--color-base--subtle, #54595d);
 }
 
@@ -402,7 +423,6 @@
 	/* background-color: var(--background-color-base, #fff); */
 	/* border: 1px solid var(--border-color-base); */
 	border-radius: 2px;
-	line-height: var(--line-height-content);
 }
 
 .review-changes__revert-risk-notice + .review-changes__revert-risk-notice,
@@ -606,13 +626,13 @@
 	.review-changes__summary {
 		color: var(--color-emphasized);
 	}
+
+	.review-changes__structured-delta-placeholder {
+		color: var(--color-emphasized);
+	}
 }
 
 .review-changes__user {
-	color: var(--color-base--subtle);
-}
-
-.review-changes__summary {
 	color: var(--color-base--subtle);
 }
 
@@ -623,7 +643,6 @@
 .review-changes__page {
 	font-weight: 700;
 	color: var(--color-base--subtle);
-	line-height: var(--line-height-content);
 	flex-shrink: 1;
 }
 
@@ -644,7 +663,6 @@
 .review-changes__short-desc {
 	color: var(--color-base--subtle, #54595d);
 	font-weight: normal;
-	line-height: var(--line-height-content);
 	margin-left: 6px;
 }
 
@@ -667,7 +685,6 @@
 }
 
 .review-changes__source-subtitle {
-	font-size: 0.875em;
 	color: var(--color-base--subtle, #54595d);
 	margin-top: -0.25rem;
 	flex-shrink: 0;
@@ -683,7 +700,7 @@
 }
 
 .review-changes__summary {
-	line-height: 1.4;
+	color: var(--color-base--subtle);
 	display: flex;
 	align-items: baseline;
 	flex-wrap: wrap;
@@ -757,4 +774,36 @@
 .review-changes__view-more-link:hover {
 	color: var(--color-progressive--hover, #3056a9);
 	text-decoration: underline;
+}
+
+/* Structured deltas (edit-types segments) — one block row below user/time, above summary */
+.review-changes__structured-delta-row {
+	display: block;
+	width: 100%;
+	min-width: 0;
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
+
+/* Align row strip heights with feed typography (matches .review-changes__item-link line-height). */
+.review-changes__page-cell > * {
+	/* min-height: var(--line-height-small); */
+	box-sizing: border-box;
+}
+
+.review-changes__structured-delta-placeholder {
+	color: var(--color-subtle);
+}
+
+.change-types-delta-add {
+	color: var(--color-content-added);
+}
+
+.change-types-delta-remove {
+	color: var(--color-content-removed);
+}
+
+.change-types-delta-change {
+	color: var(--color-progressive, #36c);
 }
