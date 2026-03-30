@@ -785,12 +785,14 @@
 	/* padding-top: 1.25rem; */
 	padding: 16px 20px;
 	color: var(--color-base, #202122);
-	text-align: right;
+	text-align: center;
+	display: block;
+	color: var(--color-progressive, #36c);
+	font-weight: var(--font-weight-bold);
 }
 
-.review-changes__view-more-link {
-	color: var(--color-progressive, #36c);
-	text-decoration: none;
+.review-changes__view-more:hover {
+	/* background-color: var(--background-color-interactive-subtle--hover); */
 }
 
 .review-changes__view-more-link:visited {

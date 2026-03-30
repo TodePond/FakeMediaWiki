@@ -713,11 +713,13 @@
 				</li>
 			</template>
 		</ul>
-		<div v-if="!isLoading && hasFeedItems" class="review-changes__view-more">
-			<RouterLink class="review-changes__view-more-link" to="/Special/ReviewChangesPlus">
-				More changes...
-			</RouterLink>
-		</div>
+		<RouterLink
+			v-if="!isLoading && hasFeedItems"
+			class="review-changes__view-more"
+			to="/Special/ReviewChangesPlus"
+		>
+			Show more
+		</RouterLink>
 		<CdxPopover
 			v-model:open="showUserPopover"
 			:anchor="userPopoverAnchor"
@@ -1579,10 +1581,7 @@ function getMixedRecentChangesTargetCount(): number {
 	const rcOrdered = getMixedRecentChangesFullyOrdered()
 	const rcRatioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
 	if (rcRatioPercent === 0) return 0
-	return Math.min(
-		Math.floor((RECENT_CHANGES_LIMIT * rcRatioPercent) / 100),
-		rcOrdered.length
-	)
+	return Math.min(Math.floor((RECENT_CHANGES_LIMIT * rcRatioPercent) / 100), rcOrdered.length)
 }
 
 /** Pre-filter recent-changes slice for mixed mode when not using risky-feed backfill (same ordering as the feed). */
@@ -1938,8 +1937,7 @@ watch(
 		const hasMixedPool =
 			props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0
 		const hasStandalonePool =
-			props.source === "recentChanges" &&
-			getStandaloneRecentChangesCandidatePool().length > 0
+			props.source === "recentChanges" && getStandaloneRecentChangesCandidatePool().length > 0
 		if (props.source === "mixed") {
 			if (!hasMixedPool && selectedRevisionsForDisplay.value.length === 0) return
 		} else if (thresholdRc && props.source === "recentChanges") {
