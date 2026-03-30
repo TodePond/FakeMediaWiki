@@ -1050,6 +1050,8 @@ const REFERENCE_NEED_THRESHOLD = 0.01
 
 const toneCheckByRevId = ref<Map<number, FWToneCheckPrediction | { error: true } | null>>(new Map())
 const isLoadingToneCheck = ref(false)
+/** When true, skip prediction network work until Refresh / load more clears it (after localStorage hydrate). */
+const deferPredictionFetchesUntilFeedReload = ref(false)
 /** Show tone check flag when prediction is true and probability >= this (0–1). */
 const TONE_CHECK_THRESHOLD = 0.55
 
@@ -1297,10 +1299,11 @@ function toneCheckEntryValid(
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
+	if (deferPredictionFetchesUntilFeedReload.value) return
 	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
 	if (props.requireRecentChangesMeetRevertRiskThresholds) {
 		if (props.source === "mixed") {
-			const rcCandidates = getMixedRecentChangesFullyOrdered()
+			const rcCandidates = getMixedRecentChangesForPredictionFetch()
 			const byId = new Map<number, FWRevision>(revs.map(r => [r.id, r]))
 			for (const r of rcCandidates) {
 				if (!byId.has(r.id)) byId.set(r.id, r)
@@ -1357,10 +1360,11 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 }
 
 async function fetchReferenceNeedForFeed(): Promise<void> {
+	if (deferPredictionFetchesUntilFeedReload.value) return
 	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
 	if (props.requireRecentChangesMeetRevertRiskThresholds) {
 		if (props.source === "mixed") {
-			const rcCandidates = getMixedRecentChangesFullyOrdered()
+			const rcCandidates = getMixedRecentChangesForPredictionFetch()
 			const byId = new Map(revs.map(r => [r.id, r]))
 			for (const r of rcCandidates) {
 				if (!byId.has(r.id)) byId.set(r.id, r)
@@ -1454,10 +1458,11 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 }
 
 async function fetchToneCheckForFeed(): Promise<void> {
+	if (deferPredictionFetchesUntilFeedReload.value) return
 	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
 	if (props.requireRecentChangesMeetRevertRiskThresholds) {
 		if (props.source === "mixed") {
-			const rcCandidates = getMixedRecentChangesFullyOrdered()
+			const rcCandidates = getMixedRecentChangesForPredictionFetch()
 			const byId = new Map(revs.map(r => [r.id, r]))
 			for (const r of rcCandidates) {
 				if (!byId.has(r.id)) byId.set(r.id, r)
@@ -1534,6 +1539,8 @@ const mixedRelatedChangesData = ref<FWRevision[]>([])
 type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
 
 const NUM_RC_SEGMENTS = 4
+/** Max interleaved RC rows to score for Lift Wing when risky-feed threshold mode is on (~visible feed size). */
+const PREDICTION_MIXED_RC_SCAN_CAP = 6
 
 /** Full interleaved recent-changes ordering for mixed mode (segment round-robin); not capped by ratio. */
 function getMixedRecentChangesFullyOrdered(): FWRevision[] {
@@ -1559,6 +1566,12 @@ function getMixedRecentChangesFullyOrdered(): FWRevision[] {
 		}
 	}
 	return rcOrdered
+}
+
+/** Prefix of interleaved RC list used for prediction fetches only (see PREDICTION_MIXED_RC_SCAN_CAP). */
+function getMixedRecentChangesForPredictionFetch(): FWRevision[] {
+	const ordered = getMixedRecentChangesFullyOrdered()
+	return ordered.slice(0, Math.min(ordered.length, PREDICTION_MIXED_RC_SCAN_CAP))
 }
 
 /** Target slot count for recent changes in mixed mode (ratio of RECENT_CHANGES_LIMIT). */
@@ -2167,6 +2180,7 @@ function restoreLastSuccessfulFeed(): void {
 	revertRiskByRevId.value = new Map()
 	referenceNeedByRevId.value = new Map()
 	toneCheckByRevId.value = new Map()
+	deferPredictionFetchesUntilFeedReload.value = false
 	if (
 		props.showRevertRisk ||
 		props.showRevertRiskFlags ||
@@ -2349,6 +2363,7 @@ function applyPersistedFeedBundle(bundle: PersistedFeedBundleV1): void {
 			bundle.editTypesErrors ?? []
 		)
 	}
+	deferPredictionFetchesUntilFeedReload.value = true
 }
 
 function clearFeedToEmptyState(): void {
@@ -2369,6 +2384,7 @@ function clearFeedToEmptyState(): void {
 	lastFeedErrorWasRateLimit.value = false
 	lastLoadedDataNotice.value = ""
 	structuredDeltas?.resetStructuredDeltaState()
+	deferPredictionFetchesUntilFeedReload.value = false
 }
 
 function tryHydrateFromPersistedCache(): void {
@@ -2553,6 +2569,7 @@ async function processRevisions(
 }
 
 async function loadFeed(append = false): Promise<void> {
+	deferPredictionFetchesUntilFeedReload.value = false
 	if (!append) {
 		isLoading.value = true
 		errors.value = []

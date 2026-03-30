@@ -135,13 +135,15 @@
 	cursor: pointer;
 	/* border: 1px solid var(--border-color-muted); */
 	border: 1px solid transparent;
+	outline: 0px solid var(--border-color-interactive--hover);
 	/* border-bottom: 1px solid var(--border-color-subtle, #a2a9b1); */
 }
 
 /* Only when no coarse pointer */
 @media (pointer: fine) {
 	.review-changes__item-link:hover {
-		background-color: var(--background-color-progressive-subtle, #d9e2ff);
+		/* background-color: var(--background-color-progressive-subtle, #d9e2ff); */
+		outline-width: 1px;
 	}
 }
 
@@ -229,18 +231,22 @@
 
 .review-changes__item-link--primary-unviewed-tone {
 	border-color: var(--border-color-warning, #ab7f2a);
+	outline-color: var(--border-color-warning, #ab7f2a);
 }
 
 .review-changes__item-link--primary-unviewed-revert {
 	border-color: var(--color-destructive, #b32424);
+	outline-color: var(--color-destructive, #b32424);
 }
 
 .review-changes__item-link--primary-unviewed-revert-warn {
 	border-color: var(--border-color-warning, #ab7f2a);
+	outline-color: var(--border-color-warning, #ab7f2a);
 }
 
 .review-changes__item-link--primary-unviewed-recommendation {
 	border-color: var(--color-progressive, #36c);
+	outline-color: var(--color-progressive, #36c);
 }
 
 /* Recently clicked indicator: black vertical lines on left and right.

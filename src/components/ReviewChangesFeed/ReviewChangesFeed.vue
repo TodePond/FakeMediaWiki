@@ -992,6 +992,8 @@ const REFERENCE_NEED_THRESHOLD = 0.001
 
 const toneCheckByRevId = ref<Map<number, FWToneCheckPrediction | { error: true } | null>>(new Map())
 const isLoadingToneCheck = ref(false)
+/** When true, skip prediction network work until Refresh / load more clears it (after localStorage hydrate). */
+const deferPredictionFetchesUntilFeedReload = ref(false)
 /** Show tone check flag when prediction is true and probability >= this (0–1). */
 const TONE_CHECK_THRESHOLD = 0.55
 
@@ -1184,6 +1186,7 @@ function revertRiskEntryIsComplete(
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
+	if (deferPredictionFetchesUntilFeedReload.value) return
 	const revs = selectedRevisionsForDisplay.value
 	if (revs.length === 0) return
 	const revIds = revs.map(r => r.id)
@@ -1234,6 +1237,7 @@ function referenceNeedEntryValid(
 }
 
 async function fetchReferenceNeedForFeed(): Promise<void> {
+	if (deferPredictionFetchesUntilFeedReload.value) return
 	const revs = selectedRevisionsForDisplay.value
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
@@ -1322,6 +1326,7 @@ function toneCheckEntryValid(
 }
 
 async function fetchToneCheckForFeed(): Promise<void> {
+	if (deferPredictionFetchesUntilFeedReload.value) return
 	const revs = selectedRevisionsForDisplay.value
 	if (revs.length === 0) return
 	const revsWithPage = revs.filter(r => r.pageName)
@@ -1739,6 +1744,7 @@ function restoreLastSuccessfulFeed(): void {
 	revertRiskByRevId.value = new Map()
 	referenceNeedByRevId.value = new Map()
 	toneCheckByRevId.value = new Map()
+	deferPredictionFetchesUntilFeedReload.value = false
 	if (props.showRevertRisk || props.showRevertRiskFlags) {
 		void fetchRevertRiskForFeed()
 	}
@@ -1979,6 +1985,7 @@ function applyPersistedFeedBundle(bundle: PersistedFeedBundleV1): void {
 	errors.value = []
 	lastFeedErrorWasRateLimit.value = false
 	lastLoadedDataNotice.value = ""
+	deferPredictionFetchesUntilFeedReload.value = true
 }
 
 const RECENT_CHANGES_LIMIT = 10
@@ -2148,6 +2155,7 @@ async function processRevisions(
 }
 
 async function loadFeed(append = false): Promise<void> {
+	deferPredictionFetchesUntilFeedReload.value = false
 	if (!append) {
 		isLoading.value = true
 		errors.value = []
@@ -2439,6 +2447,7 @@ function resetFeedToEmptyForManualMode(): void {
 	isLoadingRevertRisk.value = false
 	isLoadingReferenceNeed.value = false
 	isLoadingToneCheck.value = false
+	deferPredictionFetchesUntilFeedReload.value = false
 }
 
 function tryHydrateFromPersistedCache(): void {
