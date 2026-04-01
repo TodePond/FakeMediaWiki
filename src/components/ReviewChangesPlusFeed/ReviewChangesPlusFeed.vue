@@ -762,16 +762,17 @@ import type {
 	FWPageHistoryRevision,
 	FWPredictionByModel,
 	FWPredictionModel,
+	FWReferenceNeedPrediction,
 	FWRevision,
 	FWToneCheckPrediction,
 } from "fakewiki/types"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import FeedItemTitle from "./FeedItemTitle.vue"
 
-/** Align with Wikimedia guidance (≤3 concurrent API requests); parse + Lift Wing bursts use modest pools. */
-const PROCESS_REVISIONS_CONCURRENCY = 4
-const RC_SEGMENTS_FETCH_CONCURRENCY = 2
-const REFERENCE_NEED_AND_TONE_CONCURRENCY = 4
+/** Review Changes Plus: serialize work to reduce 429s (feed wiki also uses history/LW concurrency 1). */
+const PROCESS_REVISIONS_CONCURRENCY = 1
+const RC_SEGMENTS_FETCH_CONCURRENCY = 1
+const REFERENCE_NEED_AND_TONE_CONCURRENCY = 1
 
 export type ReviewChangesSource =
 	| "recentChanges"
@@ -916,7 +917,10 @@ const props = withDefaults(
 	}
 )
 
-const wiki = new FakeWiki()
+const wiki = new FakeWiki(undefined, {
+	historyFetchConcurrency: 1,
+	liftWingRevisionConcurrency: 1,
+})
 
 /** Set after `useStructuredDeltas` below; used by persist/restore helpers. */
 let structuredDeltas: ReturnType<typeof useStructuredDeltas> | null = null
@@ -1052,7 +1056,10 @@ const REFERENCE_NEED_THRESHOLD = 0.01
 
 const toneCheckByRevId = ref<Map<number, FWToneCheckPrediction | { error: true } | null>>(new Map())
 const isLoadingToneCheck = ref(false)
-/** When true, skip prediction network work until Refresh / load more clears it (after localStorage hydrate). */
+/**
+ * When true, skip prediction + structured-delta auto-load + short-description network work until Refresh
+ * clears it (after localStorage hydrate).
+ */
 const deferPredictionFetchesUntilFeedReload = ref(false)
 /** Show tone check flag when prediction is true and probability >= this (0–1). */
 const TONE_CHECK_THRESHOLD = 0.55
@@ -1409,16 +1416,32 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 		if (referenceNeedEntryValid(e)) next.set(c.id, e)
 	}
 	try {
+		const referenceNeedPredPromises = new Map<
+			number,
+			Promise<FWReferenceNeedPrediction | null>
+		>()
+		const getReferenceNeedPredictionDeduped = (revId: number) => {
+			let p = referenceNeedPredPromises.get(revId)
+			if (!p) {
+				p = wiki.getReferenceNeedPrediction(revId)
+				referenceNeedPredPromises.set(revId, p)
+			}
+			return p
+		}
 		const results = await wiki.runWithConcurrency(
 			toFetch,
 			REFERENCE_NEED_AND_TONE_CONCURRENCY,
 			async change => {
 				try {
-					const parentId = await wiki.getParentRevisionId(change.pageName!, change.id)
-					const [beforePred, afterPred] = await Promise.all([
-						parentId != null ? wiki.getReferenceNeedPrediction(parentId) : null,
-						wiki.getReferenceNeedPrediction(change.id),
-					])
+					const page = change.pageName!
+					const cachedParent = wiki.getParentRevisionIdFromCache(page, change.id)
+					const parentId =
+						cachedParent !== undefined
+							? cachedParent
+							: await wiki.getParentRevisionId(page, change.id)
+					const beforePred =
+						parentId != null ? await getReferenceNeedPredictionDeduped(parentId) : null
+					const afterPred = await getReferenceNeedPredictionDeduped(change.id)
 					const rnBefore = beforePred?.rn_score ?? 0
 					const rnAfter = afterPred?.rn_score ?? null
 					if (typeof rnAfter !== "number")
@@ -1851,19 +1874,15 @@ const selectedRevisionsForDisplay = computed(() => getSelectedRevisionsForDispla
 const shortDescriptionByPage = ref<Map<string, string | null>>(new Map())
 
 async function fetchShortDescriptionsForFeed(): Promise<void> {
+	if (deferPredictionFetchesUntilFeedReload.value) return
 	if (!props.showShortDescription) return
 	const revs = selectedRevisionsForDisplay.value
 	const pageNames = [...new Set(revs.map(r => r.pageName).filter((p): p is string => !!p))]
 	const toFetch = pageNames.filter(p => !shortDescriptionByPage.value.has(p))
 	if (toFetch.length === 0) return
-	const results = await Promise.all(
-		toFetch.map(async pageName => {
-			const desc = await wiki.getShortDescription(pageName)
-			return { pageName, desc } as const
-		})
-	)
 	const next = new Map(shortDescriptionByPage.value)
-	for (const { pageName, desc } of results) {
+	for (const pageName of toFetch) {
+		const desc = await wiki.getShortDescription(pageName)
 		next.set(pageName, desc)
 	}
 	shortDescriptionByPage.value = next
@@ -2991,9 +3010,14 @@ const structuredDeltaRevisionIds = computed(() =>
 		: []
 )
 
+/** Empty while hydrating from localStorage so edit-types API does not run until Refresh. */
+const structuredDeltaRevisionIdsForAutoLoad = computed(() =>
+	deferPredictionFetchesUntilFeedReload.value ? [] : structuredDeltaRevisionIds.value
+)
+
 structuredDeltas = useStructuredDeltas({
 	wiki,
-	revisionIds: structuredDeltaRevisionIds,
+	revisionIds: structuredDeltaRevisionIdsForAutoLoad,
 	loadConcurrency: 1,
 	autoLoad: true,
 })

@@ -209,13 +209,39 @@ export class FakeWiki {
 	readonly STRUCTURED_DELTA_MAX_HIGHLIGHT_COUNT = this.STRUCTURED_DELTA_SIGNIFICANCE_LEVELS.length
 
 	/**
+	 * Max parallel history fetches in getCombinedFeed / getUsersHistory (default: COMBINED_FEED_HISTORY_CONCURRENCY).
+	 */
+	private readonly historyFetchConcurrency: number
+
+	/**
+	 * Max parallel Lift Wing calls per model in getRevisionPredictions (default: LIFT_WING_REVISION_CONCURRENCY).
+	 */
+	private readonly liftWingRevisionConcurrency: number
+
+	/**
 	 * Create a new FakeWiki instance
 	 * @param base - Base URL for the API
 	 * @param options - Optional settings; use `apiUserAgent` to override the identifier sent to Lift Wing / Wikimedia APIs (e.g. for testing).
+	 * Use `historyFetchConcurrency` / `liftWingRevisionConcurrency` to cap parallelism (e.g. serialize with 1 for rate-sensitive prototypes).
 	 */
-	constructor(base = "https://en.wikipedia.org/", options?: { apiUserAgent?: string }) {
+	constructor(
+		base = "https://en.wikipedia.org/",
+		options?: {
+			apiUserAgent?: string
+			historyFetchConcurrency?: number
+			liftWingRevisionConcurrency?: number
+		}
+	) {
 		this.base = base
 		this.apiUserAgent = options?.apiUserAgent
+		this.historyFetchConcurrency = Math.max(
+			1,
+			Math.floor(options?.historyFetchConcurrency ?? COMBINED_FEED_HISTORY_CONCURRENCY)
+		)
+		this.liftWingRevisionConcurrency = Math.max(
+			1,
+			Math.floor(options?.liftWingRevisionConcurrency ?? LIFT_WING_REVISION_CONCURRENCY)
+		)
 		this.userInfoCache = new Map()
 		this.userCategoryCache = new Map()
 		this.defaultUserTypeConfig = {
@@ -1113,7 +1139,7 @@ export class FakeWiki {
 
 		const userResults = await this.runWithConcurrency(
 			userNames,
-			COMBINED_FEED_HISTORY_CONCURRENCY,
+			this.historyFetchConcurrency,
 			async userName => {
 				try {
 					const history = await this.getUserHistory(userName, options)
@@ -1163,7 +1189,7 @@ export class FakeWiki {
 		if (userNames.length > 0) {
 			const userResults = await this.runWithConcurrency(
 				userNames,
-				COMBINED_FEED_HISTORY_CONCURRENCY,
+				this.historyFetchConcurrency,
 				async userName => {
 					let userOptions: FWHistoryOptions = {
 						limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
@@ -1196,7 +1222,7 @@ export class FakeWiki {
 		if (pageNames.length > 0) {
 			const pageResults = await this.runWithConcurrency(
 				pageNames,
-				COMBINED_FEED_HISTORY_CONCURRENCY,
+				this.historyFetchConcurrency,
 				async pageName => {
 					try {
 						const options: FWHistoryOptions = {}
@@ -3794,7 +3820,7 @@ export class FakeWiki {
 		for (const model of normalizedModels) {
 			const byRevision = await this.runWithConcurrency(
 				revisionIds,
-				LIFT_WING_REVISION_CONCURRENCY,
+				this.liftWingRevisionConcurrency,
 				async revId => ({
 					revId,
 					prediction: await this.fetchRevisionPrediction(revId, model, wiki),
