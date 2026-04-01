@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import ReviewChangesPlusFeed from "@/components/ReviewChangesPlusFeed/ReviewChangesPlusFeed.vue"
+import ReviewChangesPlusFeed from "@/modules/ReviewChangesPlus/components/ReviewChangesPlusFeed/ReviewChangesPlusFeed.vue"
 import { reviewChangesPlusFeedProps } from "@/modules/ReviewChangesPlus/reviewChangesPlusFeedProps"
 </script>
 

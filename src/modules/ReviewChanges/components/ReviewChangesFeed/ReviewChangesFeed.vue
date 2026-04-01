@@ -687,7 +687,7 @@
 </template>
 
 <script setup lang="ts">
-import FeedItemTitle from "@/components/ReviewChangesFeed/FeedItemTitle.vue"
+import FeedItemTitle from "./FeedItemTitle.vue"
 import {
 	clearRevisionsCallback,
 	setRevisionsCallback,

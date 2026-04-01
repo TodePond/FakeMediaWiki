@@ -47,9 +47,9 @@
 </template>
 
 <script setup lang="ts">
-import VisualDiff from "@/components/VisualDiff/VisualDiff.vue"
-import VisualEditor from "@/components/VisualEditor/VisualEditor.vue"
-import { whenVeReady } from "@/lib/visualeditor/loadVe"
+import VisualDiff from "@/modules/VisualEditor/components/VisualDiff.vue"
+import VisualEditor from "@/modules/VisualEditor/components/VisualEditor.vue"
+import { whenVeReady } from "@repo-lib/visualeditor/loadVe"
 import { CdxLabel } from "@wikimedia/codex"
 import { nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 

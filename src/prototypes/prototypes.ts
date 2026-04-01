@@ -619,16 +619,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 	},
 	{
 		type: "prototype",
-		id: "Feed",
-		name: "Review changes feed",
-		description: "The feed module with fixed appearance.",
-		category: "dashboard",
-		wrapper: "Chrome",
-		title: "Review changes feed",
-		hidden: true,
-	},
-	{
-		type: "prototype",
 		id: "PageMetadata",
 		name: "Page metadata",
 		description: "How to get a page's metadata from the API.",

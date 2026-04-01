@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { renderVisualDiffToHtml } from "@/lib/visualeditor/veVisualDiff"
+import { renderVisualDiffToHtml } from "@repo-lib/visualeditor/veVisualDiff"
 import { onMounted, onUnmounted, ref, watch } from "vue"
 
 const props = defineProps<{

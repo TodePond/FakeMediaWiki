@@ -101,6 +101,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"@": fileURLToPath(new URL("./src", import.meta.url)),
+			"@repo-lib": fileURLToPath(new URL("./lib", import.meta.url)),
 		},
 	},
 	build: {

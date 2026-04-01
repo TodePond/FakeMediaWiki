@@ -2,6 +2,8 @@
 
 For prototypes under `src/prototypes/`, keep prototype-specific component styles in the prototype's `style.css` file. Do not add `<style scoped>` blocks with CSS inside the Vue file.
 
+**Scope:** This rule is for **prototype-local** CSS. Site-wide rules belong in **`src/styles/`** ([src-folder-layout.md](src-folder-layout.md), [css-styling.md](css-styling.md)).
+
 ## Pattern
 
 - **✅ Do:** Put scoped, prototype-specific styles in `src/prototypes/<Name>/style.css` and import it from `index.vue` with a single scoped import:

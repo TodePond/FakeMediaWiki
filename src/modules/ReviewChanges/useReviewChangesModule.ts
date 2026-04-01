@@ -1,4 +1,4 @@
-import type { ReviewChangesSource } from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
+import type { ReviewChangesSource } from "./components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import { computed, ref, watch } from "vue"
 
 const STORAGE_PREFIX = "review-changes-module-"

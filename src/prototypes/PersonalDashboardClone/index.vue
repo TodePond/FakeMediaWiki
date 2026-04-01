@@ -253,7 +253,7 @@
 </template>
 
 <script setup lang="ts">
-import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
+import ReviewChangesFeed from "@/modules/ReviewChanges/components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import ReviewChangesControls from "@/modules/ReviewChanges/ReviewChangesControls.vue"
 import { useReviewChangesModule } from "@/modules/ReviewChanges/useReviewChangesModule"
 import {

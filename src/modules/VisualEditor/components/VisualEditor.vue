@@ -3,8 +3,8 @@
 </template>
 
 <script setup lang="ts">
-import { whenVePlatformReady } from "@/lib/visualeditor/loadVe"
-import type { VeDocument, VeTarget } from "@/lib/visualeditor/veTypes"
+import { whenVePlatformReady } from "@repo-lib/visualeditor/loadVe"
+import type { VeDocument, VeTarget } from "@repo-lib/visualeditor/veTypes"
 import { nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 
 const props = withDefaults(

@@ -115,7 +115,7 @@
 	/* padding-right: 16px; */
 }
 
-/* Feed item card body: one ruleset for row typography (tokens: src/style/tokens.css). */
+/* Feed item card body: one ruleset for row typography (tokens: src/styles/tokens.css). */
 .review-changes__item-link {
 	position: relative;
 	display: flex;

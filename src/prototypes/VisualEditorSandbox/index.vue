@@ -40,8 +40,8 @@
 </template>
 
 <script setup lang="ts">
-import VisualEditor from "@/components/VisualEditor/VisualEditor.vue"
-import { whenVeReady } from "@/lib/visualeditor/loadVe"
+import VisualEditor from "@/modules/VisualEditor/components/VisualEditor.vue"
+import { whenVeReady } from "@repo-lib/visualeditor/loadVe"
 import { CdxButton, CdxLabel, CdxTextArea } from "@wikimedia/codex"
 import { nextTick, onMounted, ref } from "vue"
 

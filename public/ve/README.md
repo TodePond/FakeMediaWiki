@@ -2,6 +2,8 @@
 
 This directory is served at `/ve/` and must contain the built VisualEditor assets so the Visual Editor and Visual Diff components work.
 
+**Note:** Vendor scripts and styles live under `public/ve/lib/`. TypeScript that loads this bundle (e.g. `loadVe.ts`) lives in the repo-root **`lib/visualeditor/`** folder, not under `public/ve/`.
+
 ## Refresh procedure (no local VE repo required)
 
 **Option A – npm script (recommended)**

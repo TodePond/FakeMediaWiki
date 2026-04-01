@@ -455,9 +455,9 @@
 </template>
 
 <script setup lang="ts">
-import VisualDiff from "@/components/VisualDiff/VisualDiff.vue"
-import VisualEditor from "@/components/VisualEditor/VisualEditor.vue"
-import { whenVePlatformReady } from "@/lib/visualeditor/loadVe"
+import VisualDiff from "@/modules/VisualEditor/components/VisualDiff.vue"
+import VisualEditor from "@/modules/VisualEditor/components/VisualEditor.vue"
+import { whenVePlatformReady } from "@repo-lib/visualeditor/loadVe"
 import { CdxButton, CdxLabel, CdxProgressBar, CdxTextInput } from "@wikimedia/codex"
 import { FakeWiki } from "fakewiki"
 import type {

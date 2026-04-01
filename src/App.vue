@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import RouterViewOutlet from "@/components/RouterViewOutlet/RouterViewOutlet.vue"
+import RouterViewOutlet from "@/views/RouterViewOutlet/RouterViewOutlet.vue"
 import { RouterView } from "vue-router"
 </script>
 

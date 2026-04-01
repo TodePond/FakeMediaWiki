@@ -2,22 +2,24 @@
 
 **CRITICAL: Before adding custom CSS to prototypes, check existing global stylesheets first.**
 
+Global app styles live in **`src/styles/`** (not under individual prototypes). For where code belongs in the repo, see [src-folder-layout.md](src-folder-layout.md).
+
 ## Global Stylesheets Available
 
 The project has comprehensive global stylesheets that already style common elements:
 
-- `src/style/main.css` - Main global styles including:
+- `src/styles/main.css` - Main global styles including:
   - Headings (h1, h2, h3, etc.)
   - Lists (ul, ol, li)
   - Links (a, a:hover, a:visited, etc.)
   - Paragraphs, tables, forms
   - Codex design tokens and variables
   
-- `src/style/load.css` - Additional styles for rendered content
+- `src/styles/load.css` - Additional styles for rendered content
 
-- `src/style/tokens.css` - Design tokens
+- `src/styles/tokens.css` - Design tokens
 
-- `src/style/colors.css` - Color definitions
+- `src/styles/colors.css` - Color definitions
 
 ## When NOT to Add Custom CSS
 
@@ -90,7 +92,7 @@ The project has comprehensive global stylesheets that already style common eleme
 
 ## Process Before Adding CSS
 
-1. **Check `src/style/main.css`** - Does it already style this element?
+1. **Check `src/styles/main.css`** - Does it already style this element?
 2. **Check Codex components** - Can you use a Codex component instead?
 3. **Check design tokens** - Can you use existing CSS variables?
 4. **Ask yourself:** Is this styling truly unique to this prototype, or is it just standard HTML?
@@ -98,7 +100,7 @@ The project has comprehensive global stylesheets that already style common eleme
 ## AI Agent Instructions
 
 When working on prototypes:
-1. **Always check** `src/style/main.css` and `src/style/load.css` before adding `<style>` blocks
+1. **Always check** `src/styles/main.css` and `src/styles/load.css` before adding `<style>` blocks
 2. **Prefer** using standard HTML elements with global styles over custom CSS
 3. **Minimize** custom CSS - only add what's absolutely necessary
 4. **Remove** unnecessary CSS if you find it in existing prototypes

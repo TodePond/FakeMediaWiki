@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import ReviewChangesFeed from "@/components/ReviewChangesFeed/ReviewChangesFeed.vue"
+import ReviewChangesFeed from "./components/ReviewChangesFeed/ReviewChangesFeed.vue"
 import ReviewChangesControls from "@/modules/ReviewChanges/ReviewChangesControls.vue"
 import type { Ref } from "vue"
 import { inject, ref } from "vue"

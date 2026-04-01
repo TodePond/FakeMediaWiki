@@ -25,9 +25,18 @@
 		/* Path mapping */
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"@repo-lib/*": ["./lib/*"]
 		}
 	},
-	"include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "vite.config.ts"],
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx",
+		"src/**/*.vue",
+		"lib/**/*.ts",
+		"lib/**/*.d.ts",
+		"vite.config.ts",
+		"vite-env.d.ts"
+	],
 	"exclude": ["node_modules", "dist"]
 }
