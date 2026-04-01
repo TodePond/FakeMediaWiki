@@ -151,6 +151,11 @@ export class FakeWiki {
 	private revisionHtmlCache = new Map<string, string>()
 
 	/**
+	 * In-flight MediaWiki REST revision compare requests; same (from,to) pair shares one HTTP call.
+	 */
+	private compareInFlight = new Map<string, Promise<FWCompareResponse>>()
+
+	/**
 	 * Cache for short descriptions by page name.
 	 * key = pageName, value = description string or null if none
 	 */
@@ -1626,10 +1631,20 @@ export class FakeWiki {
 		fromRevId: number,
 		toRevId: number
 	): Promise<FWCompareResponse> {
-		return (await this.request({
+		const key = `${fromRevId}:${toRevId}`
+		const existing = this.compareInFlight.get(key)
+		if (existing) return existing
+
+		const promise = this.request({
 			api: "mediawiki",
 			path: `revision/${fromRevId}/compare/${toRevId}`,
-		})) as FWCompareResponse
+		}) as Promise<FWCompareResponse>
+
+		this.compareInFlight.set(key, promise)
+		void promise.finally(() => {
+			this.compareInFlight.delete(key)
+		})
+		return promise
 	}
 
 	/**

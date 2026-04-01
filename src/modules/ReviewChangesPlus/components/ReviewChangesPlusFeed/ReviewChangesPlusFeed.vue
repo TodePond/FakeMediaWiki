@@ -773,6 +773,7 @@ import FeedItemTitle from "./FeedItemTitle.vue"
 const PROCESS_REVISIONS_CONCURRENCY = 1
 const RC_SEGMENTS_FETCH_CONCURRENCY = 1
 const REFERENCE_NEED_AND_TONE_CONCURRENCY = 1
+const EDIT_CHECK_PREDICTION_DEBOUNCE_MS = 300
 
 export type ReviewChangesSource =
 	| "recentChanges"
@@ -1292,19 +1293,18 @@ function pickFirstNQualifyingRevisions(
 	return out
 }
 
+/** True once we have any settled outcome (success, API error, or missing key still undefined). */
 function referenceNeedEntryValid(
 	entry: { delta: number; before: number; after: number } | { error: true } | undefined
-): entry is { delta: number; before: number; after: number } {
-	if (entry == null) return false
-	return !("error" in entry && entry.error)
+): entry is { delta: number; before: number; after: number } | { error: true } {
+	return entry !== undefined
 }
 
+/** True for any settled fetch result; only `undefined` (never fetched) needs a request. `null` = no prediction (API/format). */
 function toneCheckEntryValid(
 	entry: FWToneCheckPrediction | { error: true } | null | undefined
 ): boolean {
-	if (entry == null) return false
-	if (typeof entry === "object" && "error" in entry && entry.error) return false
-	return true
+	return entry !== undefined
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
@@ -1400,7 +1400,7 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 		>()
 		for (const c of revsWithPage) {
 			const e = prev.get(c.id)
-			if (referenceNeedEntryValid(e)) pruned.set(c.id, e)
+			if (referenceNeedEntryValid(e)) pruned.set(c.id, e!)
 		}
 		referenceNeedByRevId.value = pruned
 		schedulePersistFeedBundleSave()
@@ -1413,7 +1413,7 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 	>()
 	for (const c of revsWithPage) {
 		const e = prev.get(c.id)
-		if (referenceNeedEntryValid(e)) next.set(c.id, e)
+		if (referenceNeedEntryValid(e)) next.set(c.id, e!)
 	}
 	try {
 		const referenceNeedPredPromises = new Map<
@@ -1511,7 +1511,7 @@ async function fetchToneCheckForFeed(): Promise<void> {
 		const pruned = new Map<number, FWToneCheckPrediction | { error: true } | null>()
 		for (const c of revsWithPage) {
 			const e = prev.get(c.id)
-			if (toneCheckEntryValid(e)) pruned.set(c.id, e as FWToneCheckPrediction)
+			if (toneCheckEntryValid(e)) pruned.set(c.id, e!)
 		}
 		toneCheckByRevId.value = pruned
 		schedulePersistFeedBundleSave()
@@ -1521,7 +1521,7 @@ async function fetchToneCheckForFeed(): Promise<void> {
 	const next = new Map<number, FWToneCheckPrediction | { error: true } | null>()
 	for (const c of revsWithPage) {
 		const e = prev.get(c.id)
-		if (toneCheckEntryValid(e)) next.set(c.id, e as FWToneCheckPrediction)
+		if (toneCheckEntryValid(e)) next.set(c.id, e!)
 	}
 	try {
 		const results = await wiki.runWithConcurrency(
@@ -1549,6 +1549,21 @@ async function fetchToneCheckForFeed(): Promise<void> {
 		isLoadingToneCheck.value = false
 		schedulePersistFeedBundleSave()
 	}
+}
+
+let editCheckPredictionScheduleId: ReturnType<typeof setTimeout> | null = null
+
+/** Coalesces reference-need + tone fetches so loadFeed and watchers do not run duplicate overlapping requests. */
+function scheduleEditCheckPredictionFetches(
+	delayMs: number = EDIT_CHECK_PREDICTION_DEBOUNCE_MS
+): void {
+	if (!(props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks)) return
+	if (editCheckPredictionScheduleId) clearTimeout(editCheckPredictionScheduleId)
+	editCheckPredictionScheduleId = setTimeout(() => {
+		editCheckPredictionScheduleId = null
+		void fetchReferenceNeedForFeed()
+		void fetchToneCheckForFeed()
+	}, delayMs)
 }
 
 const allRevisionsData = ref<FWRevision[]>([])
@@ -1927,13 +1942,11 @@ watch(
 				(props.source === "recentChanges" &&
 					getStandaloneRecentChangesCandidatePool().length > 0))
 		if (selectedRevisionsForDisplay.value.length > 0 || hasRcCandidates) {
-			fetchReferenceNeedForFeed()
-			fetchToneCheckForFeed()
+			scheduleEditCheckPredictionFetches(0)
 		}
 	}
 )
 
-let referenceNeedDebounceId: ReturnType<typeof setTimeout> | null = null
 watch(
 	() => [
 		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
@@ -1964,12 +1977,7 @@ watch(
 		} else {
 			return
 		}
-		if (referenceNeedDebounceId) clearTimeout(referenceNeedDebounceId)
-		referenceNeedDebounceId = setTimeout(() => {
-			referenceNeedDebounceId = null
-			fetchReferenceNeedForFeed()
-			fetchToneCheckForFeed()
-		}, 300)
+		scheduleEditCheckPredictionFetches(EDIT_CHECK_PREDICTION_DEBOUNCE_MS)
 	}
 )
 
@@ -2206,8 +2214,7 @@ function restoreLastSuccessfulFeed(): void {
 		void fetchRevertRiskForFeed()
 	}
 	if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
-		void fetchReferenceNeedForFeed()
-		void fetchToneCheckForFeed()
+		scheduleEditCheckPredictionFetches(0)
 	}
 	const persistedForRestore = loadPersistedFeedBundleForSource(props.source ?? "recentChanges")
 	if (
@@ -2630,8 +2637,7 @@ async function loadFeed(append = false): Promise<void> {
 				void fetchRevertRiskForFeed()
 			}
 			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
-				fetchReferenceNeedForFeed()
-				fetchToneCheckForFeed()
+				scheduleEditCheckPredictionFetches(EDIT_CHECK_PREDICTION_DEBOUNCE_MS)
 			}
 			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
@@ -2737,8 +2743,7 @@ async function loadFeed(append = false): Promise<void> {
 				void fetchRevertRiskForFeed()
 			}
 			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
-				fetchReferenceNeedForFeed()
-				fetchToneCheckForFeed()
+				scheduleEditCheckPredictionFetches(EDIT_CHECK_PREDICTION_DEBOUNCE_MS)
 			}
 			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
@@ -2776,8 +2781,7 @@ async function loadFeed(append = false): Promise<void> {
 				void fetchRevertRiskForFeed()
 			}
 			if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
-				fetchReferenceNeedForFeed()
-				fetchToneCheckForFeed()
+				scheduleEditCheckPredictionFetches(EDIT_CHECK_PREDICTION_DEBOUNCE_MS)
 			}
 			schedulePersistFeedBundleIfSkippingPredictionFetches()
 			return
@@ -2846,8 +2850,7 @@ async function loadFeed(append = false): Promise<void> {
 			void fetchRevertRiskForFeed()
 		}
 		if (props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks) {
-			fetchReferenceNeedForFeed()
-			fetchToneCheckForFeed()
+			scheduleEditCheckPredictionFetches(EDIT_CHECK_PREDICTION_DEBOUNCE_MS)
 		}
 		persistLastSuccessfulFeedSnapshot()
 		schedulePersistFeedBundleIfSkippingPredictionFetches()
@@ -3089,6 +3092,8 @@ onMounted(() => {
 onUnmounted(() => {
 	if (persistFeedBundleDebounceId) clearTimeout(persistFeedBundleDebounceId)
 	persistFeedBundleDebounceId = null
+	if (editCheckPredictionScheduleId) clearTimeout(editCheckPredictionScheduleId)
+	editCheckPredictionScheduleId = null
 	clearRevisionsCallback()
 })
 
