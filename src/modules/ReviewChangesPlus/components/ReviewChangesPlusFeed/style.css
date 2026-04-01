@@ -99,6 +99,8 @@
 	gap: 4px;
 	display: flex;
 	flex-direction: column;
+	border-top: 1px solid var(--border-color-subtle);
+	border-bottom: 1px solid var(--border-color-subtle);
 }
 
 .review-changes__item {
