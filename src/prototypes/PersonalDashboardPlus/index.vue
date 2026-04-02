@@ -102,7 +102,7 @@
 		<!-- Desktop: full dashboard -->
 		<div class="dashboard-main">
 			<ReviewChangesPlusFeed
-				v-bind="reviewChangesPlusFeedProps"
+				v-bind="{ ...reviewChangesPlusFeedProps }"
 				@preview-update="onPreviewUpdate"
 			/>
 
@@ -153,7 +153,10 @@
 								<span class="policies__item-desc"
 									>Content must represent significant views fairly,
 									proportionately, and without bias.<a
-										:href="wiki.getPageUrl('Wikipedia:Neutral_point_of_view') + '#Examples'"
+										:href="
+											wiki.getPageUrl('Wikipedia:Neutral_point_of_view') +
+											'#Examples'
+										"
 										target="_blank"
 										rel="noopener noreferrer"
 										class="policies__examples"
@@ -166,7 +169,10 @@
 								<span class="policies__item-desc"
 									>Articles should summarise published sources, and not contain
 									users' own interpretation or knowledge.<a
-										:href="wiki.getPageUrl('Wikipedia:No_original_research') + '#Examples'"
+										:href="
+											wiki.getPageUrl('Wikipedia:No_original_research') +
+											'#Examples'
+										"
 										target="_blank"
 										rel="noopener noreferrer"
 										class="policies__examples"
@@ -179,7 +185,9 @@
 								<span class="policies__item-desc"
 									>New additions should include a citation, providing the source
 									of the information.<a
-										:href="wiki.getPageUrl('Wikipedia:Verifiability') + '#Examples'"
+										:href="
+											wiki.getPageUrl('Wikipedia:Verifiability') + '#Examples'
+										"
 										target="_blank"
 										rel="noopener noreferrer"
 										class="policies__examples"
@@ -192,7 +200,10 @@
 								<span class="policies__item-desc"
 									>Remember that most users are trying to improve Wikipedia and
 									not deliberately reduce its quality.<a
-										:href="wiki.getPageUrl('Wikipedia:Assume_good_faith') + '#Examples'"
+										:href="
+											wiki.getPageUrl('Wikipedia:Assume_good_faith') +
+											'#Examples'
+										"
 										target="_blank"
 										rel="noopener noreferrer"
 										class="policies__examples"
@@ -211,10 +222,7 @@
 <script setup lang="ts">
 import ReviewChangesPlusFeed from "@/modules/ReviewChangesPlus/components/ReviewChangesPlusFeed/ReviewChangesPlusFeed.vue"
 import { reviewChangesPlusFeedProps } from "@/modules/ReviewChangesPlus/reviewChangesPlusFeedProps"
-import {
-	CdxIcon,
-	CdxProgressBar,
-} from "@wikimedia/codex"
+import { CdxIcon, CdxProgressBar } from "@wikimedia/codex"
 import {
 	cdxIconArrowNext,
 	cdxIconCheckAll,

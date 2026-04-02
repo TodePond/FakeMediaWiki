@@ -625,6 +625,10 @@
 	color: #202122;
 }
 
+.review-changes__source-icon--pagesIveEdited {
+	color: #202122;
+}
+
 .review-changes__item-link--unviewed {
 	.review-changes__page {
 		color: var(--color-emphasized);

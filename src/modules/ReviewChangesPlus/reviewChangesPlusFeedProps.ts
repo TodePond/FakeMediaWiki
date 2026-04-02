@@ -19,6 +19,7 @@ export const reviewChangesPlusFeedProps = {
 	pagesAndUsersRatio: 0,
 	pagesAndUsersLatestRatio: 30,
 	collaboratorsRatio: 0,
+	pagesIveEditedRatio: 0,
 	relatedChangesRatio: 10,
 	title: "Review changes plus",
 	hideDescription: false,

@@ -170,7 +170,9 @@
 														? cdxIconLightbulb
 														: getItemSource(change) === 'collaborators'
 															? cdxIconUserAvatar
-															: cdxIconClock
+															: getItemSource(change) === 'pagesIveEdited'
+																? cdxIconEdit
+																: cdxIconClock
 											"
 											size="x-small"
 											:class="[
@@ -188,7 +190,9 @@
 															: getItemSource(change) ===
 																  'collaborators'
 																? 'Mentor'
-																: 'Risky'
+																: getItemSource(change) === 'pagesIveEdited'
+																	? 'Pages you have edited'
+																	: 'Risky'
 											"
 										/>
 										<span class="review-changes__page">{{
@@ -223,7 +227,9 @@
 													? "From recommendations"
 													: getItemSource(change) === "collaborators"
 														? "By your mentor"
-														: "From recent changes"
+														: getItemSource(change) === "pagesIveEdited"
+															? "Pages you've edited"
+															: "From recent changes"
 									}}
 								</div>
 								<span
@@ -746,6 +752,7 @@ import {
 	cdxIconArrowNext,
 	cdxIconCheck,
 	cdxIconClock,
+	cdxIconEdit,
 	cdxIconError,
 	cdxIconLightbulb,
 	cdxIconLinkExternal,
@@ -787,6 +794,7 @@ export type ItemSource =
 	| "recentChanges"
 	| "pagesAndUsers"
 	| "pagesAndUsersLatest"
+	| "pagesIveEdited"
 	| "relatedChanges"
 	| "collaborators"
 
@@ -817,6 +825,8 @@ const props = withDefaults(
 		collaboratorsRatio?: number
 		/** 0–100, used when source is "mixed" or "pagesAndUsersLatest". 0 = exclude watchlist latest. */
 		pagesAndUsersLatestRatio?: number
+		/** 0–100, used when source is "mixed". 0 = exclude "pages you've edited" (usercontribs) pool. */
+		pagesIveEditedRatio?: number
 		title?: string
 		/** When true, hides the "Help keep Wikipedia reliable..." description line. */
 		hideDescription?: boolean
@@ -894,6 +904,7 @@ const props = withDefaults(
 		relatedChangesRatio: 30,
 		collaboratorsRatio: 20,
 		pagesAndUsersLatestRatio: 20,
+		pagesIveEditedRatio: 0,
 		hideDescription: false,
 		showSummaryCutout: true,
 		showEmptyEditSummary: true,
@@ -1574,6 +1585,7 @@ const mixedRecentChangesBySegment = ref<FWRevision[][]>([])
 const mixedPagesAndUsersData = ref<FWRevision[]>([])
 const mixedPagesAndUsersLatestData = ref<FWRevision[]>([])
 const mixedCollaboratorsData = ref<FWRevision[]>([])
+const mixedPagesIveEditedData = ref<FWRevision[]>([])
 const mixedRelatedChangesData = ref<FWRevision[]>([])
 
 type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
@@ -1666,11 +1678,13 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	const wl = mixedPagesAndUsersData.value
 	const wlLatest = mixedPagesAndUsersLatestData.value
 	const collaborators = mixedCollaboratorsData.value
+	const pagesIveEdited = mixedPagesIveEditedData.value
 	const related = mixedRelatedChangesData.value
 	const rcRatioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
 	const wlRatioPercent = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50))
 	const wlLatestRatioPercent = Math.max(0, Math.min(100, props.pagesAndUsersLatestRatio ?? 20))
 	const collaboratorsRatioPercent = Math.max(0, Math.min(100, props.collaboratorsRatio ?? 20))
+	const pagesIveEditedRatioPercent = Math.max(0, Math.min(100, props.pagesIveEditedRatio ?? 0))
 	const relatedRatioPercent = Math.max(0, Math.min(100, props.relatedChangesRatio ?? 30))
 
 	// 0% all: show nothing
@@ -1679,6 +1693,7 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 		wlRatioPercent === 0 &&
 		wlLatestRatioPercent === 0 &&
 		collaboratorsRatioPercent === 0 &&
+		pagesIveEditedRatioPercent === 0 &&
 		relatedRatioPercent === 0
 	)
 		return []
@@ -1719,12 +1734,19 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	)
 	const relatedSliced = relatedSorted.slice(0, relatedCount)
 
-	// Round-robin across 5 pools: RC, WL, WL latest, collaborators, relatedChanges
+	const pagesIveEditedCount = Math.min(
+		Math.floor((RECENT_CHANGES_LIMIT * pagesIveEditedRatioPercent) / 100),
+		pagesIveEdited.length
+	)
+	const pagesIveEditedSliced = pagesIveEdited.slice(0, pagesIveEditedCount)
+
+	// Round-robin across 6 pools: RC, WL, WL latest, collaborators, pages you've edited, relatedChanges
 	const pools = [
 		rcSliced.map(r => ({ ...r, itemSource: "recentChanges" as const })),
 		wlSliced.map(r => ({ ...r, itemSource: "pagesAndUsers" as const })),
 		wlLatestSliced.map(r => ({ ...r, itemSource: "pagesAndUsersLatest" as const })),
 		collaboratorsSliced.map(r => ({ ...r, itemSource: "collaborators" as const })),
+		pagesIveEditedSliced.map(r => ({ ...r, itemSource: "pagesIveEdited" as const })),
 		relatedSliced.map(r => ({ ...r, itemSource: "relatedChanges" as const })),
 	]
 	const maxLen = Math.max(...pools.map(p => p.length))
@@ -1868,6 +1890,13 @@ const latestRevIdByPageCollaborators = computed(() => {
 	return new Map<string, number>()
 })
 
+const latestRevIdByPagePagesIveEdited = computed(() => {
+	if (props.source === "mixed") {
+		return buildLatestRevIdByPage(mixedPagesIveEditedData.value)
+	}
+	return new Map<string, number>()
+})
+
 function isLatestRevision(change: RevisionWithSource): boolean {
 	const source = change.itemSource ?? props.source
 	if (
@@ -1877,6 +1906,9 @@ function isLatestRevision(change: RevisionWithSource): boolean {
 	)
 		return true
 	if (!change.pageName) return false
+	if (source === "pagesIveEdited") {
+		return latestRevIdByPagePagesIveEdited.value.get(change.pageName) === change.id
+	}
 	const latestMap =
 		source === "pagesAndUsers"
 			? latestRevIdByPageWatchlist.value
@@ -2030,6 +2062,7 @@ type ReviewChangesFeedSnapshot = {
 	mixedPagesAndUsersData: FWRevision[]
 	mixedPagesAndUsersLatestData: FWRevision[]
 	mixedCollaboratorsData: FWRevision[]
+	mixedPagesIveEditedData: FWRevision[]
 	mixedRelatedChangesData: FWRevision[]
 	rccontinue?: string
 }
@@ -2041,6 +2074,7 @@ function collectRevisionIdsFromSnapshot(s: ReviewChangesFeedSnapshot): Set<numbe
 	for (const r of s.mixedPagesAndUsersData) ids.add(r.id)
 	for (const r of s.mixedPagesAndUsersLatestData) ids.add(r.id)
 	for (const r of s.mixedCollaboratorsData) ids.add(r.id)
+	for (const r of s.mixedPagesIveEditedData) ids.add(r.id)
 	for (const r of s.mixedRelatedChangesData) ids.add(r.id)
 	for (const seg of s.mixedRecentChangesBySegment) {
 		for (const r of seg) ids.add(r.id)
@@ -2058,6 +2092,7 @@ function collectPageNamesFromSnapshot(s: ReviewChangesFeedSnapshot): Set<string>
 	for (const r of s.mixedPagesAndUsersData) add(r)
 	for (const r of s.mixedPagesAndUsersLatestData) add(r)
 	for (const r of s.mixedCollaboratorsData) add(r)
+	for (const r of s.mixedPagesIveEditedData) add(r)
 	for (const r of s.mixedRelatedChangesData) add(r)
 	for (const seg of s.mixedRecentChangesBySegment) {
 		for (const r of seg) add(r)
@@ -2098,6 +2133,9 @@ function parsePersistedFeedBundleJson(raw: string): PersistedFeedBundleV1 | null
 		if (!Array.isArray(snap.mixedPagesAndUsersLatestData)) return null
 		if (!Array.isArray(snap.mixedCollaboratorsData)) return null
 		if (!Array.isArray(snap.mixedRelatedChangesData)) return null
+		if (!Array.isArray(snap.mixedPagesIveEditedData)) {
+			;(snap as ReviewChangesFeedSnapshot).mixedPagesIveEditedData = []
+		}
 		return {
 			version: 1,
 			snapshot: JSON.parse(JSON.stringify(snap)) as ReviewChangesFeedSnapshot,
@@ -2152,6 +2190,7 @@ function isFeedSnapshotNonEmpty(s: ReviewChangesFeedSnapshot): boolean {
 		s.mixedPagesAndUsersData.length > 0 ||
 		s.mixedPagesAndUsersLatestData.length > 0 ||
 		s.mixedCollaboratorsData.length > 0 ||
+		s.mixedPagesIveEditedData.length > 0 ||
 		s.mixedRelatedChangesData.length > 0 ||
 		s.mixedRecentChangesBySegment.some(seg => seg.length > 0)
 	)
@@ -2167,6 +2206,7 @@ function snapshotFromCurrentRefs(): ReviewChangesFeedSnapshot {
 		mixedPagesAndUsersData: cloneForFeedSnapshot(mixedPagesAndUsersData.value),
 		mixedPagesAndUsersLatestData: cloneForFeedSnapshot(mixedPagesAndUsersLatestData.value),
 		mixedCollaboratorsData: cloneForFeedSnapshot(mixedCollaboratorsData.value),
+		mixedPagesIveEditedData: cloneForFeedSnapshot(mixedPagesIveEditedData.value),
 		mixedRelatedChangesData: cloneForFeedSnapshot(mixedRelatedChangesData.value),
 		rccontinue: rccontinue.value,
 	}
@@ -2197,6 +2237,7 @@ function restoreLastSuccessfulFeed(): void {
 	mixedPagesAndUsersData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersData)
 	mixedPagesAndUsersLatestData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersLatestData)
 	mixedCollaboratorsData.value = cloneForFeedSnapshot(snap.mixedCollaboratorsData)
+	mixedPagesIveEditedData.value = cloneForFeedSnapshot(snap.mixedPagesIveEditedData ?? [])
 	mixedRelatedChangesData.value = cloneForFeedSnapshot(snap.mixedRelatedChangesData)
 	rccontinue.value = snap.rccontinue
 	errors.value = []
@@ -2371,6 +2412,7 @@ function applyPersistedFeedBundle(bundle: PersistedFeedBundleV1): void {
 	mixedPagesAndUsersData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersData)
 	mixedPagesAndUsersLatestData.value = cloneForFeedSnapshot(snap.mixedPagesAndUsersLatestData)
 	mixedCollaboratorsData.value = cloneForFeedSnapshot(snap.mixedCollaboratorsData)
+	mixedPagesIveEditedData.value = cloneForFeedSnapshot(snap.mixedPagesIveEditedData ?? [])
 	mixedRelatedChangesData.value = cloneForFeedSnapshot(snap.mixedRelatedChangesData)
 	rccontinue.value = snap.rccontinue
 	lastSuccessfulFeedSnapshot.value = cloneForFeedSnapshot(snap)
@@ -2397,6 +2439,7 @@ function clearFeedToEmptyState(): void {
 	mixedPagesAndUsersData.value = []
 	mixedPagesAndUsersLatestData.value = []
 	mixedCollaboratorsData.value = []
+	mixedPagesIveEditedData.value = []
 	mixedRelatedChangesData.value = []
 	rccontinue.value = undefined
 	shortDescriptionByPage.value = new Map()
@@ -2439,6 +2482,33 @@ const HARDCODED_PAGE_NAMES = [
 	"Wet Leg",
 ]
 const HARDCODED_USER_NAMES = ["Samwalton9"]
+/** User whose contributions power the "pages you've edited" mixed-feed pool (dashboard demo). */
+const HARDCODED_PAGES_IVE_EDITED_USER = "Todepond"
+/** Max distinct pages for that pool: most recent edit per page, newest pages first. */
+const PAGES_IVE_EDITED_DISTINCT_PAGE_LIMIT = 6
+
+/** Newest-first; first time we see a page title wins (user's latest edit on that page). */
+function takeNewestDistinctPages(
+	revisions: FWRevision[],
+	maxPages: number
+): FWRevision[] {
+	if (maxPages <= 0) return []
+	const sorted = [...revisions].sort(
+		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+	)
+	const seen = new Set<string>()
+	const out: FWRevision[] = []
+	for (const r of sorted) {
+		const page = r.pageName?.trim()
+		if (!page) continue
+		const key = page.toLowerCase()
+		if (seen.has(key)) continue
+		seen.add(key)
+		out.push(r)
+		if (out.length >= maxPages) break
+	}
+	return out
+}
 
 /** Select top N pages by score; on ties, randomly pick among tying pages. */
 function selectTopNByScoreWithRandomTies(
@@ -2626,6 +2696,7 @@ async function loadFeed(append = false): Promise<void> {
 			mixedPagesAndUsersData.value = []
 			mixedPagesAndUsersLatestData.value = []
 			mixedCollaboratorsData.value = []
+			mixedPagesIveEditedData.value = []
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
 			persistLastSuccessfulFeedSnapshot()
@@ -2658,6 +2729,13 @@ async function loadFeed(append = false): Promise<void> {
 				userNames: HARDCODED_USER_NAMES,
 				limit: RECENT_CHANGES_LIMIT,
 			})
+			const pagesIveEditedRevisions =
+				(props.pagesIveEditedRatio ?? 0) > 0
+					? await wiki.getCombinedFeed({
+							userNames: [HARDCODED_PAGES_IVE_EDITED_USER],
+							limit: RECENT_CHANGES_LIMIT,
+						})
+					: []
 			const watchlistLatestRevisions = await loadWatchlistLatestRevisions()
 			const processedPages = await enrichRevisionsWithTags(
 				await processRevisions(pagesRevisions)
@@ -2669,9 +2747,20 @@ async function loadFeed(append = false): Promise<void> {
 			const sortedCollaborators = processedCollaborators.sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 			)
+			const processedPagesIveEdited =
+				pagesIveEditedRevisions.length > 0
+					? await enrichRevisionsWithTags(await processRevisions(pagesIveEditedRevisions))
+					: []
+			const sortedPagesIveEdited = processedPagesIveEdited.sort(
+				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+			)
 			mixedPagesAndUsersData.value = sortedPages
 			mixedPagesAndUsersLatestData.value = watchlistLatestRevisions
 			mixedCollaboratorsData.value = sortedCollaborators
+			mixedPagesIveEditedData.value = takeNewestDistinctPages(
+				sortedPagesIveEdited,
+				PAGES_IVE_EDITED_DISTINCT_PAGE_LIMIT
+			)
 
 			// Divide time range into 4 segments, query each in parallel
 			const LIMIT_PER_QUERY = Math.ceil(RECENT_CHANGES_LIMIT / NUM_RC_SEGMENTS)
@@ -2770,6 +2859,7 @@ async function loadFeed(append = false): Promise<void> {
 			mixedPagesAndUsersData.value = []
 			mixedPagesAndUsersLatestData.value = []
 			mixedCollaboratorsData.value = []
+			mixedPagesIveEditedData.value = []
 			mixedRelatedChangesData.value = []
 			isLoading.value = false
 			persistLastSuccessfulFeedSnapshot()
@@ -2825,6 +2915,7 @@ async function loadFeed(append = false): Promise<void> {
 		mixedPagesAndUsersData.value = []
 		mixedPagesAndUsersLatestData.value = []
 		mixedCollaboratorsData.value = []
+		mixedPagesIveEditedData.value = []
 		mixedRelatedChangesData.value = []
 
 		if (append && props.source === "recentChanges") {
@@ -2866,6 +2957,7 @@ async function loadFeed(append = false): Promise<void> {
 			mixedPagesAndUsersData.value = []
 			mixedPagesAndUsersLatestData.value = []
 			mixedCollaboratorsData.value = []
+			mixedPagesIveEditedData.value = []
 			mixedRelatedChangesData.value = []
 		}
 	}
