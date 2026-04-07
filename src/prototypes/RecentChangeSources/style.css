@@ -1,0 +1,83 @@
+.recent-change-sources {
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.api-busy {
+	font-weight: 600;
+}
+
+.stage {
+	padding-top: 12px;
+}
+
+.source-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 12px;
+}
+
+.source-controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 8px 12px;
+	margin: 8px 0 12px;
+}
+
+.source-control {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+}
+
+.source-step__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.prioritize-controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 8px 12px;
+	margin: 8px 0 12px;
+}
+
+.prioritize-control {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+}
+
+.prioritize-actions {
+	display: flex;
+	gap: 8px;
+	margin: 0 0 10px;
+}
+
+.meta {
+	font-size: 12px;
+	/* margin: 6px 0; */
+	color: var(--color-subtle);
+	padding: 0px 6px;
+	background-color: var(--background-color-neutral);
+}
+
+.log-list {
+	margin: 6px 0;
+	padding-left: 18px;
+	font-size: 12px;
+	max-height: 96px;
+	overflow-y: auto;
+	display: none;
+}
+
+.error {
+	color: var(--color-error, #b32424);
+	font-size: 12px;
+}
