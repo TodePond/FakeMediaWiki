@@ -208,15 +208,11 @@
 }
 
 .review-changes__primary-flag-icon--recommendation {
-	/* color: var(--color-progressive, #36c); */
-}
-
-.review-changes__primary-flag-icon--recommendation {
-	color: var(--color-base--subtle);
+	color: var(--color-progressive, #36c);
 }
 
 .review-changes__item-link--unviewed .review-changes__primary-flag-icon--recommendation {
-	color: var(--color-emphasized);
+	color: var(--color-progressive, #36c);
 }
 
 /* After the user opens the diff, soften header icon and flag copy to body grey. */
@@ -225,6 +221,10 @@
 .review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--revert-warn,
 .review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--recommendation {
 	color: var(--color-icon-notice, #54595d);
+}
+
+.review-changes__item-link--revision-viewed .review-changes__primary-flag-icon--recommendation {
+	color: var(--color-progressive, #36c);
 }
 
 .review-changes__item-link--revision-viewed .review-changes__revert-risk-notice--very-high,

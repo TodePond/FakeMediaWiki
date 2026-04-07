@@ -755,7 +755,6 @@ import {
 	cdxIconLightbulb,
 	cdxIconLinkExternal,
 	cdxIconReload,
-	cdxIconStar,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
 	cdxIconUserTemporary,
@@ -1178,8 +1177,8 @@ function getEditCheckDebugLines(change: FWRevision): Array<{ label: string; valu
 const REVERT_RISK_THRESHOLDS = {
 	lowerTight: 0.25,
 	lowerLoose: 0.45,
-	upperLoose: 0.86,
-	upperTight: 0.86,
+	upperLoose: 0.9,
+	upperTight: 0.9,
 } as const
 
 type RevertRiskBand = "high" | "mediumHigh"
@@ -1579,7 +1578,8 @@ async function prefetchMixedRecentChangesQualificationSignals(targetCount: numbe
 			const next = new Map(prev)
 			try {
 				for (const revId of toFetch) {
-					const page = uniqueCandidates.find(r => r.id === revId)?.pageName ?? "(unknown page)"
+					const page =
+						uniqueCandidates.find(r => r.id === revId)?.pageName ?? "(unknown page)"
 					console.log(
 						`[ReviewChangesPlus][revert-risk-check][qualification-precheck] revId=${revId} page=${page}`
 					)
@@ -1605,7 +1605,10 @@ async function prefetchMixedRecentChangesQualificationSignals(targetCount: numbe
 		if (toFetch.length > 0) {
 			const next = new Map(prev)
 			try {
-				const referenceNeedPredPromises = new Map<number, Promise<FWReferenceNeedPrediction | null>>()
+				const referenceNeedPredPromises = new Map<
+					number,
+					Promise<FWReferenceNeedPrediction | null>
+				>()
 				const getReferenceNeedPredictionDeduped = (
 					revId: number,
 					pageName: string,
@@ -1634,9 +1637,17 @@ async function prefetchMixedRecentChangesQualificationSignals(targetCount: numbe
 									: await wiki.getParentRevisionId(page, change.id)
 							const beforePred =
 								parentId != null
-									? await getReferenceNeedPredictionDeduped(parentId, page, "before")
+									? await getReferenceNeedPredictionDeduped(
+											parentId,
+											page,
+											"before"
+										)
 									: null
-							const afterPred = await getReferenceNeedPredictionDeduped(change.id, page, "after")
+							const afterPred = await getReferenceNeedPredictionDeduped(
+								change.id,
+								page,
+								"after"
+							)
 							const rnBefore = beforePred?.rn_score ?? 0
 							const rnAfter = afterPred?.rn_score ?? null
 							if (typeof rnAfter !== "number")
@@ -1689,7 +1700,10 @@ async function prefetchMixedRecentChangesQualificationSignals(targetCount: numbe
 							console.log(
 								`[ReviewChangesPlus][tone-check][qualification-precheck] revId=${change.id} page=${change.pageName ?? "(unknown page)"}`
 							)
-							const pred = await wiki.getToneCheckForRevision(change.pageName!, change.id)
+							const pred = await wiki.getToneCheckForRevision(
+								change.pageName!,
+								change.id
+							)
 							return { revId: change.id, pred } as const
 						} catch {
 							return { revId: change.id, pred: { error: true } as const } as const
@@ -1953,7 +1967,7 @@ function primaryFlagCdxIcon(change: RevisionWithSource): Icon {
 		return p.band === "high" ? cdxIconError : cdxIconAlert
 	}
 	// return cdxIconLightbulb
-	return cdxIconStar
+	return cdxIconUnStar
 }
 
 function primaryFlagIconModifierClass(change: RevisionWithSource): string {
@@ -2554,7 +2568,10 @@ function takeNewestDistinctPages(revisions: FWRevision[], maxPages: number): FWR
  * 1) finding pages the user recently edited, then
  * 2) fetching the latest revision on each page that was made by someone else.
  */
-async function loadPagesIveEditedByOthers(userName: string, maxPages: number): Promise<FWRevision[]> {
+async function loadPagesIveEditedByOthers(
+	userName: string,
+	maxPages: number
+): Promise<FWRevision[]> {
 	if (maxPages <= 0) return []
 	const ownRaw = await wiki.getCombinedFeed({
 		userNames: [userName],
@@ -2581,7 +2598,9 @@ async function loadPagesIveEditedByOthers(userName: string, maxPages: number): P
 
 	const processed = await processRevisions(candidateRevisions)
 	const enriched = await enrichRevisionsWithTags(processed)
-	return enriched.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+	return enriched.sort(
+		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+	)
 }
 
 /** Select top N pages by score; on ties, randomly pick among tying pages. */
@@ -2674,7 +2693,9 @@ async function loadRelatedChangesRevisions(options?: {
 	})
 }
 
-async function loadWatchlistLatestRevisions(maxPages = HARDCODED_PAGE_NAMES.length): Promise<FWRevision[]> {
+async function loadWatchlistLatestRevisions(
+	maxPages = HARDCODED_PAGE_NAMES.length
+): Promise<FWRevision[]> {
 	const latestRevisions: Array<FWPageHistoryRevision & { pageName?: string }> = []
 	for (const pageName of HARDCODED_PAGE_NAMES) {
 		const history = await wiki.getPageHistory(pageName, { limit: 1 })
