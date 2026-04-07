@@ -114,6 +114,28 @@
 					</div>
 					<div class="ratio-slider-row" role="group" aria-label="Mix ratio">
 						<CdxLabel
+							:input-id="pagesIveEditedSliderId"
+							class="ratio-slider-label"
+							title="Pages you've edited %"
+							>Pages you've edited</CdxLabel
+						>
+						<div class="ratio-slider-line">
+							<input
+								:id="pagesIveEditedSliderId"
+								v-model.number="mixedPagesIveEditedRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ mixedPagesIveEditedRatio }}%</span
+							>
+						</div>
+					</div>
+					<div class="ratio-slider-row" role="group" aria-label="Mix ratio">
+						<CdxLabel
 							:input-id="relatedChangesSliderId"
 							class="ratio-slider-label"
 							title="Related changes %"
@@ -228,6 +250,28 @@
 						</div>
 					</div>
 					<div
+						v-if="feedSource === 'pagesIveEdited'"
+						class="ratio-slider-row"
+						role="group"
+						aria-label="Show ratio"
+					>
+						<div class="ratio-slider-line">
+							<input
+								:id="pagesIveEditedSliderId"
+								v-model.number="standalonePagesIveEditedRatio"
+								type="range"
+								min="0"
+								max="100"
+								step="10"
+								class="ratio-slider"
+								aria-label="Pages you've edited %"
+							/>
+							<span class="ratio-slider-value" aria-hidden="true"
+								>{{ standalonePagesIveEditedRatio }}%</span
+							>
+						</div>
+					</div>
+					<div
 						v-if="feedSource === 'relatedChanges'"
 						class="ratio-slider-row"
 						role="group"
@@ -287,6 +331,7 @@ import { computed } from "vue"
 import {
 	REVIEW_CHANGES_CHECKBOX_CONFIG,
 	collaboratorsSliderId,
+	pagesIveEditedSliderId,
 	pagesAndUsersLatestSliderId,
 	pagesAndUsersSliderId,
 	recentChangesSliderId,
@@ -365,11 +410,13 @@ const {
 	mixedRecentChangesRatio,
 	mixedPagesAndUsersRatio,
 	mixedPagesAndUsersLatestRatio,
+	mixedPagesIveEditedRatio,
 	mixedCollaboratorsRatio,
 	mixedRelatedChangesRatio,
 	standaloneRecentChangesRatio,
 	standalonePagesAndUsersRatio,
 	standalonePagesAndUsersLatestRatio,
+	standalonePagesIveEditedRatio,
 	standaloneCollaboratorsRatio,
 	standaloneRelatedChangesRatio,
 } = module

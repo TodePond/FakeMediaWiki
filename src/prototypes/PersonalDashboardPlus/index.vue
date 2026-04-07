@@ -102,7 +102,7 @@
 		<!-- Desktop: full dashboard -->
 		<div class="dashboard-main">
 			<ReviewChangesPlusFeed
-				v-bind="{ ...reviewChangesPlusFeedProps }"
+				v-bind="reviewChangesPlusFeedProps"
 				@preview-update="onPreviewUpdate"
 			/>
 

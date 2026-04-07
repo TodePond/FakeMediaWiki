@@ -2,7 +2,6 @@ import type {
 	FWActionApiOptions,
 	FWApiOptions,
 	FWCachedRevision,
-	FWRecentChangesResult,
 	FWCompareResponse,
 	FWDiffLine,
 	FWDiffSegment,
@@ -29,14 +28,14 @@ import type {
 	FWPredictionModel,
 	FWRandomPageResult,
 	FWRandomPageSummary,
+	FWRecentChangesResult,
+	FWReferenceNeedPrediction,
 	FWRelativeTimestampOptions,
 	FWRestApiOptions,
 	FWResult,
 	FWRevision,
 	FWRevisionPredictions,
 	FWRevisionWithLinkType,
-	FWReferenceNeedPrediction,
-	FWToneCheckPrediction,
 	FWStructuredDeltaCandidate,
 	FWStructuredDeltaCanonicalType,
 	FWStructuredDeltaKind,
@@ -44,6 +43,7 @@ import type {
 	FWStructuredDeltaRevisionOptions,
 	FWStructuredDeltaSettings,
 	FWStructuredDeltasOptions,
+	FWToneCheckPrediction,
 	FWToolbarComment,
 	FWTopRelatedChange,
 	FWTopRelatedOptions,
@@ -561,7 +561,9 @@ export class FakeWiki {
 			const trimmed = text?.trim() ?? ""
 			if (trimmed.length > 0 && trimmed.length <= 800) {
 				try {
-					const j = trimmed ? (JSON.parse(trimmed) as { error?: { info?: string } }) : null
+					const j = trimmed
+						? (JSON.parse(trimmed) as { error?: { info?: string } })
+						: null
 					const info = j?.error?.info
 					if (typeof info === "string" && info.trim()) bodyHint = info.trim()
 				} catch {
@@ -1171,6 +1173,7 @@ export class FakeWiki {
 	 * @param options.userNames - Array of usernames to include
 	 * @param options.pageNames - Array of page titles to include
 	 * @param options.limit - Maximum total number of revisions to return (default and max: PAGE_HISTORY_REVISIONS_PER_REQUEST)
+	 * @param options.perSourceLimit - Maximum revisions to request per page/user history source before merge
 	 * @param options.after - Map of source (page name or user name) → revision ID to fetch revisions older than (per source). Ensures every page/user keeps paginating.
 	 * @returns Array of revisions sorted by timestamp (newest first), deduplicated by revision ID
 	 */
@@ -1178,15 +1181,21 @@ export class FakeWiki {
 		userNames?: string[]
 		pageNames?: string[]
 		limit?: number
+		perSourceLimit?: number
 		after?: Record<string, string>
 	}): Promise<FWCachedRevision[]> {
 		const {
 			userNames = [],
 			pageNames = [],
 			limit = PAGE_HISTORY_REVISIONS_PER_REQUEST,
+			perSourceLimit,
 			after: afterMap,
 		} = options
 		const totalLimit = Math.min(Math.max(limit, 1), PAGE_HISTORY_REVISIONS_PER_REQUEST)
+		const sourceLimit = Math.min(
+			Math.max(perSourceLimit ?? totalLimit, 1),
+			PAGE_HISTORY_REVISIONS_PER_REQUEST
+		)
 		const allRevisions: FWCachedRevision[] = []
 		const seenIds = new Set<number>()
 
@@ -1197,7 +1206,7 @@ export class FakeWiki {
 				this.historyFetchConcurrency,
 				async userName => {
 					let userOptions: FWHistoryOptions = {
-						limit: PAGE_HISTORY_REVISIONS_PER_REQUEST,
+						limit: sourceLimit,
 					}
 					const afterRevId = afterMap?.[userName]
 					if (afterRevId) {
@@ -1230,7 +1239,7 @@ export class FakeWiki {
 				this.historyFetchConcurrency,
 				async pageName => {
 					try {
-						const options: FWHistoryOptions = {}
+						const options: FWHistoryOptions = { limit: sourceLimit }
 						const pageAfter = afterMap?.[pageName]
 						if (pageAfter) {
 							options.older_than = pageAfter
@@ -1270,13 +1279,15 @@ export class FakeWiki {
 	 * @param options.rcend - Timestamp to end enumerating (with rcdir=older, must be earlier than rcstart)
 	 * @returns Revisions (revision-like) and optional rccontinue for pagination
 	 */
-	async getRecentChanges(options: {
-		limit?: number
-		rccontinue?: string
-		onlyNeedsReview?: boolean
-		rcstart?: string
-		rcend?: string
-	} = {}): Promise<FWRecentChangesResult> {
+	async getRecentChanges(
+		options: {
+			limit?: number
+			rccontinue?: string
+			onlyNeedsReview?: boolean
+			rcstart?: string
+			rcend?: string
+		} = {}
+	): Promise<FWRecentChangesResult> {
 		const { limit = 50, rccontinue, onlyNeedsReview = false, rcstart, rcend } = options
 		const rclimit = Math.min(Math.max(limit, 1), 500)
 
@@ -1305,17 +1316,19 @@ export class FakeWiki {
 			api: "action",
 			params,
 		})) as {
-			query?: { recentchanges?: Array<{
-				revid?: number
-				title?: string
-				user?: string
-				timestamp?: string
-				comment?: string
-				oldlen?: number
-				newlen?: number
-				oresscores?: Record<string, unknown>
-				tags?: string[]
-			}> }
+			query?: {
+				recentchanges?: Array<{
+					revid?: number
+					title?: string
+					user?: string
+					timestamp?: string
+					comment?: string
+					oldlen?: number
+					newlen?: number
+					oresscores?: Record<string, unknown>
+					tags?: string[]
+				}>
+			}
 			continue?: { rccontinue?: string }
 		}
 
@@ -1332,7 +1345,8 @@ export class FakeWiki {
 				size: rc.newlen ?? 0,
 			}
 			if (rc.oresscores) {
-				(rev as FWCachedRevision & { oresscores?: Record<string, unknown> }).oresscores = rc.oresscores
+				;(rev as FWCachedRevision & { oresscores?: Record<string, unknown> }).oresscores =
+					rc.oresscores
 			}
 			if (Array.isArray(rc.tags) && rc.tags.length > 0) {
 				rev.tags = rc.tags
@@ -1404,7 +1418,8 @@ export class FakeWiki {
 		lang?: string
 	): Promise<FWReferenceNeedPrediction | null> {
 		const langCode = lang ?? this.getEditTypesLang()
-		const url = "https://api.wikimedia.org/service/lw/inference/v1/models/reference-need:predict"
+		const url =
+			"https://api.wikimedia.org/service/lw/inference/v1/models/reference-need:predict"
 
 		try {
 			const response = await fetch(url, {
@@ -1419,7 +1434,9 @@ export class FakeWiki {
 			if (!response.ok) {
 				if (response.status === 422) return null
 				const message = await this.getPredictionApiErrorMessage(response)
-				console.warn(`Reference need prediction unavailable for revision ${revId}: ${message}`)
+				console.warn(
+					`Reference need prediction unavailable for revision ${revId}: ${message}`
+				)
 				return null
 			}
 
@@ -1483,7 +1500,11 @@ export class FakeWiki {
 
 			const data = (await response.json()) as { predictions?: FWToneCheckPrediction[] }
 			const pred = data.predictions?.[0]
-			if (pred && typeof pred.prediction === "boolean" && typeof pred.probability === "number") {
+			if (
+				pred &&
+				typeof pred.prediction === "boolean" &&
+				typeof pred.probability === "number"
+			) {
 				return pred
 			}
 			return null
@@ -3579,9 +3600,7 @@ export class FakeWiki {
 		const url = `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&action=edit`
 		if (sectionTitle?.trim()) {
 			// MediaWiki-style section fragment: heading "Foo bar" -> #Foo_bar
-			const fragment = sectionTitle
-				.trim()
-				.replace(/\s+/g, "_")
+			const fragment = sectionTitle.trim().replace(/\s+/g, "_")
 			return `${url}#${encodeURIComponent(fragment)}`
 		}
 		return url
@@ -3943,27 +3962,31 @@ export class FakeWiki {
 
 		const userAgent = this.apiUserAgent ?? DEFAULT_API_USER_AGENT
 
-		const results = await this.runWithConcurrency(chunks, ORES_CHUNK_CONCURRENCY, async chunk => {
-			const revids = chunk.join("|")
-			const url = `https://ores.wikimedia.org/v3/scores/${wikiCode}/?models=damaging|goodfaith&revids=${encodeURIComponent(revids)}`
-			try {
-				const response = await fetch(url, {
-					method: "GET",
-					headers: {
-						"Api-User-Agent": userAgent,
-					},
-				})
-				if (!response.ok) {
-					const message = await this.getPredictionApiErrorMessage(response, "ORES")
-					throw new Error(message)
+		const results = await this.runWithConcurrency(
+			chunks,
+			ORES_CHUNK_CONCURRENCY,
+			async chunk => {
+				const revids = chunk.join("|")
+				const url = `https://ores.wikimedia.org/v3/scores/${wikiCode}/?models=damaging|goodfaith&revids=${encodeURIComponent(revids)}`
+				try {
+					const response = await fetch(url, {
+						method: "GET",
+						headers: {
+							"Api-User-Agent": userAgent,
+						},
+					})
+					if (!response.ok) {
+						const message = await this.getPredictionApiErrorMessage(response, "ORES")
+						throw new Error(message)
+					}
+					return (await response.json()) as FWLiftWingResponse
+				} catch (error) {
+					if (error instanceof Error) throw error
+					console.error(`ORES request failed for revids ${revids}:`, error)
+					return null
 				}
-				return (await response.json()) as FWLiftWingResponse
-			} catch (error) {
-				if (error instanceof Error) throw error
-				console.error(`ORES request failed for revids ${revids}:`, error)
-				return null
 			}
-		})
+		)
 
 		for (const data of results) {
 			if (!data?.[wikiCode]?.scores) continue

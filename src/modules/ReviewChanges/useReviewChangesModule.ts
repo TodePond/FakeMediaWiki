@@ -42,11 +42,13 @@ const FEED_SOURCE_KEY = `${STORAGE_PREFIX}feed-source`
 const MIXED_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-recent-changes-ratio`
 const MIXED_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-ratio`
 const MIXED_PAGES_AND_USERS_LATEST_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-and-users-latest-ratio`
+const MIXED_PAGES_IVE_EDITED_RATIO_KEY = `${STORAGE_PREFIX}mixed-pages-ive-edited-ratio`
 const MIXED_RELATED_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}mixed-related-changes-ratio`
 const MIXED_COLLABORATORS_RATIO_KEY = `${STORAGE_PREFIX}mixed-collaborators-ratio-v2`
 const STANDALONE_RECENT_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}standalone-recent-changes-ratio`
 const STANDALONE_PAGES_AND_USERS_RATIO_KEY = `${STORAGE_PREFIX}standalone-pages-and-users-ratio`
 const STANDALONE_PAGES_AND_USERS_LATEST_RATIO_KEY = `${STORAGE_PREFIX}standalone-pages-and-users-latest-ratio`
+const STANDALONE_PAGES_IVE_EDITED_RATIO_KEY = `${STORAGE_PREFIX}standalone-pages-ive-edited-ratio`
 const STANDALONE_RELATED_CHANGES_RATIO_KEY = `${STORAGE_PREFIX}standalone-related-changes-ratio`
 const STANDALONE_COLLABORATORS_RATIO_KEY = `${STORAGE_PREFIX}standalone-collaborators-ratio-v2`
 
@@ -67,10 +69,12 @@ const LEGACY_KEYS: Record<string, string> = {
 	[MIXED_RECENT_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}recent-changes-ratio`,
 	[MIXED_PAGES_AND_USERS_RATIO_KEY]: `${LEGACY_PREFIX}pages-and-users-ratio`,
 	[MIXED_PAGES_AND_USERS_LATEST_RATIO_KEY]: `${STORAGE_PREFIX}mixed-pages-and-users-latest-ratio`,
+	[MIXED_PAGES_IVE_EDITED_RATIO_KEY]: `${STORAGE_PREFIX}mixed-pages-ive-edited-ratio`,
 	[MIXED_RELATED_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}related-changes-ratio`,
 	[STANDALONE_RECENT_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}standalone-recent-changes-ratio`,
 	[STANDALONE_PAGES_AND_USERS_RATIO_KEY]: `${LEGACY_PREFIX}standalone-pages-and-users-ratio`,
 	[STANDALONE_PAGES_AND_USERS_LATEST_RATIO_KEY]: `${STORAGE_PREFIX}standalone-pages-and-users-latest-ratio`,
+	[STANDALONE_PAGES_IVE_EDITED_RATIO_KEY]: `${STORAGE_PREFIX}standalone-pages-ive-edited-ratio`,
 	[STANDALONE_RELATED_CHANGES_RATIO_KEY]: `${LEGACY_PREFIX}standalone-related-changes-ratio`,
 	[MIXED_COLLABORATORS_RATIO_KEY]: `${STORAGE_PREFIX}mixed-collaborators-ratio`,
 	[STANDALONE_COLLABORATORS_RATIO_KEY]: `${STORAGE_PREFIX}standalone-collaborators-ratio`,
@@ -156,6 +160,7 @@ function getStoredFeedSource(): ReviewChangesSource {
 		stored === "recentChanges" ||
 		stored === "pagesAndUsers" ||
 		stored === "pagesAndUsersLatest" ||
+		stored === "pagesIveEdited" ||
 		stored === "mixed" ||
 		stored === "relatedChanges" ||
 		stored === "collaborators"
@@ -170,6 +175,7 @@ export const sourceOptions: Array<{
 		| "recentChanges"
 		| "pagesAndUsers"
 		| "pagesAndUsersLatest"
+		| "pagesIveEdited"
 		| "mixed"
 		| "relatedChanges"
 		| "collaborators"
@@ -178,6 +184,7 @@ export const sourceOptions: Array<{
 	{ value: "recentChanges", label: "Risky" },
 	{ value: "pagesAndUsers", label: "Watchlist" },
 	{ value: "pagesAndUsersLatest", label: "Watchlist (latest revision)" },
+	{ value: "pagesIveEdited", label: "Pages you've edited" },
 	{ value: "collaborators", label: "Mentor" },
 	{ value: "relatedChanges", label: "Related changes" },
 	{ value: "mixed", label: "Mixed" },
@@ -187,6 +194,7 @@ export const reviewChangesSourceId = "review-changes-module-source"
 export const recentChangesSliderId = "review-changes-module-recent-slider"
 export const pagesAndUsersSliderId = "review-changes-module-pages-slider"
 export const pagesAndUsersLatestSliderId = "review-changes-module-pages-latest-slider"
+export const pagesIveEditedSliderId = "review-changes-module-pages-ive-edited-slider"
 export const relatedChangesSliderId = "review-changes-module-related-slider"
 export const collaboratorsSliderId = "review-changes-module-collaborators-slider"
 export const timestampPositionId = "review-changes-module-timestamp-position"
@@ -374,6 +382,13 @@ function createReviewChangesModule() {
 			20
 		)
 	)
+	const mixedPagesIveEditedRatio = ref(
+		getStoredRatio(
+			MIXED_PAGES_IVE_EDITED_RATIO_KEY,
+			LEGACY_KEYS[MIXED_PAGES_IVE_EDITED_RATIO_KEY],
+			0
+		)
+	)
 	const mixedRelatedChangesRatio = ref(
 		getStoredRatio(
 			MIXED_RELATED_CHANGES_RATIO_KEY,
@@ -406,6 +421,13 @@ function createReviewChangesModule() {
 		getStoredRatio(
 			STANDALONE_PAGES_AND_USERS_LATEST_RATIO_KEY,
 			LEGACY_KEYS[STANDALONE_PAGES_AND_USERS_LATEST_RATIO_KEY],
+			100
+		)
+	)
+	const standalonePagesIveEditedRatio = ref(
+		getStoredRatio(
+			STANDALONE_PAGES_IVE_EDITED_RATIO_KEY,
+			LEGACY_KEYS[STANDALONE_PAGES_IVE_EDITED_RATIO_KEY],
 			100
 		)
 	)
@@ -443,6 +465,11 @@ function createReviewChangesModule() {
 		feedSource.value === "mixed"
 			? mixedRelatedChangesRatio.value
 			: standaloneRelatedChangesRatio.value
+	)
+	const pagesIveEditedRatio = computed(() =>
+		feedSource.value === "mixed"
+			? mixedPagesIveEditedRatio.value
+			: standalonePagesIveEditedRatio.value
 	)
 	const collaboratorsRatio = computed(() =>
 		feedSource.value === "mixed"
@@ -717,6 +744,13 @@ function createReviewChangesModule() {
 			// ignore
 		}
 	})
+	watch(mixedPagesIveEditedRatio, value => {
+		try {
+			localStorage.setItem(MIXED_PAGES_IVE_EDITED_RATIO_KEY, String(value))
+		} catch {
+			// ignore
+		}
+	})
 	watch(mixedRelatedChangesRatio, value => {
 		try {
 			localStorage.setItem(MIXED_RELATED_CHANGES_RATIO_KEY, String(value))
@@ -741,6 +775,13 @@ function createReviewChangesModule() {
 	watch(standalonePagesAndUsersLatestRatio, value => {
 		try {
 			localStorage.setItem(STANDALONE_PAGES_AND_USERS_LATEST_RATIO_KEY, String(value))
+		} catch {
+			// ignore
+		}
+	})
+	watch(standalonePagesIveEditedRatio, value => {
+		try {
+			localStorage.setItem(STANDALONE_PAGES_IVE_EDITED_RATIO_KEY, String(value))
 		} catch {
 			// ignore
 		}
@@ -802,11 +843,13 @@ function createReviewChangesModule() {
 		mixedRecentChangesRatio.value = 20
 		mixedPagesAndUsersRatio.value = 0
 		mixedPagesAndUsersLatestRatio.value = 20
+		mixedPagesIveEditedRatio.value = 0
 		mixedRelatedChangesRatio.value = 20
 		mixedCollaboratorsRatio.value = 20
 		standaloneRecentChangesRatio.value = 60
 		standalonePagesAndUsersRatio.value = 100
 		standalonePagesAndUsersLatestRatio.value = 100
+		standalonePagesIveEditedRatio.value = 100
 		standaloneRelatedChangesRatio.value = 100
 		standaloneCollaboratorsRatio.value = 100
 	}
@@ -816,16 +859,19 @@ function createReviewChangesModule() {
 		mixedRecentChangesRatio,
 		mixedPagesAndUsersRatio,
 		mixedPagesAndUsersLatestRatio,
+		mixedPagesIveEditedRatio,
 		mixedRelatedChangesRatio,
 		mixedCollaboratorsRatio,
 		standaloneRecentChangesRatio,
 		standalonePagesAndUsersRatio,
 		standalonePagesAndUsersLatestRatio,
+		standalonePagesIveEditedRatio,
 		standaloneRelatedChangesRatio,
 		standaloneCollaboratorsRatio,
 		recentChangesRatio,
 		pagesAndUsersRatio,
 		pagesAndUsersLatestRatio,
+		pagesIveEditedRatio,
 		relatedChangesRatio,
 		collaboratorsRatio,
 		showRevertRiskInFeed,
@@ -863,6 +909,7 @@ function createReviewChangesModule() {
 		recentChangesSliderId,
 		pagesAndUsersSliderId,
 		pagesAndUsersLatestSliderId,
+		pagesIveEditedSliderId,
 		relatedChangesSliderId,
 		collaboratorsSliderId,
 		resetToDefaults,

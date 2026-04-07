@@ -170,7 +170,8 @@
 														? cdxIconLightbulb
 														: getItemSource(change) === 'collaborators'
 															? cdxIconUserAvatar
-															: getItemSource(change) === 'pagesIveEdited'
+															: getItemSource(change) ===
+																  'pagesIveEdited'
 																? cdxIconEdit
 																: cdxIconClock
 											"
@@ -190,7 +191,8 @@
 															: getItemSource(change) ===
 																  'collaborators'
 																? 'Mentor'
-																: getItemSource(change) === 'pagesIveEdited'
+																: getItemSource(change) ===
+																	  'pagesIveEdited'
 																	? 'Pages you have edited'
 																	: 'Risky'
 											"
@@ -558,10 +560,6 @@
 												getRevertRiskNotice(change)?.band === 'high',
 											'review-changes__revert-risk-notice--high':
 												getRevertRiskNotice(change)?.band === 'mediumHigh',
-											'review-changes__revert-risk-notice--low':
-												getRevertRiskNotice(change)?.band === 'low',
-											'review-changes__revert-risk-notice--medium-low':
-												getRevertRiskNotice(change)?.band === 'mediumLow',
 										}"
 									>
 										<span class="review-changes__revert-risk-notice-text"
@@ -1184,7 +1182,7 @@ const REVERT_RISK_THRESHOLDS = {
 	upperTight: 0.86,
 } as const
 
-type RevertRiskBand = "high" | "mediumHigh" | "low" | "mediumLow"
+type RevertRiskBand = "high" | "mediumHigh"
 
 function getRiskFromPrediction(pred: FWLiftWingPrediction): number {
 	const p = pred.probability?.true
@@ -1219,24 +1217,6 @@ function getRevertRiskNotice(
 				? `This change ${revWord} high revert risk.`
 				: "This edit has a high chance of getting undone.",
 			band: "mediumHigh",
-		}
-	}
-	if (risk < REVERT_RISK_THRESHOLDS.lowerTight) {
-		return {
-			label: "Very low revert risk.",
-			description: verbose
-				? `This change ${revWord} very low revert risk.`
-				: "This edit is unlikely to be reverted.",
-			band: "low",
-		}
-	}
-	if (risk < REVERT_RISK_THRESHOLDS.lowerLoose) {
-		return {
-			label: "Low revert risk.",
-			description: verbose
-				? `This change ${revWord} low revert risk.`
-				: "This edit has a low chance of getting undone.",
-			band: "mediumLow",
 		}
 	}
 	return null
@@ -1319,26 +1299,16 @@ function toneCheckEntryValid(
 }
 
 async function fetchRevertRiskForFeed(): Promise<void> {
-	if (deferPredictionFetchesUntilFeedReload.value) return
-	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
-	if (props.requireRecentChangesMeetRevertRiskThresholds) {
-		if (props.source === "mixed") {
-			const rcCandidates = getMixedRecentChangesForPredictionFetch()
-			const byId = new Map<number, FWRevision>(revs.map(r => [r.id, r]))
-			for (const r of rcCandidates) {
-				if (!byId.has(r.id)) byId.set(r.id, r)
-			}
-			revs = [...byId.values()]
-		} else if (props.source === "recentChanges") {
-			const rcCandidates = getStandaloneRecentChangesCandidatePool()
-			const byId = new Map<number, FWRevision>(revs.map(r => [r.id, r]))
-			for (const r of rcCandidates) {
-				if (!byId.has(r.id)) byId.set(r.id, r)
-			}
-			revs = [...byId.values()]
-		}
+	if (deferPredictionFetchesUntilFeedReload.value) {
+		console.log("[ReviewChangesPlus][revert-risk-check] skipped: waiting for Refresh")
+		return
 	}
-	if (revs.length === 0) return
+	// Invariant: analysis must only run for currently displayed rows.
+	const revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
+	if (revs.length === 0) {
+		console.log("[ReviewChangesPlus][revert-risk-check] skipped: no displayed revisions")
+		return
+	}
 	const revIds = revs.map(r => r.id)
 	const prev = revertRiskByRevId.value
 	const models: FWPredictionModel[] = props.showRevertRisk
@@ -1346,6 +1316,9 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 		: ["revertrisk"]
 	const toFetch = revIds.filter(id => !revertRiskEntryIsComplete(prev.get(id), models))
 	if (toFetch.length === 0) {
+		console.log(
+			"[ReviewChangesPlus][revert-risk-check] skipped: all displayed revisions already cached"
+		)
 		const pruned = new Map<number, FWPredictionByModel | { error: true }>()
 		for (const id of revIds) {
 			const e = prev.get(id)
@@ -1362,6 +1335,12 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 		if (revertRiskEntryIsComplete(e, models)) next.set(id, e as FWPredictionByModel)
 	}
 	try {
+		const pageNameByRevId = new Map(revs.map(r => [r.id, r.pageName ?? "(unknown page)"]))
+		for (const revId of toFetch) {
+			console.log(
+				`[ReviewChangesPlus][revert-risk-check] revId=${revId} page=${pageNameByRevId.get(revId) ?? "(unknown page)"}`
+			)
+		}
 		const predictions = await wiki.getRevisionPredictions(toFetch, models)
 		for (const revId of toFetch) {
 			const byModel = predictions[revId] ?? {}
@@ -1380,31 +1359,29 @@ async function fetchRevertRiskForFeed(): Promise<void> {
 }
 
 async function fetchReferenceNeedForFeed(): Promise<void> {
-	if (deferPredictionFetchesUntilFeedReload.value) return
-	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
-	if (props.requireRecentChangesMeetRevertRiskThresholds) {
-		if (props.source === "mixed") {
-			const rcCandidates = getMixedRecentChangesForPredictionFetch()
-			const byId = new Map(revs.map(r => [r.id, r]))
-			for (const r of rcCandidates) {
-				if (!byId.has(r.id)) byId.set(r.id, r)
-			}
-			revs = [...byId.values()]
-		} else if (props.source === "recentChanges") {
-			const rcCandidates = getStandaloneRecentChangesCandidatePool()
-			const byId = new Map(revs.map(r => [r.id, r]))
-			for (const r of rcCandidates) {
-				if (!byId.has(r.id)) byId.set(r.id, r)
-			}
-			revs = [...byId.values()]
-		}
+	if (deferPredictionFetchesUntilFeedReload.value) {
+		console.log("[ReviewChangesPlus][reference-need-check] skipped: waiting for Refresh")
+		return
 	}
-	if (revs.length === 0) return
+	// Invariant: analysis must only run for currently displayed rows.
+	const revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
+	if (revs.length === 0) {
+		console.log("[ReviewChangesPlus][reference-need-check] skipped: no displayed revisions")
+		return
+	}
 	const revsWithPage = revs.filter(r => r.pageName)
-	if (revsWithPage.length === 0) return
+	if (revsWithPage.length === 0) {
+		console.log(
+			"[ReviewChangesPlus][reference-need-check] skipped: no displayed revisions with page names"
+		)
+		return
+	}
 	const prev = referenceNeedByRevId.value
 	const toFetch = revsWithPage.filter(c => !referenceNeedEntryValid(prev.get(c.id)))
 	if (toFetch.length === 0) {
+		console.log(
+			"[ReviewChangesPlus][reference-need-check] skipped: all displayed revisions already cached"
+		)
 		const pruned = new Map<
 			number,
 			{ delta: number; before: number; after: number } | { error: true }
@@ -1431,9 +1408,16 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 			number,
 			Promise<FWReferenceNeedPrediction | null>
 		>()
-		const getReferenceNeedPredictionDeduped = (revId: number) => {
+		const getReferenceNeedPredictionDeduped = (
+			revId: number,
+			pageName: string,
+			phase: string
+		) => {
 			let p = referenceNeedPredPromises.get(revId)
 			if (!p) {
+				console.log(
+					`[ReviewChangesPlus][reference-need-check] phase=${phase} revId=${revId} page=${pageName}`
+				)
 				p = wiki.getReferenceNeedPrediction(revId)
 				referenceNeedPredPromises.set(revId, p)
 			}
@@ -1451,8 +1435,14 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 							? cachedParent
 							: await wiki.getParentRevisionId(page, change.id)
 					const beforePred =
-						parentId != null ? await getReferenceNeedPredictionDeduped(parentId) : null
-					const afterPred = await getReferenceNeedPredictionDeduped(change.id)
+						parentId != null
+							? await getReferenceNeedPredictionDeduped(parentId, page, "before")
+							: null
+					const afterPred = await getReferenceNeedPredictionDeduped(
+						change.id,
+						page,
+						"after"
+					)
 					const rnBefore = beforePred?.rn_score ?? 0
 					const rnAfter = afterPred?.rn_score ?? null
 					if (typeof rnAfter !== "number")
@@ -1494,31 +1484,29 @@ async function fetchReferenceNeedForFeed(): Promise<void> {
 }
 
 async function fetchToneCheckForFeed(): Promise<void> {
-	if (deferPredictionFetchesUntilFeedReload.value) return
-	let revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
-	if (props.requireRecentChangesMeetRevertRiskThresholds) {
-		if (props.source === "mixed") {
-			const rcCandidates = getMixedRecentChangesForPredictionFetch()
-			const byId = new Map(revs.map(r => [r.id, r]))
-			for (const r of rcCandidates) {
-				if (!byId.has(r.id)) byId.set(r.id, r)
-			}
-			revs = [...byId.values()]
-		} else if (props.source === "recentChanges") {
-			const rcCandidates = getStandaloneRecentChangesCandidatePool()
-			const byId = new Map(revs.map(r => [r.id, r]))
-			for (const r of rcCandidates) {
-				if (!byId.has(r.id)) byId.set(r.id, r)
-			}
-			revs = [...byId.values()]
-		}
+	if (deferPredictionFetchesUntilFeedReload.value) {
+		console.log("[ReviewChangesPlus][tone-check] skipped: waiting for Refresh")
+		return
 	}
-	if (revs.length === 0) return
+	// Invariant: analysis must only run for currently displayed rows.
+	const revs: FWRevision[] = [...selectedRevisionsForDisplay.value]
+	if (revs.length === 0) {
+		console.log("[ReviewChangesPlus][tone-check] skipped: no displayed revisions")
+		return
+	}
 	const revsWithPage = revs.filter(r => r.pageName)
-	if (revsWithPage.length === 0) return
+	if (revsWithPage.length === 0) {
+		console.log(
+			"[ReviewChangesPlus][tone-check] skipped: no displayed revisions with page names"
+		)
+		return
+	}
 	const prev = toneCheckByRevId.value
 	const toFetch = revsWithPage.filter(c => !toneCheckEntryValid(prev.get(c.id)))
 	if (toFetch.length === 0) {
+		console.log(
+			"[ReviewChangesPlus][tone-check] skipped: all displayed revisions already cached"
+		)
 		const pruned = new Map<number, FWToneCheckPrediction | { error: true } | null>()
 		for (const c of revsWithPage) {
 			const e = prev.get(c.id)
@@ -1540,6 +1528,9 @@ async function fetchToneCheckForFeed(): Promise<void> {
 			REFERENCE_NEED_AND_TONE_CONCURRENCY,
 			async change => {
 				try {
+					console.log(
+						`[ReviewChangesPlus][tone-check] revId=${change.id} page=${change.pageName ?? "(unknown page)"}`
+					)
 					const pred = await wiki.getToneCheckForRevision(change.pageName!, change.id)
 					return { revId: change.id, pred } as const
 				} catch {
@@ -1560,6 +1551,164 @@ async function fetchToneCheckForFeed(): Promise<void> {
 		isLoadingToneCheck.value = false
 		schedulePersistFeedBundleSave()
 	}
+}
+
+/**
+ * Bootstrap risky-feed qualification for mixed recent-changes slots.
+ * This is intentionally bounded to RC slot count so we can decide which RC rows
+ * qualify before they are displayed, without reintroducing broad hidden-item analysis.
+ */
+async function prefetchMixedRecentChangesQualificationSignals(targetCount: number): Promise<void> {
+	if (!props.requireRecentChangesMeetRevertRiskThresholds) return
+	if (props.source !== "mixed") return
+	if (targetCount <= 0) return
+	const rcCandidates = getMixedRecentChangesFullyOrdered().slice(0, targetCount)
+	if (rcCandidates.length === 0) return
+	const uniqueCandidates = [...new Map(rcCandidates.map(r => [r.id, r])).values()]
+
+	// Revert risk bootstrap
+	const models: FWPredictionModel[] = props.showRevertRisk
+		? ["revertrisk", "revertrisk-multilingual"]
+		: ["revertrisk"]
+	{
+		const prev = revertRiskByRevId.value
+		const toFetch = uniqueCandidates
+			.map(r => r.id)
+			.filter(id => !revertRiskEntryIsComplete(prev.get(id), models))
+		if (toFetch.length > 0) {
+			const next = new Map(prev)
+			try {
+				for (const revId of toFetch) {
+					const page = uniqueCandidates.find(r => r.id === revId)?.pageName ?? "(unknown page)"
+					console.log(
+						`[ReviewChangesPlus][revert-risk-check][qualification-precheck] revId=${revId} page=${page}`
+					)
+				}
+				const predictions = await wiki.getRevisionPredictions(toFetch, models)
+				for (const revId of toFetch) {
+					next.set(revId, predictions[revId] ?? {})
+				}
+			} catch {
+				for (const revId of toFetch) {
+					if (!next.has(revId)) next.set(revId, { error: true })
+				}
+			}
+			revertRiskByRevId.value = next
+		}
+	}
+
+	// Reference-need bootstrap (only when it can affect qualification)
+	if (props.showEditCheckOtherFlag) {
+		const revsWithPage = uniqueCandidates.filter(r => r.pageName)
+		const prev = referenceNeedByRevId.value
+		const toFetch = revsWithPage.filter(c => !referenceNeedEntryValid(prev.get(c.id)))
+		if (toFetch.length > 0) {
+			const next = new Map(prev)
+			try {
+				const referenceNeedPredPromises = new Map<number, Promise<FWReferenceNeedPrediction | null>>()
+				const getReferenceNeedPredictionDeduped = (
+					revId: number,
+					pageName: string,
+					phase: string
+				) => {
+					let p = referenceNeedPredPromises.get(revId)
+					if (!p) {
+						console.log(
+							`[ReviewChangesPlus][reference-need-check][qualification-precheck] phase=${phase} revId=${revId} page=${pageName}`
+						)
+						p = wiki.getReferenceNeedPrediction(revId)
+						referenceNeedPredPromises.set(revId, p)
+					}
+					return p
+				}
+				const results = await wiki.runWithConcurrency(
+					toFetch,
+					REFERENCE_NEED_AND_TONE_CONCURRENCY,
+					async change => {
+						try {
+							const page = change.pageName!
+							const cachedParent = wiki.getParentRevisionIdFromCache(page, change.id)
+							const parentId =
+								cachedParent !== undefined
+									? cachedParent
+									: await wiki.getParentRevisionId(page, change.id)
+							const beforePred =
+								parentId != null
+									? await getReferenceNeedPredictionDeduped(parentId, page, "before")
+									: null
+							const afterPred = await getReferenceNeedPredictionDeduped(change.id, page, "after")
+							const rnBefore = beforePred?.rn_score ?? 0
+							const rnAfter = afterPred?.rn_score ?? null
+							if (typeof rnAfter !== "number")
+								return { revId: change.id, delta: null, error: true } as const
+							return {
+								revId: change.id,
+								before: rnBefore,
+								after: rnAfter,
+								delta: rnAfter - rnBefore,
+								error: false,
+							} as const
+						} catch {
+							return { revId: change.id, delta: null, error: true } as const
+						}
+					}
+				)
+				for (const result of results) {
+					if (result.error) {
+						next.set(result.revId, { error: true })
+					} else if (typeof result.delta === "number") {
+						next.set(result.revId, {
+							before: result.before,
+							after: result.after,
+							delta: result.delta,
+						})
+					}
+				}
+			} catch {
+				for (const change of toFetch) {
+					if (!next.has(change.id)) next.set(change.id, { error: true })
+				}
+			}
+			referenceNeedByRevId.value = next
+		}
+	}
+
+	// Tone-check bootstrap (only when it can affect qualification)
+	if (props.showToneCheckFlag) {
+		const revsWithPage = uniqueCandidates.filter(r => r.pageName)
+		const prev = toneCheckByRevId.value
+		const toFetch = revsWithPage.filter(c => !toneCheckEntryValid(prev.get(c.id)))
+		if (toFetch.length > 0) {
+			const next = new Map(prev)
+			try {
+				const results = await wiki.runWithConcurrency(
+					toFetch,
+					REFERENCE_NEED_AND_TONE_CONCURRENCY,
+					async change => {
+						try {
+							console.log(
+								`[ReviewChangesPlus][tone-check][qualification-precheck] revId=${change.id} page=${change.pageName ?? "(unknown page)"}`
+							)
+							const pred = await wiki.getToneCheckForRevision(change.pageName!, change.id)
+							return { revId: change.id, pred } as const
+						} catch {
+							return { revId: change.id, pred: { error: true } as const } as const
+						}
+					}
+				)
+				for (const { revId, pred } of results) {
+					next.set(revId, pred)
+				}
+			} catch {
+				for (const change of toFetch) {
+					if (!next.has(change.id)) next.set(change.id, { error: true })
+				}
+			}
+			toneCheckByRevId.value = next
+		}
+	}
+
+	schedulePersistFeedBundleSave()
 }
 
 let editCheckPredictionScheduleId: ReturnType<typeof setTimeout> | null = null
@@ -1591,8 +1740,16 @@ const mixedRelatedChangesData = ref<FWRevision[]>([])
 type RevisionWithSource = FWRevision & { itemSource?: ItemSource }
 
 const NUM_RC_SEGMENTS = 4
-/** Max interleaved RC rows to score for Lift Wing when risky-feed threshold mode is on (~visible feed size). */
-const PREDICTION_MIXED_RC_SCAN_CAP = 6
+
+function isFilteredNamespacePage(pageName: string | null | undefined): boolean {
+	if (!pageName) return false
+	const name = pageName.trim()
+	return /^(Talk:|User:)/i.test(name)
+}
+
+function isDisplayEligibleRevision(revision: FWRevision): boolean {
+	return !isFilteredNamespacePage(revision.pageName)
+}
 
 /** Full interleaved recent-changes ordering for mixed mode (segment round-robin); not capped by ratio. */
 function getMixedRecentChangesFullyOrdered(): FWRevision[] {
@@ -1617,13 +1774,7 @@ function getMixedRecentChangesFullyOrdered(): FWRevision[] {
 			if (seg[i]) rcOrdered.push(seg[i])
 		}
 	}
-	return rcOrdered
-}
-
-/** Prefix of interleaved RC list used for prediction fetches only (see PREDICTION_MIXED_RC_SCAN_CAP). */
-function getMixedRecentChangesForPredictionFetch(): FWRevision[] {
-	const ordered = getMixedRecentChangesFullyOrdered()
-	return ordered.slice(0, Math.min(ordered.length, PREDICTION_MIXED_RC_SCAN_CAP))
+	return rcOrdered.filter(isDisplayEligibleRevision)
 }
 
 /** Target slot count for recent changes in mixed mode (ratio of RECENT_CHANGES_LIMIT). */
@@ -1634,22 +1785,16 @@ function getMixedRecentChangesTargetCount(): number {
 	return Math.min(Math.floor((RECENT_CHANGES_LIMIT * rcRatioPercent) / 100), rcOrdered.length)
 }
 
-/** Pre-filter recent-changes slice for mixed mode when not using risky-feed backfill (same ordering as the feed). */
+/** Pre-filter recent-changes slice for mixed mode (same ordering as the feed). */
 function getMixedRecentChangesSlicedRevisions(): FWRevision[] {
 	const rcOrdered = getMixedRecentChangesFullyOrdered()
 	const target = getMixedRecentChangesTargetCount()
 	return rcOrdered.slice(0, target)
 }
 
-/** Full candidate pool for standalone recent changes (time order), for prediction fetch and backfill. */
-function getStandaloneRecentChangesCandidatePool(): FWRevision[] {
-	if (props.source !== "recentChanges") return []
-	return selectedRevisions.value
-}
-
 function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 	if (props.source !== "mixed") {
-		let all = selectedRevisions.value
+		let all = selectedRevisions.value.filter(isDisplayEligibleRevision)
 		if (props.source === "relatedChanges") {
 			all = [...all].sort((a, b) => {
 				const scoreA = (a as FWRevision & { score?: number }).score ?? -Infinity
@@ -1675,11 +1820,11 @@ function getSelectedRevisionsForDisplay(): RevisionWithSource[] {
 				: all.slice(0, count)
 		return toShow.map(r => ({ ...r, itemSource: props.source as ItemSource }))
 	}
-	const wl = mixedPagesAndUsersData.value
-	const wlLatest = mixedPagesAndUsersLatestData.value
-	const collaborators = mixedCollaboratorsData.value
-	const pagesIveEdited = mixedPagesIveEditedData.value
-	const related = mixedRelatedChangesData.value
+	const wl = mixedPagesAndUsersData.value.filter(isDisplayEligibleRevision)
+	const wlLatest = mixedPagesAndUsersLatestData.value.filter(isDisplayEligibleRevision)
+	const collaborators = mixedCollaboratorsData.value.filter(isDisplayEligibleRevision)
+	const pagesIveEdited = mixedPagesIveEditedData.value.filter(isDisplayEligibleRevision)
+	const related = mixedRelatedChangesData.value.filter(isDisplayEligibleRevision)
 	const rcRatioPercent = Math.max(0, Math.min(100, props.recentChangesRatio ?? 50))
 	const wlRatioPercent = Math.max(0, Math.min(100, props.pagesAndUsersRatio ?? 50))
 	const wlLatestRatioPercent = Math.max(0, Math.min(100, props.pagesAndUsersLatestRatio ?? 20))
@@ -1943,110 +2088,6 @@ watch(
 	],
 	() => {
 		fetchShortDescriptionsForFeed()
-	}
-)
-
-watch(
-	() =>
-		props.showRevertRisk ||
-		props.showRevertRiskFlags ||
-		props.requireRecentChangesMeetRevertRiskThresholds,
-	enabled => {
-		if (!enabled) return
-		const hasRcCandidates =
-			props.requireRecentChangesMeetRevertRiskThresholds &&
-			((props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0) ||
-				(props.source === "recentChanges" &&
-					getStandaloneRecentChangesCandidatePool().length > 0))
-		if (selectedRevisionsForDisplay.value.length > 0 || hasRcCandidates) {
-			void fetchRevertRiskForFeed()
-		}
-	}
-)
-
-watch(
-	() => props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks,
-	enabled => {
-		if (!enabled) return
-		const hasRcCandidates =
-			props.requireRecentChangesMeetRevertRiskThresholds &&
-			((props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0) ||
-				(props.source === "recentChanges" &&
-					getStandaloneRecentChangesCandidatePool().length > 0))
-		if (selectedRevisionsForDisplay.value.length > 0 || hasRcCandidates) {
-			scheduleEditCheckPredictionFetches(0)
-		}
-	}
-)
-
-watch(
-	() => [
-		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
-		props.showEditCheckOtherFlag || props.showToneCheckFlag || props.showDebugChecks,
-		props.requireRecentChangesMeetRevertRiskThresholds && props.source === "mixed"
-			? getMixedRecentChangesFullyOrdered()
-					.map(r => r.id)
-					.join(",")
-			: props.requireRecentChangesMeetRevertRiskThresholds && props.source === "recentChanges"
-				? getStandaloneRecentChangesCandidatePool()
-						.map(r => r.id)
-						.join(",")
-				: "",
-	],
-	([, enabled]) => {
-		if (!enabled) return
-		const thresholdRc =
-			props.requireRecentChangesMeetRevertRiskThresholds &&
-			(props.source === "mixed" || props.source === "recentChanges")
-		const hasMixedPool =
-			props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0
-		const hasStandalonePool =
-			props.source === "recentChanges" && getStandaloneRecentChangesCandidatePool().length > 0
-		if (props.source === "mixed") {
-			if (!hasMixedPool && selectedRevisionsForDisplay.value.length === 0) return
-		} else if (thresholdRc && props.source === "recentChanges") {
-			if (!hasStandalonePool && selectedRevisionsForDisplay.value.length === 0) return
-		} else {
-			return
-		}
-		scheduleEditCheckPredictionFetches(EDIT_CHECK_PREDICTION_DEBOUNCE_MS)
-	}
-)
-
-let revertRiskDebounceId: ReturnType<typeof setTimeout> | null = null
-watch(
-	() => [
-		selectedRevisionsForDisplay.value.map(r => r.id).join(","),
-		props.showRevertRisk ||
-			props.showRevertRiskFlags ||
-			props.requireRecentChangesMeetRevertRiskThresholds,
-		props.requireRecentChangesMeetRevertRiskThresholds && props.source === "mixed"
-			? getMixedRecentChangesFullyOrdered()
-					.map(r => r.id)
-					.join(",")
-			: props.requireRecentChangesMeetRevertRiskThresholds && props.source === "recentChanges"
-				? getStandaloneRecentChangesCandidatePool()
-						.map(r => r.id)
-						.join(",")
-				: "",
-	],
-	([, enabled]) => {
-		if (!enabled) return
-		const isMixedOrFilteredRc =
-			props.source === "mixed" ||
-			(props.source === "recentChanges" && props.requireRecentChangesMeetRevertRiskThresholds)
-		if (!isMixedOrFilteredRc) return
-		const hasRcCandidates =
-			props.requireRecentChangesMeetRevertRiskThresholds &&
-			((props.source === "mixed" && getMixedRecentChangesFullyOrdered().length > 0) ||
-				(props.source === "recentChanges" &&
-					getStandaloneRecentChangesCandidatePool().length > 0))
-		if (selectedRevisionsForDisplay.value.length === 0 && !hasRcCandidates) return
-		if (revertRiskDebounceId) clearTimeout(revertRiskDebounceId)
-		revertRiskDebounceId = setTimeout(() => {
-			revertRiskDebounceId = null
-			void fetchRevertRiskForFeed()
-		}, 300)
 	}
 )
 
@@ -2488,10 +2529,7 @@ const HARDCODED_PAGES_IVE_EDITED_USER = "Todepond"
 const PAGES_IVE_EDITED_DISTINCT_PAGE_LIMIT = 6
 
 /** Newest-first; first time we see a page title wins (user's latest edit on that page). */
-function takeNewestDistinctPages(
-	revisions: FWRevision[],
-	maxPages: number
-): FWRevision[] {
+function takeNewestDistinctPages(revisions: FWRevision[], maxPages: number): FWRevision[] {
 	if (maxPages <= 0) return []
 	const sorted = [...revisions].sort(
 		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -2501,6 +2539,7 @@ function takeNewestDistinctPages(
 	for (const r of sorted) {
 		const page = r.pageName?.trim()
 		if (!page) continue
+		if (!isDisplayEligibleRevision(r)) continue
 		const key = page.toLowerCase()
 		if (seen.has(key)) continue
 		seen.add(key)
@@ -2508,6 +2547,41 @@ function takeNewestDistinctPages(
 		if (out.length >= maxPages) break
 	}
 	return out
+}
+
+/**
+ * Build the "pages you've edited" pool by:
+ * 1) finding pages the user recently edited, then
+ * 2) fetching the latest revision on each page that was made by someone else.
+ */
+async function loadPagesIveEditedByOthers(userName: string, maxPages: number): Promise<FWRevision[]> {
+	if (maxPages <= 0) return []
+	const ownRaw = await wiki.getCombinedFeed({
+		userNames: [userName],
+		limit: maxPages,
+		perSourceLimit: maxPages,
+	})
+	const ownProcessed = await processRevisions(ownRaw)
+	const ownDistinctPages = takeNewestDistinctPages(ownProcessed, maxPages)
+	if (ownDistinctPages.length === 0) return []
+
+	const lowerUser = userName.trim().toLowerCase()
+	const candidateRevisions: Array<FWPageHistoryRevision & { pageName?: string }> = []
+	for (const revision of ownDistinctPages) {
+		const pageName = revision.pageName?.trim()
+		if (!pageName) continue
+		const history = await wiki.getPageHistory(pageName, { limit: 1 })
+		const latestRevision = history.revisions?.[0]
+		// Only include if someone else still has the latest revision on this page.
+		if (latestRevision && latestRevision.user?.name?.trim().toLowerCase() !== lowerUser) {
+			candidateRevisions.push({ ...latestRevision, pageName })
+		}
+	}
+	if (candidateRevisions.length === 0) return []
+
+	const processed = await processRevisions(candidateRevisions)
+	const enriched = await enrichRevisionsWithTags(processed)
+	return enriched.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 }
 
 /** Select top N pages by score; on ties, randomly pick among tying pages. */
@@ -2544,12 +2618,20 @@ function selectTopNByScoreWithRandomTies(
 	return result
 }
 
-async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
+async function loadRelatedChangesRevisions(options?: {
+	queryLimit?: number
+	maxRecommendedPages?: number
+}): Promise<FWRevision[]> {
+	const queryLimit = Math.max(1, Math.floor(options?.queryLimit ?? 50))
+	const maxRecommendedPages = Math.max(
+		1,
+		Math.floor(options?.maxRecommendedPages ?? RELATED_CHANGES_TOP_N)
+	)
 	const { pages: pagesWithScores, changes } = await wiki.getTopRelatedPages(
 		HARDCODED_PAGE_NAMES,
 		{
 			percentage: 100,
-			limit: 50,
+			limit: queryLimit,
 		}
 	)
 	const sourcePageNamesByPage = new Map<string, string[]>()
@@ -2565,7 +2647,7 @@ async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
 	const pagesExcludingWatchlist = pagesWithScores.filter(
 		p => !watchlistTitles.has(p.title.toLowerCase())
 	)
-	const selected = selectTopNByScoreWithRandomTies(pagesExcludingWatchlist, RELATED_CHANGES_TOP_N)
+	const selected = selectTopNByScoreWithRandomTies(pagesExcludingWatchlist, maxRecommendedPages)
 	const recommendedTitles = selected.map(p => p.title)
 	if (recommendedTitles.length === 0) return []
 	const scoreByPage = new Map(selected.map(p => [p.title, p.score]))
@@ -2592,7 +2674,7 @@ async function loadRelatedChangesRevisions(): Promise<FWRevision[]> {
 	})
 }
 
-async function loadWatchlistLatestRevisions(): Promise<FWRevision[]> {
+async function loadWatchlistLatestRevisions(maxPages = HARDCODED_PAGE_NAMES.length): Promise<FWRevision[]> {
 	const latestRevisions: Array<FWPageHistoryRevision & { pageName?: string }> = []
 	for (const pageName of HARDCODED_PAGE_NAMES) {
 		const history = await wiki.getPageHistory(pageName, { limit: 1 })
@@ -2603,9 +2685,10 @@ async function loadWatchlistLatestRevisions(): Promise<FWRevision[]> {
 	}
 	const processed = await processRevisions(latestRevisions)
 	const enriched = await enrichRevisionsWithTags(processed)
-	return enriched.sort(
+	const sorted = enriched.sort(
 		(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 	)
+	return sorted.slice(0, Math.max(0, Math.floor(maxPages)))
 }
 
 async function processRevisions(
@@ -2719,24 +2802,42 @@ async function loadFeed(append = false): Promise<void> {
 				isLoading.value = false
 				return
 			}
+			const clampRatio = (value: number | undefined) => Math.max(0, Math.min(100, value ?? 0))
+			const toSlotBudget = (ratioPercent: number) =>
+				Math.max(0, Math.floor((RECENT_CHANGES_LIMIT * ratioPercent) / 100))
+			const rcSlots = toSlotBudget(clampRatio(props.recentChangesRatio))
+			const wlSlots = toSlotBudget(clampRatio(props.pagesAndUsersRatio))
+			const wlLatestSlots = toSlotBudget(clampRatio(props.pagesAndUsersLatestRatio))
+			const collaboratorsSlots = toSlotBudget(clampRatio(props.collaboratorsRatio))
+			const pagesIveEditedSlots = toSlotBudget(clampRatio(props.pagesIveEditedRatio))
+			const relatedSlots = toSlotBudget(clampRatio(props.relatedChangesRatio))
 			// Serialize page vs user combined feeds so we never stack 3× REST history + 3× usercontribs
 			// (Wikimedia: ≤3 concurrent API requests total across Action + REST).
-			const pagesRevisions = await wiki.getCombinedFeed({
-				pageNames: HARDCODED_PAGE_NAMES,
-				limit: RECENT_CHANGES_LIMIT,
-			})
-			const collaboratorsRevisions = await wiki.getCombinedFeed({
-				userNames: HARDCODED_USER_NAMES,
-				limit: RECENT_CHANGES_LIMIT,
-			})
-			const pagesIveEditedRevisions =
-				(props.pagesIveEditedRatio ?? 0) > 0
+			const pagesRevisions =
+				wlSlots > 0
 					? await wiki.getCombinedFeed({
-							userNames: [HARDCODED_PAGES_IVE_EDITED_USER],
-							limit: RECENT_CHANGES_LIMIT,
+							pageNames: HARDCODED_PAGE_NAMES,
+							limit: wlSlots,
+							perSourceLimit: wlSlots,
 						})
 					: []
-			const watchlistLatestRevisions = await loadWatchlistLatestRevisions()
+			const collaboratorsRevisions =
+				collaboratorsSlots > 0
+					? await wiki.getCombinedFeed({
+							userNames: HARDCODED_USER_NAMES,
+							limit: collaboratorsSlots,
+							perSourceLimit: collaboratorsSlots,
+						})
+					: []
+			const pagesIveEditedByOthers =
+				pagesIveEditedSlots > 0
+					? await loadPagesIveEditedByOthers(
+							HARDCODED_PAGES_IVE_EDITED_USER,
+							Math.max(pagesIveEditedSlots, PAGES_IVE_EDITED_DISTINCT_PAGE_LIMIT)
+						)
+					: []
+			const watchlistLatestRevisions =
+				wlLatestSlots > 0 ? await loadWatchlistLatestRevisions(wlLatestSlots) : []
 			const processedPages = await enrichRevisionsWithTags(
 				await processRevisions(pagesRevisions)
 			)
@@ -2747,75 +2848,75 @@ async function loadFeed(append = false): Promise<void> {
 			const sortedCollaborators = processedCollaborators.sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 			)
-			const processedPagesIveEdited =
-				pagesIveEditedRevisions.length > 0
-					? await enrichRevisionsWithTags(await processRevisions(pagesIveEditedRevisions))
-					: []
-			const sortedPagesIveEdited = processedPagesIveEdited.sort(
-				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-			)
 			mixedPagesAndUsersData.value = sortedPages
 			mixedPagesAndUsersLatestData.value = watchlistLatestRevisions
 			mixedCollaboratorsData.value = sortedCollaborators
-			mixedPagesIveEditedData.value = takeNewestDistinctPages(
-				sortedPagesIveEdited,
-				PAGES_IVE_EDITED_DISTINCT_PAGE_LIMIT
-			)
+			mixedPagesIveEditedData.value = pagesIveEditedByOthers
 
-			// Divide time range into 4 segments, query each in parallel
-			const LIMIT_PER_QUERY = Math.ceil(RECENT_CHANGES_LIMIT / NUM_RC_SEGMENTS)
 			let processedBySegment: FWRevision[][] = []
-			let rangeStart: number
-			let rangeEnd: number
-			if (sortedPages.length > 0) {
-				const timestamps = sortedPages.map(r => new Date(r.timestamp).getTime())
-				const earliest = Math.min(...timestamps)
-				const latest = Math.max(...timestamps)
-				const bufferMs = 12 * 60 * 60 * 1000 // 12 hours each direction
-				rangeStart = earliest - bufferMs
-				rangeEnd = latest + bufferMs
-			} else {
-				// Watchlist empty: use default range (last 7 days) so we still get 4 segments of RC
-				const now = Date.now()
-				const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
-				rangeEnd = now
-				rangeStart = now - sevenDaysMs
-			}
-			const rangeMs = rangeEnd - rangeStart
-			const segmentDuration = rangeMs / NUM_RC_SEGMENTS
-			const queries = Array.from({ length: NUM_RC_SEGMENTS }, (_, i) => {
-				const segEnd = rangeStart + (i + 1) * segmentDuration
-				const segStart = rangeStart + i * segmentDuration
-				return {
-					rcstart: new Date(segEnd).toISOString(),
-					rcend: new Date(segStart).toISOString(),
+			if (rcSlots > 0) {
+				// Divide time range into up to 4 segments with strict request budget (no top-up).
+				const segmentCount = Math.min(NUM_RC_SEGMENTS, rcSlots)
+				const limitPerQuery = 1
+				let rangeStart: number
+				let rangeEnd: number
+				if (sortedPages.length > 0) {
+					const timestamps = sortedPages.map(r => new Date(r.timestamp).getTime())
+					const earliest = Math.min(...timestamps)
+					const latest = Math.max(...timestamps)
+					const bufferMs = 12 * 60 * 60 * 1000 // 12 hours each direction
+					rangeStart = earliest - bufferMs
+					rangeEnd = latest + bufferMs
+				} else {
+					// Watchlist empty: use default range (last 7 days).
+					const now = Date.now()
+					const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+					rangeEnd = now
+					rangeStart = now - sevenDaysMs
 				}
-			})
-			const results = await wiki.runWithConcurrency(
-				queries,
-				RC_SEGMENTS_FETCH_CONCURRENCY,
-				q =>
-					wiki.getRecentChanges({
-						limit: LIMIT_PER_QUERY,
-						onlyNeedsReview: true,
-						rcstart: q.rcstart,
-						rcend: q.rcend,
-					})
-			)
-			processedBySegment = await wiki.runWithConcurrency(
-				results,
-				PROCESS_REVISIONS_CONCURRENCY,
-				r => processRevisions(r.revisions)
-			)
-			processedBySegment = processedBySegment.map(seg =>
-				seg.sort(
-					(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+				const rangeMs = rangeEnd - rangeStart
+				const segmentDuration = rangeMs / segmentCount
+				const queries = Array.from({ length: segmentCount }, (_, i) => {
+					const segEnd = rangeStart + (i + 1) * segmentDuration
+					const segStart = rangeStart + i * segmentDuration
+					return {
+						rcstart: new Date(segEnd).toISOString(),
+						rcend: new Date(segStart).toISOString(),
+					}
+				})
+				const results = await wiki.runWithConcurrency(
+					queries,
+					RC_SEGMENTS_FETCH_CONCURRENCY,
+					q =>
+						wiki.getRecentChanges({
+							limit: limitPerQuery,
+							onlyNeedsReview: true,
+							rcstart: q.rcstart,
+							rcend: q.rcend,
+						})
 				)
-			)
+				processedBySegment = await wiki.runWithConcurrency(
+					results,
+					PROCESS_REVISIONS_CONCURRENCY,
+					r => processRevisions(r.revisions)
+				)
+				processedBySegment = processedBySegment.map(seg =>
+					seg.sort(
+						(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+					)
+				)
+			}
 			mixedRecentChangesBySegment.value = processedBySegment
+			await prefetchMixedRecentChangesQualificationSignals(rcSlots)
 
 			// Fetch related changes (latest revision per recommended page) - loadRelatedChangesRevisions already enriches with tags
-			const relatedRevisions = await loadRelatedChangesRevisions()
+			const relatedRevisions =
+				relatedSlots > 0
+					? await loadRelatedChangesRevisions({
+							queryLimit: relatedSlots,
+							maxRecommendedPages: relatedSlots,
+						})
+					: []
 			mixedRelatedChangesData.value = relatedRevisions.sort(
 				(a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 			)

@@ -37,6 +37,7 @@ import { computed } from "vue"
 import { CdxIcon } from "@wikimedia/codex"
 import {
 	cdxIconClock,
+	cdxIconEdit,
 	cdxIconLightbulb,
 	cdxIconUnStar,
 	cdxIconUserAvatar,
@@ -46,6 +47,7 @@ export type ItemSource =
 	| "recentChanges"
 	| "pagesAndUsers"
 	| "pagesAndUsersLatest"
+	| "pagesIveEdited"
 	| "relatedChanges"
 	| "collaborators"
 
@@ -78,6 +80,8 @@ const sourceIcon = computed(() => {
 			return cdxIconLightbulb
 		case "collaborators":
 			return cdxIconUserAvatar
+		case "pagesIveEdited":
+			return cdxIconEdit
 		default:
 			return cdxIconClock
 	}
@@ -94,6 +98,8 @@ const sourceIconLabel = computed(() => {
 			return "Related changes"
 		case "collaborators":
 			return "Mentor"
+		case "pagesIveEdited":
+			return "Pages you have edited"
 		default:
 			return "Risky"
 	}
