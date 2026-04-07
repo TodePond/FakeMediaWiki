@@ -12,11 +12,23 @@
 			<div class="source-controls">
 				<label class="source-control">
 					<span>Recent risky items: {{ recentRiskyFetchLimit }}</span>
-					<input v-model.number="recentRiskyFetchLimit" type="range" min="1" max="40" step="1" />
+					<input
+						v-model.number="recentRiskyFetchLimit"
+						type="range"
+						min="1"
+						max="40"
+						step="1"
+					/>
 				</label>
 				<label class="source-control">
 					<span>Watchlist latest items: {{ watchlistFetchLimit }}</span>
-					<input v-model.number="watchlistFetchLimit" type="range" min="1" max="12" step="1" />
+					<input
+						v-model.number="watchlistFetchLimit"
+						type="range"
+						min="1"
+						max="12"
+						step="1"
+					/>
 				</label>
 				<label class="source-control">
 					<span>Pages I edited items: {{ pagesIEditedFetchLimit }}</span>
@@ -152,8 +164,8 @@
 					<input
 						v-model.number="sourceCountWeight"
 						type="range"
-						min="-2"
-						max="2"
+						min="-5"
+						max="5"
 						step="0.05"
 					/>
 				</label>
@@ -165,8 +177,8 @@
 					<input
 						v-model.number="recommendationScoreWeight"
 						type="range"
-						min="-2"
-						max="2"
+						min="-5"
+						max="5"
 						step="0.05"
 					/>
 				</label>
@@ -175,8 +187,8 @@
 					<input
 						v-model.number="revertRiskWeight"
 						type="range"
-						min="-2"
-						max="2"
+						min="-5"
+						max="5"
 						step="0.05"
 					/>
 				</label>
@@ -185,8 +197,8 @@
 					<input
 						v-model.number="toneProbabilityWeight"
 						type="range"
-						min="-2"
-						max="2"
+						min="-5"
+						max="5"
 						step="0.05"
 					/>
 				</label>
@@ -195,15 +207,15 @@
 					<input
 						v-model.number="referenceDeltaWeight"
 						type="range"
-						min="-2"
-						max="2"
+						min="-5"
+						max="5"
 						step="0.05"
 					/>
 				</label>
 			</div>
 			<div class="prioritize-actions">
 				<CdxButton @click="resetPrioritizeSliders">Reset</CdxButton>
-				<CdxButton @click="setAllPrioritizeWeightsToZero">Set all to 0%</CdxButton>
+				<CdxButton @click="setAllPrioritizeWeightsToZero">Set all to 0</CdxButton>
 			</div>
 			<RecentChangeFeed
 				:items="prioritizedRows"
@@ -217,8 +229,23 @@
 			<div class="stage__header">
 				<h2>6. Select</h2>
 			</div>
+			<div class="select-controls">
+				<label class="select-control">
+					<span>Selected items: {{ selectCount }}</span>
+					<input v-model.number="selectCount" type="range" min="0" max="20" step="1" />
+				</label>
+				<div class="select-control">
+					<span>Select from sources:</span>
+					<div class="source-checkboxes">
+						<label v-for="sourceId in sourceStepIds" :key="`select-source-${sourceId}`">
+							<input v-model="selectSourcesEnabled[sourceId]" type="checkbox" />
+							{{ sourceDisplayLabels[sourceId] }}
+						</label>
+					</div>
+				</div>
+			</div>
 			<p class="meta">
-				top {{ SELECT_COUNT }} chosen; unselected entries stay visible and faded
+				top {{ selectCount }} chosen; unselected entries stay visible and faded
 			</p>
 			<RecentChangeFeed
 				:items="prioritizedRows"
@@ -233,10 +260,62 @@
 			<div class="stage__header">
 				<h2>7. Fill quotas</h2>
 			</div>
-			<p class="meta">
-				min {{ QUOTA_PER_SOURCE }} per source (if available) across: recent risky, watchlist
-				latest, pages I edited, related, related to edits
-			</p>
+			<div class="quota-controls">
+				<label class="quota-control">
+					<span>Recent risky quota: {{ recentRiskyQuotaTarget }}</span>
+					<input
+						v-model.number="recentRiskyQuotaTarget"
+						type="range"
+						min="0"
+						max="8"
+						step="1"
+					/>
+				</label>
+				<label class="quota-control">
+					<span>Watchlist latest quota: {{ watchlistQuotaTarget }}</span>
+					<input
+						v-model.number="watchlistQuotaTarget"
+						type="range"
+						min="0"
+						max="8"
+						step="1"
+					/>
+				</label>
+				<label class="quota-control">
+					<span>Pages I edited quota: {{ pagesIEditedQuotaTarget }}</span>
+					<input
+						v-model.number="pagesIEditedQuotaTarget"
+						type="range"
+						min="0"
+						max="8"
+						step="1"
+					/>
+				</label>
+				<label class="quota-control">
+					<span>Related changes quota: {{ relatedChangesQuotaTarget }}</span>
+					<input
+						v-model.number="relatedChangesQuotaTarget"
+						type="range"
+						min="0"
+						max="8"
+						step="1"
+					/>
+				</label>
+				<label class="quota-control">
+					<span>Related to edits quota: {{ relatedToEditsQuotaTarget }}</span>
+					<input
+						v-model.number="relatedToEditsQuotaTarget"
+						type="range"
+						min="0"
+						max="8"
+						step="1"
+					/>
+				</label>
+			</div>
+			<div class="quota-actions">
+				<CdxButton @click="resetQuotaTargets">Reset</CdxButton>
+				<CdxButton @click="setAllQuotaTargetsToZero">Set all to 0</CdxButton>
+			</div>
 			<RecentChangeFeed
 				:items="prioritizedRows"
 				key-prefix="quota"
@@ -324,6 +403,25 @@ const watchlistFetchLimit = ref(6)
 const pagesIEditedFetchLimit = ref(8)
 const relatedChangesFetchLimit = ref(8)
 const relatedToEditsFetchLimit = ref(8)
+const selectSourcesEnabled = ref<Record<SourceStepId, boolean>>({
+	recentRisky: true,
+	watchlistLatest: true,
+	pagesIEditedByOthers: true,
+	relatedChanges: true,
+	relatedToEdits: true,
+})
+const sourceDisplayLabels: Record<SourceStepId, string> = {
+	recentRisky: "recent risky",
+	watchlistLatest: "watchlist latest",
+	pagesIEditedByOthers: "pages I edited",
+	relatedChanges: "related changes",
+	relatedToEdits: "related to edits",
+}
+const recentRiskyQuotaTarget = ref(1)
+const watchlistQuotaTarget = ref(1)
+const pagesIEditedQuotaTarget = ref(1)
+const relatedChangesQuotaTarget = ref(1)
+const relatedToEditsQuotaTarget = ref(1)
 
 const WATCHLIST_PAGES = [
 	"Confidence Man (band)",
@@ -334,8 +432,7 @@ const WATCHLIST_PAGES = [
 	"Wet Leg",
 ]
 const PAGES_IVE_EDITED_USER = "Todepond"
-const SELECT_COUNT = 4
-const QUOTA_PER_SOURCE = 1
+const selectCount = ref(4)
 const RECENT_RISKY_PAGE_SIZE = 10
 
 const STORAGE_PREFIX = "prototype.recent-change-sources.v1"
@@ -349,6 +446,8 @@ const SOURCE_KEYS: Record<SourceStepId, string> = {
 const SCORE_KEY = `${STORAGE_PREFIX}.score`
 const PRIORITY_WEIGHTS_KEY = `${STORAGE_PREFIX}.priorityWeights`
 const SOURCE_FETCH_COUNTS_KEY = `${STORAGE_PREFIX}.sourceFetchCounts`
+const QUOTA_TARGETS_KEY = `${STORAGE_PREFIX}.quotaTargets`
+const SELECT_CONFIG_KEY = `${STORAGE_PREFIX}.selectConfig`
 
 function createSourceStepState(title: string): SourceStepState {
 	return {
@@ -432,7 +531,8 @@ const filteredRevisions = computed<RevisionRecord[]>(() => {
 		if (
 			pageName.startsWith("user:") ||
 			pageName.startsWith("talk:") ||
-			pageName.startsWith("user talk:")
+			pageName.startsWith("user talk:") ||
+			pageName.startsWith("wikipedia:")
 		) {
 			return false
 		}
@@ -499,24 +599,44 @@ const prioritizedRows = computed(() => {
 		.sort((a, b) => b.priorityScore - a.priorityScore)
 })
 
-const selectedRows = computed(() => prioritizedRows.value.slice(0, SELECT_COUNT))
+const selectedCandidateRows = computed(() =>
+	prioritizedRows.value.filter(row =>
+		row.sourceIds.some(sourceId => selectSourcesEnabled.value[sourceId])
+	)
+)
+
+const selectedRows = computed(() =>
+	selectedCandidateRows.value.slice(0, Math.max(0, Math.floor(selectCount.value)))
+)
 const selectedIdSet = computed(() => new Set(selectedRows.value.map(row => row.id)))
 const unselectedAfterSelectIds = computed(() =>
 	prioritizedRows.value.filter(row => !selectedIdSet.value.has(row.id)).map(row => row.id)
 )
 
+function getQuotaTarget(sourceId: SourceStepId): number {
+	if (sourceId === "recentRisky") return Math.max(0, Math.floor(recentRiskyQuotaTarget.value))
+	if (sourceId === "watchlistLatest") return Math.max(0, Math.floor(watchlistQuotaTarget.value))
+	if (sourceId === "pagesIEditedByOthers")
+		return Math.max(0, Math.floor(pagesIEditedQuotaTarget.value))
+	if (sourceId === "relatedChanges")
+		return Math.max(0, Math.floor(relatedChangesQuotaTarget.value))
+	return Math.max(0, Math.floor(relatedToEditsQuotaTarget.value))
+}
+
 const quotaFilledRows = computed(() => {
 	const chosen = [...selectedRows.value]
 	const chosenIds = new Set(chosen.map(row => row.id))
 	for (const sourceId of sourceStepIds) {
+		const quotaTarget = getQuotaTarget(sourceId)
+		if (quotaTarget <= 0) continue
 		let countFromSource = chosen.filter(row => row.sourceIds.includes(sourceId)).length
-		if (countFromSource >= QUOTA_PER_SOURCE) continue
+		if (countFromSource >= quotaTarget) continue
 		for (const row of prioritizedRows.value) {
 			if (chosenIds.has(row.id) || !row.sourceIds.includes(sourceId)) continue
 			chosen.push(row)
 			chosenIds.add(row.id)
 			countFromSource += 1
-			if (countFromSource >= QUOTA_PER_SOURCE) break
+			if (countFromSource >= quotaTarget) break
 		}
 	}
 	return chosen
@@ -549,6 +669,22 @@ function setAllPrioritizeWeightsToZero(): void {
 	revertRiskWeight.value = 0
 	toneProbabilityWeight.value = 0
 	referenceDeltaWeight.value = 0
+}
+
+function resetQuotaTargets(): void {
+	recentRiskyQuotaTarget.value = 1
+	watchlistQuotaTarget.value = 1
+	pagesIEditedQuotaTarget.value = 1
+	relatedChangesQuotaTarget.value = 1
+	relatedToEditsQuotaTarget.value = 1
+}
+
+function setAllQuotaTargetsToZero(): void {
+	recentRiskyQuotaTarget.value = 0
+	watchlistQuotaTarget.value = 0
+	pagesIEditedQuotaTarget.value = 0
+	relatedChangesQuotaTarget.value = 0
+	relatedToEditsQuotaTarget.value = 0
 }
 
 function savePrioritizeWeights(): void {
@@ -625,6 +761,68 @@ function restoreSourceFetchCounts(): void {
 	}
 }
 
+function saveQuotaTargets(): void {
+	const payload = {
+		recentRiskyQuotaTarget: recentRiskyQuotaTarget.value,
+		watchlistQuotaTarget: watchlistQuotaTarget.value,
+		pagesIEditedQuotaTarget: pagesIEditedQuotaTarget.value,
+		relatedChangesQuotaTarget: relatedChangesQuotaTarget.value,
+		relatedToEditsQuotaTarget: relatedToEditsQuotaTarget.value,
+	}
+	localStorage.setItem(QUOTA_TARGETS_KEY, JSON.stringify(payload))
+}
+
+function restoreQuotaTargets(): void {
+	const payload = parseStored<{
+		recentRiskyQuotaTarget?: number
+		watchlistQuotaTarget?: number
+		pagesIEditedQuotaTarget?: number
+		relatedChangesQuotaTarget?: number
+		relatedToEditsQuotaTarget?: number
+	}>(QUOTA_TARGETS_KEY)
+	if (!payload) return
+	if (typeof payload.recentRiskyQuotaTarget === "number") {
+		recentRiskyQuotaTarget.value = payload.recentRiskyQuotaTarget
+	}
+	if (typeof payload.watchlistQuotaTarget === "number") {
+		watchlistQuotaTarget.value = payload.watchlistQuotaTarget
+	}
+	if (typeof payload.pagesIEditedQuotaTarget === "number") {
+		pagesIEditedQuotaTarget.value = payload.pagesIEditedQuotaTarget
+	}
+	if (typeof payload.relatedChangesQuotaTarget === "number") {
+		relatedChangesQuotaTarget.value = payload.relatedChangesQuotaTarget
+	}
+	if (typeof payload.relatedToEditsQuotaTarget === "number") {
+		relatedToEditsQuotaTarget.value = payload.relatedToEditsQuotaTarget
+	}
+}
+
+function saveSelectConfig(): void {
+	const payload = {
+		selectCount: selectCount.value,
+		selectSourcesEnabled: selectSourcesEnabled.value,
+	}
+	localStorage.setItem(SELECT_CONFIG_KEY, JSON.stringify(payload))
+}
+
+function restoreSelectConfig(): void {
+	const payload = parseStored<{
+		selectCount?: number
+		selectSourcesEnabled?: Partial<Record<SourceStepId, boolean>>
+	}>(SELECT_CONFIG_KEY)
+	if (!payload) return
+	if (typeof payload.selectCount === "number") {
+		selectCount.value = payload.selectCount
+	}
+	if (payload.selectSourcesEnabled) {
+		selectSourcesEnabled.value = {
+			...selectSourcesEnabled.value,
+			...payload.selectSourcesEnabled,
+		}
+	}
+}
+
 watch(
 	[
 		sourceCountWeight,
@@ -649,6 +847,27 @@ watch(
 	() => {
 		saveSourceFetchCounts()
 	}
+)
+
+watch(
+	[
+		recentRiskyQuotaTarget,
+		watchlistQuotaTarget,
+		pagesIEditedQuotaTarget,
+		relatedChangesQuotaTarget,
+		relatedToEditsQuotaTarget,
+	],
+	() => {
+		saveQuotaTargets()
+	}
+)
+
+watch(
+	[selectCount, selectSourcesEnabled],
+	() => {
+		saveSelectConfig()
+	},
+	{ deep: true }
 )
 
 function setSourceStepItems(stepId: SourceStepId, items: SourceRevision[]): void {
@@ -788,7 +1007,10 @@ async function runSourceStep(stepId: SourceStepId): Promise<void> {
 					if (!rccontinue) break
 				}
 			} else if (stepId === "watchlistLatest") {
-				const selectedPages = WATCHLIST_PAGES.slice(0, Math.max(1, Math.floor(watchlistFetchLimit.value)))
+				const selectedPages = WATCHLIST_PAGES.slice(
+					0,
+					Math.max(1, Math.floor(watchlistFetchLimit.value))
+				)
 				step.totalCount = selectedPages.length
 				for (const pageName of selectedPages) {
 					step.currentItem = pageName
@@ -1048,6 +1270,8 @@ async function runScore(): Promise<void> {
 onMounted(() => {
 	restorePrioritizeWeights()
 	restoreSourceFetchCounts()
+	restoreQuotaTargets()
+	restoreSelectConfig()
 	restoreSnapshots()
 	pushScoreLog(`serial API delay: ${API_BASE_DELAY_MS}ms`)
 })

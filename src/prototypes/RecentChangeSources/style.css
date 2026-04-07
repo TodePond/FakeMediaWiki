@@ -33,6 +33,46 @@
 	font-size: 12px;
 }
 
+.select-controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 8px 12px;
+	margin: 8px 0 12px;
+}
+
+.select-control {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+}
+
+.source-checkboxes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 10px;
+}
+
+.source-checkboxes label {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.quota-controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 8px 12px;
+	margin: 8px 0 12px;
+}
+
+.quota-control {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+}
+
 .source-step__header {
 	display: flex;
 	align-items: center;
@@ -55,6 +95,12 @@
 }
 
 .prioritize-actions {
+	display: flex;
+	gap: 8px;
+	margin: 0 0 10px;
+}
+
+.quota-actions {
 	display: flex;
 	gap: 8px;
 	margin: 0 0 10px;
