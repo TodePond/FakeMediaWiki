@@ -2,7 +2,6 @@
 	<main class="recent-change-sources">
 		<header class="prototype-header">
 			<h1>Recent change sources</h1>
-			<p v-if="apiBusyBy" class="api-busy">API busy: {{ apiBusyBy }}</p>
 		</header>
 
 		<section class="stage">
