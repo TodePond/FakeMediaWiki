@@ -126,6 +126,7 @@
 	/* gap: 0.25rem; */
 	min-width: 0;
 	padding: 16px;
+	box-sizing: border-box;
 	/* padding: 12px 12px; */
 	/* margin-left: -16px; */
 	/* margin-right: -16px; */
@@ -136,24 +137,46 @@
 	line-height: var(--line-height-small);
 	cursor: pointer;
 	/* border: 1px solid var(--border-color-muted); */
-	border: 1px solid transparent;
+	/* border: 1px solid transparent; */
 	/* border-bottom: 1px solid var(--border-color-subtle, #a2a9b1); */
-}
-
-.review-changes__item-link:not(:focus) {
-	outline: 0px solid var(--border-color-interactive--hover);
 }
 
 /* Only when no coarse pointer */
 @media (pointer: fine) {
-	.review-changes__item-link:hover {
-		/* background-color: var(--background-color-progressive-subtle, #d9e2ff); */
-		/* outline-offset: 0px; */
+	.review-changes__item-link:hover:not(:focus) {
+		border-width: 1px;
+		border-style: solid;
+		margin: -1px;
+		border-color: var(--border-color-interactive--hover);
+		/* box-shadow: 0 0 0 1px var(--border-color-interactive--active, #202122); */
+		z-index: 1;
 	}
 
-	.review-changes__item-link:hover:not(:focus) {
-		outline-width: 1px;
-		/* outline-width: 2px; */
+	.review-changes__item-link--primary-unviewed-tone:hover:not(:focus),
+	.review-changes__item-link--primary-unviewed-revert-warn:hover:not(:focus) {
+		border-color: var(--border-color-warning);
+		border-width: 2px;
+		margin: -1px;
+		border-radius: 3px;
+		/* box-shadow: 0 0 0 1px var(--border-color-warning--hover, #735421); */
+	}
+
+	.review-changes__item-link--primary-unviewed-revert:hover:not(:focus) {
+		border-width: 2px;
+		border-style: solid;
+		border-color: var(--border-color-destructive);
+		margin: -1px;
+		border-radius: 3px;
+		/* box-shadow: 0 0 0 1px var(--border-color-destructive--hover, #9f3526); */
+	}
+
+	.review-changes__item-link--primary-unviewed-recommendation:hover:not(:focus) {
+		border-width: 2px;
+		border-style: solid;
+		border-color: var(--color-progressive);
+		margin: -1px;
+		border-radius: 3px;
+		/* box-shadow: 0 0 0 1px var(--border-color-progressive--hover, #3056a9); */
 	}
 }
 
@@ -163,6 +186,11 @@
 
 .review-changes__item-link--not-link:hover {
 	background-color: transparent;
+	border-color: transparent;
+	border-width: 1px;
+	margin: 0;
+	box-shadow: none;
+	z-index: auto;
 }
 
 .review-changes__item-link--unviewed {
@@ -240,35 +268,27 @@
 }
 
 .review-changes__item-link--primary-unviewed-tone {
+	border-width: 1px;
+	border-style: solid;
 	border-color: var(--border-color-warning, #ab7f2a);
-}
-
-.review-changes__item-link--primary-unviewed-tone:not(:focus) {
-	outline-color: var(--border-color-warning, #ab7f2a);
 }
 
 .review-changes__item-link--primary-unviewed-revert {
-	border-color: var(--color-destructive, #b32424);
-}
-
-.review-changes__item-link--primary-unviewed-revert:not(:focus) {
-	outline-color: var(--color-destructive, #b32424);
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--border-color-destructive, #b32424);
 }
 
 .review-changes__item-link--primary-unviewed-revert-warn {
+	border-width: 1px;
+	border-style: solid;
 	border-color: var(--border-color-warning, #ab7f2a);
 }
 
-.review-changes__item-link--primary-unviewed-revert-warn:not(:focus) {
-	outline-color: var(--border-color-warning, #ab7f2a);
-}
-
 .review-changes__item-link--primary-unviewed-recommendation {
+	border-width: 1px;
+	border-style: solid;
 	border-color: var(--color-progressive, #36c);
-}
-
-.review-changes__item-link--primary-unviewed-recommendation:not(:focus) {
-	outline-color: var(--color-progressive, #36c);
 }
 
 /* Recently clicked indicator: black vertical lines on left and right.

@@ -575,6 +575,18 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		title: "Visual diff feed",
 		featured: true,
 	},
+
+	{
+		type: "prototype",
+		id: "RecentChangeSources",
+		name: "Recent change sources",
+		description: "Debugging playground for comparing and scoring edit-feed sources.",
+		category: "dashboard",
+		wrapper: "Fullscreen",
+		title: "Recent change sources",
+		featured: true,
+		status: "new",
+	},
 	{
 		type: "prototype",
 		id: "PersonalDashboardPlus",
@@ -616,17 +628,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Chrome",
 		title: "Review changes plus",
 		hidden: true,
-	},
-	{
-		type: "prototype",
-		id: "RecentChangeSources",
-		name: "Recent change sources",
-		description: "Debugging playground for comparing and scoring edit-feed sources.",
-		category: "dashboard",
-		wrapper: "Fullscreen",
-		title: "Recent change sources",
-		featured: true,
-		status: "wip",
 	},
 	{
 		type: "prototype",
