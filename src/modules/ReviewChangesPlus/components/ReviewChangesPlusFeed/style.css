@@ -95,7 +95,7 @@
 	list-style: none;
 	margin: 0;
 	padding: 4px;
-	background-color: var(--background-color-interactive--hover);
+	background-color: var(--background-color-neutral);
 	gap: 4px;
 	display: flex;
 	flex-direction: column;
@@ -130,24 +130,49 @@
 	font-size: var(--font-size-small);
 	line-height: var(--line-height-small);
 	cursor: pointer;
-	border: 1px solid transparent;
+	border: 1px solid var(--background-color-neutral);
+	border-radius: 3px;
 	/* border-bottom: 1px solid var(--border-color-subtle, #a2a9b1); */
 }
 
 /* Only when no coarse pointer */
 @media (pointer: fine) {
-	.review-changes__item-link:hover:not(:focus):not(.review-changes__item-link--not-link) {
-		background-color: var(--background-color-base);
+	.review-changes__item-link:hover {
+		border-color: var(--border-color-subtle);
+		/* box-sizing: auto; */
 	}
 
-	.review-changes__item-link--revision-viewed:hover:not(:focus):not(
-		.review-changes__item-link--not-link
-	) {
-		background-color: var(--background-color-interactive-subtle--hover);
+	.review-changes__item-link--primary-unviewed-tone:hover:not(:focus):not(
+			.review-changes__item-link--not-link
+		),
+	.review-changes__item-link--primary-unviewed-revert-warn:hover:not(:focus):not(
+			.review-changes__item-link--not-link
+		) {
+		/* border-color: var(--border-color-interactive--hover); */
+		border-width: 2px;
+		margin: -1px;
+		border-radius: 4px;
+		border-color: var(--border-color-warning);
 	}
 
-	.review-changes__item-link--unviewed:hover:not(:focus):not(.review-changes__item-link--not-link) {
-		background-color: var(--background-color-neutral-subtle);
+	.review-changes__item-link--primary-unviewed-revert:hover:not(:focus):not(
+			.review-changes__item-link--not-link
+		) {
+		/* border-color: var(--border-color-interactive--hover); */
+		border-width: 2px;
+		margin: -1px;
+		border-radius: 4px;
+		border-color: var(--border-color-error);
+	}
+
+	.review-changes__item-link--primary-unviewed-recommendation:hover:not(:focus):not(
+			.review-changes__item-link--not-link
+		) {
+		/* border-color: var(--border-color-progressive--hover, #3056a9); */
+		border-color: var(--border-color-progressive);
+		border-radius: 4px;
+		border-width: 2px;
+		margin: -1px;
 	}
 }
 

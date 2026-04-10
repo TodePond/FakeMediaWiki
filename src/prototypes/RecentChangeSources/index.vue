@@ -564,7 +564,7 @@ const scoredRows = computed(() => {
 		const normalizedReference =
 			typeof score.referenceNeedBefore === "number" &&
 			typeof score.referenceNeedAfter === "number"
-				? score.referenceNeedBefore - score.referenceNeedAfter
+				? score.referenceNeedAfter - score.referenceNeedBefore
 				: score.referenceNeedDelta
 		return {
 			...revision,
@@ -1242,7 +1242,7 @@ async function runScore(): Promise<void> {
 					next.referenceNeedDelta =
 						next.referenceNeedAfter == null
 							? null
-							: beforeScore - next.referenceNeedAfter
+							: next.referenceNeedAfter - beforeScore
 					pushScoreLog(`reference need delta fetched for ${revision.id}`)
 				} else {
 					pushScoreLog(`reference need skipped for ${revision.id}`)

@@ -9,7 +9,7 @@
 				</span>
 				<span>{{ formatTimestamp(item.timestamp) }}</span>
 			</div>
-			<div class="feed-card__summary">{{ formattedSummary || "(no edit summary)" }}</div>
+			<div v-if="formattedSummary" class="feed-card__summary">{{ formattedSummary }}</div>
 			<div class="info-boxes">
 				<div v-if="sourceLabelList.length > 0" class="info-box">
 					sources: {{ sourceLabelList.join(", ") }}
@@ -181,20 +181,31 @@ function formatTimestamp(timestamp: string): string {
 	flex-direction: column;
 	border-radius: 2px;
 	gap: 0px;
-	border: 1px solid var(--border-color-subtle, #c8ccd1);
 	background: var(--background-color-base, #fff);
 	font-size: var(--font-size-small);
 	line-height: var(--line-height-small);
-	color: var(--color-base);
+	color: var(--color-emphasized);
 }
 
 .feed-card-link:hover .feed-card,
 .feed-card-link:focus-visible .feed-card {
-	border-color: var(--border-color-emphasized, #72777d);
+	border: 1px solid var(--border-color-subtle);
+	margin: -1px;
 }
 
 .feed-card--faded {
-	opacity: 0.45;
+	/* opacity: 0.8; */
+	background: var(--background-color-neutral-subtle);
+	color: var(--color-subtle);
+}
+
+.feed-card--faded .feed-card__user {
+	color: var(--color-subtle);
+	font-weight: var(--font-weight-normal);
+}
+
+.feed-card--faded .cdx-icon {
+	color: var(--color-subtle);
 }
 
 .feed-card__title {
@@ -231,6 +242,5 @@ function formatTimestamp(timestamp: string): string {
 	border: 1px solid var(--border-color-subtle, #c8ccd1);
 	border-radius: 2px;
 	font-size: 12px;
-	background: var(--background-color-neutral-subtle, #f8f9fa);
 }
 </style>
