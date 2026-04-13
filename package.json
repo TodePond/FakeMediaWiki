@@ -19,6 +19,10 @@
     "type-check": "vue-tsc --noEmit",
     "format": "prettier --write src/",
     "update-ve": "bash scripts/update-ve.sh",
+    "bump:patch": "npm version patch -w fakewiki --no-git-tag-version",
+    "bump:minor": "npm version minor -w fakewiki --no-git-tag-version",
+    "bump:major": "npm version major -w fakewiki --no-git-tag-version",
+    "bump": "node -e \"const type=process.env.npm_config_type || 'patch'; if(!['patch','minor','major'].includes(type)){console.error('Usage: npm run bump --type=patch|minor|major'); process.exit(1)}; process.stdout.write(type)\" | xargs -I{} npm run bump:{}",
     "publish": "npm publish -w fakewiki --access public"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 {
 	"name": "fakewiki",
-	"version": "0.0.6",
+	"version": "0.0.8",
 	"type": "module",
 	"description": "Helpers for making MediaWiki prototypes",
 	"license": "GPL-2.0-only",
