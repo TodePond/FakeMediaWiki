@@ -518,6 +518,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Component",
 		title: "More like search",
 		featured: true,
+		status: "new",
 	},
 	{
 		type: "prototype",
