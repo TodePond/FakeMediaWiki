@@ -183,9 +183,11 @@ const METHOD_PARAM_DEFAULTS: Record<string, Record<string, string | number | boo
 const METHOD_CATEGORY_OVERRIDES: Record<string, string> = {
 	getAnnouncements: "Pages and content",
 	getCombinedFeed: "Revisions and diffs",
+	getRecentChanges: "Revisions and diffs",
 	getDaysOfActivity: "Users",
 	getDeltaClass: "Revisions and diffs",
 	getEditSummaryHtml: "Formatting",
+	getShortDescription: "Pages and content",
 	getToneCheckPrediction: "Predictions",
 	getToneCheckForRevision: "Predictions",
 	getMediawikiBase: "URLs",
@@ -199,11 +201,11 @@ const METHOD_CATEGORY_OVERRIDES: Record<string, string> = {
 	preprocessEditSummary: "Formatting",
 	searchTitles: "Search",
 	encode: "URLs",
-	createResult: "Utilities",
-	createResults: "Utilities",
-	getStorageKey: "Utilities",
-	getStorageKeys: "Utilities",
-	runWithConcurrency: "Utilities",
+	createResult: "Requests",
+	createResults: "Requests",
+	getStorageKey: "Persistence",
+	getStorageKeys: "Persistence",
+	runWithConcurrency: "Requests",
 }
 
 function inferType(key: string, override?: { inputType?: string; options?: string[] }): ParamType {

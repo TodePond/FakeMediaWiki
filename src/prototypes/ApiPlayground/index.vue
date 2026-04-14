@@ -213,8 +213,10 @@ const CATEGORY_ORDER = [
 	"Formatting",
 	"URLs",
 	"Prototyping",
+	"Requests",
 	"Utilities",
 	"Cache and diagnostics",
+	"Persistence",
 ] as const
 
 const CATEGORY_ORDER_INDEX = new Map<string, number>(
