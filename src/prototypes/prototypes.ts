@@ -234,7 +234,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Fullscreen",
 		title: "Multiple flag watchlist",
 		featured: true,
-		status: "updated",
 	},
 	{
 		type: "prototype",
@@ -245,7 +244,6 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Fullscreen",
 		title: "Flag watchlist",
 		featured: true,
-		status: "updated",
 	},
 	{
 		type: "variants",
