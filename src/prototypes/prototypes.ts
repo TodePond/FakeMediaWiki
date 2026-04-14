@@ -513,7 +513,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		type: "prototype",
 		id: "MoreLikeSearch",
 		name: "More like search",
-		description: "Try Cirrus morelike recommendations from a set of seed pages.",
+		description: "Get 'more like' recommendations from a set of seed pages.",
 		category: "search",
 		wrapper: "Component",
 		title: "More like search",
