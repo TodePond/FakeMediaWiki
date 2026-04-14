@@ -38,6 +38,7 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 	getTopRelatedPages: {
 		optionsParamKeys: ["percentage", "scoreMultipliers", "limit", "days", "from"],
 	},
+	getMoreLikePages: { optionsParamKeys: ["limit", "offset", "namespace"] },
 	getListBuilding: { optionsParamKeys: ["pageTitle", "qid", "k"] },
 	getMultiPageListBuilding: { optionsParamKeys: ["k"] },
 	getRandomPage: { paramOverrides: { format: { inputType: "enum", options: ["summary", "html", "title"] } } },

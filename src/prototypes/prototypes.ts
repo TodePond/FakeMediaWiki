@@ -511,6 +511,16 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 	},
 	{
 		type: "prototype",
+		id: "MoreLikeSearch",
+		name: "More like search",
+		description: "Try Cirrus morelike recommendations from a set of seed pages.",
+		category: "search",
+		wrapper: "Component",
+		title: "More like search",
+		featured: true,
+	},
+	{
+		type: "prototype",
 		id: "SearchUsers",
 		name: "Search users",
 		description: "How to search user accounts using the API.",

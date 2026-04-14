@@ -203,6 +203,34 @@ export interface FWPageSearchResult {
 	thumbnail?: { url: string } | null
 }
 
+/** One result row from Action API search (`list=search`) used by Cirrus `morelike:` queries. */
+export interface FWMoreLikeSearchResult {
+	pageid: number
+	ns: number
+	title: string
+	size?: number
+	wordcount?: number
+	snippet?: string
+	timestamp?: string
+}
+
+/** Options for Cirrus morelike search via Action API (`srsearch=morelike:...`). */
+export interface FWMoreLikeOptions {
+	limit?: number
+	offset?: number
+	namespace?: number
+}
+
+/** Normalized response for FakeWiki morelike recommendations. */
+export interface FWMoreLikeResponse {
+	pages: FWMoreLikeSearchResult[]
+	totalHits: number
+	offset: number
+	nextOffset?: number
+	seeds: string[]
+	query: string
+}
+
 export interface FWRandomPageSummary {
 	title?: string
 	description?: string

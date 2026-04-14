@@ -18,6 +18,9 @@ import type {
 	FWListBuildingResponse,
 	FWMultiPageListBuildingEntry,
 	FWMultiPageListBuildingResult,
+	FWMoreLikeOptions,
+	FWMoreLikeResponse,
+	FWMoreLikeSearchResult,
 	FWOnThisDayItem,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
@@ -75,6 +78,12 @@ const ORES_CHUNK_CONCURRENCY = 4
 
 /** Default limit for search endpoints (searchTitles, searchPages, searchUsers). */
 const DEFAULT_SEARCH_LIMIT = 20
+
+/** Default result limit for Cirrus morelike search. */
+const DEFAULT_MORELIKE_LIMIT = 10
+
+/** Max srlimit used by this client for Action API search. */
+const MAX_MORELIKE_LIMIT = 50
 
 /** Default limit for user contribution history (Action API usercontribs). */
 const DEFAULT_USER_CONTRIBS_LIMIT = 20
@@ -870,6 +879,72 @@ export class FakeWiki {
 			api: "mediawiki",
 			path: `search/page?q=${encodeURIComponent(query)}&limit=${limit}`,
 		})) as { pages?: FWPageSearchResult[] }
+	}
+
+	/**
+	 * Find pages related to one or more seed pages using CirrusSearch `morelike:`.
+	 * Uses Action API search (`action=query&list=search`) with `srsearch=morelike:...`.
+	 * @param pageTitles - Seed page titles used to construct the morelike query
+	 * @param options - Optional search options (limit, offset, and namespace)
+	 * @returns Related pages with total hits and pagination metadata
+	 * @category Search
+	 */
+	async getMoreLikePages(
+		pageTitles: string[],
+		options?: FWMoreLikeOptions
+	): Promise<FWMoreLikeResponse> {
+		const seeds = [...new Set(pageTitles.map(title => title.trim()).filter(Boolean))].map(title =>
+			title.replace(/ /g, "_")
+		)
+		const offset = Math.max(0, Math.floor(options?.offset ?? 0))
+
+		if (seeds.length === 0) {
+			return {
+				pages: [],
+				totalHits: 0,
+				offset,
+				seeds: [],
+				query: "",
+			}
+		}
+
+		const limit = Math.min(MAX_MORELIKE_LIMIT, Math.max(1, Math.floor(options?.limit ?? DEFAULT_MORELIKE_LIMIT)))
+		const query = `morelike:${seeds.join("|")}`
+		const params: Record<string, string | number> = {
+			action: "query",
+			list: "search",
+			srsearch: query,
+			srwhat: "text",
+			srlimit: limit,
+			sroffset: offset,
+		}
+		if (typeof options?.namespace === "number" && Number.isFinite(options.namespace)) {
+			params.srnamespace = Math.floor(options.namespace)
+		}
+
+		const data = (await this.request({
+			api: "action",
+			params,
+		})) as {
+			query?: {
+				search?: FWMoreLikeSearchResult[]
+				searchinfo?: { totalhits?: number }
+			}
+			continue?: { sroffset?: number | string }
+		}
+		const nextOffsetRaw = data.continue?.sroffset
+		const nextOffsetNumber = Number(nextOffsetRaw)
+		return {
+			pages: data.query?.search ?? [],
+			totalHits: data.query?.searchinfo?.totalhits ?? 0,
+			offset,
+			nextOffset:
+				nextOffsetRaw !== undefined && Number.isFinite(nextOffsetNumber)
+					? nextOffsetNumber
+					: undefined,
+			seeds,
+			query,
+		}
 	}
 
 	/**
@@ -2771,7 +2846,7 @@ export class FakeWiki {
 		pageTitles: string[],
 		options?: {
 			k?: number
-			onLoad?: (data: FWMultiPageListBuildingResult) => void
+			onLoad?: (_data: FWMultiPageListBuildingResult) => void
 		}
 	): Promise<FWMultiPageListBuildingResult> {
 		const titles = [...new Set(pageTitles)].filter(t => t.trim().length > 0)

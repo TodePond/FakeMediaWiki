@@ -44,6 +44,10 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
       { key: "query", description: "Search query" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
   ] },
+  { name: "getMoreLikePages", description: "Find pages related to one or more seed pages using CirrusSearch `morelike:`.\nUses Action API search (`action=query&list=search`) with `srsearch=morelike:...`.", category: "Search", params: [
+      { key: "pageTitles", description: "Seed page titles used to construct the morelike query" },
+      { key: "options", description: "Optional search options (limit, offset, and namespace)" }
+  ] },
   { name: "searchUsers", description: "Search for users by username (without avatars).", category: undefined, params: [
       { key: "query", description: "Search query (username or part of username)" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
