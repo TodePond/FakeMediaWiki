@@ -53,7 +53,7 @@ const NUMBER_KEYS = new Set([
 	"count",
 	"concurrency",
 ])
-const STRING_ARRAY_KEYS = new Set(["userNames", "pageNames", "pageTitles"])
+const STRING_ARRAY_KEYS = new Set(["userNames", "pageNames", "pageTitles", "models"])
 const NUMBER_ARRAY_KEYS = new Set(["revisionIds"])
 const BOOLEAN_KEYS = new Set([
 	"showOutgoing",
@@ -106,7 +106,7 @@ const METHOD_PARAM_DEFAULTS: Record<string, Record<string, string | number | boo
 	getAnnouncements: {},
 	getTopRelatedChanges: { percentage: 1 },
 	getTopRelatedPages: { percentage: 1 },
-	getMoreLikePages: { limit: 10 },
+	getMoreLikePages: { pageTitles: "Wet Leg, Rizzle Kicks, Jade Thirlwall", limit: 10 },
 	encode: { slug: "Wet Leg" },
 	getCombinedFeed: { limit: 20, after: "{}" },
 	getDaysOfActivity: { registrationDate: "2025-02-26T10:30:00Z" },
@@ -146,6 +146,7 @@ const METHOD_PARAM_DEFAULTS: Record<string, Record<string, string | number | boo
 	formatDelta: { delta: 42 },
 	searchUsers: { query: "Samwalton9" },
 	searchUsersWithAvatars: { query: "Samwalton9" },
+	getRevisionPredictions: { models: "damaging, goodfaith, revertrisk, revertrisk-multilingual" },
 	compareRevisions: { fromRevId: 1336311016, toRevId: 1337619110 },
 	getRevisionUrl: { id: 1337619110 },
 	getAssetUrlFromUploadUrl: {
