@@ -1,37 +1,46 @@
 <template>
-	<a :href="changeUrl" target="_blank" rel="noreferrer" class="feed-card-link">
-		<article class="feed-card" :class="{ 'feed-card--faded': faded }">
-			<div class="feed-card__title">{{ item.pageName || "(no page)" }}</div>
-			<div class="feed-card__meta">
-				<span class="feed-card__user">
-					<CdxIcon :icon="cdxIconUserAvatar" size="x-small" />
-					<span>{{ item.user.name }}</span>
-				</span>
-				<span>{{ formatTimestamp(item.timestamp) }}</span>
+	<RecentChangeCardShell :href="changeUrl" :title="item.pageName || '(no page)'" :faded="faded">
+		<template #meta>
+			<span class="feed-card__user">
+				<CdxIcon :icon="cdxIconUserAvatar" size="x-small" />
+				<span>{{ item.user.name }}</span>
+			</span>
+			<span>{{ formatTimestamp(item.timestamp) }}</span>
+		</template>
+		<template v-if="formattedSummary" #summary>
+			<div class="feed-card__summary-content">{{ formattedSummary }}</div>
+		</template>
+		<template #infoBoxes>
+			<div v-if="sourceLabelList.length > 0" class="info-box">
+				change sources: {{ sourceLabelList.join(", ") }}
 			</div>
-			<div v-if="formattedSummary" class="feed-card__summary">{{ formattedSummary }}</div>
-			<div class="info-boxes">
-				<div v-if="sourceLabelList.length > 0" class="info-box">
-					sources: {{ sourceLabelList.join(", ") }}
-				</div>
-				<div v-if="relatedToPages.length > 0" class="info-box">
-					related to: {{ relatedToPages.join(", ") }}
-				</div>
-				<div v-if="item.priorityScore !== undefined" class="info-box">
-					priority {{ item.priorityScore.toFixed(2) }}
-				</div>
-				<template v-if="showMetrics">
-					<div class="info-box">revert risk: {{ toPercentLabel(item.revertRisk) }}</div>
-					<div class="info-box">
-						tone: {{ toSignedPercentLabel(item.toneProbability) }}
-					</div>
-					<div class="info-box">
-						reference need: {{ toSignedPercentLabel(item.referenceNeedDelta) }}
-					</div>
-				</template>
+			<div v-if="pageSourceLabels.length > 0" class="info-box">
+				page sources: {{ pageSourceLabels.join(", ") }}
 			</div>
-		</article>
-	</a>
+			<div v-if="item.pageScore !== undefined" class="info-box">
+				page score: {{ item.pageScore.toFixed(2) }}
+			</div>
+			<div v-if="searchQueryRankLabel" class="info-box">
+				{{ searchQueryRankLabel }}
+			</div>
+			<div v-if="relatedToPages.length > 0" class="info-box">
+				related to: {{ relatedToPages.join(", ") }}
+			</div>
+			<div v-if="relationshipTypeCounts.length > 0" class="info-box">
+				link types: {{ relationshipTypeCounts.join(", ") }}
+			</div>
+			<div v-if="item.priorityScore !== undefined" class="info-box">
+				change score: {{ item.priorityScore.toFixed(2) }}
+			</div>
+			<template v-if="showMetrics">
+				<div class="info-box">revert risk: {{ toPercentLabel(item.revertRisk) }}</div>
+				<div class="info-box">tone: {{ toSignedPercentLabel(item.toneProbability) }}</div>
+				<div class="info-box">
+					reference need: {{ toSignedPercentLabel(item.referenceNeedDelta) }}
+				</div>
+			</template>
+		</template>
+	</RecentChangeCardShell>
 </template>
 
 <script setup lang="ts">
@@ -39,6 +48,7 @@ import { CdxIcon } from "@wikimedia/codex"
 import { cdxIconUserAvatar } from "@wikimedia/codex-icons"
 import { FakeWiki } from "fakewiki"
 import { computed } from "vue"
+import RecentChangeCardShell from "./RecentChangeCardShell.vue"
 
 type FeedDisplayItem = {
 	id: number
@@ -49,6 +59,22 @@ type FeedDisplayItem = {
 	sourceId?: string
 	sourceIds?: string[]
 	recommendationSourcePageNames?: string[]
+	pageSourceLabels?: string[]
+	pageScore?: number
+	moreLikeRanks?: Partial<
+		Record<
+			| "moreLikeWatchPages"
+			| "moreLikeBookmarkPages"
+			| "moreLikeEditedPages"
+			| "moreLikeDiscussedPages"
+			| "moreLikeInteractedPages",
+			number
+		>
+	>
+	relatedSeedLinks?: Array<{
+		pageName: string
+		linkType: "to" | "from" | "both"
+	}>
 	priorityScore?: number
 	revertRisk?: number | null
 	toneProbability?: number | null
@@ -64,10 +90,8 @@ const wiki = new FakeWiki()
 
 const SOURCE_LABELS: Record<string, string> = {
 	recentRisky: "recent risky",
-	watchlistLatest: "watchlist latest",
-	pagesIEditedByOthers: "pages I edited",
-	relatedChanges: "related changes",
-	relatedToEdits: "related to edits",
+	fromSelectedPages: "changes from selected pages",
+	relatedToSelectedPages: "changes related to selected pages",
 }
 
 const sourceLabelList = computed(() => {
@@ -82,6 +106,55 @@ const sourceLabelList = computed(() => {
 const relatedToPages = computed(() => {
 	const pages = props.item.recommendationSourcePageNames ?? []
 	return [...new Set(pages)].filter(Boolean)
+})
+
+const pageSourceLabels = computed(() => {
+	const labels = props.item.pageSourceLabels ?? []
+	return [...new Set(labels)].filter(Boolean)
+})
+
+const MORE_LIKE_SOURCE_LABELS = {
+	moreLikeWatchPages: "more like pages I watch",
+	moreLikeBookmarkPages: "more like pages I've bookmarked",
+	moreLikeEditedPages: "more like pages I've edited",
+	moreLikeDiscussedPages: "more like pages I've discussed",
+	moreLikeInteractedPages: "more like pages I've interacted with",
+} as const
+
+const searchQueryRankLabel = computed(() => {
+	const entries = Object.entries(props.item.moreLikeRanks ?? {}) as Array<
+		[keyof typeof MORE_LIKE_SOURCE_LABELS, number]
+	>
+	if (entries.length === 0) return null
+	if (entries.length === 1) {
+		return `search query rank: #${entries[0][1]}`
+	}
+	return `search query ranks: ${entries
+		.map(([stepId, rank]) => `${MORE_LIKE_SOURCE_LABELS[stepId]} #${rank}`)
+		.join(", ")}`
+})
+
+const RELATIONSHIP_TYPE_LABELS: Record<"to" | "from" | "both", string> = {
+	to: "outlink",
+	from: "backlink",
+	both: "bidirectional",
+}
+
+const relationshipTypeCounts = computed(() => {
+	const links = props.item.relatedSeedLinks ?? []
+	const counts = new Map<"to" | "from" | "both", number>()
+	for (const link of links) {
+		counts.set(link.linkType, (counts.get(link.linkType) ?? 0) + 1)
+	}
+	const orderedTypes: Array<"both" | "to" | "from"> = ["both", "to", "from"]
+	return orderedTypes
+		.map(type => {
+			const count = counts.get(type) ?? 0
+			if (count === 0) return null
+			const label = RELATIONSHIP_TYPE_LABELS[type]
+			return count === 1 ? `1 ${label}` : `${count} ${label} links`
+		})
+		.filter((value): value is string => value !== null)
 })
 
 const changeUrl = computed(() => {
@@ -163,84 +236,10 @@ function formatTimestamp(timestamp: string): string {
 </script>
 
 <style scoped>
-.feed-card-link {
-	display: block;
-	text-decoration: none;
-	color: inherit;
-}
-
-.feed-card-link:visited,
-.feed-card-link:hover,
-.feed-card-link:active {
-	color: inherit;
-}
-
-.feed-card {
-	padding: 10px;
-	display: flex;
-	flex-direction: column;
-	border-radius: 2px;
-	gap: 0px;
-	background: var(--background-color-base, #fff);
-	font-size: var(--font-size-small);
-	line-height: var(--line-height-small);
-	color: var(--color-emphasized);
-}
-
-.feed-card-link:hover .feed-card,
-.feed-card-link:focus-visible .feed-card {
-	border: 1px solid var(--border-color-subtle);
-	margin: -1px;
-}
-
-.feed-card--faded {
-	/* opacity: 0.8; */
-	background: var(--background-color-neutral-subtle);
-	color: var(--color-subtle);
-}
-
-.feed-card--faded .feed-card__user {
-	color: var(--color-subtle);
-	font-weight: var(--font-weight-normal);
-}
-
-.feed-card--faded .cdx-icon {
-	color: var(--color-subtle);
-}
-
-.feed-card__title {
-	font-weight: 600;
-}
-
-.feed-card__meta {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-}
-
 .feed-card__user {
 	display: inline-flex;
 	align-items: center;
 	gap: 2px;
 	font-weight: var(--font-weight-bold);
-}
-
-.feed-card__summary {
-	padding-top: 2px;
-	padding-bottom: 8px;
-}
-
-.info-boxes {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-	padding-top: 6px;
-}
-
-.info-box {
-	padding: 0px 6px;
-	border: 1px solid var(--border-color-subtle, #c8ccd1);
-	border-radius: 2px;
-	font-size: 12px;
 }
 </style>

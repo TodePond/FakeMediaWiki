@@ -2204,8 +2204,12 @@ export class FakeWiki {
 				const userName = nameEl?.textContent?.trim() ?? ""
 				const summaryEl = entry.getElementsByTagNameNS(ns, "summary").item(0)
 				const summary = summaryEl?.textContent?.trim() ?? ""
-				// Select first <p> in summary string
-				const comment = summary.match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1]?.trim() ?? ""
+				let comment = ""
+				if (summary) {
+					const summaryDoc = new DOMParser().parseFromString(summary, "text/html")
+					const firstParagraph = summaryDoc.querySelector("p")
+					comment = (firstParagraph?.textContent ?? summaryDoc.body?.textContent ?? "").trim()
+				}
 				let id = 0
 				if (href) {
 					const diffMatch = href.match(/[?&]diff=(\d+)/)
