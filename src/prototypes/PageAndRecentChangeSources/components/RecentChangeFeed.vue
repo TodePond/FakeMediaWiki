@@ -21,6 +21,22 @@ type FeedDisplayItem = {
 	timestamp: string
 	user: { name: string }
 	sourceIds?: string[]
+	pageSourceLabels?: string[]
+	pageScore?: number
+	moreLikeRanks?: Partial<
+		Record<
+			| "moreLikeWatchPages"
+			| "moreLikeBookmarkPages"
+			| "moreLikeEditedPages"
+			| "moreLikeDiscussedPages"
+			| "moreLikeInteractedPages",
+			number
+		>
+	>
+	relatedSeedLinks?: Array<{
+		pageName: string
+		linkType: "to" | "from" | "both"
+	}>
 	priorityScore?: number
 	revertRisk?: number | null
 	toneProbability?: number | null

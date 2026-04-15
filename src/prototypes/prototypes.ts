@@ -587,6 +587,17 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 
 	{
 		type: "prototype",
+		id: "PageAndRecentChangeSources",
+		name: "Page and recent change sources",
+		description: "Debugging playground for comparing and scoring edit-feed sources.",
+		category: "dashboard",
+		wrapper: "Fullscreen",
+		title: "Page and recent change sources",
+		featured: true,
+		status: "new",
+	},
+	{
+		type: "prototype",
 		id: "RecentChangeSources",
 		name: "Recent change sources",
 		description: "Debugging playground for comparing and scoring edit-feed sources.",
