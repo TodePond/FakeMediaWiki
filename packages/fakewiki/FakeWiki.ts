@@ -16,11 +16,11 @@ import type {
 	FWLiftWingPrediction,
 	FWLiftWingResponse,
 	FWListBuildingResponse,
-	FWMultiPageListBuildingEntry,
-	FWMultiPageListBuildingResult,
 	FWMoreLikeOptions,
 	FWMoreLikeResponse,
 	FWMoreLikeSearchResult,
+	FWMultiPageListBuildingEntry,
+	FWMultiPageListBuildingResult,
 	FWOnThisDayItem,
 	FWPageHistoryResponse,
 	FWPageHistoryRevision,
@@ -893,8 +893,8 @@ export class FakeWiki {
 		pageTitles: string[],
 		options?: FWMoreLikeOptions
 	): Promise<FWMoreLikeResponse> {
-		const seeds = [...new Set(pageTitles.map(title => title.trim()).filter(Boolean))].map(title =>
-			title.replace(/ /g, "_")
+		const seeds = [...new Set(pageTitles.map(title => title.trim()).filter(Boolean))].map(
+			title => title.replace(/ /g, "_")
 		)
 		const offset = Math.max(0, Math.floor(options?.offset ?? 0))
 
@@ -908,7 +908,10 @@ export class FakeWiki {
 			}
 		}
 
-		const limit = Math.min(MAX_MORELIKE_LIMIT, Math.max(1, Math.floor(options?.limit ?? DEFAULT_MORELIKE_LIMIT)))
+		const limit = Math.min(
+			MAX_MORELIKE_LIMIT,
+			Math.max(1, Math.floor(options?.limit ?? DEFAULT_MORELIKE_LIMIT))
+		)
 		const query = `morelike:${seeds.join("|")}`
 		const params: Record<string, string | number> = {
 			action: "query",
@@ -2208,7 +2211,11 @@ export class FakeWiki {
 				if (summary) {
 					const summaryDoc = new DOMParser().parseFromString(summary, "text/html")
 					const firstParagraph = summaryDoc.querySelector("p")
-					comment = (firstParagraph?.textContent ?? summaryDoc.body?.textContent ?? "").trim()
+					comment = (
+						firstParagraph?.textContent ??
+						summaryDoc.body?.textContent ??
+						""
+					).trim()
 				}
 				let id = 0
 				if (href) {
@@ -2550,8 +2557,9 @@ export class FakeWiki {
 			}
 
 			// Fallback: first image on the page (e.g. infobox image)
-			const firstImageUrl = await this.getFirstPageImageThumbnail(targetPageName)
-			return firstImageUrl
+			// const firstImageUrl = await this.getFirstPageImageThumbnail(targetPageName)
+			// return firstImageUrl
+			return null
 		} catch (error) {
 			console.error("Failed to get thumbnail:", error)
 			return null
@@ -2583,8 +2591,23 @@ export class FakeWiki {
 		base: string
 	): Promise<string | null> {
 		const infoboxUrl = await this.getInfoboxImageFromParsedPage(pageName, base)
-		if (infoboxUrl) return infoboxUrl
+		if (infoboxUrl && !this.isDisallowedFallbackThumbnailUrl(infoboxUrl)) {
+			return infoboxUrl
+		}
 		return null
+	}
+
+	/**
+	 * Whether a URL should be rejected as a page-thumbnail fallback.
+	 * We never want map tile snapshots from maps.wikimedia.org as article thumbnails.
+	 */
+	private isDisallowedFallbackThumbnailUrl(url: string): boolean {
+		try {
+			const parsed = new URL(url)
+			return parsed.hostname === "maps.wikimedia.org"
+		} catch {
+			return false
+		}
 	}
 
 	/**
@@ -3486,10 +3509,10 @@ export class FakeWiki {
 		} else if (diffDays < 7) {
 			currentPeriod = "days"
 			currentValue = diffDays
-		} else if (diffWeeks < 4) {
+		} else if (diffDays < 30) {
 			currentPeriod = "weeks"
 			currentValue = diffWeeks
-		} else if (diffMonths < 12) {
+		} else if (diffDays < 365) {
 			currentPeriod = "months"
 			currentValue = diffMonths
 		} else {

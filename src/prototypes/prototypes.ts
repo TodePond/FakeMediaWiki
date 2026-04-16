@@ -103,6 +103,17 @@ export const categories: PrototypeTypes.CategoryDefinition[] = [
 export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" | "variants">[] = [
 	{
 		type: "prototype",
+		id: "UserRecentPages",
+		name: "Recent edits",
+		description: "Show the recently edited pages for a single user.",
+		category: "dashboard",
+		wrapper: "Component",
+		title: "Recent edits",
+		status: "new",
+		featured: true,
+	},
+	{
+		type: "prototype",
 		id: "ApiPlayground",
 		name: "API Playground",
 		description: "Sandbox for every FakeWiki method.",
@@ -586,26 +597,36 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 	},
 
 	{
-		type: "prototype",
-		id: "PageAndRecentChangeSources",
-		name: "Page and recent change sources",
-		description: "Debugging playground for comparing and scoring edit-feed sources.",
-		category: "dashboard",
-		wrapper: "Fullscreen",
-		title: "Page and recent change sources",
-		featured: true,
-		status: "new",
-	},
-	{
-		type: "prototype",
+		type: "variants",
 		id: "RecentChangeSources",
 		name: "Recent change sources",
 		description: "Debugging playground for comparing and scoring edit-feed sources.",
 		category: "dashboard",
-		wrapper: "Fullscreen",
-		title: "Recent change sources",
 		featured: true,
 		status: "new",
+		variants: [
+			{
+				type: "variant",
+				id: "PageAndRecentChangeSources",
+				name: "Page and recent change sources",
+				description:
+					"A two phase system that first gathers page recommendations and then gathers changes from those pages.",
+				wrapper: "Fullscreen",
+				title: "Page and recent change sources",
+				featured: true,
+				status: "new",
+			},
+			{
+				type: "variant",
+				id: "RecentChangeSources",
+				name: "Recent change sources",
+				description: "A one phase system that gathers change recommendations directly.",
+				wrapper: "Fullscreen",
+				title: "Recent change sources",
+				featured: true,
+				status: "new",
+			},
+		],
 	},
 	{
 		type: "prototype",
