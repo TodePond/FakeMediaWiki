@@ -31,7 +31,18 @@
 		</section>
 
 		<section v-if="cards.length > 0" class="cards">
-			<article v-for="card in cards" :key="card.cardId" class="suggestion-card">
+			<article
+				v-for="card in cards"
+				:key="card.cardId"
+				class="suggestion-card suggestion-card--clickable"
+			>
+				<a
+					class="suggestion-card__overlay-link"
+					:href="card.cardLinkUrl"
+					target="_blank"
+					rel="noreferrer noopener"
+					:aria-label="`Open ${card.heading}`"
+				/>
 				<div class="card-header">
 					<div class="card-title-row">
 						<p class="card-title">{{ card.heading }}</p>
@@ -75,6 +86,12 @@ type VeMethodDescriptor = {
 	run: (wiki: FakeWiki, pageTitle: string) => Promise<FWVeSuggestionResponse>
 }
 
+type SectionRange = {
+	title: string
+	startOffset: number
+	endOffset: number
+}
+
 type SuggestionCard = {
 	cardId: string
 	suggestionType: string
@@ -84,6 +101,7 @@ type SuggestionCard = {
 	renderedSnippetHtml: string
 	severity: FWVeSuggestionItem["severity"] | null
 	changeSize: "easy" | "medium" | "hard"
+	cardLinkUrl: string
 }
 
 const wiki = new FakeWiki()
@@ -328,6 +346,10 @@ function loadState(): void {
 							value.changeSize === "hard" ?
 								value.changeSize
 							:	"medium",
+						cardLinkUrl:
+							typeof value.cardLinkUrl === "string" && value.cardLinkUrl ?
+								value.cardLinkUrl
+							:	wiki.getPageUrl(pageTitle.value),
 					}
 				})
 			: []
@@ -355,6 +377,71 @@ function escapeHtml(value: string): string {
 		.replaceAll(">", "&gt;")
 		.replaceAll('"', "&quot;")
 		.replaceAll("'", "&#39;")
+}
+
+function toSectionHash(sectionTitle: string): string {
+	const normalized = sectionTitle.trim().replaceAll(" ", "_")
+	if (!normalized) return ""
+	return encodeURIComponent(normalized)
+}
+
+function resolveBestEffortCardLink(
+	pageTitle: string,
+	context: DescriptionContext,
+	_suggestionType: string,
+	sectionTitleMap: Map<string, string>,
+	sectionRanges: SectionRange[],
+	pageSource: string,
+	rawSnippet: string
+): string {
+	const baseUrl = wiki.getPageUrl(pageTitle)
+	const suggestionData = context.suggestion.data as Record<string, unknown> | undefined
+	const candidateData = context.selectedCandidate?.data as Record<string, unknown> | undefined
+	const sectionHintRaw =
+		(typeof suggestionData?.section === "string" && suggestionData.section) ||
+		(typeof candidateData?.section === "string" && candidateData.section) ||
+		(typeof suggestionData?.sectionTitle === "string" && suggestionData.sectionTitle) ||
+		(typeof candidateData?.sectionTitle === "string" && candidateData.sectionTitle) ||
+		""
+	const sectionHint = sectionHintRaw.trim()
+	if (sectionHint && sectionHint.toLowerCase() !== "lead") {
+		const exactSectionTitle = sectionTitleMap.get(sectionHint.toLowerCase()) ?? sectionHint
+		const hash = toSectionHash(exactSectionTitle)
+		return hash ? `${baseUrl}#${hash}` : baseUrl
+	}
+	// Fallback: infer nearest section from snippet location in source.
+	if (rawSnippet && pageSource && sectionRanges.length > 0) {
+		const exactOffset = pageSource.indexOf(rawSnippet)
+		if (exactOffset >= 0) {
+			const section = sectionRanges.find(
+				range => exactOffset >= range.startOffset && exactOffset < range.endOffset
+			)
+			if (section?.title) {
+				const hash = toSectionHash(section.title)
+				if (hash) return `${baseUrl}#${hash}`
+			}
+		}
+	}
+	// Fuzzy fallback for whitespace-normalized snippets.
+	if (rawSnippet && pageSource && sectionRanges.length > 0) {
+		const compactSnippet = rawSnippet.replace(/\s+/g, " ").trim()
+		if (compactSnippet) {
+			const compactSource = pageSource.replace(/\s+/g, " ")
+			const compactOffset = compactSource.indexOf(compactSnippet)
+			if (compactOffset >= 0 && compactSource.length > 0) {
+				const approxOffset = Math.floor((compactOffset / compactSource.length) * pageSource.length)
+				const section = sectionRanges.find(
+					range => approxOffset >= range.startOffset && approxOffset < range.endOffset
+				)
+				if (section?.title) {
+					const hash = toSectionHash(section.title)
+					if (hash) return `${baseUrl}#${hash}`
+				}
+			}
+		}
+	}
+	const hash = ""
+	return hash ? `${baseUrl}#${hash}` : baseUrl
 }
 
 function getTargetLabel(context: DescriptionContext): string | null {
@@ -441,7 +528,10 @@ async function buildCard(
 	pageTitle: string,
 	response: FWVeSuggestionResponse,
 	suggestion: FWVeSuggestionItem,
-	index: number
+	index: number,
+	sectionTitleMap: Map<string, string>,
+	sectionRanges: SectionRange[],
+	pageSource: string
 ): Promise<SuggestionCard> {
 	const selectedCandidate =
 		response.candidates.find(candidate => candidate.id === suggestion.id) ??
@@ -484,7 +574,58 @@ async function buildCard(
 		renderedSnippetHtml,
 		severity: suggestion.severity ?? null,
 		changeSize: changeSizeBySuggestionType[response.suggestionType] ?? "medium",
+		cardLinkUrl: resolveBestEffortCardLink(
+			pageTitle,
+			context,
+			response.suggestionType,
+			sectionTitleMap,
+			sectionRanges,
+			pageSource,
+			rawSnippet ?? ""
+		),
 	}
+}
+
+function buildSectionTitleMap(source: string): Map<string, string> {
+	const out = new Map<string, string>()
+	const headingRegex = /^==+\s*(.*?)\s*==+\s*$/gm
+	let match: RegExpExecArray | null
+	while ((match = headingRegex.exec(source)) !== null) {
+		const exactTitle = (match[1] ?? "").trim()
+		if (!exactTitle) continue
+		out.set(exactTitle.toLowerCase(), exactTitle)
+	}
+	return out
+}
+
+function buildSectionRanges(source: string): SectionRange[] {
+	const headings: Array<{ title: string; offset: number }> = []
+	const headingRegex = /^==+\s*(.*?)\s*==+\s*$/gm
+	let match: RegExpExecArray | null
+	while ((match = headingRegex.exec(source)) !== null) {
+		const title = (match[1] ?? "").trim()
+		if (!title) continue
+		headings.push({ title, offset: match.index })
+	}
+	if (headings.length === 0) return []
+	const out: SectionRange[] = [
+		{
+			title: "",
+			startOffset: 0,
+			endOffset: headings[0]?.offset ?? source.length,
+		},
+	]
+	for (let i = 0; i < headings.length; i++) {
+		const current = headings[i]
+		if (!current) continue
+		const next = headings[i + 1]
+		out.push({
+			title: current.title,
+			startOffset: current.offset,
+			endOffset: next?.offset ?? source.length,
+		})
+	}
+	return out
 }
 
 async function runAllSuggestions(): Promise<void> {
@@ -499,6 +640,18 @@ async function runAllSuggestions(): Promise<void> {
 	methodErrors.value = []
 	completedMethodCount.value = 0
 	try {
+		let sectionTitleMap = new Map<string, string>()
+		let sectionRanges: SectionRange[] = []
+		let pageSource = ""
+		try {
+			pageSource = await wiki.getPageSource(trimmedPageTitle.value)
+			sectionTitleMap = buildSectionTitleMap(pageSource)
+			sectionRanges = buildSectionRanges(pageSource)
+		} catch {
+			sectionTitleMap = new Map<string, string>()
+			sectionRanges = []
+			pageSource = ""
+		}
 		for (const method of veMethods) {
 			try {
 				const response = await method.run(wiki, trimmedPageTitle.value)
@@ -511,7 +664,10 @@ async function runAllSuggestions(): Promise<void> {
 						trimmedPageTitle.value,
 						response,
 						suggestion,
-						index
+						index,
+						sectionTitleMap,
+						sectionRanges,
+						pageSource
 					)
 					methodCards.push(card)
 				}

@@ -14,3 +14,18 @@
 .card-description a {
 	color: var(--color-progressive);
 }
+
+/* Pointer-events model for full-card overlay + clickable inline links. */
+.ve-suggestions .suggestion-card * {
+	pointer-events: none;
+}
+
+.ve-suggestions .suggestion-card .suggestion-card__overlay-link {
+	pointer-events: all !important;
+}
+
+.ve-suggestions .suggestion-card a:not(.suggestion-card__overlay-link) {
+	position: relative;
+	z-index: 3;
+	pointer-events: all !important;
+}

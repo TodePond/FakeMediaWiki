@@ -43,7 +43,7 @@
 }
 
 .cards {
-	gap: 4px;
+	gap: 0px;
 }
 
 .suggestion-card {
@@ -52,13 +52,44 @@
 	padding-bottom: 16px;
 	padding-top: 12px;
 	display: flex;
-	/* padding-left: 16px; */
-	/* padding-right: 16px; */
+	padding-left: 16px;
+	padding-right: 16px;
 	border-top: 1px solid var(--border-color-subtle);
 	align-items: flex-start;
 	flex-direction: column;
 	gap: 6px;
+	position: relative;
 	/* border-radius: 2px; */
+}
+
+.suggestion-card--clickable {
+	cursor: pointer;
+}
+
+.suggestion-card--clickable:hover {
+	background-color: var(--background-color-interactive-subtle);
+}
+
+.suggestion-card--clickable:focus-visible {
+	outline: 2px solid var(--border-color-progressive--focus);
+	outline-offset: 2px;
+}
+
+.suggestion-card__overlay-link {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	pointer-events: auto;
+}
+
+.suggestion-card__overlay-link:focus-visible {
+	outline: 2px solid var(--border-color-progressive--focus);
+	outline-offset: 2px;
+}
+
+.suggestion-card > *:not(.suggestion-card__overlay-link) {
+	position: relative;
+	z-index: 2;
 }
 
 .suggestion-card p,
@@ -80,7 +111,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
-	padding-right: 8px;
+	/* padding-right: 8px; */
 }
 
 .card-icons {
