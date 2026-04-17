@@ -143,4 +143,37 @@ export const playgroundOverrides: Record<string, PlaygroundMethodOverride> = {
 			items: { inputType: "json" },
 		},
 	},
+	getVeToneSuggestions: {
+		resultHint: "json",
+		optionsParamKeys: ["threshold", "maxCandidates"],
+	},
+	getVeTextMatchSuggestions: { resultHint: "json" },
+	getVeExternalLinkSuggestions: { resultHint: "json" },
+	getVeDuplicateLinkSuggestions: {
+		resultHint: "json",
+		optionsParamKeys: ["scope"],
+		paramOverrides: {
+			scope: { inputType: "enum", options: ["paragraph", "section"] },
+		},
+	},
+	getVeDisambiguationSuggestions: { resultHint: "json" },
+	getVeAddReferenceSuggestions: { resultHint: "json" },
+	getVeImageCaptionSuggestions: { resultHint: "json" },
+	getVeYearLinkSuggestions: { resultHint: "json" },
+	getVeConvertReferenceSuggestions: {
+		resultHint: "json",
+		optionsParamKeys: ["strict"],
+		paramOverrides: {
+			strict: { inputType: "enum", options: ["url-only", "covered", "any"] },
+		},
+	},
+	getVeCitationNeededSuggestions: { resultHint: "json" },
+	getVeDoubleBoldSuggestions: { resultHint: "json" },
+	getVeRequiredTemplateParamSuggestions: { resultHint: "json" },
+	getVeRedirectSuggestions: { resultHint: "json" },
+	getVeSuggestedLinkSuggestions: {
+		resultHint: "json",
+		optionsParamKeys: ["threshold"],
+	},
+	getVeFakeHeadingSuggestions: { resultHint: "json" },
 }

@@ -364,6 +364,55 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getStructuredDeltaLevelIndex", description: "Public for snippet logic: significance level index (0 = most significant).", category: undefined, params: [
       { key: "type" }
   ] },
+  { name: "getVeToneSuggestions", description: "Simulate VE Tone suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle", description: "Page title to evaluate" },
+      { key: "options", description: "Optional threshold and max candidates" }
+  ] },
+  { name: "getVeTextMatchSuggestions", description: "Simulate VE TextMatch suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle", description: "Page title to evaluate" }
+  ] },
+  { name: "getVeExternalLinkSuggestions", description: "Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeDuplicateLinkSuggestions", description: "Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" },
+      { key: "options" }
+  ] },
+  { name: "getVeDisambiguationSuggestions", description: "Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeAddReferenceSuggestions", description: "Simulate VE AddReference suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeImageCaptionSuggestions", description: "Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeYearLinkSuggestions", description: "Simulate VE YearLink suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeConvertReferenceSuggestions", description: "Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" },
+      { key: "options" }
+  ] },
+  { name: "getVeCitationNeededSuggestions", description: "Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeDoubleBoldSuggestions", description: "Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeRequiredTemplateParamSuggestions", description: "Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeRedirectSuggestions", description: "Simulate VE Redirect suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
+  { name: "getVeSuggestedLinkSuggestions", description: "Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" },
+      { key: "options" }
+  ] },
+  { name: "getVeFakeHeadingSuggestions", description: "Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+      { key: "pageTitle" }
+  ] },
   { name: "runWithConcurrency", description: "Run async tasks with a concurrency limit; returns results in input order.", category: undefined, params: [
       { key: "items" },
       { key: "concurrency" },

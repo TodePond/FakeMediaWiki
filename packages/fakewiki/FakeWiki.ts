@@ -5,14 +5,18 @@ import type {
 	FWCompareResponse,
 	FWDiffLine,
 	FWDiffSegment,
+	FWDisambiguationSuggestionResponse,
+	FWDoubleBoldSuggestionResponse,
 	FWEditTypesDiffDebug,
 	FWEditTypesDiffDetails,
 	FWEditTypesDiffSummary,
 	FWFeaturedPage,
+	FWFakeHeadingSuggestionResponse,
 	FWHistoryCacheEntitySnapshot,
 	FWHistoryCacheSnapshot,
 	FWHistoryCoverageEntry,
 	FWHistoryOptions,
+	FWImageCaptionSuggestionResponse,
 	FWLiftWingPrediction,
 	FWLiftWingResponse,
 	FWListBuildingResponse,
@@ -34,6 +38,8 @@ import type {
 	FWRecentChangesResult,
 	FWReferenceNeedPrediction,
 	FWRelativeTimestampOptions,
+	FWRequiredTemplateParamSuggestionResponse,
+	FWRedirectSuggestionResponse,
 	FWRestApiOptions,
 	FWResult,
 	FWRevision,
@@ -46,7 +52,10 @@ import type {
 	FWStructuredDeltaRevisionOptions,
 	FWStructuredDeltaSettings,
 	FWStructuredDeltasOptions,
+	FWSuggestedLinkSuggestionResponse,
+	FWTextMatchSuggestionResponse,
 	FWToneCheckPrediction,
+	FWToneSuggestionResponse,
 	FWToolbarComment,
 	FWTopRelatedChange,
 	FWTopRelatedOptions,
@@ -57,6 +66,16 @@ import type {
 	FWUserInfo,
 	FWUserSearchResult,
 	FWUserTypeConfig,
+	FWVeSuggestionCandidate,
+	FWVeSuggestionDiagnostics,
+	FWVeSuggestionItem,
+	FWVeSuggestionResponse,
+	FWYearLinkSuggestionResponse,
+	FWAddReferenceSuggestionResponse,
+	FWExternalLinkSuggestionResponse,
+	FWDuplicateLinkSuggestionResponse,
+	FWConvertReferenceSuggestionResponse,
+	FWCitationNeededSuggestionResponse,
 } from "./types"
 
 import { FakeWikiHttpError } from "./httpError"
@@ -4506,6 +4525,1206 @@ export class FakeWiki {
 			typeKey.toLowerCase().replace(/\s+/g, " ")
 		if (count === 1) return base
 		return base.endsWith("s") ? `${base}es` : `${base}s`
+	}
+
+	private veTextMatchConfigPromise:
+		| Promise<{
+				matchItems: Record<string, unknown>
+				britishEnglishPairs: Record<string, string>
+		  }>
+		| null = null
+
+	private createVeDiagnostics(
+		candidates: FWVeSuggestionCandidate[],
+		suggestions: FWVeSuggestionItem[],
+		gates: string[],
+		notes: string[] = []
+	): FWVeSuggestionDiagnostics {
+		return {
+			candidateCount: candidates.length,
+			suggestionCount: suggestions.length,
+			gates,
+			notes,
+		}
+	}
+
+	private createVeResponse<T extends FWVeSuggestionResponse["suggestionType"]>(
+		suggestionType: T,
+		pageTitle: string,
+		pageId: number | null,
+		candidates: FWVeSuggestionCandidate[],
+		suggestions: FWVeSuggestionItem[],
+		gates: string[],
+		notes: string[] = []
+	): FWVeSuggestionResponse & { suggestionType: T } {
+		return {
+			pageTitle,
+			pageId,
+			suggestionType,
+			candidates,
+			suggestions,
+			diagnostics: this.createVeDiagnostics(candidates, suggestions, gates, notes),
+		}
+	}
+
+	private escapeRegex(text: string): string {
+		return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+	}
+
+	private splitSourceParagraphs(source: string): string[] {
+		return source
+			.split(/\n{2,}/)
+			.map(s => s.trim())
+			.filter(Boolean)
+	}
+
+	private countOccurrences(text: string, pattern: RegExp): number {
+		const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`
+		const re = new RegExp(pattern.source, flags)
+		let count = 0
+		let match: RegExpExecArray | null
+		while ((match = re.exec(text)) !== null) {
+			count++
+			if (match[0].length === 0) re.lastIndex++
+		}
+		return count
+	}
+
+	private getReferenceIgnoredSections(): Set<string> {
+		return new Set([
+			"",
+			"references",
+			"notes",
+			"notes and references",
+			"references and further reading",
+			"sources",
+			"footnotes",
+			"citations",
+			"external links",
+			"external websites",
+			"weblinks",
+			"see also",
+			"further reading",
+			"bibliography",
+			"publications",
+			"works",
+		])
+	}
+
+	private parseSourceParagraphsWithSections(source: string): Array<{
+		section: string
+		text: string
+		startLine: number
+		startOffset: number
+		endOffset: number
+	}> {
+		const lines = source.split("\n")
+		const lineStarts: number[] = []
+		let running = 0
+		for (const line of lines) {
+			lineStarts.push(running)
+			running += line.length + 1
+		}
+		const paragraphs: Array<{
+			section: string
+			text: string
+			startLine: number
+			startOffset: number
+			endOffset: number
+		}> = []
+		let section = ""
+		let buffer: string[] = []
+		let paragraphStartLine = 0
+		const flush = (endLineInclusive: number) => {
+			const text = buffer.join("\n").trim()
+			if (!text) {
+				buffer = []
+				return
+			}
+			const startOffset = lineStarts[paragraphStartLine] ?? 0
+			const endLineStart = lineStarts[endLineInclusive] ?? startOffset
+			const endLine = lines[endLineInclusive] ?? ""
+			const endOffset = endLineStart + endLine.length
+			paragraphs.push({
+				section,
+				text,
+				startLine: paragraphStartLine,
+				startOffset,
+				endOffset,
+			})
+			buffer = []
+		}
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i] ?? ""
+			const heading = line.match(/^==+\s*(.*?)\s*==+$/)
+			if (heading) {
+				if (buffer.length > 0) flush(Math.max(0, i - 1))
+				section = (heading[1] ?? "").trim().toLowerCase()
+				continue
+			}
+			if (line.trim() === "") {
+				if (buffer.length > 0) flush(Math.max(0, i - 1))
+				continue
+			}
+			if (buffer.length === 0) paragraphStartLine = i
+			buffer.push(line)
+		}
+		if (buffer.length > 0) flush(lines.length - 1)
+		return paragraphs
+	}
+
+	private isTemplateOrTableLikeParagraph(text: string): boolean {
+		const trimmed = text.trim()
+		if (!trimmed) return false
+		if (
+			trimmed.includes("{{") ||
+			trimmed.includes("}}") ||
+			trimmed.includes("{|") ||
+			trimmed.includes("|}") ||
+			trimmed.includes("{{{")
+		) {
+			return true
+		}
+		const lines = trimmed.split("\n")
+		return lines.some(line => /^\s*(\||!|\{\||\|\})/.test(line))
+	}
+
+	private splitTableLikeParagraphIntoUnits(text: string): string[] {
+		if (!this.isTemplateOrTableLikeParagraph(text)) return [text]
+		const lines = text.split("\n")
+		const units: string[] = []
+		let buffer: string[] = []
+		const flush = () => {
+			const unit = buffer.join("\n").trim()
+			if (unit) units.push(unit)
+			buffer = []
+		}
+		for (const line of lines) {
+			const trimmed = line.trim()
+			if (trimmed === "{|" || trimmed === "|}") {
+				flush()
+				continue
+			}
+			if (trimmed === "|-") {
+				flush()
+				continue
+			}
+			buffer.push(line)
+		}
+		flush()
+		return units.length > 0 ? units : [text]
+	}
+
+	private isWithinTemplateOrTableBlock(source: string, offset: number): boolean {
+		const before = source.slice(0, offset)
+		const templateOpen = this.countOccurrences(before, /\{\{/g)
+		const templateClose = this.countOccurrences(before, /\}\}/g)
+		const tableOpen = this.countOccurrences(before, /\{\|/g)
+		const tableClose = this.countOccurrences(before, /\|\}/g)
+		return templateOpen > templateClose || tableOpen > tableClose
+	}
+
+	private stripReferenceContent(source: string): string {
+		let out = source
+		// Remove full ref tags first
+		out = out.replace(/<ref\b[^>]*>[\s\S]*?<\/ref\s*>/gi, " ")
+		// Remove self-closing refs
+		out = out.replace(/<ref\b[^>]*\/\s*>/gi, " ")
+		// Remove common inline citation templates
+		out = out.replace(/\{\{\s*(?:sfn|sfnp|harv|harvnb|harvp|r|rp|efn|citation needed|cn)\b[\s\S]*?\}\}/gi, " ")
+		// Remove citation templates often used in reference lists/inline bibliographies
+		out = out.replace(
+			/\{\{\s*(?:cite|citation|vcite|wikicite|cite web|cite news|cite journal|cite book|cite conference|cite report|cite arxiv|cite thesis)\b[\s\S]*?\}\}/gi,
+			" "
+		)
+		// Remove bare list-style reference lines that are mostly citation templates/urls
+		out = out.replace(/^\s*[*#]\s*(?:\{\{[^}]+\}\}|\[https?:\/\/[^\]]+\]|https?:\/\/\S+).*$\n?/gim, " ")
+		return out
+	}
+
+	private extractTemplatesFromSource(source: string): Set<string> {
+		const out = new Set<string>()
+		const re = /\{\{\s*([^|}\n]+)[^}]*\}\}/gim
+		let match: RegExpExecArray | null
+		while ((match = re.exec(source)) !== null) {
+			const raw = match[1]
+			if (!raw) continue
+			const normalized = raw.replace(/^Template:/i, "").trim()
+			if (normalized) out.add(normalized)
+		}
+		return out
+	}
+
+	private extractWikiLinks(source: string): Array<{
+		raw: string
+		target: string
+		label: string
+		start: number
+		end: number
+	}> {
+		const links: Array<{ raw: string; target: string; label: string; start: number; end: number }> =
+			[]
+		const re = /\[\[([^\]|#]+(?:#[^\]|]+)?)(?:\|([^\]]+))?\]\]/g
+		let match: RegExpExecArray | null
+		while ((match = re.exec(source)) !== null) {
+			const raw = match[0] ?? ""
+			const fullTarget = (match[1] ?? "").trim()
+			const label = (match[2] ?? fullTarget).trim()
+			const hashIndex = fullTarget.indexOf("#")
+			const target = (hashIndex >= 0 ? fullTarget.slice(0, hashIndex) : fullTarget).trim()
+			links.push({
+				raw,
+				target,
+				label,
+				start: match.index,
+				end: match.index + raw.length,
+			})
+		}
+		return links
+	}
+
+	private getImageLinkRanges(source: string): Array<{ start: number; end: number }> {
+		const ranges: Array<{ start: number; end: number }> = []
+		const lower = source.toLowerCase()
+		let i = 0
+		while (i < source.length - 1) {
+			const openIndex = source.indexOf("[[", i)
+			if (openIndex < 0) break
+			const afterOpen = openIndex + 2
+			const isImageLink =
+				lower.startsWith("file:", afterOpen) || lower.startsWith("image:", afterOpen)
+			if (!isImageLink) {
+				i = afterOpen
+				continue
+			}
+			let depth = 1
+			let cursor = afterOpen
+			while (cursor < source.length - 1 && depth > 0) {
+				if (source.startsWith("[[", cursor)) {
+					depth++
+					cursor += 2
+					continue
+				}
+				if (source.startsWith("]]", cursor)) {
+					depth--
+					cursor += 2
+					continue
+				}
+				cursor++
+			}
+			ranges.push({ start: openIndex, end: cursor })
+			i = Math.max(cursor, afterOpen)
+		}
+		return ranges
+	}
+
+	private isLikelyIgnoredLinkTarget(target: string): boolean {
+		const lower = target.toLowerCase()
+		return (
+			lower.startsWith("file:") ||
+			lower.startsWith("image:") ||
+			lower.startsWith("category:") ||
+			lower.startsWith("help:") ||
+			lower.startsWith("special:")
+		)
+	}
+
+	private normalizeLinkTarget(target: string): string {
+		return target.replace(/_/g, " ").trim().toLowerCase()
+	}
+
+	private isLikelyInterwikiExternalUrl(url: string): boolean {
+		try {
+			const parsed = new URL(url)
+			const host = parsed.hostname.toLowerCase()
+			return (
+				host.endsWith(".wikipedia.org") ||
+				host.endsWith(".wiktionary.org") ||
+				host.endsWith(".wikidata.org") ||
+				host.endsWith(".wikimedia.org")
+			)
+		} catch {
+			return false
+		}
+	}
+
+	private async resolvePageIdentity(pageTitle: string): Promise<{
+		pageTitle: string
+		pageId: number | null
+		source: string
+	}> {
+		const trimmed = pageTitle.trim()
+		if (!trimmed) return { pageTitle, pageId: null, source: "" }
+		const data = (await this.request({
+			api: "action",
+			params: {
+				action: "query",
+				titles: trimmed,
+				redirects: 1,
+				formatversion: 2,
+			},
+		})) as {
+			query?: { pages?: Array<{ pageid?: number; title?: string; missing?: boolean }> }
+		}
+		const page = data.query?.pages?.[0]
+		const canonical = page?.title ?? trimmed
+		if (!page || page.missing || typeof page.pageid !== "number") {
+			return { pageTitle: canonical, pageId: null, source: "" }
+		}
+		const source = await this.getPageSource(canonical).catch(() => "")
+		return { pageTitle: canonical, pageId: page.pageid, source }
+	}
+
+	private getSourceParagraphIndex(source: string, start: number): number {
+		const before = source.slice(0, start)
+		return before.split(/\n{2,}/).length - 1
+	}
+
+	private async getEnwikiTextMatchData(): Promise<{
+		matchItems: Record<string, unknown>
+		britishEnglishPairs: Record<string, string>
+	}> {
+		if (this.veTextMatchConfigPromise) return this.veTextMatchConfigPromise
+		this.veTextMatchConfigPromise = (async () => {
+			let configJson: { textMatch?: { matchItems?: Record<string, unknown> } } = {}
+			let britishJson: { query?: Record<string, string> } = {}
+			try {
+				const configSource = await this.getPageSource("MediaWiki:Editcheck-config.json")
+				configJson = JSON.parse(configSource) as {
+					textMatch?: { matchItems?: Record<string, unknown> }
+				}
+			} catch {
+				configJson = {}
+			}
+			try {
+				const britishSource = await this.getPageSource(
+					"MediaWiki:Editcheck-config-textmatch-british-english.json"
+				)
+				britishJson = JSON.parse(britishSource) as { query?: Record<string, string> }
+			} catch {
+				britishJson = {}
+			}
+			return {
+				matchItems: configJson.textMatch?.matchItems ?? {},
+				britishEnglishPairs: britishJson.query ?? {},
+			}
+		})()
+		return this.veTextMatchConfigPromise
+	}
+
+	private async getToneCheckPredictionsBatch(
+		modifiedTexts: string[],
+		pageTitle: string,
+		lang: string
+	): Promise<Array<FWToneCheckPrediction | null>> {
+		if (modifiedTexts.length === 0) return []
+		const url = "https://api.wikimedia.org/service/lw/inference/v1/models/edit-check:predict"
+		try {
+			const response = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
+				},
+				body: JSON.stringify({
+					instances: modifiedTexts.map(modifiedText => ({
+						lang,
+						check_type: "tone",
+						page_title: pageTitle,
+						original_text: "",
+						modified_text: modifiedText,
+					})),
+				}),
+			})
+			if (!response.ok) {
+				return modifiedTexts.map(() => null)
+			}
+			const data = (await response.json()) as {
+				predictions?: Array<FWToneCheckPrediction | null>
+			}
+			const predictions = data.predictions ?? []
+			return modifiedTexts.map((_, i) => predictions[i] ?? null)
+		} catch {
+			return modifiedTexts.map(() => null)
+		}
+	}
+
+	/**
+	 * Simulate VE Tone suggestions for editor-open behavior (enwiki).
+	 * @param pageTitle - Page title to evaluate
+	 * @param options - Optional threshold and max candidates
+	 * @returns Tone suggestion simulation payload
+	 */
+	async getVeToneSuggestions(
+		pageTitle: string,
+		options?: { threshold?: number; maxCandidates?: number }
+	): Promise<FWToneSuggestionResponse> {
+		const threshold = options?.threshold ?? 0.8
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const paragraphs = this.splitSourceParagraphs(source).filter(p => p.length > 20)
+		const candidates = paragraphs.slice(0, options?.maxCandidates ?? 20).map((text, i) => ({
+			id: `tone-${i}`,
+			text,
+			data: { paragraphIndex: i },
+		}))
+		const predictions: Array<{
+			candidate: FWVeSuggestionCandidate
+			prediction: FWToneCheckPrediction | null
+		}> = []
+		for (let i = 0; i < candidates.length; i += 100) {
+			const batch = candidates.slice(i, i + 100)
+			const batchPredictions = await this.getToneCheckPredictionsBatch(
+				batch.map(candidate => candidate.text ?? ""),
+				canonicalTitle,
+				"en"
+			)
+			for (let j = 0; j < batch.length; j++) {
+				const candidate = batch[j]
+				if (!candidate) continue
+				predictions.push({
+					candidate,
+					prediction: batchPredictions[j] ?? null,
+				})
+			}
+		}
+		const suggestions: FWVeSuggestionItem[] = predictions
+			.filter(item => (item.prediction?.probability ?? 0) >= threshold && item.prediction?.prediction)
+			.map(item => ({
+				id: item.candidate.id,
+				title: "Tone suggestion",
+				message: "Model flagged paragraph as potentially non-neutral.",
+				severity: "medium",
+				data: {
+					probability: item.prediction?.probability,
+					paragraphIndex: item.candidate.data?.paragraphIndex,
+				},
+			}))
+		return this.createVeResponse("tone", canonicalTitle, pageId, candidates, suggestions, [
+			"showAsSuggestion enabled",
+			"lang=en",
+			"serial batched requests (<=100 instances per request)",
+			`probability>=${threshold}`,
+		])
+	}
+
+	/**
+	 * Simulate VE TextMatch suggestions for editor-open behavior (enwiki).
+	 * @param pageTitle - Page title to evaluate
+	 * @returns TextMatch suggestion simulation payload
+	 */
+	async getVeTextMatchSuggestions(pageTitle: string): Promise<FWTextMatchSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const { matchItems, britishEnglishPairs } = await this.getEnwikiTextMatchData()
+		const ignoredSections = this.getReferenceIgnoredSections()
+		const sourceWithoutReferences = this.stripReferenceContent(source)
+		const sourceForMatching = this.parseSourceParagraphsWithSections(sourceWithoutReferences)
+			.filter(paragraph => !ignoredSections.has(paragraph.section))
+			.filter(paragraph => !this.isTemplateOrTableLikeParagraph(paragraph.text))
+			.filter(
+				paragraph =>
+					!this.isWithinTemplateOrTableBlock(sourceWithoutReferences, paragraph.startOffset)
+			)
+			.map(paragraph => paragraph.text)
+			.join("\n\n")
+		const templates = this.extractTemplatesFromSource(sourceWithoutReferences)
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		const items = Object.entries(matchItems)
+		for (const [itemId, rawItem] of items) {
+			const item = rawItem as {
+				query?: string[] | Record<string, string | null>
+				config?: {
+					caseSensitive?: boolean
+					minOccurrences?: number
+					hasTemplate?: string[]
+					lacksTemplate?: string[]
+				}
+				expand?: string
+			}
+			if (itemId === "british-english") {
+				const hasTemplate = (item.config?.hasTemplate ?? []).some(name => templates.has(name))
+				if (!hasTemplate) continue
+				let count = 0
+				for (const [us, uk] of Object.entries(britishEnglishPairs).slice(0, 2000)) {
+					const re = new RegExp(`\\b${this.escapeRegex(us)}\\b`, "g")
+					let match: RegExpExecArray | null
+					while ((match = re.exec(sourceForMatching)) !== null) {
+						count++
+						const id = `textmatch-${itemId}-${count}`
+						candidates.push({ id, text: us, data: { replacement: uk, index: match.index } })
+						suggestions.push({
+							id,
+							title: "Change English spelling",
+							message: `Found "${us}" where British variant "${uk}" may be expected.`,
+							severity: "low",
+							data: { replacement: uk, index: match.index },
+						})
+					}
+				}
+				continue
+			}
+			const query =
+				Array.isArray(item.query) ?
+					Object.fromEntries(item.query.map(value => [value, null])) :
+					(item.query ?? {})
+			const minOccurrences = item.config?.minOccurrences ?? 1
+			const caseSensitive = item.config?.caseSensitive ?? false
+			const matchedByParagraph = new Map<number, Array<{ term: string; replacement: string | null }>>()
+			for (const [term, replacement] of Object.entries(query)) {
+				const flags = caseSensitive ? "g" : "gi"
+				const re = new RegExp(`\\b${this.escapeRegex(term)}\\b`, flags)
+				let match: RegExpExecArray | null
+				while ((match = re.exec(sourceForMatching)) !== null) {
+					const paragraphIndex = this.getSourceParagraphIndex(sourceForMatching, match.index)
+					const bucket = matchedByParagraph.get(paragraphIndex) ?? []
+					bucket.push({ term, replacement: replacement ?? null })
+					matchedByParagraph.set(paragraphIndex, bucket)
+					candidates.push({
+						id: `textmatch-${itemId}-${paragraphIndex}-${bucket.length}`,
+						text: term,
+						data: { itemId, paragraphIndex },
+					})
+				}
+			}
+			for (const [paragraphIndex, matches] of matchedByParagraph.entries()) {
+				if (matches.length < minOccurrences) continue
+				const first = matches[0]
+				suggestions.push({
+					id: `textmatch-${itemId}-${paragraphIndex}`,
+					title: `TextMatch: ${itemId}`,
+					message: `Matched ${matches.length} configured terms in one paragraph.`,
+					severity: "medium",
+					data: {
+						itemId,
+						paragraphIndex,
+						matches: matches.map(m => m.term),
+						replacement: first?.replacement ?? null,
+					},
+				})
+			}
+		}
+		return this.createVeResponse("textMatch", canonicalTitle, pageId, candidates, suggestions, [
+			"enwiki textMatch config",
+			"whole-word matching",
+			"hasTemplate/lacksTemplate gating",
+			"exclude template/table-like content",
+		])
+	}
+
+	/**
+	 * Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeExternalLinkSuggestions(pageTitle: string): Promise<FWExternalLinkSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const sourceForLinks = this.stripReferenceContent(source)
+		const ignoredSections = this.getReferenceIgnoredSections()
+		const sectionedParagraphs = this.parseSourceParagraphsWithSections(sourceForLinks)
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		const seen = new Set<string>()
+		const bracketed = /\[(https?:\/\/[^\s\]]+)(?:\s+[^\]]+)?\]/gi
+		const bare = /(?<!\[)(https?:\/\/[^\s<>{}|\\^`[\]]+)/gi
+		for (const re of [bracketed, bare]) {
+			let match: RegExpExecArray | null
+			while ((match = re.exec(sourceForLinks)) !== null) {
+				const url = match[1] ?? match[0] ?? ""
+				const offset = match.index
+				if (!url || seen.has(`${url}@${offset}`)) continue
+				seen.add(`${url}@${offset}`)
+				const id = `external-${offset}`
+				const section =
+					sectionedParagraphs.find(
+						paragraph => offset >= paragraph.startOffset && offset <= paragraph.endOffset
+					)?.section ?? ""
+				candidates.push({ id, text: url, data: { index: offset, section } })
+				if (this.isLikelyInterwikiExternalUrl(url)) continue
+				if (ignoredSections.has(section)) continue
+				suggestions.push({
+					id,
+					title: "External link in body",
+					message: "Non-interwiki external link detected; VE external-link check would flag this.",
+					severity: "low",
+					data: { url, index: offset, section, action: "remove-or-dismiss" },
+				})
+			}
+		}
+		return this.createVeResponse("externalLink", canonicalTitle, pageId, candidates, suggestions, [
+			"exclude interwiki-like urls",
+			"ignore reference-style sections",
+			"remove/dismiss only",
+		])
+	}
+
+	/**
+	 * Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeDuplicateLinkSuggestions(
+		pageTitle: string,
+		options?: { scope?: "paragraph" | "section" }
+	): Promise<FWDuplicateLinkSuggestionResponse> {
+		const scope = options?.scope ?? "paragraph"
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const sourceForLinks = this.stripReferenceContent(source)
+		const ignoredSections = this.getReferenceIgnoredSections()
+		const paragraphs = this.parseSourceParagraphsWithSections(sourceForLinks).filter(
+			paragraph => !ignoredSections.has(paragraph.section)
+		)
+		const units =
+			scope === "section" ?
+				(() => {
+					const mergedBySection = new Map<string, string[]>()
+					const tableRowUnits: string[] = []
+					for (const paragraph of paragraphs) {
+						if (this.isTemplateOrTableLikeParagraph(paragraph.text)) {
+							tableRowUnits.push(...this.splitTableLikeParagraphIntoUnits(paragraph.text))
+							continue
+						}
+						const list = mergedBySection.get(paragraph.section) ?? []
+						list.push(paragraph.text)
+						mergedBySection.set(paragraph.section, list)
+					}
+					return [
+						...Array.from(mergedBySection.values()).map(parts => parts.join("\n\n")),
+						...tableRowUnits,
+					]
+				})()
+			:	paragraphs.flatMap(paragraph => this.splitTableLikeParagraphIntoUnits(paragraph.text))
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		for (let unitIndex = 0; unitIndex < units.length; unitIndex++) {
+			const unit = units[unitIndex] ?? ""
+			const imageRanges = this.getImageLinkRanges(unit)
+			const links = this.extractWikiLinks(unit)
+				.filter(link => link.target && !this.isLikelyIgnoredLinkTarget(link.target))
+				.map(link => ({
+					...link,
+					inImageCaption: imageRanges.some(
+						range => link.start >= range.start && link.end <= range.end
+					),
+				}))
+			links.forEach((link, linkIndex) => {
+				candidates.push({
+					id: `duplicate-${unitIndex}-candidate-${linkIndex}`,
+					text: link.raw,
+					data: {
+						unitIndex,
+						key: this.normalizeLinkTarget(link.target),
+						position: linkIndex + 1,
+						inImageCaption: !!link.inImageCaption,
+					},
+				})
+			})
+			const groups = new Map<string, typeof links>()
+			for (const link of links) {
+				if (link.inImageCaption) continue
+				const key = this.normalizeLinkTarget(link.target)
+				const group = groups.get(key) ?? []
+				group.push(link)
+				groups.set(key, group)
+			}
+			for (const [key, group] of groups) {
+				group.forEach((link, i) => {
+					const id = `duplicate-${unitIndex}-${key}-${i}`
+					if (i === 0) return
+					suggestions.push({
+						id,
+						title: "Duplicate wikilink",
+						message: `Duplicate link to "${link.target}" in same ${scope}.`,
+						severity: "low",
+						data: { scope, unitIndex, target: link.target, position: i + 1 },
+					})
+				})
+			}
+		}
+		return this.createVeResponse("duplicateLink", canonicalTitle, pageId, candidates, suggestions, [
+			`scope=${scope}`,
+			"ignore reference-style sections",
+			"ignore image-caption links for duplicate checks",
+			"first occurrence allowed",
+			"second+ occurrences flagged",
+		])
+	}
+
+	/**
+	 * Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeDisambiguationSuggestions(
+		pageTitle: string
+	): Promise<FWDisambiguationSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const links = this.extractWikiLinks(source).filter(
+			link =>
+				link.target &&
+				!this.isLikelyIgnoredLinkTarget(link.target) &&
+				!link.raw.includes("#") &&
+				!/\#/.test(link.target)
+		)
+		const candidates: FWVeSuggestionCandidate[] = links.map((link, i) => ({
+			id: `disambig-${i}`,
+			text: link.raw,
+			data: { target: link.target },
+		}))
+		const uniqueTargets = Array.from(new Set(links.map(link => link.target))).slice(0, 200)
+		const disambigTargets = new Set<string>()
+		for (let i = 0; i < uniqueTargets.length; i += 50) {
+			const chunk = uniqueTargets.slice(i, i + 50)
+			const data = (await this.request({
+				api: "action",
+				params: {
+					action: "query",
+					prop: "pageprops",
+					titles: chunk.join("|"),
+					redirects: 1,
+				},
+			})) as {
+				query?: { pages?: Record<string, { title?: string; pageprops?: Record<string, unknown> }> }
+			}
+			for (const page of Object.values(data.query?.pages ?? {})) {
+				if (page.pageprops?.disambiguation !== undefined && page.title) {
+					disambigTargets.add(page.title)
+				}
+			}
+		}
+		const suggestions: FWVeSuggestionItem[] = links
+			.map((link, i) => ({ link, i }))
+			.filter(({ link }) => disambigTargets.has(link.target))
+			.map(({ link, i }) => ({
+				id: `disambig-${i}`,
+				title: "Disambiguation link",
+				message: `Link target "${link.target}" appears to be a disambiguation page.`,
+				severity: "medium",
+				data: { target: link.target, label: link.label },
+			}))
+		return this.createVeResponse("disambiguation", canonicalTitle, pageId, candidates, suggestions, [
+			"exclude fragment links",
+			"pageprops.disambiguation check",
+		])
+	}
+
+	/**
+	 * Simulate VE AddReference suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeAddReferenceSuggestions(pageTitle: string): Promise<FWAddReferenceSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const ignoredSections = this.getReferenceIgnoredSections()
+		const paragraphs = this.parseSourceParagraphsWithSections(source)
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		paragraphs.forEach((paragraph, i) => {
+			const id = `addref-${i}`
+			candidates.push({
+				id,
+				text: paragraph.text.slice(0, 240),
+				data: {
+					section: paragraph.section,
+					length: paragraph.text.length,
+					index: paragraph.startLine,
+				},
+			})
+			if (ignoredSections.has(paragraph.section)) return
+			if (this.isTemplateOrTableLikeParagraph(paragraph.text)) return
+			if (this.isWithinTemplateOrTableBlock(source, paragraph.startOffset)) return
+			if (paragraph.text.length < 50) return
+			if (/<ref[\s>]/i.test(paragraph.text) || /\{\{\s*cite\b/i.test(paragraph.text)) return
+			if (/\{\{\s*(citation needed|cn)\b/i.test(paragraph.text)) return
+			suggestions.push({
+				id,
+				title: "Add reference",
+				message: "Paragraph is long enough and appears uncited.",
+				severity: "medium",
+				data: { section: paragraph.section, length: paragraph.text.length },
+			})
+		})
+		return this.createVeResponse("addReference", canonicalTitle, pageId, candidates, suggestions, [
+			"ignoreLeadSection=true",
+			"ignore reference-style sections",
+			"exclude template/table-like paragraphs",
+			"minimumCharacters=50",
+		])
+	}
+
+	/**
+	 * Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeImageCaptionSuggestions(
+		pageTitle: string
+	): Promise<FWImageCaptionSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const fileRe = /\[\[(?:File|Image):([^\]|]+)([^\]]*)\]\]/gi
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		let match: RegExpExecArray | null
+		let i = 0
+		while ((match = fileRe.exec(source)) !== null) {
+			const params = (match[2] ?? "")
+				.split("|")
+				.map(p => p.trim())
+				.filter(Boolean)
+			const id = `imagecaption-${i++}`
+			const isThumb = params.some(p => /^(thumb|thumbnail)$/i.test(p))
+			const caption = params
+				.filter(
+					p =>
+						!/^(thumb|thumbnail|left|right|center|none|upright.*|\d+px|frameless|frame)$/i.test(
+							p
+						)
+				)
+				.join(" ")
+				.trim()
+			candidates.push({ id, text: match[0], data: { file: match[1], isThumb, caption } })
+			if (!isThumb) continue
+			if (caption.length >= 12) continue
+			suggestions.push({
+				id,
+				title: "Image caption",
+				message:
+					caption.length === 0 ?
+						"Thumbnail image appears to be missing a caption."
+					:	"Thumbnail image caption appears too short to be descriptive.",
+				severity: "low",
+				data: { file: match[1], captionLength: caption.length },
+			})
+		}
+		return this.createVeResponse("imageCaption", canonicalTitle, pageId, candidates, suggestions, [
+			"thumb images only",
+			"empty caption only",
+		])
+	}
+
+	/**
+	 * Simulate VE YearLink suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeYearLinkSuggestions(pageTitle: string): Promise<FWYearLinkSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const links = this.extractWikiLinks(source).filter(link => !this.isLikelyIgnoredLinkTarget(link.target))
+		const getSingleYear = (text: string): string | null => {
+			const matches = text.match(/\b\d{3,4}\b/g) ?? []
+			return matches.length === 1 ? matches[0] ?? null : null
+		}
+		const candidates: FWVeSuggestionCandidate[] = links.map((link, i) => ({
+			id: `yearlink-${i}`,
+			text: link.raw,
+			data: { target: link.target, label: link.label },
+		}))
+		const suggestions: FWVeSuggestionItem[] = links
+			.map((link, i) => ({ link, i }))
+			.filter(({ link }) => {
+				const targetYear = getSingleYear(link.target)
+				const labelYear = getSingleYear(link.label)
+				return Boolean(targetYear && labelYear && targetYear !== labelYear)
+			})
+			.map(({ link, i }) => ({
+				id: `yearlink-${i}`,
+				title: "Year link mismatch",
+				message: `Link target year and label year differ for "${link.raw}".`,
+				severity: "low",
+				data: { target: link.target, label: link.label, actionChoices: ["useTarget", "useLabel"] },
+			}))
+		return this.createVeResponse("yearLink", canonicalTitle, pageId, candidates, suggestions, [
+			"single year in target and label",
+			"targetYear !== labelYear",
+		])
+	}
+
+	/**
+	 * Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeConvertReferenceSuggestions(
+		pageTitle: string,
+		options?: { strict?: "url-only" | "covered" | "any" }
+	): Promise<FWConvertReferenceSuggestionResponse> {
+		const strict = options?.strict ?? "url-only"
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const refRe = /<ref\b[^>]*>([\s\S]*?)<\/ref>/gi
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		let match: RegExpExecArray | null
+		let i = 0
+		while ((match = refRe.exec(source)) !== null) {
+			const content = (match[1] ?? "").trim()
+			const id = `convertref-${i++}`
+			candidates.push({ id, text: content.slice(0, 240) })
+			const hasUrl = /(https?:\/\/\S+)/i.test(content)
+			if (!hasUrl) continue
+			if (strict === "url-only" && !/^https?:\/\/\S+$/i.test(content)) continue
+			if (strict === "covered" && !/^\[https?:\/\/\S+(?:\s+[^\]]+)?\]$/i.test(content)) continue
+			suggestions.push({
+				id,
+				title: "Convert reference",
+				message: `Reference appears convertible under strictness "${strict}".`,
+				severity: "low",
+				data: { strict },
+			})
+		}
+		return this.createVeResponse("convertReference", canonicalTitle, pageId, candidates, suggestions, [
+			`strict=${strict}`,
+			"reference contains convertible url",
+		])
+	}
+
+	/**
+	 * Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeCitationNeededSuggestions(
+		pageTitle: string
+	): Promise<FWCitationNeededSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const re = /\{\{\s*(citation needed|cn)\b([^}]*)\}\}/gi
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		let match: RegExpExecArray | null
+		let i = 0
+		while ((match = re.exec(source)) !== null) {
+			const id = `citationneeded-${i++}`
+			const raw = match[0] ?? ""
+			candidates.push({ id, text: raw, data: { index: match.index } })
+			suggestions.push({
+				id,
+				title: "Citation needed template",
+				message: "Citation-needed template found; VE citation-needed check candidate.",
+				severity: "medium",
+				data: { index: match.index },
+			})
+		}
+		return this.createVeResponse("citationNeeded", canonicalTitle, pageId, candidates, suggestions, [
+			"showAsSuggestion default=false unless enabled",
+			"template compatibility required",
+		])
+	}
+
+	/**
+	 * Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeDoubleBoldSuggestions(pageTitle: string): Promise<FWDoubleBoldSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const lines = source.split("\n")
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		lines.forEach((line, i) => {
+			if (!/'''[^']+'''/.test(line)) return
+			const id = `doublebold-${i}`
+			candidates.push({ id, text: line.trim(), data: { line: i + 1 } })
+			const inHeading = /^===+/.test(line)
+			const inHeaderCell = /^\!/.test(line)
+			const inDefinitionTerm = /^;/.test(line)
+			if (!(inHeading || inHeaderCell || inDefinitionTerm)) return
+			suggestions.push({
+				id,
+				title: "Redundant bold",
+				message: "Bold formatting appears redundant in this structural context.",
+				severity: "low",
+				data: { line: i + 1, inHeading, inHeaderCell, inDefinitionTerm },
+			})
+		})
+		return this.createVeResponse("doubleBold", canonicalTitle, pageId, candidates, suggestions, [
+			"heading>=3 or table header or definition term",
+			"bold annotation present",
+		])
+	}
+
+	/**
+	 * Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeRequiredTemplateParamSuggestions(
+		pageTitle: string
+	): Promise<FWRequiredTemplateParamSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const templateInvocations = Array.from(
+			source.matchAll(/\{\{\s*([^|}\n]+)((?:\|[^}]*)?)\}\}/gim)
+		).slice(0, 400)
+		const candidates: FWVeSuggestionCandidate[] = templateInvocations.map((match, i) => ({
+			id: `requiredparam-${i}`,
+			text: (match[1] ?? "").trim(),
+			data: { invocation: (match[0] ?? "").slice(0, 200) },
+		}))
+		const suggestions: FWVeSuggestionItem[] = []
+		for (let i = 0; i < templateInvocations.length; i++) {
+			const match = templateInvocations[i]
+			const template = (match?.[1] ?? "").trim()
+			const paramsBlob = match?.[2] ?? ""
+			if (!template) continue
+			const id = `requiredparam-${i}`
+			const emptyNamedParams = Array.from(
+				paramsBlob.matchAll(/\|\s*([^=|]+)\s*=\s*(?=(?:\||$))/g)
+			).map(part => (part[1] ?? "").trim())
+			if (emptyNamedParams.length === 0) continue
+			suggestions.push({
+				id,
+				title: "Template missing required params",
+				message: `Template "${template}" has empty named params: ${emptyNamedParams.slice(0, 5).join(", ")}.`,
+				severity: "medium",
+				data: { template, emptyNamedParams },
+			})
+		}
+		return this.createVeResponse(
+			"requiredTemplateParam",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			[
+				"showAsSuggestion default=false unless enabled",
+				"heuristic: empty named params treated as potentially required",
+			]
+		)
+	}
+
+	/**
+	 * Simulate VE Redirect suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeRedirectSuggestions(pageTitle: string): Promise<FWRedirectSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const links = this.extractWikiLinks(source).filter(
+			link => link.target && !this.isLikelyIgnoredLinkTarget(link.target)
+		)
+		const candidates: FWVeSuggestionCandidate[] = links.map((link, i) => ({
+			id: `redirect-${i}`,
+			text: link.raw,
+			data: { target: link.target, label: link.label },
+		}))
+		const targets = Array.from(new Set(links.map(link => link.target))).slice(0, 200)
+		const redirectMap = new Map<string, string>()
+		for (let i = 0; i < targets.length; i += 50) {
+			const chunk = targets.slice(i, i + 50)
+			const data = (await this.request({
+				api: "action",
+				params: {
+					action: "query",
+					titles: chunk.join("|"),
+					redirects: 1,
+					formatversion: 2,
+				},
+			})) as {
+				query?: { redirects?: Array<{ from?: string; to?: string }> }
+			}
+			for (const item of data.query?.redirects ?? []) {
+				if (item.from && item.to) redirectMap.set(item.from, item.to)
+			}
+		}
+		const suggestions: FWVeSuggestionItem[] = links
+			.map((link, i) => ({ link, i }))
+			.filter(({ link }) => {
+				const redirectTarget = redirectMap.get(link.target)
+				if (!redirectTarget) return false
+				const labelNorm = this.normalizeLinkTarget(link.label)
+				const targetNorm = this.normalizeLinkTarget(link.target)
+				return !labelNorm.startsWith(targetNorm)
+			})
+			.map(({ link, i }) => ({
+				id: `redirect-${i}`,
+				title: "Redirect link",
+				message: `Link target "${link.target}" is a redirect.`,
+				severity: "low",
+				data: { target: link.target, finalTarget: redirectMap.get(link.target) },
+			}))
+		return this.createVeResponse("redirect", canonicalTitle, pageId, candidates, suggestions, [
+			"showAsSuggestion default=false unless enabled",
+			"exclude compact-label intent matches",
+		])
+	}
+
+	/**
+	 * Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeSuggestedLinkSuggestions(
+		pageTitle: string,
+		options?: { threshold?: number }
+	): Promise<FWSuggestedLinkSuggestionResponse> {
+		const threshold = options?.threshold ?? 0.8
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const links = this.extractWikiLinks(source)
+		const linkedText = new Set(links.map(link => link.label))
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		try {
+			const titleVariants = [canonicalTitle, canonicalTitle.replace(/ /g, "_")]
+			let apiLinks:
+				| Array<{
+						link_text?: string
+						link_target?: string
+						score?: number
+						context_before?: string
+						context_after?: string
+						match_index?: number
+				  }>
+				| null = null
+			for (const titleVariant of titleVariants) {
+				if (apiLinks && apiLinks.length > 0) break
+				const encoded = encodeURIComponent(titleVariant)
+				const url = `https://api.wikimedia.org/service/linkrecommendation/v1/linkrecommendations/wikipedia/en/${encoded}`
+				const res = await fetch(url, {
+					headers: { "Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT },
+				})
+				if (!res.ok) continue
+				const data = (await res.json()) as {
+					links?: Array<{
+						link_text?: string
+						link_target?: string
+						score?: number
+						context_before?: string
+						context_after?: string
+						match_index?: number
+					}>
+				}
+				apiLinks = data.links ?? []
+			}
+			for (let i = 0; i < (apiLinks?.length ?? 0); i++) {
+				const entry = apiLinks?.[i]
+				if (!entry?.link_text || !entry.link_target) continue
+				const id = `suggestedlink-${i}`
+				candidates.push({
+					id,
+					text: entry.link_text,
+					data: { target: entry.link_target, score: entry.score ?? 0 },
+				})
+				if ((entry.score ?? 0) < threshold) continue
+				if (!source.includes(entry.link_text)) continue
+				if (linkedText.has(entry.link_text)) continue
+				suggestions.push({
+					id,
+					title: "Suggested link",
+					message: `Consider linking "${entry.link_text}" to "${entry.link_target}".`,
+					severity: "low",
+					data: entry,
+				})
+			}
+		} catch {
+			// No suggestions on API failure
+		}
+		return this.createVeResponse("suggestedLink", canonicalTitle, pageId, candidates, suggestions, [
+			"wikipedia hostname model",
+			`score>=${threshold}`,
+			"text must be currently unlinked",
+		])
+	}
+
+	/**
+	 * Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).
+	 */
+	async getVeFakeHeadingSuggestions(pageTitle: string): Promise<FWFakeHeadingSuggestionResponse> {
+		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const lines = source.split("\n")
+		const candidates: FWVeSuggestionCandidate[] = []
+		const suggestions: FWVeSuggestionItem[] = []
+		lines.forEach((line, i) => {
+			if (/^=+/.test(line)) return
+			const trimmed = line.trim()
+			if (!trimmed) return
+			if (!/^'''[^']+'''$/.test(trimmed)) return
+			const id = `fakeheading-${i}`
+			candidates.push({ id, text: trimmed, data: { line: i + 1 } })
+			suggestions.push({
+				id,
+				title: "Use real heading",
+				message: "Fully bold paragraph line looks like a fake heading.",
+				severity: "low",
+				data: { line: i + 1, suggestedLevel: 3 },
+			})
+		})
+		return this.createVeResponse("fakeHeading", canonicalTitle, pageId, candidates, suggestions, [
+			"showAsSuggestion default=false unless enabled",
+			"root paragraph bold-only heuristic",
+		])
 	}
 
 	/**

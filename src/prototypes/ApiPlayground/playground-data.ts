@@ -172,6 +172,50 @@ const METHOD_PARAM_DEFAULTS: Record<string, Record<string, string | number | boo
 		lang: "en",
 		pageTitle: "Corsica Studios",
 	},
+	getVeToneSuggestions: {
+		pageTitle: "Artificial intelligence",
+		threshold: 0.8,
+		maxCandidates: 20,
+	},
+	getVeTextMatchSuggestions: {
+		pageTitle: "Ips pini",
+	},
+	getVeExternalLinkSuggestions: {
+		pageTitle: "Live coding",
+	},
+	getVeDuplicateLinkSuggestions: {
+		pageTitle: "Little Mix",
+		scope: "paragraph",
+	},
+	getVeDisambiguationSuggestions: {
+		pageTitle: "United Kingdom",
+	},
+	getVeAddReferenceSuggestions: {
+		pageTitle: "Wet Leg",
+	},
+	getVeYearLinkSuggestions: {
+		pageTitle: "United States",
+	},
+	getVeConvertReferenceSuggestions: {
+		pageTitle: "Wet Leg",
+		strict: "url-only",
+	},
+	getVeCitationNeededSuggestions: {
+		pageTitle: "United Kingdom",
+	},
+	getVeDoubleBoldSuggestions: {
+		pageTitle: "Glossary of mathematics",
+	},
+	getVeRedirectSuggestions: {
+		pageTitle: "Wet Leg",
+	},
+	getVeSuggestedLinkSuggestions: {
+		pageTitle: "Wet Leg",
+		threshold: 0.8,
+	},
+	getVeFakeHeadingSuggestions: {
+		pageTitle: "Wet Leg",
+	},
 	normalizeStructuredDeltaSummary: {
 		raw: '{"summary":{"Sentence":{"change":2,"remove":1},"Punctuation":{"remove":1},"Whitespace":{"change":1},"Comment":{"insert":"2"}},"debug":{"traceId":"demo"}}',
 	},
@@ -191,6 +235,21 @@ const METHOD_CATEGORY_OVERRIDES: Record<string, string> = {
 	getShortDescription: "Pages and content",
 	getToneCheckPrediction: "Predictions",
 	getToneCheckForRevision: "Predictions",
+	getVeToneSuggestions: "Suggestions",
+	getVeTextMatchSuggestions: "Suggestions",
+	getVeExternalLinkSuggestions: "Suggestions",
+	getVeDuplicateLinkSuggestions: "Suggestions",
+	getVeDisambiguationSuggestions: "Suggestions",
+	getVeAddReferenceSuggestions: "Suggestions",
+	getVeImageCaptionSuggestions: "Suggestions",
+	getVeYearLinkSuggestions: "Suggestions",
+	getVeConvertReferenceSuggestions: "Suggestions",
+	getVeCitationNeededSuggestions: "Suggestions",
+	getVeDoubleBoldSuggestions: "Suggestions",
+	getVeRequiredTemplateParamSuggestions: "Suggestions",
+	getVeRedirectSuggestions: "Suggestions",
+	getVeSuggestedLinkSuggestions: "Suggestions",
+	getVeFakeHeadingSuggestions: "Suggestions",
 	getMediawikiBase: "URLs",
 	getOnThisDay: "Pages and content",
 	getTableFromEditSummary: "Formatting",

@@ -550,3 +550,76 @@ export interface FWMultiPageListBuildingResult {
 	entries: FWMultiPageListBuildingEntry[]
 	completedCount: number
 }
+
+/** Generic candidate used by VE suggestion simulation methods. */
+export interface FWVeSuggestionCandidate {
+	id: string
+	text?: string
+	context?: string
+	data?: Record<string, unknown>
+}
+
+/** Generic actionable suggestion used by VE suggestion simulation methods. */
+export interface FWVeSuggestionItem {
+	id: string
+	title: string
+	message: string
+	severity?: "low" | "medium" | "high"
+	data?: Record<string, unknown>
+}
+
+/** Diagnostics for VE suggestion simulation methods. */
+export interface FWVeSuggestionDiagnostics {
+	candidateCount: number
+	suggestionCount: number
+	gates: string[]
+	notes?: string[]
+}
+
+/** Base response shared by VE suggestion simulation methods. */
+export interface FWVeSuggestionResponse {
+	pageTitle: string
+	pageId: number | null
+	suggestionType: string
+	candidates: FWVeSuggestionCandidate[]
+	suggestions: FWVeSuggestionItem[]
+	diagnostics: FWVeSuggestionDiagnostics
+}
+
+export type FWToneSuggestionResponse = FWVeSuggestionResponse & { suggestionType: "tone" }
+export type FWTextMatchSuggestionResponse = FWVeSuggestionResponse & { suggestionType: "textMatch" }
+export type FWExternalLinkSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "externalLink"
+}
+export type FWDuplicateLinkSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "duplicateLink"
+}
+export type FWDisambiguationSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "disambiguation"
+}
+export type FWAddReferenceSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "addReference"
+}
+export type FWImageCaptionSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "imageCaption"
+}
+export type FWYearLinkSuggestionResponse = FWVeSuggestionResponse & { suggestionType: "yearLink" }
+export type FWConvertReferenceSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "convertReference"
+}
+export type FWCitationNeededSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "citationNeeded"
+}
+export type FWDoubleBoldSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "doubleBold"
+}
+export type FWRequiredTemplateParamSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "requiredTemplateParam"
+}
+export type FWRedirectSuggestionResponse = FWVeSuggestionResponse & { suggestionType: "redirect" }
+export type FWSuggestedLinkSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "suggestedLink"
+}
+export type FWFakeHeadingSuggestionResponse = FWVeSuggestionResponse & {
+	suggestionType: "fakeHeading"
+}
