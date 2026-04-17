@@ -4818,6 +4818,18 @@ export class FakeWiki {
 		return ranges
 	}
 
+	private stripImageFileLinksFromSource(source: string): string {
+		const ranges = this.getImageLinkRanges(source)
+		if (ranges.length === 0) return source
+		const chars = Array.from(source)
+		for (const range of ranges) {
+			for (let i = range.start; i < range.end; i++) {
+				chars[i] = " "
+			}
+		}
+		return chars.join("")
+	}
+
 	private isLikelyIgnoredLinkTarget(target: string): boolean {
 		const lower = target.toLowerCase()
 		return (
@@ -5306,11 +5318,14 @@ export class FakeWiki {
 	 */
 	async getVeAddReferenceSuggestions(pageTitle: string): Promise<FWAddReferenceSuggestionResponse> {
 		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const sourceForAddReference = this.stripImageFileLinksFromSource(source)
 		const ignoredSections = this.getReferenceIgnoredSections()
-		const paragraphs = this.parseSourceParagraphsWithSections(source)
+		const paragraphs = this.parseSourceParagraphsWithSections(sourceForAddReference)
 		const candidates: FWVeSuggestionCandidate[] = []
 		const suggestions: FWVeSuggestionItem[] = []
 		paragraphs.forEach((paragraph, i) => {
+			if (this.isTemplateOrTableLikeParagraph(paragraph.text)) return
+			if (this.isWithinTemplateOrTableBlock(sourceForAddReference, paragraph.startOffset)) return
 			const id = `addref-${i}`
 			candidates.push({
 				id,
@@ -5322,8 +5337,6 @@ export class FakeWiki {
 				},
 			})
 			if (ignoredSections.has(paragraph.section)) return
-			if (this.isTemplateOrTableLikeParagraph(paragraph.text)) return
-			if (this.isWithinTemplateOrTableBlock(source, paragraph.startOffset)) return
 			if (paragraph.text.length < 50) return
 			if (/<ref[\s>]/i.test(paragraph.text) || /\{\{\s*cite\b/i.test(paragraph.text)) return
 			if (/\{\{\s*(citation needed|cn)\b/i.test(paragraph.text)) return
