@@ -29,14 +29,14 @@ import { CdxButton, CdxTextInput, CdxLabel } from "@wikimedia/codex"
 
 ## Icons
 
-Icons are provided by `@wikimedia/codex-icons` and rendered with `CdxIcon`. For which icons this project uses and how to add more, see **ICON_REFERENCE.md** in this package.
+Icons are provided by `@wikimedia/codex-icons` and rendered with `CdxIcon`. For which icons this project uses and how to add more, see **ICON_REFERENCE.md** in this folder.
 
 ## Design tokens
 
-Codex exposes design tokens as CSS variables (e.g. in your app’s `tokens.css` or equivalent). Typical names:
+Codex exposes design tokens as CSS variables (e.g. in your app's `tokens.css` or equivalent). Typical names:
 
 - **Colors** – `--color-base`, `--color-progressive`, `--color-destructive`, `--color-subtle`
-- **Spacing** – `--spacing-50`, `--spacing-100`, …
+- **Spacing** – `--spacing-50`, `--spacing-100`, ...
 - **Border** – `--border-color-base`, `--border-color-subtle`
 - **Background** – `--background-color-base`, `--background-color-interactive`
 

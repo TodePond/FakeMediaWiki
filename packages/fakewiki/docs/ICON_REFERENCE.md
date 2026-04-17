@@ -4,7 +4,7 @@ Quick reference for **Codex icons** (`@wikimedia/codex-icons`) used in this proj
 
 ## Import and use
 
-Icons are imported from `@wikimedia/codex-icons` and rendered with Codex’s `CdxIcon`:
+Icons are imported from `@wikimedia/codex-icons` and rendered with Codex's `CdxIcon`:
 
 ```vue
 <script setup>
@@ -21,8 +21,8 @@ import { cdxIconHeart, cdxIconLinkExternal } from "@wikimedia/codex-icons"
 
 | Icon | Usage |
 |------|--------|
-| `cdxIconLinkExternal` | External link (e.g. feed items → revisions) |
-| `cdxIconHeart` | “Thank” actions on revisions |
+| `cdxIconLinkExternal` | External link (e.g. feed items -> revisions) |
+| `cdxIconHeart` | "Thank" actions on revisions |
 | `cdxIconRobot` | Bot edits |
 | `cdxIconArticle` | Article/document (e.g. placeholder for page thumbnails) |
 | `cdxIconPushPin` | Pinned prototypes (e.g. home view) |

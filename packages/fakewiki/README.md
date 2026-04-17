@@ -4,6 +4,11 @@ Helpers for building MediaWiki prototypes: API client for Wikipedia and sister s
 
 You can try every `FakeWiki` method with custom parameters in the [playground](https://todepond.github.io/FakeMediaWiki/Fullscreen/ApiPlayground).
 
+## Additional docs
+
+- **docs/VE_SUGGESTION_TYPES_REPORT.md** – VisualEditor suggestion badge logic and suggestion-type breakdown
+- **docs/CODEX_ICONS_IN_REPO.md** – Codex icons currently used across the repo
+
 ## Install
 
 ```bash
@@ -229,8 +234,8 @@ See the source for full options and return shapes.
 
 ## Reference docs (in repo)
 
-- **CODEX_REFERENCE.md** – Codex components and design tokens
-- **ICON_REFERENCE.md** – Codex icons used in the project
+- **docs/CODEX_REFERENCE.md** – Codex components and design tokens
+- **docs/ICON_REFERENCE.md** – Codex icons used in the project
 
 ## External references
 
