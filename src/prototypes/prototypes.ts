@@ -124,6 +124,17 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		featured: true,
 	},
 	{
+		type: "prototype",
+		id: "VeSuggestions",
+		name: "Edit suggestions",
+		description: "Run all edit suggestion checks for a page in serial.",
+		category: "dashboard",
+		wrapper: "Component",
+		title: "Edit suggestions",
+		status: "new",
+		featured: true,
+	},
+	{
 		type: "variants",
 		id: "RecommendationFeeds",
 		name: "Recommendation feeds",

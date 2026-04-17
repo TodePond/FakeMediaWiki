@@ -1,0 +1,16 @@
+.card-snippet > :first-child {
+	margin-top: 8px !important;
+}
+.card-snippet > :last-child {
+	margin-bottom: 8px !important;
+}
+
+.card-description {
+	font-size: 14px;
+	line-height: 1.4;
+	color: var(--color-base);
+}
+
+.card-description a {
+	color: var(--color-progressive);
+}
