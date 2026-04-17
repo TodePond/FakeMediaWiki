@@ -415,7 +415,7 @@ function createRequiredTemplateParamDescription(context: DescriptionContext): st
 	)
 	const fieldSummary =
 		allowedMissingFields.length === 1 ?
-			`missing ${escapeHtml(allowedMissingFields[0] ?? "")} field`
+			`the missing ${escapeHtml(allowedMissingFields[0] ?? "")} field`
 		:	emptyNamedParams.length === 0 ?
 			"a missing field"
 		:	emptyNamedParams.length === 1 ?
