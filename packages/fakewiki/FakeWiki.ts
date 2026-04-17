@@ -4830,6 +4830,28 @@ export class FakeWiki {
 		return chars.join("")
 	}
 
+	private getApproxVePlainTextLengthFromWikitext(text: string): number {
+		let out = text
+		// Comments and ref tags are not visible plain text in VE content.
+		out = out.replace(/<!--[\s\S]*?-->/g, " ")
+		out = out.replace(/<ref\b[^>]*>[\s\S]*?<\/ref\s*>/gi, " ")
+		out = out.replace(/<ref\b[^>]*\/\s*>/gi, " ")
+		// Keep visible link labels while dropping wiki link syntax.
+		out = out.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+		out = out.replace(/\[\[([^\]]+)\]\]/g, "$1")
+		// For external links, keep label if present; otherwise drop URL literal.
+		out = out.replace(/\[(https?:\/\/[^\s\]]+)\s+([^\]]+)\]/gi, "$2")
+		out = out.replace(/\[https?:\/\/[^\]]+\]/gi, " ")
+		// Drop common wikitext formatting markers and generic HTML tags.
+		out = out.replace(/'{2,5}/g, "")
+		out = out.replace(/<\/?[^>]+>/g, " ")
+		out = out.replace(/&nbsp;/gi, " ")
+		out = out.replace(/&amp;/gi, "&")
+		// Normalize whitespace before length comparison.
+		out = out.replace(/\s+/g, " ").trim()
+		return out.length
+	}
+
 	private isLikelyIgnoredLinkTarget(target: string): boolean {
 		const lower = target.toLowerCase()
 		return (
@@ -5326,18 +5348,19 @@ export class FakeWiki {
 		paragraphs.forEach((paragraph, i) => {
 			if (this.isTemplateOrTableLikeParagraph(paragraph.text)) return
 			if (this.isWithinTemplateOrTableBlock(sourceForAddReference, paragraph.startOffset)) return
+			const plainTextLength = this.getApproxVePlainTextLengthFromWikitext(paragraph.text)
 			const id = `addref-${i}`
 			candidates.push({
 				id,
 				text: paragraph.text.slice(0, 240),
 				data: {
 					section: paragraph.section,
-					length: paragraph.text.length,
+					length: plainTextLength,
 					index: paragraph.startLine,
 				},
 			})
 			if (ignoredSections.has(paragraph.section)) return
-			if (paragraph.text.length < 50) return
+			if (plainTextLength < 50) return
 			if (/<ref[\s>]/i.test(paragraph.text) || /\{\{\s*cite\b/i.test(paragraph.text)) return
 			if (/\{\{\s*(citation needed|cn)\b/i.test(paragraph.text)) return
 			suggestions.push({
@@ -5345,7 +5368,7 @@ export class FakeWiki {
 				title: "Add reference",
 				message: "Paragraph is long enough and appears uncited.",
 				severity: "medium",
-				data: { section: paragraph.section, length: paragraph.text.length },
+				data: { section: paragraph.section, length: plainTextLength },
 			})
 		})
 		return this.createVeResponse("addReference", canonicalTitle, pageId, candidates, suggestions, [
