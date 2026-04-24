@@ -133,6 +133,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		wrapper: "Fullscreen",
 		title: "Wiki signals reference",
 		status: "new",
+		featured: true,
 	},
 	{
 		type: "prototype",
