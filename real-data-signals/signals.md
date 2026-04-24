@@ -1,6 +1,6 @@
 # List of ML and analytics signals for use in MediaWiki prototypes
 
-## 1) Lift Wing: Language agnostic revert risk
+## 1) Language agnostic revert risk
 
 This endpoint predicts whether a revision is likely to be reverted, using a model that is designed to work across languages.
 It is useful when you want one revert-risk score format regardless of the wiki language.
@@ -27,25 +27,31 @@ It is useful when you want one revert-risk score format regardless of the wiki l
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
 curl "https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-language-agnostic:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id": 123456, "lang": "en"}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796, "lang": "en"}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
+	"model_name": "revertrisk-language-agnostic",
+	"model_version": "3",
+	"wiki_db": "enwiki",
+	"revision_id": 1350687796,
 	"output": {
 		"prediction": true,
 		"probabilities": {
-			"true": 0.77,
-			"false": 0.23
+			"true": 0.7697548270225525,
+			"false": 0.2302451729774475
 		}
 	}
 }
@@ -61,7 +67,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 2) Lift Wing: Multilingual revert risk
+## 2) Multilingual revert risk
 
 This endpoint predicts whether a revision is likely to be reverted for supported languages.
 It returns one revert-risk result for the revision you pass in.
@@ -88,24 +94,32 @@ It returns one revert-risk result for the revision you pass in.
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
 curl "https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-multilingual:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id": 123456, "lang": "en"}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796, "lang": "en"}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"prediction": false,
-	"probability": {
-		"true": 0.31,
-		"false": 0.69
+	"model_name": "revertrisk-multilingual",
+	"model_version": "4",
+	"wiki_db": "enwiki",
+	"revision_id": 1350687796,
+	"output": {
+		"prediction": false,
+		"probabilities": {
+			"true": 0.28305266753993896,
+			"false": 0.716947332460061
+		}
 	}
 }
 ```
@@ -122,7 +136,7 @@ Supported language codes (API reference): `ka`, `lv`, `ta`, `ur`, `eo`, `lt`, `s
 
 ---
 
-## 3) Lift Wing: Reference need
+## 3) Reference need
 
 This endpoint predicts whether the content in a revision needs additional references.
 It returns a score you can use to flag edits that may need citation follow-up.
@@ -149,21 +163,27 @@ It returns a score you can use to flag edits that may need citation follow-up.
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
 curl "https://api.wikimedia.org/service/lw/inference/v1/models/reference-need:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id": 123456, "lang": "en"}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796, "lang": "en"}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"rn_score": 0.42
+	"model_name": "reference-need",
+	"model_version": 0,
+	"wiki_db": "enwiki",
+	"revision_id": 1350687796,
+	"reference_need_score": 0.1013215859030837
 }
 ```
 
@@ -177,7 +197,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 4) Lift Wing: Tone check
+## 4) Tone check
 
 This endpoint runs Edit Check models on text you provide.
 For tone checks, you send before-and-after text and the endpoint returns whether the new wording is likely to violate tone guidance.
@@ -206,34 +226,42 @@ Inline explanation from project notes: this endpoint is called with batched `ins
 			"lang": "en",
 			"check_type": "tone",
 			"page_title": "Earth",
-			"original_text": "old text",
-			"modified_text": "new text"
+			"original_text": "Earth is the third planet from the Sun. It is the only known world with life.",
+			"modified_text": "Earth is clearly the only planet that matters; the other planets are lifeless, overrated rocks that serious readers can safely ignore as irrelevant to human destiny."
 		}
 	]
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
 curl "https://api.wikimedia.org/service/lw/inference/v1/models/edit-check:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"instances":[{"lang":"en","check_type":"tone","page_title":"Earth","original_text":"old text","modified_text":"new text"}]}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"instances":[{"lang":"en","check_type":"tone","page_title":"Earth","original_text":"Earth is the third planet from the Sun. It is the only known world with life.","modified_text":"Earth is clearly the only planet that matters; the other planets are lifeless, overrated rocks that serious readers can safely ignore as irrelevant to human destiny."}]}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
+	"message": "",
+	"batchId": "2b9cdabb-d7ca-46d9-8112-4b166a193724",
 	"predictions": [
 		{
-			"prediction": true,
-			"probability": 0.81,
 			"check_type": "tone",
+			"details": {},
 			"language": "en",
-			"page_title": "Earth"
+			"model_name": "edit-check",
+			"model_version": "v1",
+			"page_title": "Earth",
+			"prediction": true,
+			"probability": 0.778,
+			"status_code": 200
 		}
 	]
 }
@@ -253,7 +281,7 @@ Single global endpoint. Availability is determined by supported `check_type` val
 
 ---
 
-## 5) Action API: Search more-like retrieval
+## 5) "More like" search
 
 This endpoint performs full-text search, and it can also run "more like this" retrieval using `srsearch=morelike:...`.
 It returns candidate pages that are textually similar to your seed pages.
@@ -278,37 +306,62 @@ It returns candidate pages that are textually similar to your seed pages.
 - `sroffset=0`
 - optional `srnamespace=0`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=morelike:Earth|Mars&srwhat=text&srlimit=10&sroffset=0&format=json"
+curl -sS "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=morelike:Earth|Mars&srwhat=text&srlimit=3&sroffset=0&format=json" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
+	"batchcomplete": "",
+	"continue": {
+		"sroffset": 3,
+		"continue": "-||"
+	},
 	"query": {
 		"searchinfo": {
-			"totalhits": 250
+			"totalhits": 1194567
 		},
 		"search": [
 			{
-				"pageid": 123,
 				"ns": 0,
-				"title": "Planet",
-				"size": 5555,
-				"wordcount": 850,
-				"snippet": "A <span class=\"searchmatch\">planet</span> is ...",
-				"timestamp": "2026-04-20T12:00:00Z"
+				"title": "Extraterrestrial liquid water",
+				"pageid": 11322595,
+				"size": 75343,
+				"wordcount": 7535,
+				"snippet": "Extraterrestrial liquid water is water in its liquid state that naturally occurs outside Earth. It is a subject of wide interest because it is recognized",
+				"timestamp": "2026-03-24T19:59:52Z"
+			},
+			{
+				"ns": 0,
+				"title": "Earth analog",
+				"pageid": 26780222,
+				"size": 39826,
+				"wordcount": 3940,
+				"snippet": "An Earth analog, also called an Earth twin or second Earth, is a planet or moon with environmental conditions similar to those found on Earth. The term",
+				"timestamp": "2026-04-20T06:48:07Z"
+			},
+			{
+				"ns": 0,
+				"title": "Planetary surface",
+				"pageid": 34661457,
+				"size": 42947,
+				"wordcount": 3834,
+				"snippet": "A planetary surface is where the solid or liquid material of certain types of astronomical objects contacts the atmosphere or outer space. Planetary surfaces",
+				"timestamp": "2026-02-22T10:36:18Z"
 			}
 		]
-	},
-	"continue": {
-		"sroffset": 10
 	}
 }
 ```
+
+_Captured with `srlimit=3` to keep the sample small; your own `search` array may be longer with higher limits._
 
 ### Availability
 
@@ -326,7 +379,7 @@ Available where the search backend supports the `morelike:` operator (commonly C
 
 ---
 
-## 6) Link Recommendation API: Link suggestions
+## 6) Link suggestions
 
 This endpoint suggests links that could be added to an article.
 It returns candidate link text, target pages, and context so you can propose concrete linking edits.
@@ -351,26 +404,67 @@ It returns candidate link text, target pages, and context so you can propose con
     - `{lang}` (example: `en`)
     - `{title}` (page title)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/linkrecommendation/v1/linkrecommendations/wikipedia/en/Earth"
+curl -sS "https://api.wikimedia.org/service/linkrecommendation/v1/linkrecommendations/wikipedia/en/Earth" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"links": [
 		{
-			"link_text": "planet",
-			"link_target": "Planet",
-			"score": 0.92,
-			"context_before": "Earth is a ",
-			"context_after": " in the Solar System.",
-			"match_index": 1
+			"context_after": " of this m",
+			"context_before": "ed by the ",
+			"link_index": 0,
+			"link_target": "Partial melting",
+			"link_text": "partial melting",
+			"match_index": 0,
+			"score": 0.8778332471847534,
+			"wikitext_offset": 23595
+		},
+		{
+			"context_after": ". The two ",
+			"context_before": " in ",
+			"link_index": 1,
+			"link_target": "Sedimentary rock",
+			"link_text": "sedimentary rocks",
+			"match_index": 0,
+			"score": 0.5837271809577942,
+			"wikitext_offset": 24840
+		},
+		{
+			"context_after": " within th",
+			"context_before": "hanges in ",
+			"link_index": 2,
+			"link_target": "Crystal structure",
+			"link_text": "crystal structure",
+			"match_index": 0,
+			"score": 0.7161753177642822,
+			"wikitext_offset": 40127
 		}
-	]
+		// etc...
+	],
+	"links_count": 15,
+	"meta": {
+		"application_version": "4372b3e",
+		"dataset_checksums": {
+			"anchors": "ab0a4c3fc5dcf9e6404c45eaad1eb463b38673a4936ab3f80e7dcdbf8130dee5",
+			"model": "c25a9fb36577a272dd7ca101655d6169bf8a86dbfb1edce7c9b6ee445dec8e71",
+			"pageids": "05391e1229aefc087c5076bea2042cddcc0d23bded0f6262cc474898a954c96e",
+			"redirects": "56e8089b9d930b4ff77dbc9495c6a2e67c48d8d8a023f9b148e3bbfe5a98665f",
+			"w2vfiltered": "59cb88563ca2e0d1992d71d28921f04e902880a9bc9d03081360cbef69fa229c"
+		},
+		"format_version": 1
+	},
+	"page_title": "Earth",
+	"pageid": 9228,
+	"revid": 1350687796
 }
 ```
 
@@ -390,7 +484,7 @@ Path is explicit by project and language (`{project}/{lang}/{title}`); availabil
 
 ---
 
-## 7) Edit-types API: Diff edit type summary
+## 7) Edit types
 
 This endpoint analyzes a revision diff and labels the kinds of changes made.
 Depending on the route, it returns summary counts, detailed structured changes, or debug output.
@@ -418,23 +512,68 @@ Query params:
 - `revid`
 - optional `content_type`
 
-### Example requests
+### Example 1: Diff summary
+
+#### Request
 
 ```bash
-curl "https://edit-types.wmcloud.org/diff-summary?lang=en&revid=123456"
-curl "https://edit-types.wmcloud.org/diff-details?lang=en&revid=123456"
+curl -sS "https://edit-types.wmcloud.org/diff-summary?lang=en&revid=1350687796" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"Template": {
-		"change": 1
-	},
-	"Wikilink": {
-		"insert": 2
+	"article": "https://en.wikipedia.org/wiki/?oldid=1350687796",
+	"summary": {
+		"Wikilink": {
+			"change": 1,
+			"insert": 1
+		},
+		"Section": {
+			"change": 1
+		},
+		"Media": {
+			"change": 1
+		},
+		"Template": {
+			"change": 1
+		}
 	}
+}
+```
+
+### Example 2: Diff details
+
+#### Request
+
+```bash
+curl -sS "https://edit-types.wmcloud.org/diff-details?lang=en&revid=1350687796" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
+```
+
+#### Response
+
+```json
+{
+	"article": "https://en.wikipedia.org/wiki/?oldid=1350687796",
+	"summary": {
+		"Wikilink": {
+			"insert": 1,
+			"change": 1
+		},
+		"Template": {
+			"change": 1
+		},
+		"Media": {
+			"change": 1
+		},
+		"Section": {
+			"change": 1
+		}
+	},
+	"details": "…(truncated: full response includes per-change detail arrays)"
 }
 ```
 
@@ -454,7 +593,7 @@ Cross-wiki in input shape (`lang` + `revid`), with real availability determined 
 
 ---
 
-## 8) List-building API: Serpentine
+## 8) List-building
 
 This endpoint returns a ranked list of candidate pages from a multi-source list-building service.
 It combines several retrieval channels and returns unified results for exploration workflows.
@@ -482,24 +621,82 @@ Query params used:
 - optional `page_title`
 - optional `qid`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://list-building.toolforge.org/api/serpentine?lang=en&k-reader=10&k-links=10&k-morelike=10&page_title=Earth"
+curl -sS "https://list-building.toolforge.org/api/serpentine?lang=en&k-reader=3&k-links=3&k-morelike=3&page_title=Earth" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"qid": "Q2",
 	"results": [
 		{
-			"page_title": "Planet",
-			"qid": "Q634",
-			"source": "morelike",
+			"description": "another planet with environmental conditions similar to those found on the planet Earth",
+			"page_title": "Earth analog",
+			"qid": "Q2670101",
 			"redlink": false,
-			"description": "Astronomical body"
+			"source": "morelike"
+		},
+		{
+			"description": "geology of Mercury, Venus, Earth, Mars and Ceres",
+			"page_title": "Geology of solar terrestrial planets",
+			"qid": "Q5535416",
+			"redlink": false,
+			"source": "links"
+		},
+		{
+			"description": "Galilean moon of Jupiter",
+			"page_title": "Europa (moon)",
+			"qid": "Q3143",
+			"redlink": false,
+			"source": "morelike"
+		},
+		{
+			"description": "apparent mystery that the early Earth seems to have had liquid water, even though the young Sun was less bright, thus presumably completely freezing the Earth",
+			"page_title": "Faint young Sun paradox",
+			"qid": "Q686707",
+			"redlink": false,
+			"source": "links"
+		},
+		{
+			"description": "water",
+			"page_title": "Extraterrestrial liquid water",
+			"qid": "Q1319471",
+			"redlink": false,
+			"source": "morelike"
+		},
+		{
+			"page_title": "-",
+			"qid": "Q111954298",
+			"redlink": true,
+			"source": "links"
+		},
+		{
+			"description": "possible upcoming scenarios for Earth",
+			"page_title": "Future of Earth",
+			"qid": "Q2003654",
+			"redlink": false,
+			"source": "morelike"
+		},
+		{
+			"description": "structure and composition of the Moon",
+			"page_title": "Geology of the Moon",
+			"qid": "Q1648514",
+			"redlink": false,
+			"source": "links"
+		},
+		{
+			"description": "fourth planet from the Solar System, tellurian and orange-red due to iron oxide",
+			"page_title": "Mars",
+			"qid": "Q111",
+			"redlink": false,
+			"source": "morelike"
 		}
 	]
 }
@@ -521,7 +718,7 @@ Cross-wiki in input shape (`lang` + optional `page_title`/`qid`), with availabil
 
 ---
 
-## 9) On-wiki config: Edit-check JSON
+## 9) Edit check config
 
 This endpoint returns the live JSON rules that Edit Check reads directly from wiki pages.
 Those rules include phrase matching and replacement lists, so the response shows the exact configuration currently in production.
@@ -547,26 +744,412 @@ Inline explanation from project notes: the imported British-English replacement 
 - `title=MediaWiki:...`
 - `action=raw`
 
-### Example requests
+### Example 1: Main config
+
+#### Request
 
 ```bash
-curl "https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config.json&action=raw"
-curl "https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config-textmatch-british-english.json&action=raw"
+curl -sS "https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config.json&action=raw" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
+
+_Real output is the raw JSON on that wiki page; the snippet is a prefix of the `curl` body._
 
 ```json
 {
+	"addReference": {
+		"ignoreLeadSection": true,
+		"ignoreSections": [
+			"notes",
+			"notes and references",
+			"references",
+			"references and further reading",
+			"sources",
+			"footnotes",
+			"citations",
+			"external links",
+			"external websites",
+			"weblinks",
+			"see also",
+			"further reading",
+			"bibliography",
+			"publications",
+			"works",
+			"synopsis",
+			"plot",
+			"plot summary",
+			"episodes",
+			"summary"
+		]
+	},
+	"externalLink": {
+		"ignoreSections": [
+			"notes",
+			"notes and references",
+			"references",
+			"references and further reading",
+			"sources",
+			"footnotes",
+			"citations",
+			"external links",
+			"weblinks",
+			"see also",
+			"further reading",
+			"bibliography",
+			"publications",
+			"works"
+		]
+	},
+	"disambiguation": {
+		"ignoreSections": ["see also"],
+		"ignoreDisambiguationPages": true
+	},
 	"textMatch": {
 		"matchItems": {
 			"british-english": {
 				"import": "MediaWiki:Editcheck-config-textmatch-british-english.json"
 			},
+			"LLM-user-comms": {
+				"query": [
+					"I hope this helps",
+					"Of course!",
+					"Certainly!",
+					"You're absolutely right!",
+					"Would you like",
+					"Is there anything else",
+					"let me know",
+					"more detailed breakdown",
+					"Here is a",
+					"up to my last training update",
+					"as of my last knowledge update",
+					"while specific details are limited",
+					"while specific details are scarce",
+					"in the provided sources",
+					"in the available sources",
+					"in the provided search results",
+					"in the available search results",
+					"based on available information",
+					"as an AI language model",
+					"as a large language model",
+					"I'm sorry",
+					"ChatGPT said"
+				],
+				"title": "Potential AI-generated content",
+				"message": "This text may include [[Wikipedia:Large_language_models#Handling_suspected_LLM-generated_content|AI-generated content]]. Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.",
+				"config": {
+					"caseSensitive": false,
+					"minimumEditcount": 10,
+					"enabled": true
+				},
+				"expand": "paragraph"
+			},
+			"LLM-immediate-indicators": {
+				"query": [
+					"indelible mark",
+					"deeply rooted",
+					"profound heritage",
+					"steadfast dedication",
+					"continues to captivate",
+					"continued to captivate",
+					"continuing to captivate",
+					"stunning natural",
+					"rich artistic landscape",
+					"rich cultural landscape",
+					"rich literary landscape",
+					"rich media landscape",
+					"vibrant artistic landscape",
+					"vibrant cultural landscape",
+					"vibrant literary landscape",
+					"vibrant media landscape",
+					"diverse artistic landscape",
+					"diverse cultural landscape",
+					"diverse literary landscape",
+					"diverse media landscape",
+					"important to note",
+					"important to remember",
+					"important to consider",
+					"critical to note",
+					"critical to remember",
+					"critical to consider",
+					"crucial to note",
+					"crucial to remember",
+					"crucial to consider",
+					"In summary",
+					"In conclusion",
+					"despite its challenges",
+					"faces several challenges",
+					"despite these challenges",
+					"challenges and legacy",
+					"future outlook",
+					"Observers have cited"
+				],
+				"title": "Potential AI-generated content",
+				"message": "This text may include [[Wikipedia:Large_language_models#Handling_suspected_LLM-generated_content|AI-generated content]]. Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.",
+				"config": {
+					"caseSensitive": false,
+					"minimumEditcount": 10,
+					"enabled": true
+				},
+				"expand": "paragraph"
+			},
 			"LLM-multiple-indicators": {
-				"minOccurrences": 3
+				"query": [
+					"as a testament",
+					"as a reminder",
+					"is a testament",
+					"is a reminder",
+					"playing a vital role",
+					"playing a significant role",
+					"playing a crucial role",
+					"plays a vital role",
+					"plays a significant role",
+					"plays a crucial role",
+					"key turning point",
+					"independent coverage",
+					"local media outlets",
+					"regional media outlets",
+					"national media outlets",
+					"music outlets",
+					"business outlets",
+					"tech outlets",
+					"ensuring",
+					"reflect",
+					"reflects",
+					"reflecting",
+					"contributing to",
+					"groundbreaking",
+					"intricate",
+					"enduring legacy",
+					"lasting legacy",
+					"nestled",
+					"in the heart of",
+					"boasts a",
+					"may vary",
+					"align",
+					"aligns",
+					"aligning with",
+					"crucial",
+					"delve",
+					"delves",
+					"delving",
+					"emphasizing",
+					"enduring",
+					"enhanced",
+					"enhance",
+					"enhances",
+					"enhancing",
+					"foster",
+					"fosters",
+					"fostered",
+					"fostering",
+					"garner",
+					"garners",
+					"garnered",
+					"garnering",
+					"highlight",
+					"highlighted",
+					"highlighting",
+					"highlights",
+					"interplay",
+					"intricate",
+					"intricacies",
+					"pivotal",
+					"showcase",
+					"showcased",
+					"showcases",
+					"showcasing",
+					"tapestry",
+					"underscore",
+					"underscored",
+					"underscores",
+					"underscoring",
+					"industry reports",
+					"Some critics argue",
+					"widely available",
+					"widely documented",
+					"widely disclosed"
+				],
+				"title": "Potential AI-generated content",
+				"message": "This text may include [[Wikipedia:Large_language_models#Handling_suspected_LLM-generated_content|AI-generated content]]. Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.",
+				"config": {
+					"caseSensitive": false,
+					"minimumEditcount": 10,
+					"enabled": true,
+					"minOccurrences": 3
+				},
+				"expand": "paragraph"
 			}
 		}
+		// etc...
+	}
+}
+```
+
+### Example 2: Imported text-match set
+
+#### Request
+
+```bash
+curl -sS "https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config-textmatch-british-english.json&action=raw" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
+```
+
+#### Response
+
+_Real output is the raw JSON on that wiki page; the snippet is a prefix of the `curl` body._
+
+```json
+{
+	"title": "Change English spelling",
+	"mode": "replace",
+	"message": "This word uses a different [[Wikipedia:Manual_of_Style#Retaining_the_existing_variety|English variety]] than the one used in the rest of this article. Help readers by changing the spelling to match the rest of the article.",
+	"config": {
+		"enabled": true,
+		"ignoreLeadSection": true,
+		"ignoreQuotedContent": true,
+		"caseSensitive": true,
+		"hasTemplate": [
+			"Use British English",
+			"EngvarB",
+			"EB",
+			"Eb",
+			"Use Scottish English",
+			"En-GB",
+			"Use European English",
+			"Use International English",
+			"Use british english",
+			"Use British",
+			"Use british",
+			"Ube",
+			"UBE",
+			"Engvarb",
+			"Use BrE",
+			"Use Welsh English",
+			"Engvar-B",
+			"Use British English spelling",
+			"International English",
+			"Engvar B",
+			"Uken",
+			"UKEN",
+			"Use British English with -ise spellings",
+			"Use British english",
+			"Use British spelling"
+		]
+	},
+	"query": {
+		"accouterments": "accoutrements",
+		"ameba": "amoeba",
+		"amebas": "amoebas",
+		"amebic": "amoebic",
+		"amphitheater": "amphitheatre",
+		"amphitheaters": "amphitheatres",
+		"analyze": "analyse",
+		"analyzed": "analysed",
+		"analyzer": "analyser",
+		"analyzers": "analysers",
+		"analyzes": "analyses",
+		"analyzing": "analysing",
+		"anemia": "anaemia",
+		"anemic": "anaemic",
+		"appareled": "apparelled",
+		"appareling": "apparelling",
+		"arbor": "arbour",
+		"arbors": "arbours",
+		"archeological": "archaeological",
+		"archeologist": "archaeologist",
+		"archeologists": "archaeologists",
+		"archeology": "archaeology",
+		"ardor": "ardour",
+		"ardors": "ardours",
+		"armor": "armour",
+		"armored": "armoured",
+		"armorer": "armourer",
+		"armorers": "armourers",
+		"armories": "armouries",
+		"armoring": "armouring",
+		"armors": "armours",
+		"armory": "armoury",
+		"backpedaled": "backpedalled",
+		"backpedaling": "backpedalling",
+		"barreled": "barrelled",
+		"barreling": "barrelling",
+		"bedeviled": "bedevilled",
+		"bedeviling": "bedevilling",
+		"behavior": "behaviour",
+		"behavioral": "behavioural",
+		"belabor": "belabour",
+		"belabored": "belaboured",
+		"belaboring": "belabouring",
+		"belabors": "belabours",
+		"beveled": "bevelled",
+		"beveling": "bevelling",
+		"busheled": "bushelled",
+		"busheling": "bushelling",
+		"caliber": "calibre",
+		"calibers": "calibres",
+		"canceled": "cancelled",
+		"canceling": "cancelling",
+		"candor": "candour",
+		"caroled": "carolled",
+		"caroler": "caroller",
+		"carolers": "carollers",
+		"caroling": "carolling",
+		"catalyze": "catalyse",
+		"catalyzed": "catalysed",
+		"catalyzing": "catalysing",
+		"caviled": "cavilled",
+		"caviling": "cavilling",
+		"center": "centre",
+		"centerfold": "centrefold",
+		"centerfolds": "centrefolds",
+		"centerpiece": "centrepiece",
+		"centerpieces": "centrepieces",
+		"centers": "centres",
+		"centiliter": "centilitre",
+		"centiliters": "centilitres",
+		"centimeter": "centimetre",
+		"centimeters": "centimetres",
+		"cesium": "caesium",
+		"channeled": "channelled",
+		"channeling": "channelling",
+		"chiseled": "chiselled",
+		"chiseler": "chiseller",
+		"chiselers": "chisellers",
+		"chiseling": "chiselling",
+		"clamor": "clamour",
+		"clamored": "clamoured",
+		"clamoring": "clamouring",
+		"clamors": "clamours",
+		"clangor": "clangour",
+		"color": "colour",
+		"counseled": "counselled",
+		"counseling": "counselling",
+		"crueler": "crueller",
+		"cudgeled": "cudgelled",
+		"cudgeling": "cudgelling",
+		"defense": "defence",
+		"defensed": "defenced",
+		"defenseless": "defenceless",
+		"defenses": "defences",
+		"demeanor": "demeanour",
+		"deviled": "devilled",
+		"deviling": "devilling",
+		"dialed": "dialled",
+		"dialing": "dialling",
+		"dialyzes": "dialyses",
+		"diarrhea": "diarrhoea",
+		"disemboweled": "disembowelled",
+		"disemboweling": "disembowelling",
+		"disfavor": "disfavour",
+		"disfavored": "disfavoured",
+		"disfavoring": "disfavouring",
+		"disfavors": "disfavours",
+		"disheveled": "dishevelled",
+		"disheveling": "dishevelling",
+		"doweled": "dowelled"
+		// etc...
 	}
 }
 ```
@@ -587,7 +1170,7 @@ The listed endpoints are specifically for English Wikipedia (`en.wikipedia.org`)
 
 ---
 
-## 10) Lift Wing: Outlink topic model
+## 10) Outlink topic model
 
 This endpoint predicts article topics from the page's outgoing wiki links.
 It returns topic labels with scores, using a language-agnostic model.
@@ -625,30 +1208,36 @@ Optional parameters documented in API reference:
 - `features_str`
 - `debug`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/outlink-topic-model:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/outlink-topic-model:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"page_title":"Frida_Kahlo","lang":"en","threshold":0.1}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"page_title":"Earth","lang":"en","threshold":0.1}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"prediction": {
-		"article": "https://en.wikipedia.org/wiki/Frida_Kahlo",
+		"article": "https://en.wikipedia.org/wiki/Earth",
 		"results": [
 			{
-				"score": 0.863,
-				"topic": "Culture.Biography.Biography*"
+				"topic": "STEM.STEM*",
+				"score": 0.994098961353302
 			},
 			{
-				"score": 0.516,
-				"topic": "Geography.Regions.Americas.North_America"
+				"topic": "STEM.Earth_and_environment",
+				"score": 0.5698626637458801
+			},
+			{
+				"topic": "STEM.Space",
+				"score": 0.546748161315918
 			}
 		]
 	}
@@ -697,24 +1286,103 @@ Optional:
 
 - `extended_output`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-articletopic:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-articletopic:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":12345}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"prediction": "Culture.Biography.Biography*",
-	"probability": {
-		"Culture.Biography.Biography*": 0.72,
-		"Geography.Regions.Americas.North_America": 0.19
+	"enwiki": {
+		"models": {
+			"articletopic": {
+				"version": "1.3.0"
+			}
+		},
+		"scores": {
+			"1350687796": {
+				"articletopic": {
+					"score": {
+						"prediction": ["STEM.Earth and environment", "STEM.STEM*", "STEM.Space"],
+						"probability": {
+							"Culture.Biography.Biography*": 0.011701613253713869,
+							"Culture.Biography.Women": 0.003506545840589989,
+							"Culture.Food and drink": 0.00011845275241482283,
+							"Culture.Internet culture": 0.000763237829666281,
+							"Culture.Linguistics": 0.0008772596016259223,
+							"Culture.Literature": 0.043193254180136684,
+							"Culture.Media.Books": 0.016927786611205014,
+							"Culture.Media.Entertainment": 0.00156846943984832,
+							"Culture.Media.Films": 0.0012357026319090533,
+							"Culture.Media.Media*": 0.04881271780492409,
+							"Culture.Media.Music": 0.0003129490229796458,
+							"Culture.Media.Radio": 0.000290784952328416,
+							"Culture.Media.Software": 0.0013696731253237142,
+							"Culture.Media.Television": 0.0008876195337684166,
+							"Culture.Media.Video games": 3.0743766713111965e-5,
+							"Culture.Performing arts": 8.58373016589836e-5,
+							"Culture.Philosophy and religion": 0.022912167735498066,
+							"Culture.Sports": 0.0018719162270962129,
+							"Culture.Visual arts.Architecture": 0.0021688561070116576,
+							"Culture.Visual arts.Comics and Anime": 0.0007090747370418228,
+							"Culture.Visual arts.Fashion": 0.0002490280403455542,
+							"Culture.Visual arts.Visual arts*": 0.008820035440041615,
+							"Geography.Geographical": 0.035051606582694156,
+							"Geography.Regions.Africa.Africa*": 0.005561271344435259,
+							"Geography.Regions.Africa.Central Africa": 0.00018862548123694845,
+							"Geography.Regions.Africa.Eastern Africa": 0.00022877822738494625,
+							"Geography.Regions.Africa.Northern Africa": 0.0019679720767867294,
+							"Geography.Regions.Africa.Southern Africa": 0.0006458008040730329,
+							"Geography.Regions.Africa.Western Africa": 6.813520943550339e-5,
+							"Geography.Regions.Americas.Central America": 0.0006953347929770515,
+							"Geography.Regions.Americas.North America": 0.012765873014313058,
+							"Geography.Regions.Americas.South America": 0.0037483349570561434,
+							"Geography.Regions.Asia.Asia*": 0.012455913849544387,
+							"Geography.Regions.Asia.Central Asia": 0.00033843208467763573,
+							"Geography.Regions.Asia.East Asia": 0.009293284618673498,
+							"Geography.Regions.Asia.North Asia": 0.0015914137485499012,
+							"Geography.Regions.Asia.South Asia": 0.0004166003192793215,
+							"Geography.Regions.Asia.Southeast Asia": 0.00039254494566183,
+							"Geography.Regions.Asia.West Asia": 0.0007398016380594761,
+							"Geography.Regions.Europe.Eastern Europe": 0.002289982951693866,
+							"Geography.Regions.Europe.Europe*": 0.03305386692564714,
+							"Geography.Regions.Europe.Northern Europe": 0.00801710638104169,
+							"Geography.Regions.Europe.Southern Europe": 0.00240808048295467,
+							"Geography.Regions.Europe.Western Europe": 0.0040862032055557175,
+							"Geography.Regions.Oceania": 0.001963645375565404,
+							"History and Society.Business and economics": 0.012132965233400152,
+							"History and Society.Education": 0.014890536148272616,
+							"History and Society.History": 0.01397540389407694,
+							"History and Society.Military and warfare": 0.004792377150394233,
+							"History and Society.Politics and government": 0.017199785564400907,
+							"History and Society.Society": 0.16088642471264605,
+							"History and Society.Transportation": 0.019918827473192333,
+							"STEM.Biology": 0.021670738860532425,
+							"STEM.Chemistry": 0.0021913425213621767,
+							"STEM.Computing": 0.00134038556639786,
+							"STEM.Earth and environment": 0.9168492819870301,
+							"STEM.Engineering": 0.03097805834096776,
+							"STEM.Libraries & Information": 0.008393788658179857,
+							"STEM.Mathematics": 0.00013092704344992413,
+							"STEM.Medicine & Health": 0.001986168425733357,
+							"STEM.Physics": 0.10470071213214094,
+							"STEM.STEM*": 0.9934065734188751,
+							"STEM.Space": 0.8484286828749382,
+							"STEM.Technology": 0.0741099360855917
+						}
+					}
+				}
+			}
+		}
 	}
 }
 ```
@@ -764,27 +1432,27 @@ Optional:
 
 - `extended_output`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/articlequality:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/articlequality:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":123456,"lang":"en"}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796, "lang": "en"}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"prediction": "B",
-	"probability": {
-		"B": 0.62,
-		"C": 0.24,
-		"GA": 0.09,
-		"FA": 0.05
-	}
+	"score": 0.9821763062465465,
+	"model_name": "articlequality",
+	"model_version": "1",
+	"wiki_db": "enwiki",
+	"revision_id": 1350687796
 }
 ```
 
@@ -825,21 +1493,30 @@ It returns readability-related output for the revision and language you provide.
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/readability:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/readability:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":123456,"lang":"en"}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796, "lang": "en"}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"prediction": 0.41
+	"model_name": "readability",
+	"model_version": "4",
+	"wiki_db": "enwiki",
+	"revision_id": 1350687796,
+	"output": {
+		"score": 1.7493929862976074,
+		"fk_score_proxy": 10.303658564099766
+	}
 }
 ```
 
@@ -884,26 +1561,43 @@ Optional:
 
 - `extended_output`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-draftquality:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-draftquality:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":12345}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"prediction": "OK",
-	"probability": {
-		"OK": 0.78,
-		"attack": 0.03,
-		"spam": 0.12,
-		"vandalism": 0.07
+	"enwiki": {
+		"models": {
+			"draftquality": {
+				"version": "0.2.1"
+			}
+		},
+		"scores": {
+			"1350687796": {
+				"draftquality": {
+					"score": {
+						"prediction": "OK",
+						"probability": {
+							"OK": 0.40004251065647617,
+							"attack": 0.005451687924499667,
+							"spam": 0.2798570495146997,
+							"vandalism": 0.3146487519043246
+						}
+					}
+				}
+			}
+		}
 	}
 }
 ```
@@ -947,17 +1641,19 @@ It returns one or more topic categories with probabilities for the given Wikidat
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-itemtopic:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-itemtopic:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":2366803550}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 2484051354}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
@@ -968,13 +1664,75 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-item
 			}
 		},
 		"scores": {
-			"2366803550": {
+			"2484051354": {
 				"itemtopic": {
 					"score": {
-						"prediction": ["STEM.Biology", "STEM.STEM*"],
+						"prediction": ["STEM.STEM*", "STEM.Space"],
 						"probability": {
-							"STEM.Biology": 0.999,
-							"STEM.STEM*": 0.998
+							"Culture.Biography.Biography*": 0.006415820177137949,
+							"Culture.Biography.Women": 0.0006624924087850394,
+							"Culture.Food and drink": 0.0008106529942122161,
+							"Culture.Internet culture": 0.000872941307292684,
+							"Culture.Linguistics": 0.002695290747770885,
+							"Culture.Literature": 0.0027484238481189954,
+							"Culture.Media.Books": 0.0005189442370646869,
+							"Culture.Media.Entertainment": 0.0022554082949713594,
+							"Culture.Media.Films": 0.0019737172833861243,
+							"Culture.Media.Media*": 0.007761452693058196,
+							"Culture.Media.Music": 0.0008612269632902338,
+							"Culture.Media.Radio": 0.00013774140001053813,
+							"Culture.Media.Software": 0.001173469545569596,
+							"Culture.Media.Television": 0.0015024887790805424,
+							"Culture.Media.Video games": 0.0004471213730976511,
+							"Culture.Performing arts": 0.0006866562068002329,
+							"Culture.Philosophy and religion": 0.012738932482522733,
+							"Culture.Sports": 0.0029405036310851487,
+							"Culture.Visual arts.Architecture": 0.0010500989445474136,
+							"Culture.Visual arts.Comics and Anime": 0.0005428568203055075,
+							"Culture.Visual arts.Fashion": 0.0006242264918210261,
+							"Culture.Visual arts.Visual arts*": 0.003985002512043979,
+							"Geography.Geographical": 0.013003262360875095,
+							"Geography.Regions.Africa.Africa*": 0.00813399056917809,
+							"Geography.Regions.Africa.Central Africa": 0.0006005579227302588,
+							"Geography.Regions.Africa.Eastern Africa": 0.0007652320393550818,
+							"Geography.Regions.Africa.Northern Africa": 0.004929056895787522,
+							"Geography.Regions.Africa.Southern Africa": 0.00043286580049364847,
+							"Geography.Regions.Africa.Western Africa": 0.0007637749307949655,
+							"Geography.Regions.Americas.Central America": 0.0009266593682736189,
+							"Geography.Regions.Americas.North America": 0.022020230738376553,
+							"Geography.Regions.Americas.South America": 0.00722152380342815,
+							"Geography.Regions.Asia.Asia*": 0.03740851047670337,
+							"Geography.Regions.Asia.Central Asia": 0.001127868658331572,
+							"Geography.Regions.Asia.East Asia": 0.009177569429047091,
+							"Geography.Regions.Asia.North Asia": 0.026313409202219737,
+							"Geography.Regions.Asia.South Asia": 0.00403664036621678,
+							"Geography.Regions.Asia.Southeast Asia": 0.002155549351309816,
+							"Geography.Regions.Asia.West Asia": 0.0009040234496498063,
+							"Geography.Regions.Europe.Eastern Europe": 0.01735092853323532,
+							"Geography.Regions.Europe.Europe*": 0.07439197196029886,
+							"Geography.Regions.Europe.Northern Europe": 0.020040318780167904,
+							"Geography.Regions.Europe.Southern Europe": 0.004923886627666899,
+							"Geography.Regions.Europe.Western Europe": 0.003573617367926575,
+							"Geography.Regions.Oceania": 0.006769299517401018,
+							"History and Society.Business and economics": 0.006405902517476902,
+							"History and Society.Education": 0.0023015078628234073,
+							"History and Society.History": 0.01730275269265649,
+							"History and Society.Military and warfare": 0.007871177493893237,
+							"History and Society.Politics and government": 0.007492772014149492,
+							"History and Society.Society": 0.03182270998031154,
+							"History and Society.Transportation": 0.005071598128914559,
+							"STEM.Biology": 0.004286838470962092,
+							"STEM.Chemistry": 0.002480311614102427,
+							"STEM.Computing": 0.003636013986281011,
+							"STEM.Earth and environment": 0.05495899528883844,
+							"STEM.Engineering": 0.0014682286699083604,
+							"STEM.Libraries & Information": 0.002171090371434182,
+							"STEM.Mathematics": 0.0017043665532315273,
+							"STEM.Medicine & Health": 0.0051206222341311095,
+							"STEM.Physics": 0.07753276413657004,
+							"STEM.STEM*": 0.9045598202134326,
+							"STEM.Space": 0.5391776999954941,
+							"STEM.Technology": 0.022579439238458423
 						}
 					}
 				}
@@ -1025,24 +1783,44 @@ It returns one or more candidate descriptions that can be used as summary snippe
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/article-descriptions:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/article-descriptions:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
   -d '{"lang":"en","title":"Clandonald","num_beams":2,"debug":1}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"lang": "en",
 	"title": "Clandonald",
+	"blp": false,
 	"num_beams": 2,
 	"groundtruth": "Hamlet in Alberta, Canada",
+	"latency": {
+		"wikidata-info (s)": 0.10568404197692871,
+		"mwapi - first paragraphs (s)": 0.11831045150756836,
+		"total network (s)": 0.153550386428833,
+		"model (s)": 6.823495864868164,
+		"total (s)": 6.977058410644531
+	},
+	"features": {
+		"descriptions": {
+			"fr": "hameau d'Alberta",
+			"en": "hamlet in central Alberta, Canada"
+		},
+		"first-paragraphs": {
+			"en": "Clandonald is a hamlet in central Alberta, Canada within the County of Vermilion River. It is located approximately 28 kilometres (17 mi) north of Highway 16 and 58 kilometres (36 mi) northwest of Lloydminster.",
+			"fr": "Clandonald est un hameau (hamlet) du Comté de Vermilion River, situé dans la province canadienne d'Alberta."
+		}
+	},
 	"prediction": ["Hamlet in Alberta, Canada", "human settlement in Alberta, Canada"]
 }
 ```
@@ -1090,29 +1868,31 @@ Optional:
 
 - `extended_output` (boolean)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/reference-risk:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/reference-risk:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":1242378206,"lang":"en"}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796, "lang": "en"}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"model_name": "reference-risk",
 	"model_version": "2024-11",
 	"wiki_db": "enwiki",
-	"revision_id": 1242378206,
-	"reference_count": 307,
+	"revision_id": 1350687796,
+	"reference_count": 199,
 	"survival_ratio": {
-		"min": 0.7011,
-		"mean": 0.8286,
-		"median": 0.8284
+		"min": 0.26343338900801916,
+		"mean": 0.7798243261722269,
+		"median": 0.8091431850341261
 	},
 	"reference_risk_score": 0.0
 }
@@ -1154,24 +1934,26 @@ It returns language identifiers and a confidence score for the detected language
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/langid:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/langid:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "User-Agent: your-tool-name (contact)" \
-  -d '{"text":"This is an English sentence about Wikipedia and machine learning."}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"text":"Bonjour le monde"}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"language": "eng_Latn",
-	"wikicode": "en",
-	"languagename": "English",
-	"score": 0.5686957836151123
+	"language": "fra_Latn",
+	"wikicode": "fr",
+	"languagename": "French",
+	"score": 0.9967567920684814
 }
 ```
 
@@ -1216,17 +1998,19 @@ Optional:
 
 - `extended_output` (boolean)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-drafttopic:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-drafttopic:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":1350687796}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
@@ -1242,8 +2026,70 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-drafttopic
 					"score": {
 						"prediction": ["STEM.Earth and environment", "STEM.STEM*"],
 						"probability": {
-							"STEM.Earth and environment": 0.999,
-							"STEM.STEM*": 0.999
+							"Culture.Biography.Biography*": 0.08045045408734983,
+							"Culture.Biography.Women": 0.01563415085760326,
+							"Culture.Food and drink": 0.0005263041249568254,
+							"Culture.Internet culture": 0.0019170411380525316,
+							"Culture.Linguistics": 0.003929657397100046,
+							"Culture.Literature": 0.08044949616853309,
+							"Culture.Media.Books": 0.014086401844802914,
+							"Culture.Media.Entertainment": 0.00746158359661032,
+							"Culture.Media.Films": 0.003926450555757827,
+							"Culture.Media.Media*": 0.05239763052464103,
+							"Culture.Media.Music": 0.0011537410561849185,
+							"Culture.Media.Radio": 0.0010975424496545245,
+							"Culture.Media.Software": 0.0032696618426445194,
+							"Culture.Media.Television": 0.002390187193061297,
+							"Culture.Media.Video games": 0.00025166630990232965,
+							"Culture.Performing arts": 0.00037196285326344014,
+							"Culture.Philosophy and religion": 0.006713676943460428,
+							"Culture.Sports": 0.002288355893186578,
+							"Culture.Visual arts.Architecture": 0.002737024892686108,
+							"Culture.Visual arts.Comics and Anime": 0.0011598766944291505,
+							"Culture.Visual arts.Fashion": 0.0007399200916876866,
+							"Culture.Visual arts.Visual arts*": 0.011965339069051133,
+							"Geography.Geographical": 0.04869233843175154,
+							"Geography.Regions.Africa.Africa*": 0.00963984999989999,
+							"Geography.Regions.Africa.Central Africa": 0.0005914391708034102,
+							"Geography.Regions.Africa.Eastern Africa": 0.0002730455195817152,
+							"Geography.Regions.Africa.Northern Africa": 0.0010204253474326603,
+							"Geography.Regions.Africa.Southern Africa": 0.0004612473442234881,
+							"Geography.Regions.Africa.Western Africa": 0.00026891768350000575,
+							"Geography.Regions.Americas.Central America": 0.0018534581676482496,
+							"Geography.Regions.Americas.North America": 0.023974165328559876,
+							"Geography.Regions.Americas.South America": 0.006550081201778095,
+							"Geography.Regions.Asia.Asia*": 0.016922797751446065,
+							"Geography.Regions.Asia.Central Asia": 0.0011935394586015866,
+							"Geography.Regions.Asia.East Asia": 0.012431986624114438,
+							"Geography.Regions.Asia.North Asia": 0.0010805859654606069,
+							"Geography.Regions.Asia.South Asia": 0.0008897634872587683,
+							"Geography.Regions.Asia.Southeast Asia": 0.0007441022762198635,
+							"Geography.Regions.Asia.West Asia": 0.001704269672252598,
+							"Geography.Regions.Europe.Eastern Europe": 0.0035829354638666185,
+							"Geography.Regions.Europe.Europe*": 0.03739494123276016,
+							"Geography.Regions.Europe.Northern Europe": 0.008833765937950872,
+							"Geography.Regions.Europe.Southern Europe": 0.006607200869021762,
+							"Geography.Regions.Europe.Western Europe": 0.016374126629465562,
+							"Geography.Regions.Oceania": 0.004975555302119169,
+							"History and Society.Business and economics": 0.011668703704651314,
+							"History and Society.Education": 0.009962806254353552,
+							"History and Society.History": 0.02520944195442482,
+							"History and Society.Military and warfare": 0.008212599633701263,
+							"History and Society.Politics and government": 0.026387978811126287,
+							"History and Society.Society": 0.17439657207809667,
+							"History and Society.Transportation": 0.0515350736387013,
+							"STEM.Biology": 0.06656391606773564,
+							"STEM.Chemistry": 0.005455739543988112,
+							"STEM.Computing": 0.003926114298414298,
+							"STEM.Earth and environment": 0.9231941069942504,
+							"STEM.Engineering": 0.016108083021039745,
+							"STEM.Libraries & Information": 0.05718899689278377,
+							"STEM.Mathematics": 0.0008265546800756186,
+							"STEM.Medicine & Health": 0.0038480533113177656,
+							"STEM.Physics": 0.11230611299875458,
+							"STEM.STEM*": 0.9701926328736089,
+							"STEM.Space": 0.07702112876026468,
+							"STEM.Technology": 0.06128406423453015
 						}
 					}
 				}
@@ -1293,28 +2139,30 @@ It uses revision metadata and content to return a revert-likelihood output.
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-wikidata:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-wikidata:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":2484352064}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 2484051354}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"model_name": "revertrisk-wikidata",
 	"model_version": "2",
-	"revision_id": 2484352064,
+	"revision_id": 2484051354,
 	"output": {
-		"prediction": false,
+		"prediction": true,
 		"probabilities": {
-			"true": 0.3965919981582395,
-			"false": 0.6034080018417605
+			"true": 0.5387352373078647,
+			"false": 0.46126476269213534
 		}
 	}
 }
@@ -1361,17 +2209,19 @@ Optional:
 
 - `extended_output` (boolean)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-articlequality:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-articlequality:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":1350839573}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
@@ -1382,17 +2232,17 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-articlequa
 			}
 		},
 		"scores": {
-			"1350839573": {
+			"1350687796": {
 				"articlequality": {
 					"score": {
-						"prediction": "Start",
+						"prediction": "FA",
 						"probability": {
-							"Stub": 0.02398888577889904,
-							"Start": 0.5392005742880663,
-							"C": 0.31740026564541135,
-							"B": 0.10214225714909148,
-							"GA": 0.011721489950630397,
-							"FA": 0.00554652718790141
+							"B": 0.06866911452117365,
+							"C": 0.017707842006204295,
+							"FA": 0.6281331126369486,
+							"GA": 0.2747706589607089,
+							"Start": 0.007942281113216739,
+							"Stub": 0.0027769907617477703
 						}
 					}
 				}
@@ -1445,17 +2295,19 @@ Optional:
 
 - `extended_output` (boolean)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-itemquality:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-itemquality:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":2484352064}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 2484051354}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
@@ -1466,16 +2318,16 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-item
 			}
 		},
 		"scores": {
-			"2484352064": {
+			"2484051354": {
 				"itemquality": {
 					"score": {
-						"prediction": "B",
+						"prediction": "A",
 						"probability": {
-							"A": 0.07284809111130389,
-							"B": 0.8010284572408711,
-							"C": 0.09078131952285162,
-							"D": 0.0313878119171716,
-							"E": 0.003954320207801803
+							"A": 0.9634217589797256,
+							"B": 0.02182265958408409,
+							"C": 0.009460218684110233,
+							"D": 0.004039016575363756,
+							"E": 0.001256346176716514
 						}
 					}
 				}
@@ -1524,42 +2376,28 @@ You provide article title and language, and it returns country candidates with s
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/article-country:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/article-country:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "User-Agent: your-tool-name (contact)" \
-  -d '{"lang":"en","title":"Toni_Morrison"}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"lang":"en","title":"Earth"}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"model_name": "article-country",
 	"model_version": "1",
 	"prediction": {
-		"article": "https://en.wikipedia.org/wiki/Toni_Morrison",
-		"wikidata_item": "Q72334",
-		"results": [
-			{
-				"country": "United States",
-				"score": 1.0,
-				"source": {
-					"wikidata_properties": [{ "P27": "country of citizenship" }],
-					"categories": [],
-					"links": [
-						{
-							"country": "United States",
-							"count": 249.0,
-							"prop-tfidf": 0.622714545729024
-						}
-					]
-				}
-			}
-		]
+		"article": "https://en.wikipedia.org/wiki/Earth",
+		"wikidata_item": "Q2",
+		"results": []
 	}
 }
 ```
@@ -1605,25 +2443,37 @@ Query parameters:
 - `search_algorithm` (optional, default `morelike`)
 - `rank_method` (optional, default `default`)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/recommendation/api/v1/translation?source=en&target=fr&count=3&seed=Apple&include_pageviews=true" \
-  -H "User-Agent: your-tool-name (contact)"
+curl -sS "https://api.wikimedia.org/service/lw/recommendation/api/v1/translation?source=en&target=fr&count=2&seed=Apple&include_pageviews=true" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"recommendations": [
 		{
-			"title": "Agriculture in Mesoamerica",
-			"pageviews": 40,
-			"wikidata_id": "Q5660007",
-			"rank": 96,
-			"langlinks_count": 4,
-			"size": 13765,
+			"title": "Summer squash",
+			"pageviews": 120,
+			"wikidata_id": "Q17119307",
+			"rank": 265,
+			"langlinks_count": 6,
+			"size": 7529,
+			"lead_section_size": null,
+			"collection": null
+		},
+		{
+			"title": "Winesap",
+			"pageviews": 22,
+			"wikidata_id": "Q16878488",
+			"rank": 282,
+			"langlinks_count": 3,
+			"size": 5427,
 			"lead_section_size": null,
 			"collection": null
 		}
@@ -1677,21 +2527,28 @@ Query parameters:
 - `sroffset` (optional continuation offset)
 - `format=json`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=Jupiter&srlimit=5&srqiprofile=popular_inclinks_pv&srinfo=totalhits" \
-  -H "User-Agent: your-tool-name (contact)"
+curl -sS "https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=Jupiter&srlimit=3&srqiprofile=popular_inclinks_pv&srinfo=totalhits" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"batchcomplete": "",
-	"continue": { "sroffset": 5, "continue": "-||" },
+	"continue": {
+		"sroffset": 3,
+		"continue": "-||"
+	},
 	"query": {
-		"searchinfo": { "totalhits": 26743 },
+		"searchinfo": {
+			"totalhits": 26742
+		},
 		"search": [
 			{
 				"ns": 0,
@@ -1699,12 +2556,33 @@ curl "https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&sr
 				"pageid": 38930,
 				"size": 176407,
 				"wordcount": 16375,
+				"snippet": "<span class=\"searchmatch\">Jupiter</span> is the fifth planet from the Sun, and the largest in the Solar System. It is a gas giant with a mass nearly 2.5 times that of all the other planets",
 				"timestamp": "2026-04-19T01:14:29Z"
+			},
+			{
+				"ns": 0,
+				"title": "Rory McIlroy",
+				"pageid": 3949844,
+				"size": 242237,
+				"wordcount": 18997,
+				"snippet": "Ireland Height 5 ft 9 in (1.75 m) Weight 11+1⁄2 st (161 lb; 73 kg) Residence <span class=\"searchmatch\">Jupiter</span>, Florida, U.S. Spouse Erica Stoll ​ (m. 2017)​ Children 1 Career Turned",
+				"timestamp": "2026-04-21T17:35:50Z"
+			},
+			{
+				"ns": 0,
+				"title": "Donald Trump",
+				"pageid": 4848272,
+				"size": 354110,
+				"wordcount": 29050,
+				"snippet": "York City Mar-a-Lago Golf courses US Bedminster, NJ "Doral" Miami, FL <span class=\"searchmatch\">Jupiter</span>, FL Los Angeles, CA Pine Hill, NJ Washington, D.C. Westchester, NY West",
+				"timestamp": "2026-04-24T13:02:19Z"
 			}
 		]
 	}
 }
 ```
+
+_Captured with `srlimit=3`._
 
 ### Availability
 
@@ -1751,15 +2629,16 @@ Path parameters:
 - `start` (example: `20260415`)
 - `end` (example: `20260421`)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia.org/all-access/all-agents/Jupiter/daily/20260415/20260421" \
-  -H "Accept: application/json" \
-  -H "User-Agent: your-tool-name (contact)"
+curl -sS "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia.org/all-access/all-agents/Jupiter/daily/20260415/20260420" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
@@ -1772,6 +2651,51 @@ curl "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikiped
 			"access": "all-access",
 			"agent": "all-agents",
 			"views": 7289
+		},
+		{
+			"project": "en.wikipedia",
+			"article": "Jupiter",
+			"granularity": "daily",
+			"timestamp": "2026041600",
+			"access": "all-access",
+			"agent": "all-agents",
+			"views": 7377
+		},
+		{
+			"project": "en.wikipedia",
+			"article": "Jupiter",
+			"granularity": "daily",
+			"timestamp": "2026041700",
+			"access": "all-access",
+			"agent": "all-agents",
+			"views": 6939
+		},
+		{
+			"project": "en.wikipedia",
+			"article": "Jupiter",
+			"granularity": "daily",
+			"timestamp": "2026041800",
+			"access": "all-access",
+			"agent": "all-agents",
+			"views": 7268
+		},
+		{
+			"project": "en.wikipedia",
+			"article": "Jupiter",
+			"granularity": "daily",
+			"timestamp": "2026041900",
+			"access": "all-access",
+			"agent": "all-agents",
+			"views": 7304
+		},
+		{
+			"project": "en.wikipedia",
+			"article": "Jupiter",
+			"granularity": "daily",
+			"timestamp": "2026042000",
+			"access": "all-access",
+			"agent": "all-agents",
+			"views": 7719
 		}
 	]
 }
@@ -1817,15 +2741,16 @@ Path parameters:
 - `month` (example: `04`)
 - `day` (example: `20`)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia.org/all-access/2026/04/20" \
-  -H "Accept: application/json" \
-  -H "User-Agent: your-tool-name (contact)"
+curl -sS "https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia.org/all-access/2026/04/15" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
@@ -1835,15 +2760,56 @@ curl "https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia.org/a
 			"access": "all-access",
 			"year": "2026",
 			"month": "04",
-			"day": "20",
+			"day": "15",
 			"articles": [
-				{ "article": "Main_Page", "views": 6925830, "rank": 1 },
-				{ "article": "Special:Search", "views": 1107488, "rank": 2 }
-			]
+				{
+					"article": "Main_Page",
+					"views": 7048872,
+					"rank": 1
+				},
+				{
+					"article": "Special:Search",
+					"views": 1237127,
+					"rank": 2
+				},
+				{
+					"article": "Wikipedia:Featured_pictures",
+					"views": 336973,
+					"rank": 3
+				},
+				{
+					"article": "Eric_Swalwell",
+					"views": 214002,
+					"rank": 4
+				},
+				{
+					"article": "Dhurandhar:_The_Revenge",
+					"views": 179368,
+					"rank": 5
+				},
+				{
+					"article": ".xxx",
+					"views": 167150,
+					"rank": 6
+				},
+				{
+					"article": "List_of_highest-grossing_Indian_films",
+					"views": 165718,
+					"rank": 7
+				},
+				{
+					"article": "Samrat_Choudhary",
+					"views": 146967,
+					"rank": 8
+				}
+			],
+			"_note": "…truncated: full API `articles` array is much longer (see AQS for full daily list)."
 		}
 	]
 }
 ```
+
+_Full per-day `articles` list is long; the capture includes every ranked article. Snippet above shows the envelope and the first 8 `articles` only._
 
 ### Availability
 
@@ -1886,26 +2852,41 @@ Query parameters:
 - `blcontinue` (optional continuation token)
 - `format=json`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://en.wikipedia.org/w/api.php?action=query&format=json&list=backlinks&bltitle=Jupiter&bllimit=5" \
-  -H "User-Agent: your-tool-name (contact)"
+curl -sS "https://en.wikipedia.org/w/api.php?action=query&format=json&list=backlinks&bltitle=Jupiter&bllimit=3" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"batchcomplete": "",
 	"continue": {
-		"blcontinue": "0|1365",
+		"blcontinue": "0|1210",
 		"continue": "-||"
 	},
 	"query": {
 		"backlinks": [
-			{ "pageid": 639, "ns": 0, "title": "Alkane" },
-			{ "pageid": 666, "ns": 0, "title": "Alkali metal" }
+			{
+				"pageid": 639,
+				"ns": 0,
+				"title": "Alkane"
+			},
+			{
+				"pageid": 666,
+				"ns": 0,
+				"title": "Alkali metal"
+			},
+			{
+				"pageid": 791,
+				"ns": 0,
+				"title": "Asteroid"
+			}
 		]
 	}
 }
@@ -1953,19 +2934,21 @@ Query parameters:
 - `llcontinue` (optional continuation token)
 - `format=json`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=langlinks&titles=Jupiter&lllimit=5&llprop=url|langname|autonym" \
-  -H "User-Agent: your-tool-name (contact)"
+curl -sS "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=langlinks&titles=Jupiter&lllimit=3&llprop=url|langname|autonym" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"continue": {
-		"llcontinue": "38930|ann",
+		"llcontinue": "38930|an",
 		"continue": "||"
 	},
 	"query": {
@@ -1981,6 +2964,20 @@ curl "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=langlinks
 						"langname": "Afrikaans",
 						"autonym": "Afrikaans",
 						"*": "Jupiter"
+					},
+					{
+						"lang": "gsw",
+						"url": "https://als.wikipedia.org/wiki/Jupiter_(Planet)",
+						"langname": "Alemannic",
+						"autonym": "Alemannisch",
+						"*": "Jupiter (Planet)"
+					},
+					{
+						"lang": "am",
+						"url": "https://am.wikipedia.org/wiki/%E1%8C%81%E1%8D%92%E1%89%B0%E1%88%AD",
+						"langname": "Amharic",
+						"autonym": "አማርኛ",
+						"*": "ጁፒተር"
 					}
 				]
 			}
@@ -2035,33 +3032,51 @@ Common parameters for signal retrieval:
 - optional `rcshow=oresreview`
 - optional pagination/time filters (`rccontinue`, `rcstart`, `rcend`)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://en.wikipedia.org/w/api.php?action=query&list=recentchanges&rcprop=title|timestamp|ids|user|comment|sizes|oresscores|tags&rclimit=50&rctype=edit|new&rctoponly=1&format=json"
+curl -sG "https://en.wikipedia.org/w/api.php" \
+  --data-urlencode "action=query" \
+  --data-urlencode "list=recentchanges" \
+  --data-urlencode "rcprop=title|timestamp|ids|user|comment|sizes|oresscores|tags" \
+  --data-urlencode "rclimit=1" \
+  --data-urlencode "rctype=edit|new" \
+  --data-urlencode "rctoponly=1" \
+  --data-urlencode "format=json" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
+	"batchcomplete": "",
+	"continue": {
+		"rccontinue": "20260424142405|2020420892",
+		"continue": "-||"
+	},
 	"query": {
 		"recentchanges": [
 			{
-				"revid": 123456789,
-				"title": "Earth",
-				"user": "ExampleUser",
-				"timestamp": "2026-04-23T10:00:00Z",
-				"comment": "copyedit",
-				"oldlen": 1000,
-				"newlen": 1025,
-				"oresscores": {},
-				"tags": ["mw-reverted"]
+				"type": "edit",
+				"ns": 3,
+				"title": "User talk:Lordseriouspig",
+				"pageid": 76977641,
+				"revid": 1350868008,
+				"old_revid": 1350866735,
+				"rcid": 2020420896,
+				"user": "~2026-24831-23",
+				"temp": "",
+				"oldlen": 32051,
+				"newlen": 32109,
+				"timestamp": "2026-04-24T14:24:05Z",
+				"comment": "/* COI with Hack Club */ clearer",
+				"tags": ["wikieditor"],
+				"oresscores": []
 			}
 		]
-	},
-	"continue": {
-		"rccontinue": "..."
 	}
 }
 ```
@@ -2108,24 +3123,41 @@ It returns a prediction plus probabilities you can use to estimate the chance th
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-damaging:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-damaging:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id": 12345}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"prediction": false,
-	"probability": {
-		"true": 0.08,
-		"false": 0.92
+	"enwiki": {
+		"models": {
+			"damaging": {
+				"version": "0.5.1"
+			}
+		},
+		"scores": {
+			"1350687796": {
+				"damaging": {
+					"score": {
+						"prediction": false,
+						"probability": {
+							"false": 0.9798684755361872,
+							"true": 0.02013152446381285
+						}
+					}
+				}
+			}
+		}
 	}
 }
 ```
@@ -2169,24 +3201,41 @@ It returns a prediction and probabilities so you can separate likely mistakes fr
 }
 ```
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-goodfaith:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-goodfaith:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "Api-User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id": 12345}'
+  -H "Api-User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 1350687796}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
-	"prediction": true,
-	"probability": {
-		"true": 0.89,
-		"false": 0.11
+	"enwiki": {
+		"models": {
+			"goodfaith": {
+				"version": "0.5.1"
+			}
+		},
+		"scores": {
+			"1350687796": {
+				"goodfaith": {
+					"score": {
+						"prediction": true,
+						"probability": {
+							"false": 0.009499006207313698,
+							"true": 0.9905009937926863
+						}
+					}
+				}
+			}
+		}
 	}
 }
 ```
@@ -2234,25 +3283,36 @@ Query:
 - `models=damaging|goodfaith`
 - `revids=12345|23456`
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://ores.wikimedia.org/v3/scores/enwiki/?models=damaging|goodfaith&revids=12345|23456"
+curl -sS "https://ores.wikimedia.org/v3/scores/enwiki/?models=damaging|goodfaith&revids=1350687796" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-### Response shape
+#### Response
 
 ```json
 {
 	"enwiki": {
+		"models": {
+			"damaging": {
+				"version": "0.5.1"
+			},
+			"goodfaith": {
+				"version": "0.5.1"
+			}
+		},
 		"scores": {
-			"12345": {
+			"1350687796": {
 				"damaging": {
 					"score": {
 						"prediction": false,
 						"probability": {
-							"true": 0.03,
-							"false": 0.97
+							"false": 0.9798684755361872,
+							"true": 0.02013152446381285
 						}
 					}
 				},
@@ -2260,8 +3320,8 @@ curl "https://ores.wikimedia.org/v3/scores/enwiki/?models=damaging|goodfaith&rev
 					"score": {
 						"prediction": true,
 						"probability": {
-							"true": 0.91,
-							"false": 0.09
+							"false": 0.009499006207313698,
+							"true": 0.9905009937926863
 						}
 					}
 				}
@@ -2316,17 +3376,19 @@ Optional:
 
 - `extended_output` (boolean)
 
-### Example request
+### Example
+
+#### Request
 
 ```bash
-curl "https://api.wikimedia.org/service/lw/inference/v1/models/viwiki-reverted:predict" \
+curl -sS "https://api.wikimedia.org/service/lw/inference/v1/models/viwiki-reverted:predict" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "User-Agent: your-tool-name (contact)" \
-  -d '{"rev_id":74995306}'
+  -H "User-Agent: <your tool name> (<contact: URL or email>)" \
+  -d '{"rev_id": 74995306}'
 ```
 
-### Response shape
+#### Response
 
 ```json
 {

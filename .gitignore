@@ -38,3 +38,6 @@ __screenshots__/
 # Generated entry points
 entry-points/
 */watchlists/**/*
+
+# Local API capture payloads (used when regenerating signal examples)
+real-data-signals/_captures/
