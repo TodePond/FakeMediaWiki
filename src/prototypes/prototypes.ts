@@ -125,13 +125,13 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 	},
 	{
 		type: "prototype",
-		id: "RealDataSignalsReference",
-		name: "Wiki signals reference",
+		id: "WikiSignals",
+		name: "Wiki signals",
 		description:
 			"Interactive copy of real-data-signals markdown: run each curl example and see live responses.",
 		category: "api",
 		wrapper: "Fullscreen",
-		title: "Wiki signals reference",
+		title: "Wiki signals",
 		status: "new",
 		featured: true,
 	},

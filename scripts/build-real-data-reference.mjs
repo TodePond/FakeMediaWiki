@@ -1,5 +1,5 @@
 /**
- * Parses real-data-signals/*.md into a JSON model for RealDataSignalsReference.
+ * Parses real-data-signals/*.md into a JSON model for the WikiSignals prototype.
  * Run: node scripts/build-real-data-reference.mjs
  * Or: npm run build-signals
  */
@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(__dirname, "..")
 const signalsDir = join(repoRoot, "real-data-signals")
-const outDir = join(repoRoot, "src/prototypes/RealDataSignalsReference/generated")
+const outDir = join(repoRoot, "src/prototypes/WikiSignals/generated")
 const outFile = join(outDir, "sections.json")
 
 const SOURCES = ["analytics.md", "curation.md", "links.md", "inference.md"]

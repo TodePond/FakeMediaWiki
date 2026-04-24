@@ -5,7 +5,7 @@
  * - `w/index.php?action=raw&title=…` is rewritten to `w/rest.php/v1/page/…` like `getPageSource`
  *   in `fakewiki` (raw index does not CORS the same way as the MediaWiki REST `page` route).
  */
-const DEFAULT_UA = "FakeMediaWiki-RealDataReference/1.0 (https://github.com/wikimedia/fake-mediawiki; docs)"
+const DEFAULT_UA = "FakeMediaWiki-WikiSignals/1.0 (https://github.com/wikimedia/fake-mediawiki; docs)"
 
 /** Indent for pretty-printed JSON (matches `tab-size` on code blocks). */
 const JSON_INDENT = 4
