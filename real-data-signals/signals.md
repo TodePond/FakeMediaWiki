@@ -1156,8 +1156,6 @@ _Real output is the raw JSON on that wiki page; the snippet is a prefix of the `
 
 ### Availability
 
-**Active:** Because this is on-wiki config, changes can go live immediately after page edits.
-
 Publicly available as live on-wiki configuration pages read by production tooling.
 
 The listed endpoints are specifically for English Wikipedia (`en.wikipedia.org`) configuration pages.
@@ -1254,7 +1252,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 11) Lift Wing: Revscoring article topic ({wiki})
+## 11) Revision topic
 
 This endpoint predicts article topics for a specific revision on a specific wiki.
 It returns topic labels and probabilities so you can classify article content areas.
@@ -1401,7 +1399,7 @@ Available for the following: `{wiki}-articletopic` is documented for `arwiki`, `
 
 ---
 
-## 12) Lift Wing: Language agnostic article quality
+## 12) Language agnostic article quality
 
 This endpoint predicts article quality for a revision using a language-agnostic model.
 You provide a revision ID and language code, and the response returns quality output for that revision.
@@ -1466,7 +1464,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 13) Lift Wing: Readability
+## 13) Article readability
 
 This endpoint estimates how difficult the article text is to read.
 It returns readability-related output for the revision and language you provide.
@@ -1532,7 +1530,7 @@ Supported language codes (API reference): `af`, `sq`, `am`, `ar`, `hy`, `as`, `a
 
 ---
 
-## 14) Lift Wing: Revscoring draft quality ({wiki})
+## 14) Draft quality
 
 This endpoint predicts draft quality for a revision on supported wikis.
 It returns draft-quality classes and related probabilities.
@@ -1616,7 +1614,7 @@ Available for the following: `enwiki`, `ptwiki`.
 
 ---
 
-## 15) Lift Wing: Wikidata item topic
+## 15) Wikidata item topic
 
 This endpoint predicts topic labels for Wikidata item revisions.
 It returns one or more topic categories with probabilities for the given Wikidata revision.
@@ -1754,7 +1752,7 @@ Wikidata only (`wikidatawiki`).
 
 ---
 
-## 16) Lift Wing: Article descriptions
+## 16) Article descriptions
 
 This endpoint generates short description text for an article title and language.
 It returns one or more candidate descriptions that can be used as summary snippets.
@@ -1837,7 +1835,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 17) Lift Wing: Reference risk
+## 17) Reference risk
 
 This endpoint predicts whether references introduced by a revision are likely to survive over time.
 It returns risk-oriented fields that help identify references that may be unstable.
@@ -1908,7 +1906,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 18) Lift Wing: Language identification
+## 18) Language identification
 
 This endpoint detects the language of input text.
 It returns language identifiers and a confidence score for the detected language.
@@ -1969,7 +1967,7 @@ Not tied to a specific wiki; works on raw input text.
 
 ---
 
-## 19) Lift Wing: Revscoring draft topic ({wiki})
+## 19) Draft topic
 
 This endpoint predicts draft-topic categories for a wiki revision.
 It returns topic predictions and probabilities for the revision you provide.
@@ -2113,7 +2111,7 @@ Available for the following: `enwiki`.
 
 ---
 
-## 20) Lift Wing: Wikidata revert risk
+## 20) Wikidata revert risk
 
 This endpoint predicts revert risk for Wikidata revisions.
 It uses revision metadata and content to return a revert-likelihood output.
@@ -2180,7 +2178,7 @@ Wikidata revisions only.
 
 ---
 
-## 21) Lift Wing: Revscoring article quality ({wiki})
+## 21) Revision quality
 
 This endpoint predicts article quality class for a wiki revision.
 It returns a quality label and class probabilities for that revision.
@@ -2266,7 +2264,7 @@ Available for the following: `{wiki}-articlequality` is documented for `enwiki`,
 
 ---
 
-## 22) Lift Wing: Wikidata item quality
+## 22) Wikidata item quality
 
 This endpoint predicts item quality class for a Wikidata revision.
 It uses the Wikidata-specific itemquality URL scheme and returns class probabilities.
@@ -2349,7 +2347,7 @@ Wikidata only (`wikidatawiki`).
 
 ---
 
-## 23) Lift Wing: Article country
+## 23) Article country
 
 This endpoint predicts which countries are most relevant to an article.
 You provide article title and language, and it returns country candidates with scores and source evidence.
@@ -2412,7 +2410,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 24) Lift Wing Recommendation API: Translation recommendations
+## 24) Translation recommendations
 
 This endpoint recommends articles to translate from one language wiki to another.
 It returns ranked candidate articles based on source/target languages and optional seed or topic inputs.
@@ -2497,7 +2495,7 @@ Publicly available via Wikimedia's production recommendation API.
 
 ---
 
-## 25) Action API: Search with ranking profiles
+## 25) Search with ranking profiles
 
 This endpoint runs full-text search and lets you choose ranking profiles with `srqiprofile`.
 Profiles such as `popular_inclinks_pv` bias ranking toward high-pageview and high-inlink results.
@@ -2600,7 +2598,7 @@ Available where the Action API search module is enabled; `srqiprofile` effects d
 
 ---
 
-## 26) AQS: Per-article pageviews
+## 26) Article views
 
 This endpoint returns a time series of page view counts for a specific article.
 
@@ -2715,7 +2713,7 @@ Broad Wikimedia project coverage through AQS project identifiers (for example `e
 
 ---
 
-## 27) AQS: Top pageviews
+## 27) Most viewed articles
 
 This endpoint returns ranked most-viewed pages for a project on a specific day.
 
@@ -2825,7 +2823,7 @@ Broad Wikimedia project coverage through AQS project identifiers.
 
 ---
 
-## 28) Action API: Backlinks
+## 28) Backlinks
 
 This endpoint finds pages that link to a specified page title or page id.
 
@@ -2906,7 +2904,7 @@ Available on Wikimedia wikis via each wiki's `api.php`.
 
 ---
 
-## 29) Action API: Language links
+## 29) Language links
 
 This endpoint returns interlanguage links from a page to versions of the page in other languages.
 
@@ -3000,7 +2998,7 @@ Available on Wikimedia wikis with interlanguage link data.
 
 ---
 
-## 30) Action API: Recent changes
+## 30) Recent changes with scoring
 
 This endpoint lists the most recent edits on a wiki, similar to the RecentChanges page. The Action API module is supported and not deprecated.
 
@@ -3097,7 +3095,7 @@ Available on Wikimedia wikis through each wiki's `api.php` endpoint.
 
 ---
 
-## 31) Deprecated: Lift Wing: Revscoring damaging
+## 31) Deprecated: Damaging prediction
 
 This endpoint predicts how damaging an edit is for a specific revision.
 It returns a prediction plus probabilities you can use to estimate the chance that the edit is harmful.
@@ -3176,7 +3174,7 @@ Available for the following: `arwiki`, `bswiki`, `cawiki`, `cswiki`, `dewiki`, `
 
 ---
 
-## 32) Deprecated: Lift Wing: Revscoring goodfaith
+## 32) Deprecated: Good faith prediction
 
 This endpoint predicts whether an edit appears to be made in good faith.
 It returns a prediction and probabilities so you can separate likely mistakes from likely abuse.
@@ -3254,7 +3252,7 @@ Available for the following: `arwiki`, `bswiki`, `cawiki`, `cswiki`, `dewiki`, `
 
 ---
 
-## 33) Deprecated: ORES v3: Damaging/goodfaith scores
+## 33) Deprecated: ORES damaging and goodfaith predictions
 
 This endpoint returns ORES scores for one or more revision IDs and the model names you request.
 It is a batch-style scoring endpoint that can return multiple model outputs in one call.
@@ -3345,7 +3343,7 @@ wiki/model pairs still served by ORES; request unsupported pairs and the API ret
 
 ---
 
-## 34) Deprecated: Lift Wing: Revscoring reverted ({wiki})
+## 34) Deprecated: Reverted prediction
 
 This endpoint predicts whether a wiki revision will be reverted, using the older revscoring reverted model.
 The official docs mark this model for deprecation and recommend newer revert-risk models.
