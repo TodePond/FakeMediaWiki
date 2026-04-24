@@ -1,6 +1,6 @@
 # List of ML and analytics signals for use in MediaWiki prototypes
 
-## 1) Lift Wing `revertrisk-language-agnostic`
+## 1) Lift Wing: Language agnostic revert risk
 
 This endpoint predicts whether a revision is likely to be reverted, using a model that is designed to work across languages.
 It is useful when you want one revert-risk score format regardless of the wiki language.
@@ -61,7 +61,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 2) Lift Wing `revertrisk-multilingual`
+## 2) Lift Wing: Multilingual revert risk
 
 This endpoint predicts whether a revision is likely to be reverted for supported languages.
 It returns one revert-risk result for the revision you pass in.
@@ -122,7 +122,7 @@ Supported language codes (API reference): `ka`, `lv`, `ta`, `ur`, `eo`, `lt`, `s
 
 ---
 
-## 3) Lift Wing `reference-need:predict`
+## 3) Lift Wing: Reference need
 
 This endpoint predicts whether the content in a revision needs additional references.
 It returns a score you can use to flag edits that may need citation follow-up.
@@ -177,7 +177,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 4) Lift Wing `edit-check:predict` (tone usage)
+## 4) Lift Wing: Tone check
 
 This endpoint runs Edit Check models on text you provide.
 For tone checks, you send before-and-after text and the endpoint returns whether the new wording is likely to violate tone guidance.
@@ -253,82 +253,7 @@ Single global endpoint. Availability is determined by supported `check_type` val
 
 ---
 
-## 5) Action API `recentchanges`
-
-This endpoint lists the most recent edits on a wiki, similar to the RecentChanges page, and it can include predictions from ORES when you request `oresscores`.
-It returns normal edit metadata (revision IDs, timestamps, users, comments, tags) plus model prediction fields from ORES where available.
-
-### Documentation
-
-- [API:Recentchanges](https://www.mediawiki.org/wiki/API:Recentchanges)
-- [Action API main page](https://www.mediawiki.org/wiki/API:Main_page)
-
-### Endpoint
-
-`https://en.wikipedia.org/w/api.php?action=query&list=recentchanges`
-
-### Method
-
-`GET`
-
-### Request shape
-
-Common parameters for signal retrieval:
-
-- `rcprop=title|timestamp|ids|user|comment|sizes|oresscores|tags`
-- `rclimit=...`
-- `rctype=edit|new`
-- `rctoponly=1`
-- optional `rcshow=oresreview`
-- optional pagination/time filters (`rccontinue`, `rcstart`, `rcend`)
-
-### Example request
-
-```bash
-curl "https://en.wikipedia.org/w/api.php?action=query&list=recentchanges&rcprop=title|timestamp|ids|user|comment|sizes|oresscores|tags&rclimit=50&rctype=edit|new&rctoponly=1&format=json"
-```
-
-### Response shape
-
-```json
-{
-	"query": {
-		"recentchanges": [
-			{
-				"revid": 123456789,
-				"title": "Earth",
-				"user": "ExampleUser",
-				"timestamp": "2026-04-23T10:00:00Z",
-				"comment": "copyedit",
-				"oldlen": 1000,
-				"newlen": 1025,
-				"oresscores": {},
-				"tags": ["mw-reverted"]
-			}
-		]
-	},
-	"continue": {
-		"rccontinue": "..."
-	}
-}
-```
-
-### Availability
-
-Publicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module.
-
-Available on Wikimedia wikis through each wiki's `api.php` endpoint.
-
-### Rate limits
-
-**Inherited/global policy** (no endpoint-specific req/s or req/hr published on this module page):
-
-- [Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
-
----
-
-## 6) Action API `feedrecentchanges` (Atom/RSS)
+## 5) Action API: Recent changes feed (Atom/RSS)
 
 This endpoint returns recent changes as a feed (Atom or RSS) instead of JSON.
 It is useful when you want chronological change events in feed format for polling or downstream processing.
@@ -391,7 +316,7 @@ Available on Wikimedia wikis that expose the feed module via `api.php`.
 
 ---
 
-## 7) Action API `search` with `srsearch=morelike:...`
+## 6) Action API: Search more-like retrieval
 
 This endpoint performs full-text search, and it can also run "more like this" retrieval using `srsearch=morelike:...`.
 It returns candidate pages that are textually similar to your seed pages.
@@ -465,7 +390,7 @@ Available where the search backend supports the `morelike:` operator (commonly C
 
 ---
 
-## 8) Link Recommendation API
+## 7) Link Recommendation API: Link suggestions
 
 This endpoint suggests links that could be added to an article.
 It returns candidate link text, target pages, and context so you can propose concrete linking edits.
@@ -529,7 +454,7 @@ Path is explicit by project and language (`{project}/{lang}/{title}`); availabil
 
 ---
 
-## 9) Edit-types API
+## 8) Edit-types API: Diff edit type summary
 
 This endpoint analyzes a revision diff and labels the kinds of changes made.
 Depending on the route, it returns summary counts, detailed structured changes, or debug output.
@@ -591,7 +516,7 @@ Cross-wiki in input shape (`lang` + `revid`), with real availability determined 
 
 ---
 
-## 10) List-building API (`serpentine`)
+## 9) List-building API: Serpentine
 
 This endpoint returns a ranked list of candidate pages from a multi-source list-building service.
 It combines several retrieval channels and returns unified results for exploration workflows.
@@ -656,7 +581,7 @@ Cross-wiki in input shape (`lang` + optional `page_title`/`qid`), with availabil
 
 ---
 
-## 11) Raw on-wiki edit-check config JSON endpoints
+## 10) On-wiki config: Edit-check JSON
 
 This endpoint returns the live JSON rules that Edit Check reads directly from wiki pages.
 Those rules include phrase matching and replacement lists, so the response shows the exact configuration currently in production.
@@ -723,7 +648,7 @@ The listed endpoints are specifically for English Wikipedia (`en.wikipedia.org`)
 
 ---
 
-## 12) Lift Wing `outlink-topic-model:predict` (language-agnostic link-based article topic)
+## 11) Lift Wing: Outlink topic model
 
 This endpoint predicts article topics from the page's outgoing wiki links.
 It returns topic labels with scores, using a language-agnostic model.
@@ -804,7 +729,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 13) Lift Wing `{wiki}-articletopic:predict` (revscoring articletopic)
+## 12) Lift Wing: Revscoring article topic ({wiki})
 
 This endpoint predicts article topics for a specific revision on a specific wiki.
 It returns topic labels and probabilities so you can classify article content areas.
@@ -874,7 +799,7 @@ Available for the following: `{wiki}-articletopic` is documented for `arwiki`, `
 
 ---
 
-## 14) Lift Wing `articlequality:predict` (language-agnostic article quality)
+## 13) Lift Wing: Language agnostic article quality
 
 This endpoint predicts article quality for a revision using a language-agnostic model.
 You provide a revision ID and language code, and the response returns quality output for that revision.
@@ -941,7 +866,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 15) Lift Wing `readability:predict` (multilingual readability)
+## 14) Lift Wing: Readability
 
 This endpoint estimates how difficult the article text is to read.
 It returns readability-related output for the revision and language you provide.
@@ -1000,7 +925,7 @@ Supported language codes (API reference): `af`, `sq`, `am`, `ar`, `hy`, `as`, `a
 
 ---
 
-## 16) Lift Wing `{wiki}-draftquality:predict` (revscoring draft quality)
+## 15) Lift Wing: Revscoring draft quality ({wiki})
 
 This endpoint predicts draft quality for a revision on supported wikis.
 It returns draft-quality classes and related probabilities.
@@ -1069,7 +994,7 @@ Available for the following: `enwiki`, `ptwiki`.
 
 ---
 
-## 17) Lift Wing `wikidatawiki-itemtopic:predict` (Wikidata item topic)
+## 16) Lift Wing: Wikidata item topic
 
 This endpoint predicts topic labels for Wikidata item revisions.
 It returns one or more topic categories with probabilities for the given Wikidata revision.
@@ -1145,7 +1070,7 @@ Wikidata only (`wikidatawiki`).
 
 ---
 
-## 18) Lift Wing `article-descriptions:predict`
+## 17) Lift Wing: Article descriptions
 
 This endpoint generates short description text for an article title and language.
 It returns one or more candidate descriptions that can be used as summary snippets.
@@ -1210,7 +1135,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 19) Lift Wing `reference-risk:predict`
+## 18) Lift Wing: Reference risk
 
 This endpoint predicts whether references introduced by a revision are likely to survive over time.
 It returns risk-oriented fields that help identify references that may be unstable.
@@ -1281,7 +1206,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 20) Lift Wing `langid:predict`
+## 19) Lift Wing: Language identification
 
 This endpoint detects the language of input text.
 It returns language identifiers and a confidence score for the detected language.
@@ -1342,7 +1267,7 @@ Not tied to a specific wiki; works on raw input text.
 
 ---
 
-## 21) Lift Wing `{wiki}-drafttopic:predict`
+## 20) Lift Wing: Revscoring draft topic ({wiki})
 
 This endpoint predicts draft-topic categories for a wiki revision.
 It returns topic predictions and probabilities for the revision you provide.
@@ -1424,7 +1349,7 @@ Available for the following: `enwiki`.
 
 ---
 
-## 22) Lift Wing `revertrisk-wikidata:predict`
+## 21) Lift Wing: Wikidata revert risk
 
 This endpoint predicts revert risk for Wikidata revisions.
 It uses revision metadata and content to return a revert-likelihood output.
@@ -1491,7 +1416,7 @@ Wikidata revisions only.
 
 ---
 
-## 23) Lift Wing `{wiki}-articlequality:predict` (revscoring articlequality)
+## 22) Lift Wing: Revscoring article quality ({wiki})
 
 This endpoint predicts article quality class for a wiki revision.
 It returns a quality label and class probabilities for that revision.
@@ -1577,7 +1502,7 @@ Available for the following: `{wiki}-articlequality` is documented for `enwiki`,
 
 ---
 
-## 24) Lift Wing `wikidatawiki-itemquality:predict` (Wikidata item quality)
+## 23) Lift Wing: Wikidata item quality
 
 This endpoint predicts item quality class for a Wikidata revision.
 It uses the Wikidata-specific itemquality URL scheme and returns class probabilities.
@@ -1660,7 +1585,7 @@ Wikidata only (`wikidatawiki`).
 
 ---
 
-## 25) Lift Wing `article-country:predict`
+## 24) Lift Wing: Article country
 
 This endpoint predicts which countries are most relevant to an article.
 You provide article title and language, and it returns country candidates with scores and source evidence.
@@ -1739,7 +1664,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 26) Lift Wing recommendation API `translation`
+## 25) Lift Wing Recommendation API: Translation recommendations
 
 This endpoint recommends articles to translate from one language wiki to another.
 It returns ranked candidate articles based on source/target languages and optional seed or topic inputs.
@@ -1813,7 +1738,7 @@ Publicly available via Wikimedia's production recommendation API.
 
 ---
 
-## 27) Action API `query&list=search` with `srqiprofile`
+## 26) Action API: Search with ranking profiles
 
 This endpoint runs full-text search and lets you choose ranking profiles with `srqiprofile`.
 Profiles such as `popular_inclinks_pv` bias ranking toward high-pageview and high-inlink results.
@@ -1887,7 +1812,7 @@ Available where the Action API search module is enabled; `srqiprofile` effects d
 - [Wikimedia APIs: Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 - [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
-## 28) AQS pageviews `per-article`
+## 27) AQS: Per-article pageviews
 
 This endpoint returns a time series of page view counts for a specific article.
 
@@ -1957,7 +1882,7 @@ Broad Wikimedia project coverage through AQS project identifiers (for example `e
 
 ---
 
-## 29) AQS pageviews `top`
+## 28) AQS: Top pageviews
 
 This endpoint returns ranked most-viewed pages for a project on a specific day.
 
@@ -2026,7 +1951,7 @@ Broad Wikimedia project coverage through AQS project identifiers.
 
 ---
 
-## 30) Action API `query&list=backlinks`
+## 29) Action API: Backlinks
 
 This endpoint finds pages that link to a specified page title or page id.
 
@@ -2093,7 +2018,7 @@ Available on Wikimedia wikis via each wiki's `api.php`.
 
 ---
 
-## 31) Action API `query&prop=langlinks`
+## 30) Action API: Language links
 
 This endpoint returns interlanguage links from a page to versions of the page in other languages.
 
@@ -2170,7 +2095,90 @@ Available on Wikimedia wikis with interlanguage link data.
 - [Wikimedia APIs: Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 - [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
-## 32) Deprecated: Lift Wing revscoring `damaging`
+
+---
+
+## 31) Action API: Recent changes
+
+This endpoint lists the most recent edits on a wiki, similar to the RecentChanges page. The Action API module is supported and not deprecated.
+
+**Deprecated:** When you request `rcprop=...|oresscores|...`, the `oresscores` field carries ORES model outputs. Those scores use the same model family that Wikimedia documents as planned for deprecation in favor of Lift Wing (for example revert-risk models). Prefer calling Lift Wing directly for new integrations; keep using `recentchanges` without `oresscores` if you only need edit metadata.
+
+It returns normal edit metadata (revision IDs, timestamps, users, comments, tags) and, when requested, `oresscores` from ORES where the wiki serves them.
+
+### Documentation
+
+- [API:Recentchanges](https://www.mediawiki.org/wiki/API:Recentchanges)
+- [Action API main page](https://www.mediawiki.org/wiki/API:Main_page)
+
+### Endpoint
+
+`https://en.wikipedia.org/w/api.php?action=query&list=recentchanges`
+
+### Method
+
+`GET`
+
+### Request shape
+
+Common parameters for signal retrieval:
+
+- `rcprop=title|timestamp|ids|user|comment|sizes|oresscores|tags`
+- `rclimit=...`
+- `rctype=edit|new`
+- `rctoponly=1`
+- optional `rcshow=oresreview`
+- optional pagination/time filters (`rccontinue`, `rcstart`, `rcend`)
+
+### Example request
+
+```bash
+curl "https://en.wikipedia.org/w/api.php?action=query&list=recentchanges&rcprop=title|timestamp|ids|user|comment|sizes|oresscores|tags&rclimit=50&rctype=edit|new&rctoponly=1&format=json"
+```
+
+### Response shape
+
+```json
+{
+	"query": {
+		"recentchanges": [
+			{
+				"revid": 123456789,
+				"title": "Earth",
+				"user": "ExampleUser",
+				"timestamp": "2026-04-23T10:00:00Z",
+				"comment": "copyedit",
+				"oldlen": 1000,
+				"newlen": 1025,
+				"oresscores": {},
+				"tags": ["mw-reverted"]
+			}
+		]
+	},
+	"continue": {
+		"rccontinue": "..."
+	}
+}
+```
+
+### Availability
+
+Publicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module (not deprecated).
+
+**Deprecated (optional `oresscores` only):** ORES fields returned in `oresscores` are legacy relative to ORES and Lift Wing migration notes; the rest of this endpoint is normal/supported.
+
+Available on Wikimedia wikis through each wiki's `api.php` endpoint.
+
+### Rate limits
+
+**Inherited/global policy** (no endpoint-specific req/s or req/hr published on this module page):
+
+- [Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
+- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+
+---
+
+## 32) Deprecated: Lift Wing: Revscoring damaging
 
 This endpoint predicts how damaging an edit is for a specific revision.
 It returns a prediction plus probabilities you can use to estimate the chance that the edit is harmful.
@@ -2236,7 +2244,7 @@ Available for the following: `arwiki`, `bswiki`, `cawiki`, `cswiki`, `dewiki`, `
 
 ---
 
-## 33) Deprecated: Lift Wing revscoring `goodfaith`
+## 33) Deprecated: Lift Wing: Revscoring goodfaith
 
 This endpoint predicts whether an edit appears to be made in good faith.
 It returns a prediction and probabilities so you can separate likely mistakes from likely abuse.
@@ -2297,7 +2305,7 @@ Available for the following: `arwiki`, `bswiki`, `cawiki`, `cswiki`, `dewiki`, `
 
 ---
 
-## 34) Deprecated: ORES v3 scores endpoint (`damaging|goodfaith`)
+## 34) Deprecated: ORES v3: Damaging/goodfaith scores
 
 This endpoint returns ORES scores for one or more revision IDs and the model names you request.
 It is a batch-style scoring endpoint that can return multiple model outputs in one call.
@@ -2382,7 +2390,7 @@ Source: [https://www.mediawiki.org/wiki/ORES](https://www.mediawiki.org/wiki/ORE
 
 ---
 
-## 35) Deprecated: Lift Wing `{wiki}-reverted:predict` (deprecated model)
+## 35) Deprecated: Lift Wing: Revscoring reverted ({wiki})
 
 This endpoint predicts whether a wiki revision will be reverted, using the older revscoring reverted model.
 The official docs mark this model for deprecation and recommend newer revert-risk models.
