@@ -1,4 +1,4 @@
-# List of endpoints for determining relationships between pages
+# List of endpoints for determining links between pages
 
 ## 1) Outlinks
 

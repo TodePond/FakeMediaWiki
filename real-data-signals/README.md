@@ -2,5 +2,6 @@
 
 This folder contains guidance for using real MediaWiki data in prototypes.
 
-- [`signals.md`](./signals.md): reference for ML and analytics signals.
-- [`connections.md`](./connections.md): reference for endpoints that determine relationships between pages.
+- [`inference.md`](./inference.md): reference for ML and related inference signals.
+- [`analytics.md`](./analytics.md): reference for analytics signals.
+- [`links.md`](./links.md): reference for getting links between pages.
