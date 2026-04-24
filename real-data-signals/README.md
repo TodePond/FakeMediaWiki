@@ -1,4 +1,4 @@
-# MediaWiki Prototyping Resources
+# Wiki signals
 
 This folder contains guidance for using real MediaWiki data in prototypes.
 
