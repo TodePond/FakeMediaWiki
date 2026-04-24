@@ -1,5 +1,7 @@
 # Analytics signals for use in MediaWiki prototypes
 
+Example **requests** are copy-pasteable `curl` lines. Example **response** bodies were produced by those requests against Wikimedia’s **live** AQS (not fictional JSON), then trimmed for length where noted.
+
 ## 1) Article views
 
 This endpoint returns a time series of page view counts for a specific article.
@@ -137,16 +139,16 @@ Path parameters:
 
 - `project` (example: `en.wikipedia.org`)
 - `access` (example: `all-access`)
-- `year` (example: `2026`)
-- `month` (example: `04`)
-- `day` (example: `20`)
+- `year` (example: `2024`)
+- `month` (example: `12`)
+- `day` (example: `15`)
 
 ### Example
 
 #### Request
 
 ```bash
-curl -sS "https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia.org/all-access/2026/04/15" \
+curl -sS "https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia.org/all-access/2024/12/15" \
   -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
@@ -158,58 +160,56 @@ curl -sS "https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia.o
 		{
 			"project": "en.wikipedia",
 			"access": "all-access",
-			"year": "2026",
-			"month": "04",
+			"year": "2024",
+			"month": "12",
 			"day": "15",
 			"articles": [
 				{
 					"article": "Main_Page",
-					"views": 7048872,
+					"views": 4286084,
 					"rank": 1
 				},
 				{
 					"article": "Special:Search",
-					"views": 1237127,
+					"views": 1020306,
 					"rank": 2
 				},
 				{
 					"article": "Wikipedia:Featured_pictures",
-					"views": 336973,
+					"views": 560816,
 					"rank": 3
 				},
 				{
-					"article": "Eric_Swalwell",
-					"views": 214002,
+					"article": "Pushpa_2:_The_Rule",
+					"views": 430265,
 					"rank": 4
 				},
 				{
-					"article": "Dhurandhar:_The_Revenge",
-					"views": 179368,
+					"article": "Travis_Hunter",
+					"views": 313291,
 					"rank": 5
 				},
 				{
-					"article": ".xxx",
-					"views": 167150,
+					"article": "Zakir_Hussain_(musician)",
+					"views": 240823,
 					"rank": 6
 				},
 				{
-					"article": "List_of_highest-grossing_Indian_films",
-					"views": 165718,
+					"article": "Carry-On",
+					"views": 229481,
 					"rank": 7
 				},
 				{
-					"article": "Samrat_Choudhary",
-					"views": 146967,
+					"article": "List_of_highest-grossing_Indian_films",
+					"views": 211987,
 					"rank": 8
 				}
-			],
-			"_note": "…truncated: full API `articles` array is much longer (see AQS for full daily list)."
+				// etc...
+			]
 		}
 	]
 }
 ```
-
-_Full per-day `articles` list is long; the capture includes every ranked article. Snippet above shows the envelope and the first 8 `articles` only._
 
 ### Availability
 
@@ -225,7 +225,7 @@ Broad Wikimedia project coverage through AQS project identifiers.
 
 ---
 
-## 3) Most edited pages
+## 3) Most edited articles
 
 This endpoint returns the top content pages by **number of edits** in a given **month** on a project. It answers “what got edited a lot” in aggregate (not the same as pageviews).
 
@@ -249,8 +249,8 @@ Path parameters (see live spec for allowed values):
 - `project` (example: `en.wikipedia.org`)
 - `editor-type` (example: `all-editor-types`)
 - `page-type` (example: `content` for article namespace style content)
-- `year` (example: `2024`)
-- `month` (example: `01`)
+- `year` (example: `2016`)
+- `month` (example: `08`)
 - `day` — use `all-days` for the **entire month**
 
 ### Example
@@ -258,7 +258,7 @@ Path parameters (see live spec for allowed values):
 #### Request
 
 ```bash
-curl -sS "https://wikimedia.org/api/rest_v1/metrics/edited-pages/top-by-edits/en.wikipedia.org/all-editor-types/content/2024/01/all-days" \
+curl -sS "https://wikimedia.org/api/rest_v1/metrics/edited-pages/top-by-edits/en.wikipedia.org/all-editor-types/content/2016/08/all-days" \
   -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
@@ -274,13 +274,24 @@ curl -sS "https://wikimedia.org/api/rest_v1/metrics/edited-pages/top-by-edits/en
 			"granularity": "monthly",
 			"results": [
 				{
-					"timestamp": "2024-01-01T00:00:00.000Z",
+					"timestamp": "2016-08-01T00:00:00.000Z",
 					"top": [
 						{
-							"page_title": "Deaths_in_December_2024",
-							"edits": 2252,
+							"page_title": "Great_Britain_at_the_2016_Summer_Olympics",
+							"edits": 1578,
 							"rank": 1
+						},
+						{
+							"page_title": "2016_Summer_Olympics_medal_table",
+							"edits": 1500,
+							"rank": 2
+						},
+						{
+							"page_title": "United_States_at_the_2016_Summer_Olympics",
+							"edits": 1444,
+							"rank": 3
 						}
+						// etc...
 					]
 				}
 			]
@@ -335,7 +346,7 @@ curl -sS "https://wikimedia.org/api/rest_v1/metrics/edits/per-page/en.wikipedia/
   -H "User-Agent: <your tool name> (<contact: URL or email>)"
 ```
 
-#### Response (illustrative)
+#### Response
 
 ```json
 {
@@ -347,14 +358,36 @@ curl -sS "https://wikimedia.org/api/rest_v1/metrics/edits/per-page/en.wikipedia/
 			"granularity": "daily",
 			"results": [
 				{
-					"timestamp": "2024-04-01T00:00:00.000Z",
-					"edits": 3
+					"timestamp": "2024-04-02T00:00:00.000Z",
+					"edits": 1
+				},
+				{
+					"timestamp": "2024-04-04T00:00:00.000Z",
+					"edits": 2
+				},
+				{
+					"timestamp": "2024-04-05T00:00:00.000Z",
+					"edits": 4
+				},
+				{
+					"timestamp": "2024-04-06T00:00:00.000Z",
+					"edits": 1
+				},
+				{
+					"timestamp": "2024-04-07T00:00:00.000Z",
+					"edits": 2
+				},
+				{
+					"timestamp": "2024-04-08T00:00:00.000Z",
+					"edits": 1
 				}
 			]
 		}
 	]
 }
 ```
+
+_Unmodified live response for the `curl` line above. Days with zero edits in the range may be omitted from `results`._
 
 ### Availability
 
@@ -405,6 +438,8 @@ curl -sS "https://wikimedia.org/api/rest_v1/metrics/edits/aggregate/en.wikipedia
 
 #### Response (excerpt)
 
+Unmodified `results` for the same date range as the request; the array continues through `2024-04-09` for this example.
+
 ```json
 {
 	"items": [
@@ -417,6 +452,38 @@ curl -sS "https://wikimedia.org/api/rest_v1/metrics/edits/aggregate/en.wikipedia
 				{
 					"timestamp": "2024-04-01T00:00:00.000Z",
 					"edits": 128772
+				},
+				{
+					"timestamp": "2024-04-02T00:00:00.000Z",
+					"edits": 117261
+				},
+				{
+					"timestamp": "2024-04-03T00:00:00.000Z",
+					"edits": 107243
+				},
+				{
+					"timestamp": "2024-04-04T00:00:00.000Z",
+					"edits": 114393
+				},
+				{
+					"timestamp": "2024-04-05T00:00:00.000Z",
+					"edits": 114424
+				},
+				{
+					"timestamp": "2024-04-06T00:00:00.000Z",
+					"edits": 117315
+				},
+				{
+					"timestamp": "2024-04-07T00:00:00.000Z",
+					"edits": 120656
+				},
+				{
+					"timestamp": "2024-04-08T00:00:00.000Z",
+					"edits": 113465
+				},
+				{
+					"timestamp": "2024-04-09T00:00:00.000Z",
+					"edits": 121074
 				}
 			]
 		}
