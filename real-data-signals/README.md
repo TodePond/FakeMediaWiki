@@ -1,6 +1,5 @@
-# Real Data Signal Guides
+# MediaWiki Prototyping Resources
 
-This folder contains guidance for using real MediaWiki data and signals in prototypes.
+This folder contains guidance for using real MediaWiki data in prototypes.
 
-- [`ml-signals.md`](./ml-signals.md): guidance for using ML signals in prototypes.
-- [`analytics-signals.md`](./analytics-signals.md): guidance for using analytics signals in prototypes.
+- [`signals.md`](./signals.md): reference for ML and analytics signals.
