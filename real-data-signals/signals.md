@@ -55,8 +55,6 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-langua
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
 
-Single global endpoint (not per-wiki URL); you pass `lang` + `rev_id`, and only language codes supported by the deployed model are accepted.
-
 ### Rate limits
 
 **Explicit numeric (Lift Wing external usage)**: [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
@@ -116,7 +114,7 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-multil
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
 
-Single global endpoint (not per-wiki URL); language availability is limited to the model's supported language codes.
+Supported language codes (API reference): `ka`, `lv`, `ta`, `ur`, `eo`, `lt`, `sl`, `hy`, `hr`, `sk`, `eu`, `et`, `ms`, `az`, `da`, `bg`, `sr`, `ro`, `el`, `th`, `bn`, `no`, `hi`, `ca`, `hu`, `ko`, `fi`, `vi`, `uz`, `sv`, `cs`, `he`, `id`, `tr`, `uk`, `nl`, `pl`, `ar`, `fa`, `it`, `zh`, `ru`, `es`, `ja`, `de`, `fr`, `en`.
 
 ### Rate limits
 
@@ -172,8 +170,6 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/reference-need:pr
 ### Availability
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
-
-Single global endpoint (not per-wiki URL); you pass `lang` + `rev_id`, and supported languages are constrained by the deployed model.
 
 ### Rate limits
 
@@ -249,7 +245,7 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/edit-check:predic
 
 Publicly available on `api.wikimedia.org`; this is the production inference surface used by Edit Check.
 
-Single global endpoint; availability is determined by supported `check_type` values (for example `tone`) and the languages supported by that check's model.
+Single global endpoint. Availability is determined by supported `check_type` values (for example `tone`). The docs do not publish a single exhaustive language list for all check types.
 
 ### Rate limits
 
@@ -259,8 +255,8 @@ Single global endpoint; availability is determined by supported `check_type` val
 
 ## 5) Action API `recentchanges`
 
-This endpoint lists the most recent edits on a wiki, similar to the RecentChanges page.
-It returns edit metadata such as revision IDs, timestamps, users, comments, tags, and optional ORES-related fields.
+This endpoint lists the most recent edits on a wiki, similar to the RecentChanges page, and it can include predictions from ORES when you request `oresscores`.
+It returns normal edit metadata (revision IDs, timestamps, users, comments, tags) plus model prediction fields from ORES where available.
 
 ### Documentation
 
@@ -799,7 +795,6 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/outlink-topic-mod
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
 
-Single global endpoint using `lang` plus page identifiers; available for language/page combinations supported by the deployed outlink-topic model.
 
 ### Rate limits
 
@@ -938,8 +933,6 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/articlequality:pr
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
 
-Single global endpoint using `lang` + `rev_id`; available only for language codes supported by the deployed articlequality model.
-
 ### Rate limits
 
 **Explicit numeric (Lift Wing external usage)**:
@@ -997,7 +990,7 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/readability:predi
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
 
-Multilingual endpoint; language support is model-defined and should be verified for your target languages.
+Supported language codes (API reference): `af`, `sq`, `am`, `ar`, `hy`, `as`, `az`, `eu`, `be`, `bn`, `bs`, `br`, `bg`, `my`, `ca`, `zh-yue`, `zh`, `zh-classical`, `hr`, `cs`, `da`, `nl`, `en`, `eo`, `et`, `tl`, `fi`, `fr`, `gl`, `ka`, `de`, `el`, `gu`, `ha`, `he`, `hi`, `hu`, `is`, `id`, `ga`, `it`, `ja`, `jv`, `kn`, `kk`, `km`, `ko`, `ku`, `ky`, `lo`, `la`, `lv`, `lt`, `mk`, `mg`, `ms`, `ml`, `mr`, `mn`, `ne`, `no`, `or`, `om`, `ps`, `fa`, `pl`, `pt`, `pa`, `ro`, `ru`, `sa`, `gd`, `sr`, `sd`, `si`, `sk`, `sl`, `so`, `es`, `su`, `sw`, `sv`, `ta`, `te`, `th`, `tr`, `uk`, `ur`, `ug`, `uz`, `vi`, `cy`, `fy`, `xh`, `yi`, `simple`.
 
 ### Rate limits
 
@@ -1209,8 +1202,6 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/article-descripti
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
 
-Single global endpoint using `lang` + `title`; available for languages supported by the deployed article-descriptions model.
-
 ### Rate limits
 
 **Explicit numeric (Lift Wing external usage)**:
@@ -1281,8 +1272,6 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/reference-risk:pr
 ### Availability
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
-
-Single global endpoint using `lang` + `rev_id`; available for languages covered by the deployed reference-risk model.
 
 ### Rate limits
 
@@ -1742,8 +1731,6 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/article-country:p
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
 
-Single global endpoint using `lang` + `title`; available for languages covered by the deployed article-country model.
-
 ### Rate limits
 
 **Explicit numeric (Lift Wing external usage)**:
@@ -1816,8 +1803,6 @@ curl "https://api.wikimedia.org/service/lw/recommendation/api/v1/translation?sou
 **Active:** Some request options are marked experimental in ecosystem documentation.
 
 Publicly available via Wikimedia's production recommendation API.
-
-Availability is by source/target language pair; only pairs present in the recommendation backend return results.
 
 ### Rate limits
 
