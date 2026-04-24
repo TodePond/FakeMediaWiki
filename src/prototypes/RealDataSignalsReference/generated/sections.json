@@ -1,0 +1,964 @@
+{
+	"version": 1,
+	"generatedBy": "build-real-data-reference.mjs",
+	"files": [
+		{
+			"slug": "analytics",
+			"title": "Analytics signals for use in MediaWiki prototypes",
+			"preamble": "\nExample **requests** are copy-pasteable `curl` lines. Example **response** bodies were produced by those requests against Wikimedia’s **live** public APIs, then trimmed for length where noted: **AQS** (the Analytics/REST `metrics/…` paths) in **sections 1–5**; the **`mostread`** object in **section 6** comes from the per-wiki [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) **`feed/featured`** REST bundle (not AQS, not a standalone `page/most-read/…` route on the public API).",
+			"sections": [
+				{
+					"id": "analytics-1",
+					"anchor": "analytics-1-article-views",
+					"headingLine": "## 1) Article views",
+					"titleText": "1) Article views",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns a time series of page view counts for a specific article.\n\n### Documentation\n\n- [Wikimedia Analytics API: page view analytics reference](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/page-views.html)\n- [Wikimedia Analytics API: page metrics examples](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/examples/page-metrics.html)\n\n### Endpoint\n\n`https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/{project}/{access}/{agent}/{article}/{granularity}/{start}/{end}`\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters:\n\n- `project` (example: `en.wikipedia.org`)\n- `access` (example: `all-access`)\n- `agent` (example: `all-agents`)\n- `article` (example: `Jupiter`)\n- `granularity` (`daily` or `monthly`)\n- `start` (example: `20260415`)\n- `end` (example: `20260421`)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia.org/all-access/all-agents/Jupiter/daily/20260415/20260420\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"items\": [\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"article\": \"Jupiter\",\n\t\t\t\"granularity\": \"daily\",\n\t\t\t\"timestamp\": \"2026041500\",\n\t\t\t\"access\": \"all-access\",\n\t\t\t\"agent\": \"all-agents\",\n\t\t\t\"views\": 7289\n\t\t},\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"article\": \"Jupiter\",\n\t\t\t\"granularity\": \"daily\",\n\t\t\t\"timestamp\": \"2026041600\",\n\t\t\t\"access\": \"all-access\",\n\t\t\t\"agent\": \"all-agents\",\n\t\t\t\"views\": 7377\n\t\t},\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"article\": \"Jupiter\",\n\t\t\t\"granularity\": \"daily\",\n\t\t\t\"timestamp\": \"2026041700\",\n\t\t\t\"access\": \"all-access\",\n\t\t\t\"agent\": \"all-agents\",\n\t\t\t\"views\": 6939\n\t\t},\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"article\": \"Jupiter\",\n\t\t\t\"granularity\": \"daily\",\n\t\t\t\"timestamp\": \"2026041800\",\n\t\t\t\"access\": \"all-access\",\n\t\t\t\"agent\": \"all-agents\",\n\t\t\t\"views\": 7268\n\t\t},\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"article\": \"Jupiter\",\n\t\t\t\"granularity\": \"daily\",\n\t\t\t\"timestamp\": \"2026041900\",\n\t\t\t\"access\": \"all-access\",\n\t\t\t\"agent\": \"all-agents\",\n\t\t\t\"views\": 7304\n\t\t},\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"article\": \"Jupiter\",\n\t\t\t\"granularity\": \"daily\",\n\t\t\t\"timestamp\": \"2026042000\",\n\t\t\t\"access\": \"all-access\",\n\t\t\t\"agent\": \"all-agents\",\n\t\t\t\"views\": 7719\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available via Wikimedia's Analytics API in production.\n\nBroad Wikimedia project coverage through AQS project identifiers (for example `en.wikipedia.org`).\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "analytics-2",
+					"anchor": "analytics-2-most-viewed-articles",
+					"headingLine": "## 2) Most viewed articles",
+					"titleText": "2) Most viewed articles",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns ranked most-viewed pages for a project on a specific day (the **full** AQS daily leaderboard on `wikimedia.org`). For the **shorter, app-oriented “most read” list** (same day’s view numbers where rows overlap, but with some high-traffic special pages omitted), see **section 6** (`mostread` inside `feed/featured` on a wiki).\n\n### Documentation\n\n- [Wikimedia Analytics API: page view analytics reference](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/page-views.html)\n\n### Endpoint\n\n`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/{project}/{access}/{year}/{month}/{day}`\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters:\n\n- `project` (example: `en.wikipedia.org`)\n- `access` (example: `all-access`)\n- `year` (example: `2024`)\n- `month` (example: `12`)\n- `day` (example: `15`)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia.org/all-access/2024/12/15\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"items\": [\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"access\": \"all-access\",\n\t\t\t\"year\": \"2024\",\n\t\t\t\"month\": \"12\",\n\t\t\t\"day\": \"15\",\n\t\t\t\"articles\": [\n\t\t\t\t{\n\t\t\t\t\t\"article\": \"Main_Page\",\n\t\t\t\t\t\"views\": 4286084,\n\t\t\t\t\t\"rank\": 1\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"article\": \"Special:Search\",\n\t\t\t\t\t\"views\": 1020306,\n\t\t\t\t\t\"rank\": 2\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"article\": \"Wikipedia:Featured_pictures\",\n\t\t\t\t\t\"views\": 560816,\n\t\t\t\t\t\"rank\": 3\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"article\": \"Pushpa_2:_The_Rule\",\n\t\t\t\t\t\"views\": 430265,\n\t\t\t\t\t\"rank\": 4\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"article\": \"Travis_Hunter\",\n\t\t\t\t\t\"views\": 313291,\n\t\t\t\t\t\"rank\": 5\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"article\": \"Zakir_Hussain_(musician)\",\n\t\t\t\t\t\"views\": 240823,\n\t\t\t\t\t\"rank\": 6\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"article\": \"Carry-On\",\n\t\t\t\t\t\"views\": 229481,\n\t\t\t\t\t\"rank\": 7\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"article\": \"List_of_highest-grossing_Indian_films\",\n\t\t\t\t\t\"views\": 211987,\n\t\t\t\t\t\"rank\": 8\n\t\t\t\t}\n\t\t\t\t// etc...\n\t\t\t]\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available via Wikimedia's Analytics API in production.\n\nBroad Wikimedia project coverage through AQS project identifiers.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "analytics-3",
+					"anchor": "analytics-3-most-edited-articles",
+					"headingLine": "## 3) Most edited articles",
+					"titleText": "3) Most edited articles",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns the top content pages by **number of edits** in a given **month** on a project. It answers “what got edited a lot” in aggregate (not the same as pageviews).\n\n### Documentation\n\n- [Edit analytics (includes “Edited pages” family)](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/edits.html)\n- [Wikimedia Analytics API overview](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/)\n\n### Endpoint\n\n`https://wikimedia.org/api/rest_v1/metrics/edited-pages/top-by-edits/{project}/{editor-type}/{page-type}/{year}/{month}/{day}`\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters (see live spec for allowed values):\n\n- `project` (example: `en.wikipedia.org`)\n- `editor-type` (example: `all-editor-types`)\n- `page-type` (example: `content` for article namespace style content)\n- `year` (example: `2016`)\n- `month` (example: `08`)\n- `day` — use `all-days` for the **entire month**\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://wikimedia.org/api/rest_v1/metrics/edited-pages/top-by-edits/en.wikipedia.org/all-editor-types/content/2016/08/all-days\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"items\": [\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"editor-type\": \"all-editor-types\",\n\t\t\t\"page-type\": \"content\",\n\t\t\t\"granularity\": \"monthly\",\n\t\t\t\"results\": [\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2016-08-01T00:00:00.000Z\",\n\t\t\t\t\t\"top\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"page_title\": \"Great_Britain_at_the_2016_Summer_Olympics\",\n\t\t\t\t\t\t\t\"edits\": 1578,\n\t\t\t\t\t\t\t\"rank\": 1\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"page_title\": \"2016_Summer_Olympics_medal_table\",\n\t\t\t\t\t\t\t\"edits\": 1500,\n\t\t\t\t\t\t\t\"rank\": 2\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"page_title\": \"United_States_at_the_2016_Summer_Olympics\",\n\t\t\t\t\t\t\t\"edits\": 1444,\n\t\t\t\t\t\t\t\"rank\": 3\n\t\t\t\t\t\t}\n\t\t\t\t\t\t// etc...\n\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available via Wikimedia’s Analytics API. **Edited-pages** metrics **exclude** edits on redirects (per family documentation). Data is **not** real-time; expect **delay** between live editing and published aggregates (often on the order of days—see official notes for this endpoint family).\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "analytics-4",
+					"anchor": "analytics-4-article-edit-counts",
+					"headingLine": "## 4) Article edit counts",
+					"titleText": "4) Article edit counts",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns a **daily** time series of **edit counts** for a **single page title** on a project. **Includes** edits on redirects (per “edits” family documentation—contrast with edited-pages family above).\n\n### Documentation\n\n- [Edit analytics — edits to a page](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/edits.html)\n\n### Endpoint\n\n`https://wikimedia.org/api/rest_v1/metrics/edits/per-page/{project}/{page_title}/{editor-type}/daily/{start}/{end}`\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters:\n\n- `project` (example: `en.wikipedia` — format per [REST spec](https://wikimedia.org/api/rest_v1/?doc) for the Wikimedia `metrics` module; this example matches live responses)\n- `page_title` (example: `Earth` — must be URL-escaped, e.g. `Barack%2B_Obama` when needed)\n- `editor-type` (example: `all-editor-types`)\n- `start` / `end` — per spec, often as `YYYYMMDD00` to `YYYYMMDD00` for daily (example: `2024040100` to `2024041000`)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://wikimedia.org/api/rest_v1/metrics/edits/per-page/en.wikipedia/Earth/all-editor-types/daily/2024040100/2024041000\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"items\": [\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"editor-type\": \"all-editor-types\",\n\t\t\t\"page-title\": \"Earth\",\n\t\t\t\"granularity\": \"daily\",\n\t\t\t\"results\": [\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-02T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 1\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-04T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 2\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-05T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 4\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-06T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 1\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-07T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 2\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-08T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 1\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n_Unmodified live response for the `curl` line above. Days with zero edits in the range may be omitted from `results`._\n\n### Availability\n\nPublicly available via Wikimedia’s Analytics API. Use for **prototyping** “edit activity on this title over a window,” not for low-latency “live” counters.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "analytics-5",
+					"anchor": "analytics-5-global-edit-counts",
+					"headingLine": "## 5) Global edit counts",
+					"titleText": "5) Global edit counts",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns **daily edit counts** for a **whole project** (e.g. all content-namespace edits for English Wikipedia) over a time range. Useful for dashboards or **normalization** (e.g. per-article signal vs wiki-wide busyness), not for ranking individual articles by themselves.\n\n### Documentation\n\n- [Edit analytics — number of edits](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/edits.html)\n- [Project metrics examples](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/examples/project-metrics.html)\n\n### Endpoint\n\n`https://wikimedia.org/api/rest_v1/metrics/edits/aggregate/{project}/{editor-type}/{page-type}/daily/{start}/{end}`\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters:\n\n- `project` (example: `en.wikipedia.org`)\n- `editor-type` (example: `all-editor-types`)\n- `page-type` (example: `content`)\n- `start` / `end` (example: `2024040100` to `2024041000`)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://wikimedia.org/api/rest_v1/metrics/edits/aggregate/en.wikipedia.org/all-editor-types/content/daily/2024040100/2024041000\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"items\": [\n\t\t{\n\t\t\t\"project\": \"en.wikipedia\",\n\t\t\t\"editor-type\": \"all-editor-types\",\n\t\t\t\"page-type\": \"content\",\n\t\t\t\"granularity\": \"daily\",\n\t\t\t\"results\": [\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-01T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 128772\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-02T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 117261\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-03T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 107243\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-04T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 114393\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-05T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 114424\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-06T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 117315\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-07T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 120656\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-08T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 113465\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"timestamp\": \"2024-04-09T00:00:00.000Z\",\n\t\t\t\t\t\"edits\": 121074\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available. Same **latency** caveats as other AQS metrics; check stability labels in the [REST API documentation](https://wikimedia.org/api/rest_v1/?doc) for the specific path.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "analytics-6",
+					"anchor": "analytics-6-most-read-articles",
+					"headingLine": "## 6) Most read articles",
+					"titleText": "6) Most read articles",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nTo show the same **yesterday’s top read**-style list that powers cards in the official apps’ **Explore** experience, use the aggregated Wikifeeds response and read the **`mostread`** object.\n\nThe full `feed/featured` bundle is also documented in [`curation.md`](./curation.md).\n\n### Documentation\n\n- [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) (aggregated `feed/featured` includes the microservice that backs “most read”)\n- [Wikitech: Wikifeeds (public paths)](https://wikitech.wikimedia.org/wiki/Wikifeeds#Overview)\n\n### Endpoint\n\n`https://{wiki}/api/rest_v1/feed/featured/{yyyy}/{mm}/{dd}`\n\n(Example host: `en.wikipedia.org`.) The **`mostread`** field sits inside the JSON body; the **`date`** field inside **`mostread`** is the **UTC** day the view figures refer to (typically the **previous** calendar day relative to the `featured` path’s date).\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters: `yyyy`, `mm`, `dd` (zero-padded; earliest supported year is **2016** per [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds)). Use the [User-Agent](https://www.mediawiki.org/wiki/API:Etiquette) policy. Response: parse JSON, then `response.mostread` (when present—some wikis or days may omit it).\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/api/rest_v1/feed/featured/2026/04/24\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"date\": \"2026-04-23Z\",\n\t\"articles\": [\n\t\t{\n\t\t\t\"title\": \"Nahui_Ollin\",\n\t\t\t\"views\": 1171179,\n\t\t\t\"rank\": 2\n\t\t},\n\t\t{\n\t\t\t\"title\": \"2026_Tamil_Nadu_Legislative_Assembly_election\",\n\t\t\t\"views\": 355438,\n\t\t\t\"rank\": 4\n\t\t},\n\t\t{\n\t\t\t\"title\": \"2021_Tamil_Nadu_Legislative_Assembly_election\",\n\t\t\t\"views\": 257803,\n\t\t\t\"rank\": 6\n\t\t},\n\t\t{\n\t\t\t\"title\": \"2026_West_Bengal_Legislative_Assembly_election\",\n\t\t\t\"views\": 229632,\n\t\t\t\"rank\": 7\n\t\t},\n\t\t{\n\t\t\t\"title\": \"Michael_(2026_film)\",\n\t\t\t\"views\": 177083,\n\t\t\t\"rank\": 8\n\t\t}\n\t\t// etc...\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublic on wikis that expose the [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) REST routes. Stability and field availability follow the `feed/featured` contract (see also [`curation.md`](./curation.md)). Not a substitute for the **AQS** definitions in **sections 1–2** when you need the official metrics API.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)"
+						}
+					]
+				}
+			]
+		},
+		{
+			"slug": "curation",
+			"title": "List of endpoints for community-curated and daily “Explore”-style data",
+			"preamble": "",
+			"sections": [
+				{
+					"id": "curation-1",
+					"anchor": "curation-1-daily-featured-feed-aggregated",
+					"headingLine": "## 1) Daily featured feed (aggregated)",
+					"titleText": "1) Daily featured feed (aggregated)",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns one JSON object for a calendar day, aggregating the same “curated of the day” data used in the official apps’ Explore feed (for example: today’s featured article, picture of the day, previous day’s most read, in the news, DYK, and a short on-this-day list when available); for a given date and project, the payload can also surface keys such as **`tfa`**, **`image`**, **`mostread`**, **`dyk`** (Did you know), embedded **`onthisday`**, and **`news`**, but the exact set depends on the wiki, language, and what the service can assemble—see the [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) page for documented core fields and support notes. For the full on-this-day data instead of the short list embedded in `feed/featured`, use **`feed/onthisday/…`** (for example **`all`** for every bucket, or **`selected`** for the curated short list).\n\n### Documentation\n\n- [Wikifeeds: feed/featured](https://www.mediawiki.org/wiki/Wikifeeds#%E2%80%A6%2Ffeed%2Ffeatured%2F%7Byyyy%7D%2F%7Bmm%7D%2F%7Bdd%7D)\n- [Wikifeeds API](https://www.mediawiki.org/wiki/Wikifeeds_API) (see **Quick start** for an alternate **host** that serves the same featured payload by language: `https://api.wikimedia.org/feed/v1/wikipedia/{lang}/featured/…`).\n\n### Endpoint\n\n`https://en.wikipedia.org/api/rest_v1/feed/featured/{yyyy}/{mm}/{dd}`\n\n(Same data path, different **service URL**: `https://api.wikimedia.org/feed/v1/wikipedia/en/featured/{yyyy}/{mm}/{dd}`.)\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters:\n\n- `yyyy` (four digits, earliest year supported: **2016**)\n- `mm` (month, two digits, zero-padded)\n- `dd` (day, two digits, zero-padded)\n\nOptionally use another project host instead of `en.wikipedia.org` (for example `de.wikipedia.org`) if that wiki exposes the route.\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/api/rest_v1/feed/featured/2026/04/24\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"tfa\": {\n\t\t\"type\": \"standard\",\n\t\t\"title\": \"Ornithoprion\",\n\t\t\"pageid\": 48807661,\n\t\t\"extract\": \"Ornithoprion is an extinct genus of cartilaginous fish. The only known species, O. hertwigi, lived during the Moscovian stage of the Pennsylvanian subperiod, which spanned from 315 to 307 million year\"\n\t},\n\t\"mostread\": {\n\t\t\"date\": \"2026-04-23Z\",\n\t\t\"articles\": [\n\t\t\t{\n\t\t\t\t\"title\": \"Nahui_Ollin\",\n\t\t\t\t\"views\": 1171179,\n\t\t\t\t\"rank\": 2\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"title\": \"2026_Tamil_Nadu_Legislative_Assembly_election\",\n\t\t\t\t\"views\": 355438,\n\t\t\t\t\"rank\": 4\n\t\t\t}\n\t\t]\n\t},\n\t\"image\": {\n\t\t\"title\": \"File:Rapanui Rock during sunset, Sumner, Christchurch, New Zealand.jpg\",\n\t\t\"file_page\": \"https://commons.wikimedia.org/wiki/File:Rapanui_Rock_during_sunset,_Sumner,_Christchurch,_New_Zealand.jpg\"\n\t},\n\t\"dyk\": [\n\t\t{\n\t\t\t\"text\": \"... that a 4th-century set of Roman glassware was highly valued by Silla royalty in Korea, and is considered a National Treasure?\"\n\t\t},\n\t\t{\n\t\t\t\"text\": \"... that the Tabaru River hosts the westernmost mangroves in Japan?\"\n\t\t}\n\t],\n\t\"onthisday\": [\n\t\t{\n\t\t\t\"text\": \"A building in the Savar Upazila of Dhaka, Bangladesh, collapsed, killing 1,134 people, making it the deadliest accidental structural failure in modern history.\",\n\t\t\t\"pages\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"standard\",\n\t\t\t\t\t\"title\": \"Savar_Upazila\",\n\t\t\t\t\t\"pageid\": 9495766\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"standard\",\n\t\t\t\t\t\"title\": \"Greater_Dhaka\",\n\t\t\t\t\t\"pageid\": 24027047\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on wikis that surface Wikifeeds over the [MediaWiki REST API](https://www.mediawiki.org/wiki/Wikifeeds_API). Treated as **unstable** in some upstream documentation; not every key is present for every language or every day. Some keys (for example `news`, `dyk`, or embedded `onthisday`) may be missing depending on the project.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "curation-2",
+					"anchor": "curation-2-on-this-day",
+					"headingLine": "## 2) On this day",
+					"titleText": "2) On this day",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns events tied to a month and day (anniversaries, births, deaths, holidays, and related article metadata). The path segment **`all`** returns every bucket in one response (keys such as `selected`, `events`, `births`, `deaths`, `holidays`). Other `type` values return a single key matching that name (for example `…/onthisday/events/04/24` has top-level `events` only). The **`selected`** type highlights a smaller, editorially chosen set of anniversaries when the wiki provides them.\n\n### Documentation\n\n- [Wikifeeds: feed/onthisday](https://www.mediawiki.org/wiki/Wikifeeds#%E2%80%A6%2Ffeed%2Fonthisday%2F%7Btype%7D%2F%7Bmm%7D%2F%7Bdd%7D)\n\n### Endpoint\n\n`https://en.wikipedia.org/api/rest_v1/feed/onthisday/{type}/{mm}/{dd}`\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters:\n\n- `type`: `all` | `selected` | `events` | `births` | `deaths` | `holidays`\n- `mm` (month, two digits, zero-padded)\n- `dd` (day, two digits, zero-padded)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/api/rest_v1/feed/onthisday/all/04/24\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"selected\": [\n\t\t{\n\t\t\t\"text\": \"A building in the Savar Upazila of Dhaka, Bangladesh, collapsed, killing 1,134 people, making it the deadliest accidental structural failure in modern history.\",\n\t\t\t\"year\": 2013,\n\t\t\t\"pages\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"standard\",\n\t\t\t\t\t\"title\": \"Savar_Upazila\",\n\t\t\t\t\t\"pageid\": 9495766\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"standard\",\n\t\t\t\t\t\"title\": \"Greater_Dhaka\",\n\t\t\t\t\t\"pageid\": 24027047\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t],\n\t\"events\": [\n\t\t{\n\t\t\t\"text\": \"A mass stabbing at a school in Nantes, France, leaves one person dead and three others wounded.\",\n\t\t\t\"pages\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"standard\",\n\t\t\t\t\t\"title\": \"2025_Nantes_school_stabbing\",\n\t\t\t\t\t\"pageid\": 79801582\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t],\n\t\"births\": [\n\t\t{\n\t\t\t\"text\": \"Olivia Gadecki, Australian tennis player\",\n\t\t\t\"year\": 2002,\n\t\t\t\"pages\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"standard\",\n\t\t\t\t\t\"title\": \"Olivia_Gadecki\",\n\t\t\t\t\t\"pageid\": 66556420\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t],\n\t\"holidays\": [\n\t\t{\n\t\t\t\"text\": \"Armenian Genocide Remembrance Day (Armenia, California, France)\",\n\t\t\t\"pages\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"standard\",\n\t\t\t\t\t\"title\": \"Armenian_Genocide_Remembrance_Day\",\n\t\t\t\t\t\"pageid\": 4575104\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t],\n\t\"deaths\": [\n\t\t{\n\t\t\t\"text\": \"Roy Phillips, British musician (born 1941)\",\n\t\t\t\"year\": 2025,\n\t\t\t\"pages\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"standard\",\n\t\t\t\t\t\"title\": \"Roy_Phillips\",\n\t\t\t\t\t\"pageid\": 11256854\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n(Trimmed: each page object in the **live** response includes more fields. Most items in each **array** are omitted; a single entry is shown per bucket when one exists for that day.)\n\n### Availability\n\nPublicly available on wikis that surface Wikifeeds. Coverage of languages and the richness of each bucket vary; the **`all`** request may be large. Not all types return data for all dates.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "curation-3",
+					"anchor": "curation-3-app-announcements",
+					"headingLine": "## 3) App announcements",
+					"titleText": "3) App announcements",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns structured notices meant for the **Wikipedia iOS and Android** apps (surveys, campaigns, limited-time messaging). The payload is service-defined, not mainspace wikitext; it may be **empty** when nothing is active.\n\n### Documentation\n\n- [Wikifeeds: feed/announcements](https://www.mediawiki.org/wiki/Wikifeeds#%E2%80%A6%2Ffeed%2Fannouncements)\n- [Wikimedia Apps: feed announcement config spec](https://www.mediawiki.org/wiki/Wikimedia_Apps/Team/RESTBase_services_for_apps/Feed_announcement_config_spec)\n\n### Endpoint\n\n`https://en.wikipedia.org/api/rest_v1/feed/announcements`\n\n### Method\n\n`GET`\n\n### Request shape\n\nNo path or query parameters. Use a normal project host (`en.wikipedia.org`, etc.) if that wiki exposes the route.\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/api/rest_v1/feed/announcements\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"announce\": []\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n(Live response as returned when there are no active announcements. When campaigns exist, `announce` is a non-empty array; shape follows the [announcement config spec](https://www.mediawiki.org/wiki/Wikimedia_Apps/Team/RESTBase_services_for_apps/Feed_announcement_config_spec).)\n\n### Availability\n\nPublicly available where deployed; [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds#%E2%80%A6%2Ffeed%2Fannouncements) describes the endpoint as **experimental** and more likely to change or disappear than the featured or on-this-day routes. Not appropriate as a stand-in for editorial or community “featured content.”\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "curation-4",
+					"anchor": "curation-4-random-page",
+					"headingLine": "## 4) Random page",
+					"titleText": "4) Random page",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint is served by the same [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) / REST stack: it does **not** return a flat uniform random mainspace title; the service **prefers** pages with a lead image, a Wikidata description, and a longer lead extract, so the draw is “interesting” in the same spirit as the Explore experience. The **`title`** sub-route is owned by Wikifeeds; **`summary`** and **`html`** are handled by the broader REST content API after a redirect. Requests often receive **303** with a `Location` to a concrete `page/…` URL; when following redirects, **`curl -L`** returns JSON.\n\n### Documentation\n\n- [Wikifeeds: page/random](https://www.mediawiki.org/wiki/Wikifeeds#%E2%80%A6%2Fpage%2Frandom%2F%7Bformat%7D)\n- [Wikitech: Wikifeeds](https://wikitech.wikimedia.org/wiki/Wikifeeds) (list of public routes)\n- [REST: get random page in format](https://en.wikipedia.org/api/rest_v1/#/Page%20content/get_page_random__format_) (English Wikipedia; same path pattern on other wikis)\n\n### Endpoint\n\n`https://en.wikipedia.org/api/rest_v1/page/random/{format}`\n\nPath segment **`format`**: `title` (metadata batch) | `summary` (one page summary) | `html` (one page in HTML; heavier payload than `summary`).\n\n### Method\n\n`GET`\n\n### Request shape\n\n- `format` (path): `title` | `summary` | `html`\n- For JSON clients, follow redirects: **303** to `…/api/rest_v1/page/title/{title}` (for `title`) or `…/page/summary/{title}` (for `summary`) or the corresponding HTML path.\n\n### Example 1: `summary`\n\n`summary` (one random article summary after redirect; response trimmed):"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sSL \"https://en.wikipedia.org/api/rest_v1/page/random/summary\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"type\": \"standard\",\n\t\"title\": \"Peter Vela\",\n\t\"namespace\": { \"id\": 0, \"text\": \"\" },\n\t\"pageid\": 67732039,\n\t\"description\": \"New Zealand racehorse breeder\",\n\t\"lang\": \"en\",\n\t\"dir\": \"ltr\",\n\t\"timestamp\": \"2024-04-15T16:12:53Z\",\n\t\"content_urls\": {\n\t\t\"desktop\": {\n\t\t\t\"page\": \"https://en.wikipedia.org/wiki/Peter_Vela\"\n\t\t}\n\t},\n\t\"extract\": \"Sir Peter James Vela is a New Zealand businessman and Thoroughbred breeder and owner. With his brother Philip he founded Vela Fishing and Pencarrow Stud. He is most notably associated with the mare Ethereal, winner of the 2001 Melbourne Cup.\"\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n(Trimmed: many live fields omitted, including `displaytitle`, `wikibase_item`, `thumbnail`, `extract_html`, and full `content_urls` / `originalimage` / `revision`.)\n\n`title` (batch metadata; again after `curl -L`):\n\n### Example 2: `title`"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sSL \"https://en.wikipedia.org/api/rest_v1/page/random/title\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"items\": [\n\t\t{\n\t\t\t\"title\": \"Volkswagen_Transporter_(T6)\",\n\t\t\t\"page_id\": 52601761,\n\t\t\t\"rev\": 1345857964,\n\t\t\t\"namespace\": 0,\n\t\t\t\"redirect\": false\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n(Trimmed: the live `title` example includes more keys per item, such as `user_id` and `tags`. The server may return a different page title for each call.)\n\n### Availability\n\nPublicly available on wikis that expose these routes. Response shape and redirect behavior are documented in the REST specification for each wiki. Not a **dated** or **community “featured of the day”** feed, but a practical complement for prototypes that need a plausible, reader-facing article in one request.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)"
+						}
+					]
+				}
+			]
+		},
+		{
+			"slug": "links",
+			"title": "List of endpoints for determining links between pages",
+			"preamble": "",
+			"sections": [
+				{
+					"id": "links-1",
+					"anchor": "links-1-outlinks",
+					"headingLine": "## 1) Outlinks",
+					"titleText": "1) Outlinks",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns pages that a given source page links to.\n\n### Documentation\n\n- [MediaWiki Action API: Links](https://www.mediawiki.org/wiki/API:Links)\n\n### Endpoint\n\n`https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links&titles=Jupiter&pllimit=5`\n\n### Method\n\n`GET`\n\n### Request shape\n\nQuery parameters:\n\n- `action=query`\n- `prop=links`\n- `titles` (required)\n- `pllimit` (optional)\n- `plcontinue` (optional continuation token)\n- `format=json`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/w/api.php?action=query&format=json&prop=links&titles=Jupiter&pllimit=3\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"continue\": {\n\t\t\"plcontinue\": \"38930|0|Ariane_4\",\n\t\t\"continue\": \"||\"\n\t},\n\t\"query\": {\n\t\t\"pages\": {\n\t\t\t\"38930\": {\n\t\t\t\t\"pageid\": 38930,\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Jupiter\",\n\t\t\t\t\"links\": [\n\t\t\t\t\t{ \"ns\": 0, \"title\": \"Ariane 1\" },\n\t\t\t\t\t{ \"ns\": 0, \"title\": \"Ariane 2\" },\n\t\t\t\t\t{ \"ns\": 0, \"title\": \"Ariane 3\" }\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module.\n\nAvailable on Wikimedia wikis via each wiki's `api.php`.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "links-2",
+					"anchor": "links-2-backlinks",
+					"headingLine": "## 2) Backlinks",
+					"titleText": "2) Backlinks",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint finds pages that link to a specified page title or page id.\n\n### Documentation\n\n- [MediaWiki Action API: Backlinks](https://www.mediawiki.org/wiki/API:Backlinks)\n\n### Endpoint\n\n`https://en.wikipedia.org/w/api.php?action=query&format=json&list=backlinks&bltitle=Jupiter&bllimit=5`\n\n### Method\n\n`GET`\n\n### Request shape\n\nQuery parameters:\n\n- `action=query`\n- `list=backlinks`\n- `bltitle` or `blpageid` (one required)\n- `bllimit` (optional)\n- `blcontinue` (optional continuation token)\n- `format=json`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/w/api.php?action=query&format=json&list=backlinks&bltitle=Jupiter&bllimit=3\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"batchcomplete\": \"\",\n\t\"continue\": {\n\t\t\"blcontinue\": \"0|1210\",\n\t\t\"continue\": \"-||\"\n\t},\n\t\"query\": {\n\t\t\"backlinks\": [\n\t\t\t{\n\t\t\t\t\"pageid\": 639,\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Alkane\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"pageid\": 666,\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Alkali metal\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"pageid\": 791,\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Asteroid\"\n\t\t\t}\n\t\t]\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module.\n\nAvailable on Wikimedia wikis via each wiki's `api.php`.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "links-3",
+					"anchor": "links-3-language-links",
+					"headingLine": "## 3) Language links",
+					"titleText": "3) Language links",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns interlanguage links from a page to versions of the page in other languages.\n\n### Documentation\n\n- [MediaWiki Action API: Langlinks](https://www.mediawiki.org/wiki/API:Langlinks)\n\n### Endpoint\n\n`https://en.wikipedia.org/w/api.php?action=query&format=json&prop=langlinks&titles=Jupiter&lllimit=5&llprop=url|langname|autonym`\n\n### Method\n\n`GET`\n\n### Request shape\n\nQuery parameters:\n\n- `action=query`\n- `prop=langlinks`\n- `titles` (required)\n- `lllimit` (optional)\n- `llprop` (optional, examples: `url|langname|autonym`)\n- `llcontinue` (optional continuation token)\n- `format=json`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/w/api.php?action=query&format=json&prop=langlinks&titles=Jupiter&lllimit=3&llprop=url|langname|autonym\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"continue\": {\n\t\t\"llcontinue\": \"38930|an\",\n\t\t\"continue\": \"||\"\n\t},\n\t\"query\": {\n\t\t\"pages\": {\n\t\t\t\"38930\": {\n\t\t\t\t\"pageid\": 38930,\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Jupiter\",\n\t\t\t\t\"langlinks\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"lang\": \"af\",\n\t\t\t\t\t\t\"url\": \"https://af.wikipedia.org/wiki/Jupiter\",\n\t\t\t\t\t\t\"langname\": \"Afrikaans\",\n\t\t\t\t\t\t\"autonym\": \"Afrikaans\",\n\t\t\t\t\t\t\"*\": \"Jupiter\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"lang\": \"gsw\",\n\t\t\t\t\t\t\"url\": \"https://als.wikipedia.org/wiki/Jupiter_(Planet)\",\n\t\t\t\t\t\t\"langname\": \"Alemannic\",\n\t\t\t\t\t\t\"autonym\": \"Alemannisch\",\n\t\t\t\t\t\t\"*\": \"Jupiter (Planet)\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"lang\": \"am\",\n\t\t\t\t\t\t\"url\": \"https://am.wikipedia.org/wiki/%E1%8C%81%E1%8D%92%E1%89%B0%E1%88%AD\",\n\t\t\t\t\t\t\"langname\": \"Amharic\",\n\t\t\t\t\t\t\"autonym\": \"አማርኛ\",\n\t\t\t\t\t\t\"*\": \"ጁፒተር\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module.\n\nAvailable on Wikimedia wikis with interlanguage link data.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)"
+						}
+					]
+				}
+			]
+		},
+		{
+			"slug": "inference",
+			"title": "List of ML and related inference signals for use in MediaWiki prototypes",
+			"preamble": "\nCategories are given in the table of contents that follows, and the same **category** names appear in the main text as plain **bold** lines (not `##` headings) immediately before the first `##` section in each group.\n\n- **Quality**: Sections 1–6.\n- **Topic**: Sections 7–10.\n- **Edit checks**: Sections 11–21.\n- **Article recommendations**: Sections 22–24.\n- **Edit suggestions**: Sections 25–26.\n- **Summary**: Sections 27–28.\n- **Language and country**: Sections 29–30.\n\n---\n\n**Quality** (sections 1–6)",
+			"sections": [
+				{
+					"id": "inference-1",
+					"anchor": "inference-1-language-agnostic-article-quality",
+					"headingLine": "## 1) Language agnostic article quality",
+					"titleText": "1) Language agnostic article quality",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts article quality for a revision using a language-agnostic model.\nYou provide a revision ID and language code, and the response returns quality output for that revision.\n\n### Documentation\n\n- [Lift Wing API reference: language-agnostic articlequality](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_language_agnostic_articlequality_prediction)\n- [Language-agnostic article-quality model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Proposed/Language-agnostic_Wikipedia_article_quality)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/articlequality:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 123456,\n\t\"lang\": \"en\"\n}\n```\n\nOptional:\n\n- `extended_output`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/articlequality:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796, \"lang\": \"en\"}'",
+							"responseJson": "{\n\t\"score\": 0.9821763062465465,\n\t\"model_name\": \"articlequality\",\n\t\"model_version\": \"1\",\n\t\"wiki_db\": \"enwiki\",\n\t\"revision_id\": 1350687796\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-2",
+					"anchor": "inference-2-article-readability",
+					"headingLine": "## 2) Article readability",
+					"titleText": "2) Article readability",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint estimates how difficult the article text is to read.\nIt returns readability-related output for the revision and language you provide.\n\n### Documentation\n\n- [Lift Wing API reference: readability](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_readability_prediction)\n- [Multilingual readability model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Proposed/Multilingual_readability_model_card)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/readability:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 123456,\n\t\"lang\": \"en\"\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/readability:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796, \"lang\": \"en\"}'",
+							"responseJson": "{\n\t\"model_name\": \"readability\",\n\t\"model_version\": \"4\",\n\t\"wiki_db\": \"enwiki\",\n\t\"revision_id\": 1350687796,\n\t\"output\": {\n\t\t\"score\": 1.7493929862976074,\n\t\t\"fk_score_proxy\": 10.303658564099766\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\nSupported language codes (API reference): `af`, `sq`, `am`, `ar`, `hy`, `as`, `az`, `eu`, `be`, `bn`, `bs`, `br`, `bg`, `my`, `ca`, `zh-yue`, `zh`, `zh-classical`, `hr`, `cs`, `da`, `nl`, `en`, `eo`, `et`, `tl`, `fi`, `fr`, `gl`, `ka`, `de`, `el`, `gu`, `ha`, `he`, `hi`, `hu`, `is`, `id`, `ga`, `it`, `ja`, `jv`, `kn`, `kk`, `km`, `ko`, `ku`, `ky`, `lo`, `la`, `lv`, `lt`, `mk`, `mg`, `ms`, `ml`, `mr`, `mn`, `ne`, `no`, `or`, `om`, `ps`, `fa`, `pl`, `pt`, `pa`, `ro`, `ru`, `sa`, `gd`, `sr`, `sd`, `si`, `sk`, `sl`, `so`, `es`, `su`, `sw`, `sv`, `ta`, `te`, `th`, `tr`, `uk`, `ur`, `ug`, `uz`, `vi`, `cy`, `fy`, `xh`, `yi`, `simple`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-3",
+					"anchor": "inference-3-draft-quality",
+					"headingLine": "## 3) Draft quality",
+					"titleText": "3) Draft quality",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts draft quality for a revision on supported wikis.\nIt returns draft-quality classes and related probabilities.\n\n### Documentation\n\n- [Lift Wing API reference: revscoring draftquality](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_draftquality_prediction)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/{wiki}-draftquality:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 12345\n}\n```\n\nOptional:\n\n- `extended_output`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-draftquality:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796}'",
+							"responseJson": "{\n\t\"enwiki\": {\n\t\t\"models\": {\n\t\t\t\"draftquality\": {\n\t\t\t\t\"version\": \"0.2.1\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"1350687796\": {\n\t\t\t\t\"draftquality\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": \"OK\",\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"OK\": 0.40004251065647617,\n\t\t\t\t\t\t\t\"attack\": 0.005451687924499667,\n\t\t\t\t\t\t\t\"spam\": 0.2798570495146997,\n\t\t\t\t\t\t\t\"vandalism\": 0.3146487519043246\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Active:** where this model is deployed.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing revscoring deployment.\n\nAvailable for the following: `enwiki`, `ptwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-4",
+					"anchor": "inference-4-revision-quality",
+					"headingLine": "## 4) Revision quality",
+					"titleText": "4) Revision quality",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts article quality class for a wiki revision.\nIt returns a quality label and class probabilities for that revision.\n\n### Documentation\n\n- [Lift Wing API reference: revscoring articlequality prediction](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_articlequality_prediction)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/{wiki}-articlequality:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 1350839573\n}\n```\n\nOptional:\n\n- `extended_output` (boolean)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-articlequality:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796}'",
+							"responseJson": "{\n\t\"enwiki\": {\n\t\t\"models\": {\n\t\t\t\"articlequality\": {\n\t\t\t\t\"version\": \"0.9.2\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"1350687796\": {\n\t\t\t\t\"articlequality\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": \"FA\",\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"B\": 0.06866911452117365,\n\t\t\t\t\t\t\t\"C\": 0.017707842006204295,\n\t\t\t\t\t\t\t\"FA\": 0.6281331126369486,\n\t\t\t\t\t\t\t\"GA\": 0.2747706589607089,\n\t\t\t\t\t\t\t\"Start\": 0.007942281113216739,\n\t\t\t\t\t\t\t\"Stub\": 0.0027769907617477703\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Active:** where this model is deployed. Wikidata uses `wikidatawiki-itemquality:predict` instead.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing revscoring deployment.\n\nAvailable for the following: `{wiki}-articlequality` is documented for `enwiki`, `euwiki`, `fawiki`, `frwiki`, `glwiki`, `nlwiki`, `ptwiki`, `ruwiki`, `svwiki`, `trwiki`, `ukwiki`; Wikidata uses the separate `wikidatawiki-itemquality:predict` endpoint.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-5",
+					"anchor": "inference-5-wikidata-item-quality",
+					"headingLine": "## 5) Wikidata item quality",
+					"titleText": "5) Wikidata item quality",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts item quality class for a Wikidata revision.\nIt uses the Wikidata-specific itemquality URL scheme and returns class probabilities.\n\n### Documentation\n\n- [Lift Wing API reference: revscoring articlequality prediction](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_articlequality_prediction) (documents the Wikidata `wikidatawiki-itemquality:predict` URL scheme)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-itemquality:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 2484352064\n}\n```\n\nOptional:\n\n- `extended_output` (boolean)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-itemquality:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 2484051354}'",
+							"responseJson": "{\n\t\"wikidatawiki\": {\n\t\t\"models\": {\n\t\t\t\"itemquality\": {\n\t\t\t\t\"version\": \"0.5.0\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"2484051354\": {\n\t\t\t\t\"itemquality\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": \"A\",\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"A\": 0.9634217589797256,\n\t\t\t\t\t\t\t\"B\": 0.02182265958408409,\n\t\t\t\t\t\t\t\"C\": 0.009460218684110233,\n\t\t\t\t\t\t\t\"D\": 0.004039016575363756,\n\t\t\t\t\t\t\t\"E\": 0.001256346176716514\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing revscoring deployment.\n\nWikidata only (`wikidatawiki`).\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-6",
+					"anchor": "inference-6-reference-need",
+					"headingLine": "## 6) Reference need",
+					"titleText": "6) Reference need",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts whether the content in a revision needs additional references.\nIt returns a score you can use to flag edits that may need citation follow-up.\n\n### Documentation\n\n- [Reference need endpoint reference](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_reference_need_prediction)\n- [Multilingual reference need model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Multilingual_reference_need)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/reference-need:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 123456,\n\t\"lang\": \"en\"\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl \"https://api.wikimedia.org/service/lw/inference/v1/models/reference-need:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796, \"lang\": \"en\"}'",
+							"responseJson": "{\n\t\"model_name\": \"reference-need\",\n\t\"model_version\": 0,\n\t\"wiki_db\": \"enwiki\",\n\t\"revision_id\": 1350687796,\n\t\"reference_need_score\": 0.1013215859030837\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---\n\n**Topic** (sections 7–10)"
+						}
+					]
+				},
+				{
+					"id": "inference-7",
+					"anchor": "inference-7-article-topic",
+					"headingLine": "## 7) Article topic",
+					"titleText": "7) Article topic",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts article topics from the page's outgoing wiki links.\nIt returns topic labels with scores, using a language-agnostic model.\n\n### Documentation\n\n- [Language-agnostic link-based article topic model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Language_agnostic_link-based_article_topic)\n- [Lift Wing API reference: outlink-topic-model](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_articletopic_outlink_prediction)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/outlink-topic-model:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\nAt least one of `page_id` or `page_title` is required, plus `lang`.\n\n```json\n{\n\t\"page_title\": \"Douglas_Adams\",\n\t\"lang\": \"en\",\n\t\"threshold\": 0.1\n}\n```\n\nOptional parameters documented in API reference:\n\n- `page_id`\n- `revision_id`\n- `threshold`\n- `features_str`\n- `debug`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/outlink-topic-model:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"page_title\":\"Earth\",\"lang\":\"en\",\"threshold\":0.1}'",
+							"responseJson": "{\n\t\"prediction\": {\n\t\t\"article\": \"https://en.wikipedia.org/wiki/Earth\",\n\t\t\"results\": [\n\t\t\t{\n\t\t\t\t\"topic\": \"STEM.STEM*\",\n\t\t\t\t\"score\": 0.994098961353302\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"topic\": \"STEM.Earth_and_environment\",\n\t\t\t\t\"score\": 0.5698626637458801\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"topic\": \"STEM.Space\",\n\t\t\t\t\"score\": 0.546748161315918\n\t\t\t}\n\t\t]\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-8",
+					"anchor": "inference-8-revision-topic",
+					"headingLine": "## 8) Revision topic",
+					"titleText": "8) Revision topic",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts article topics for a specific revision on a specific wiki.\nIt returns topic labels and probabilities so you can classify article content areas.\n\n### Documentation\n\n- [Lift Wing API reference: revscoring articletopic](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_articletopic_prediction)\n- [Lift Wing API reference index](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/{wiki}-articletopic:predict`\n\nWikidata note from API docs: `wikidatawiki-itemtopic:predict` is used for Wikidata item topics.\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 12345\n}\n```\n\nOptional:\n\n- `extended_output`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-articletopic:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796}'",
+							"responseJson": "{\n\t\"enwiki\": {\n\t\t\"models\": {\n\t\t\t\"articletopic\": {\n\t\t\t\t\"version\": \"1.3.0\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"1350687796\": {\n\t\t\t\t\"articletopic\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": [\"STEM.Earth and environment\", \"STEM.STEM*\", \"STEM.Space\"],\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"Culture.Biography.Biography*\": 0.011701613253713869,\n\t\t\t\t\t\t\t\"Culture.Biography.Women\": 0.003506545840589989,\n\t\t\t\t\t\t\t\"Culture.Food and drink\": 0.00011845275241482283,\n\t\t\t\t\t\t\t\"Culture.Internet culture\": 0.000763237829666281,\n\t\t\t\t\t\t\t\"Culture.Linguistics\": 0.0008772596016259223,\n\t\t\t\t\t\t\t\"Culture.Literature\": 0.043193254180136684,\n\t\t\t\t\t\t\t\"Culture.Media.Books\": 0.016927786611205014,\n\t\t\t\t\t\t\t\"Culture.Media.Entertainment\": 0.00156846943984832,\n\t\t\t\t\t\t\t\"Culture.Media.Films\": 0.0012357026319090533,\n\t\t\t\t\t\t\t\"Culture.Media.Media*\": 0.04881271780492409,\n\t\t\t\t\t\t\t\"Culture.Media.Music\": 0.0003129490229796458,\n\t\t\t\t\t\t\t\"Culture.Media.Radio\": 0.000290784952328416,\n\t\t\t\t\t\t\t\"Culture.Media.Software\": 0.0013696731253237142,\n\t\t\t\t\t\t\t\"Culture.Media.Television\": 0.0008876195337684166,\n\t\t\t\t\t\t\t\"Culture.Media.Video games\": 3.0743766713111965e-5,\n\t\t\t\t\t\t\t\"Culture.Performing arts\": 8.58373016589836e-5,\n\t\t\t\t\t\t\t\"Culture.Philosophy and religion\": 0.022912167735498066,\n\t\t\t\t\t\t\t\"Culture.Sports\": 0.0018719162270962129,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Architecture\": 0.0021688561070116576,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Comics and Anime\": 0.0007090747370418228,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Fashion\": 0.0002490280403455542,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Visual arts*\": 0.008820035440041615,\n\t\t\t\t\t\t\t\"Geography.Geographical\": 0.035051606582694156,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Africa*\": 0.005561271344435259,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Central Africa\": 0.00018862548123694845,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Eastern Africa\": 0.00022877822738494625,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Northern Africa\": 0.0019679720767867294,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Southern Africa\": 0.0006458008040730329,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Western Africa\": 6.813520943550339e-5,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.Central America\": 0.0006953347929770515,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.North America\": 0.012765873014313058,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.South America\": 0.0037483349570561434,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Asia*\": 0.012455913849544387,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Central Asia\": 0.00033843208467763573,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.East Asia\": 0.009293284618673498,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.North Asia\": 0.0015914137485499012,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.South Asia\": 0.0004166003192793215,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Southeast Asia\": 0.00039254494566183,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.West Asia\": 0.0007398016380594761,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Eastern Europe\": 0.002289982951693866,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Europe*\": 0.03305386692564714,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Northern Europe\": 0.00801710638104169,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Southern Europe\": 0.00240808048295467,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Western Europe\": 0.0040862032055557175,\n\t\t\t\t\t\t\t\"Geography.Regions.Oceania\": 0.001963645375565404,\n\t\t\t\t\t\t\t\"History and Society.Business and economics\": 0.012132965233400152,\n\t\t\t\t\t\t\t\"History and Society.Education\": 0.014890536148272616,\n\t\t\t\t\t\t\t\"History and Society.History\": 0.01397540389407694,\n\t\t\t\t\t\t\t\"History and Society.Military and warfare\": 0.004792377150394233,\n\t\t\t\t\t\t\t\"History and Society.Politics and government\": 0.017199785564400907,\n\t\t\t\t\t\t\t\"History and Society.Society\": 0.16088642471264605,\n\t\t\t\t\t\t\t\"History and Society.Transportation\": 0.019918827473192333,\n\t\t\t\t\t\t\t\"STEM.Biology\": 0.021670738860532425,\n\t\t\t\t\t\t\t\"STEM.Chemistry\": 0.0021913425213621767,\n\t\t\t\t\t\t\t\"STEM.Computing\": 0.00134038556639786,\n\t\t\t\t\t\t\t\"STEM.Earth and environment\": 0.9168492819870301,\n\t\t\t\t\t\t\t\"STEM.Engineering\": 0.03097805834096776,\n\t\t\t\t\t\t\t\"STEM.Libraries & Information\": 0.008393788658179857,\n\t\t\t\t\t\t\t\"STEM.Mathematics\": 0.00013092704344992413,\n\t\t\t\t\t\t\t\"STEM.Medicine & Health\": 0.001986168425733357,\n\t\t\t\t\t\t\t\"STEM.Physics\": 0.10470071213214094,\n\t\t\t\t\t\t\t\"STEM.STEM*\": 0.9934065734188751,\n\t\t\t\t\t\t\t\"STEM.Space\": 0.8484286828749382,\n\t\t\t\t\t\t\t\"STEM.Technology\": 0.0741099360855917\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Active:** Wikidata uses `wikidatawiki-itemtopic:predict` instead.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing revscoring deployment.\n\nAvailable for the following: `{wiki}-articletopic` is documented for `arwiki`, `cswiki`, `enwiki`, `euwiki`, `huwiki`, `hywiki`, `kowiki`, `srwiki`, `ukwiki`, `viwiki`; Wikidata uses the separate `wikidatawiki-itemtopic:predict` endpoint.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-9",
+					"anchor": "inference-9-wikidata-item-topic",
+					"headingLine": "## 9) Wikidata item topic",
+					"titleText": "9) Wikidata item topic",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts topic labels for Wikidata item revisions.\nIt returns one or more topic categories with probabilities for the given Wikidata revision.\n\n### Documentation\n\n- [Lift Wing API reference: revscoring articletopic](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_articletopic_prediction) (notes `wikidatawiki-itemtopic:predict` URL scheme for Wikidata)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-itemtopic:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 2366803550\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/wikidatawiki-itemtopic:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 2484051354}'",
+							"responseJson": "{\n\t\"wikidatawiki\": {\n\t\t\"models\": {\n\t\t\t\"itemtopic\": {\n\t\t\t\t\"version\": \"1.2.0\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"2484051354\": {\n\t\t\t\t\"itemtopic\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": [\"STEM.STEM*\", \"STEM.Space\"],\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"Culture.Biography.Biography*\": 0.006415820177137949,\n\t\t\t\t\t\t\t\"Culture.Biography.Women\": 0.0006624924087850394,\n\t\t\t\t\t\t\t\"Culture.Food and drink\": 0.0008106529942122161,\n\t\t\t\t\t\t\t\"Culture.Internet culture\": 0.000872941307292684,\n\t\t\t\t\t\t\t\"Culture.Linguistics\": 0.002695290747770885,\n\t\t\t\t\t\t\t\"Culture.Literature\": 0.0027484238481189954,\n\t\t\t\t\t\t\t\"Culture.Media.Books\": 0.0005189442370646869,\n\t\t\t\t\t\t\t\"Culture.Media.Entertainment\": 0.0022554082949713594,\n\t\t\t\t\t\t\t\"Culture.Media.Films\": 0.0019737172833861243,\n\t\t\t\t\t\t\t\"Culture.Media.Media*\": 0.007761452693058196,\n\t\t\t\t\t\t\t\"Culture.Media.Music\": 0.0008612269632902338,\n\t\t\t\t\t\t\t\"Culture.Media.Radio\": 0.00013774140001053813,\n\t\t\t\t\t\t\t\"Culture.Media.Software\": 0.001173469545569596,\n\t\t\t\t\t\t\t\"Culture.Media.Television\": 0.0015024887790805424,\n\t\t\t\t\t\t\t\"Culture.Media.Video games\": 0.0004471213730976511,\n\t\t\t\t\t\t\t\"Culture.Performing arts\": 0.0006866562068002329,\n\t\t\t\t\t\t\t\"Culture.Philosophy and religion\": 0.012738932482522733,\n\t\t\t\t\t\t\t\"Culture.Sports\": 0.0029405036310851487,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Architecture\": 0.0010500989445474136,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Comics and Anime\": 0.0005428568203055075,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Fashion\": 0.0006242264918210261,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Visual arts*\": 0.003985002512043979,\n\t\t\t\t\t\t\t\"Geography.Geographical\": 0.013003262360875095,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Africa*\": 0.00813399056917809,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Central Africa\": 0.0006005579227302588,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Eastern Africa\": 0.0007652320393550818,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Northern Africa\": 0.004929056895787522,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Southern Africa\": 0.00043286580049364847,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Western Africa\": 0.0007637749307949655,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.Central America\": 0.0009266593682736189,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.North America\": 0.022020230738376553,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.South America\": 0.00722152380342815,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Asia*\": 0.03740851047670337,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Central Asia\": 0.001127868658331572,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.East Asia\": 0.009177569429047091,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.North Asia\": 0.026313409202219737,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.South Asia\": 0.00403664036621678,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Southeast Asia\": 0.002155549351309816,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.West Asia\": 0.0009040234496498063,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Eastern Europe\": 0.01735092853323532,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Europe*\": 0.07439197196029886,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Northern Europe\": 0.020040318780167904,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Southern Europe\": 0.004923886627666899,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Western Europe\": 0.003573617367926575,\n\t\t\t\t\t\t\t\"Geography.Regions.Oceania\": 0.006769299517401018,\n\t\t\t\t\t\t\t\"History and Society.Business and economics\": 0.006405902517476902,\n\t\t\t\t\t\t\t\"History and Society.Education\": 0.0023015078628234073,\n\t\t\t\t\t\t\t\"History and Society.History\": 0.01730275269265649,\n\t\t\t\t\t\t\t\"History and Society.Military and warfare\": 0.007871177493893237,\n\t\t\t\t\t\t\t\"History and Society.Politics and government\": 0.007492772014149492,\n\t\t\t\t\t\t\t\"History and Society.Society\": 0.03182270998031154,\n\t\t\t\t\t\t\t\"History and Society.Transportation\": 0.005071598128914559,\n\t\t\t\t\t\t\t\"STEM.Biology\": 0.004286838470962092,\n\t\t\t\t\t\t\t\"STEM.Chemistry\": 0.002480311614102427,\n\t\t\t\t\t\t\t\"STEM.Computing\": 0.003636013986281011,\n\t\t\t\t\t\t\t\"STEM.Earth and environment\": 0.05495899528883844,\n\t\t\t\t\t\t\t\"STEM.Engineering\": 0.0014682286699083604,\n\t\t\t\t\t\t\t\"STEM.Libraries & Information\": 0.002171090371434182,\n\t\t\t\t\t\t\t\"STEM.Mathematics\": 0.0017043665532315273,\n\t\t\t\t\t\t\t\"STEM.Medicine & Health\": 0.0051206222341311095,\n\t\t\t\t\t\t\t\"STEM.Physics\": 0.07753276413657004,\n\t\t\t\t\t\t\t\"STEM.STEM*\": 0.9045598202134326,\n\t\t\t\t\t\t\t\"STEM.Space\": 0.5391776999954941,\n\t\t\t\t\t\t\t\"STEM.Technology\": 0.022579439238458423\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\nWikidata only (`wikidatawiki`).\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-10",
+					"anchor": "inference-10-draft-topic",
+					"headingLine": "## 10) Draft topic",
+					"titleText": "10) Draft topic",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts draft-topic categories for a wiki revision.\nIt returns topic predictions and probabilities for the revision you provide.\n\n### Documentation\n\n- [Lift Wing API reference: revscoring drafttopic prediction](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_drafttopic_prediction)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/{wiki}-drafttopic:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 1350687796\n}\n```\n\nOptional:\n\n- `extended_output` (boolean)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-drafttopic:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796}'",
+							"responseJson": "{\n\t\"enwiki\": {\n\t\t\"models\": {\n\t\t\t\"drafttopic\": {\n\t\t\t\t\"version\": \"1.3.0\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"1350687796\": {\n\t\t\t\t\"drafttopic\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": [\"STEM.Earth and environment\", \"STEM.STEM*\"],\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"Culture.Biography.Biography*\": 0.08045045408734983,\n\t\t\t\t\t\t\t\"Culture.Biography.Women\": 0.01563415085760326,\n\t\t\t\t\t\t\t\"Culture.Food and drink\": 0.0005263041249568254,\n\t\t\t\t\t\t\t\"Culture.Internet culture\": 0.0019170411380525316,\n\t\t\t\t\t\t\t\"Culture.Linguistics\": 0.003929657397100046,\n\t\t\t\t\t\t\t\"Culture.Literature\": 0.08044949616853309,\n\t\t\t\t\t\t\t\"Culture.Media.Books\": 0.014086401844802914,\n\t\t\t\t\t\t\t\"Culture.Media.Entertainment\": 0.00746158359661032,\n\t\t\t\t\t\t\t\"Culture.Media.Films\": 0.003926450555757827,\n\t\t\t\t\t\t\t\"Culture.Media.Media*\": 0.05239763052464103,\n\t\t\t\t\t\t\t\"Culture.Media.Music\": 0.0011537410561849185,\n\t\t\t\t\t\t\t\"Culture.Media.Radio\": 0.0010975424496545245,\n\t\t\t\t\t\t\t\"Culture.Media.Software\": 0.0032696618426445194,\n\t\t\t\t\t\t\t\"Culture.Media.Television\": 0.002390187193061297,\n\t\t\t\t\t\t\t\"Culture.Media.Video games\": 0.00025166630990232965,\n\t\t\t\t\t\t\t\"Culture.Performing arts\": 0.00037196285326344014,\n\t\t\t\t\t\t\t\"Culture.Philosophy and religion\": 0.006713676943460428,\n\t\t\t\t\t\t\t\"Culture.Sports\": 0.002288355893186578,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Architecture\": 0.002737024892686108,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Comics and Anime\": 0.0011598766944291505,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Fashion\": 0.0007399200916876866,\n\t\t\t\t\t\t\t\"Culture.Visual arts.Visual arts*\": 0.011965339069051133,\n\t\t\t\t\t\t\t\"Geography.Geographical\": 0.04869233843175154,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Africa*\": 0.00963984999989999,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Central Africa\": 0.0005914391708034102,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Eastern Africa\": 0.0002730455195817152,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Northern Africa\": 0.0010204253474326603,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Southern Africa\": 0.0004612473442234881,\n\t\t\t\t\t\t\t\"Geography.Regions.Africa.Western Africa\": 0.00026891768350000575,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.Central America\": 0.0018534581676482496,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.North America\": 0.023974165328559876,\n\t\t\t\t\t\t\t\"Geography.Regions.Americas.South America\": 0.006550081201778095,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Asia*\": 0.016922797751446065,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Central Asia\": 0.0011935394586015866,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.East Asia\": 0.012431986624114438,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.North Asia\": 0.0010805859654606069,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.South Asia\": 0.0008897634872587683,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.Southeast Asia\": 0.0007441022762198635,\n\t\t\t\t\t\t\t\"Geography.Regions.Asia.West Asia\": 0.001704269672252598,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Eastern Europe\": 0.0035829354638666185,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Europe*\": 0.03739494123276016,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Northern Europe\": 0.008833765937950872,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Southern Europe\": 0.006607200869021762,\n\t\t\t\t\t\t\t\"Geography.Regions.Europe.Western Europe\": 0.016374126629465562,\n\t\t\t\t\t\t\t\"Geography.Regions.Oceania\": 0.004975555302119169,\n\t\t\t\t\t\t\t\"History and Society.Business and economics\": 0.011668703704651314,\n\t\t\t\t\t\t\t\"History and Society.Education\": 0.009962806254353552,\n\t\t\t\t\t\t\t\"History and Society.History\": 0.02520944195442482,\n\t\t\t\t\t\t\t\"History and Society.Military and warfare\": 0.008212599633701263,\n\t\t\t\t\t\t\t\"History and Society.Politics and government\": 0.026387978811126287,\n\t\t\t\t\t\t\t\"History and Society.Society\": 0.17439657207809667,\n\t\t\t\t\t\t\t\"History and Society.Transportation\": 0.0515350736387013,\n\t\t\t\t\t\t\t\"STEM.Biology\": 0.06656391606773564,\n\t\t\t\t\t\t\t\"STEM.Chemistry\": 0.005455739543988112,\n\t\t\t\t\t\t\t\"STEM.Computing\": 0.003926114298414298,\n\t\t\t\t\t\t\t\"STEM.Earth and environment\": 0.9231941069942504,\n\t\t\t\t\t\t\t\"STEM.Engineering\": 0.016108083021039745,\n\t\t\t\t\t\t\t\"STEM.Libraries & Information\": 0.05718899689278377,\n\t\t\t\t\t\t\t\"STEM.Mathematics\": 0.0008265546800756186,\n\t\t\t\t\t\t\t\"STEM.Medicine & Health\": 0.0038480533113177656,\n\t\t\t\t\t\t\t\"STEM.Physics\": 0.11230611299875458,\n\t\t\t\t\t\t\t\"STEM.STEM*\": 0.9701926328736089,\n\t\t\t\t\t\t\t\"STEM.Space\": 0.07702112876026468,\n\t\t\t\t\t\t\t\"STEM.Technology\": 0.06128406423453015\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Active:** where this model is deployed.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing revscoring deployment.\n\nAvailable for the following: `enwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---\n\n**Edit checks** (sections 11–21)"
+						}
+					]
+				},
+				{
+					"id": "inference-11",
+					"anchor": "inference-11-language-agnostic-revert-risk",
+					"headingLine": "## 11) Language agnostic revert risk",
+					"titleText": "11) Language agnostic revert risk",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts whether a revision is likely to be reverted, using a model that is designed to work across languages.\nIt is useful when you want one revert-risk score format regardless of the wiki language.\n\n### Documentation\n\n- [Language-agnostic revert risk endpoint reference](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_reverted_risk_language_agnostic_prediction)\n- [Language-agnostic revert risk model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Language-agnostic_revert_risk)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-language-agnostic:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 123456,\n\t\"lang\": \"en\"\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl \"https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-language-agnostic:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796, \"lang\": \"en\"}'",
+							"responseJson": "{\n\t\"model_name\": \"revertrisk-language-agnostic\",\n\t\"model_version\": \"3\",\n\t\"wiki_db\": \"enwiki\",\n\t\"revision_id\": 1350687796,\n\t\"output\": {\n\t\t\"prediction\": true,\n\t\t\"probabilities\": {\n\t\t\t\"true\": 0.7697548270225525,\n\t\t\t\"false\": 0.2302451729774475\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-12",
+					"anchor": "inference-12-multilingual-revert-risk",
+					"headingLine": "## 12) Multilingual revert risk",
+					"titleText": "12) Multilingual revert risk",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts whether a revision is likely to be reverted for supported languages.\nIt returns one revert-risk result for the revision you pass in.\n\n### Documentation\n\n- [Multilingual revert risk endpoint reference](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_reverted_risk_multilingual_prediction)\n- [Multilingual revert risk model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Multilingual_revert_risk)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-multilingual:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 123456,\n\t\"lang\": \"en\"\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl \"https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-multilingual:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796, \"lang\": \"en\"}'",
+							"responseJson": "{\n\t\"model_name\": \"revertrisk-multilingual\",\n\t\"model_version\": \"4\",\n\t\"wiki_db\": \"enwiki\",\n\t\"revision_id\": 1350687796,\n\t\"output\": {\n\t\t\"prediction\": false,\n\t\t\"probabilities\": {\n\t\t\t\"true\": 0.28305266753993896,\n\t\t\t\"false\": 0.716947332460061\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\nSupported language codes (API reference): `ka`, `lv`, `ta`, `ur`, `eo`, `lt`, `sl`, `hy`, `hr`, `sk`, `eu`, `et`, `ms`, `az`, `da`, `bg`, `sr`, `ro`, `el`, `th`, `bn`, `no`, `hi`, `ca`, `hu`, `ko`, `fi`, `vi`, `uz`, `sv`, `cs`, `he`, `id`, `tr`, `uk`, `nl`, `pl`, `ar`, `fa`, `it`, `zh`, `ru`, `es`, `ja`, `de`, `fr`, `en`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-13",
+					"anchor": "inference-13-wikidata-revert-risk",
+					"headingLine": "## 13) Wikidata revert risk",
+					"titleText": "13) Wikidata revert risk",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts revert risk for Wikidata revisions.\nIt uses revision metadata and content to return a revert-likelihood output.\n\n### Documentation\n\n- [Lift Wing API reference: revertrisk wikidata](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revertrisk_wikidata)\n- [RevertRisk Wikidata model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/RevertRisk_Wikidata)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-wikidata:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 2484352064\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/revertrisk-wikidata:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 2484051354}'",
+							"responseJson": "{\n\t\"model_name\": \"revertrisk-wikidata\",\n\t\"model_version\": \"2\",\n\t\"revision_id\": 2484051354,\n\t\"output\": {\n\t\t\"prediction\": true,\n\t\t\"probabilities\": {\n\t\t\t\"true\": 0.5387352373078647,\n\t\t\t\"false\": 0.46126476269213534\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\nWikidata revisions only.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-14",
+					"anchor": "inference-14-reference-risk",
+					"headingLine": "## 14) Reference risk",
+					"titleText": "14) Reference risk",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts whether references introduced by a revision are likely to survive over time.\nIt returns risk-oriented fields that help identify references that may be unstable.\n\n### Documentation\n\n- [Lift Wing API reference: reference risk prediction](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_reference_risk_prediction)\n- [Language-agnostic reference risk model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Proposed/Language-agnostic_reference_risk)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/reference-risk:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 1242378206,\n\t\"lang\": \"en\"\n}\n```\n\nOptional:\n\n- `extended_output` (boolean)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/reference-risk:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796, \"lang\": \"en\"}'",
+							"responseJson": "{\n\t\"model_name\": \"reference-risk\",\n\t\"model_version\": \"2024-11\",\n\t\"wiki_db\": \"enwiki\",\n\t\"revision_id\": 1350687796,\n\t\"reference_count\": 199,\n\t\"survival_ratio\": {\n\t\t\"min\": 0.26343338900801916,\n\t\t\"mean\": 0.7798243261722269,\n\t\t\"median\": 0.8091431850341261\n\t},\n\t\"reference_risk_score\": 0.0\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-15",
+					"anchor": "inference-15-tone-check",
+					"headingLine": "## 15) Tone check",
+					"titleText": "15) Tone check",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint runs Edit Check models on text you provide.\nFor tone checks, you send before-and-after text and the endpoint returns whether the new wording is likely to violate tone guidance.\n\n### Documentation\n\n- [Tone Check model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Tone_Check)\n- [Edit check / Tone Check overview](https://www.mediawiki.org/wiki/Edit_check/Tone_Check)\n\nInline explanation from project notes: this endpoint is called with batched `instances` payloads, and tone suggestions are typically filtered by `prediction == true` and a probability threshold.\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/edit-check:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"instances\": [\n\t\t{\n\t\t\t\"lang\": \"en\",\n\t\t\t\"check_type\": \"tone\",\n\t\t\t\"page_title\": \"Earth\",\n\t\t\t\"original_text\": \"Earth is the third planet from the Sun. It is the only known world with life.\",\n\t\t\t\"modified_text\": \"Earth is clearly the only planet that matters; the other planets are lifeless, overrated rocks that serious readers can safely ignore as irrelevant to human destiny.\"\n\t\t}\n\t]\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl \"https://api.wikimedia.org/service/lw/inference/v1/models/edit-check:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"instances\":[{\"lang\":\"en\",\"check_type\":\"tone\",\"page_title\":\"Earth\",\"original_text\":\"Earth is the third planet from the Sun. It is the only known world with life.\",\"modified_text\":\"Earth is clearly the only planet that matters; the other planets are lifeless, overrated rocks that serious readers can safely ignore as irrelevant to human destiny.\"}]}'",
+							"responseJson": "{\n\t\"message\": \"\",\n\t\"batchId\": \"2b9cdabb-d7ca-46d9-8112-4b166a193724\",\n\t\"predictions\": [\n\t\t{\n\t\t\t\"check_type\": \"tone\",\n\t\t\t\"details\": {},\n\t\t\t\"language\": \"en\",\n\t\t\t\"model_name\": \"edit-check\",\n\t\t\t\"model_version\": \"v1\",\n\t\t\t\"page_title\": \"Earth\",\n\t\t\t\"prediction\": true,\n\t\t\t\"probability\": 0.778,\n\t\t\t\"status_code\": 200\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Active:** Check types may change over time.\n\nPublicly available on `api.wikimedia.org`; this is the production inference surface used by Edit Check.\n\nSingle global endpoint. Availability is determined by supported `check_type` values (for example `tone`). The docs do not publish a single exhaustive language list for all check types.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-16",
+					"anchor": "inference-16-edit-check-config",
+					"headingLine": "## 16) Edit check config",
+					"titleText": "16) Edit check config",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns the live JSON rules that Edit Check reads directly from wiki pages.\nThose rules include phrase matching and replacement lists, so the response shows the exact configuration currently in production.\n\n### Documentation\n\n- [Main edit-check config raw JSON](https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config.json&action=raw)\n- [British-English replacement raw JSON](https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config-textmatch-british-english.json&action=raw)\n\nInline explanation from project notes: the imported British-English replacement file contains hundreds of replacement pairs, and the main config includes multiple `textMatch.matchItems` buckets used as phrase/rule sources.\n\n### Endpoint\n\n- `https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config.json&action=raw`\n- `https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config-textmatch-british-english.json&action=raw`\n\n### Method\n\n`GET`\n\n### Request shape\n\n- `title=MediaWiki:...`\n- `action=raw`\n\n### Example 1: Main config"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config.json&action=raw\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"addReference\": {\n\t\t\"ignoreLeadSection\": true,\n\t\t\"ignoreSections\": [\n\t\t\t\"notes\",\n\t\t\t\"notes and references\",\n\t\t\t\"references\",\n\t\t\t\"references and further reading\",\n\t\t\t\"sources\",\n\t\t\t\"footnotes\",\n\t\t\t\"citations\",\n\t\t\t\"external links\",\n\t\t\t\"external websites\",\n\t\t\t\"weblinks\",\n\t\t\t\"see also\",\n\t\t\t\"further reading\",\n\t\t\t\"bibliography\",\n\t\t\t\"publications\",\n\t\t\t\"works\",\n\t\t\t\"synopsis\",\n\t\t\t\"plot\",\n\t\t\t\"plot summary\",\n\t\t\t\"episodes\",\n\t\t\t\"summary\"\n\t\t]\n\t},\n\t\"externalLink\": {\n\t\t\"ignoreSections\": [\n\t\t\t\"notes\",\n\t\t\t\"notes and references\",\n\t\t\t\"references\",\n\t\t\t\"references and further reading\",\n\t\t\t\"sources\",\n\t\t\t\"footnotes\",\n\t\t\t\"citations\",\n\t\t\t\"external links\",\n\t\t\t\"weblinks\",\n\t\t\t\"see also\",\n\t\t\t\"further reading\",\n\t\t\t\"bibliography\",\n\t\t\t\"publications\",\n\t\t\t\"works\"\n\t\t]\n\t},\n\t\"disambiguation\": {\n\t\t\"ignoreSections\": [\"see also\"],\n\t\t\"ignoreDisambiguationPages\": true\n\t},\n\t\"textMatch\": {\n\t\t\"matchItems\": {\n\t\t\t\"british-english\": {\n\t\t\t\t\"import\": \"MediaWiki:Editcheck-config-textmatch-british-english.json\"\n\t\t\t},\n\t\t\t\"LLM-user-comms\": {\n\t\t\t\t\"query\": [\n\t\t\t\t\t\"I hope this helps\",\n\t\t\t\t\t\"Of course!\",\n\t\t\t\t\t\"Certainly!\",\n\t\t\t\t\t\"You're absolutely right!\",\n\t\t\t\t\t\"Would you like\",\n\t\t\t\t\t\"Is there anything else\",\n\t\t\t\t\t\"let me know\",\n\t\t\t\t\t\"more detailed breakdown\",\n\t\t\t\t\t\"Here is a\",\n\t\t\t\t\t\"up to my last training update\",\n\t\t\t\t\t\"as of my last knowledge update\",\n\t\t\t\t\t\"while specific details are limited\",\n\t\t\t\t\t\"while specific details are scarce\",\n\t\t\t\t\t\"in the provided sources\",\n\t\t\t\t\t\"in the available sources\",\n\t\t\t\t\t\"in the provided search results\",\n\t\t\t\t\t\"in the available search results\",\n\t\t\t\t\t\"based on available information\",\n\t\t\t\t\t\"as an AI language model\",\n\t\t\t\t\t\"as a large language model\",\n\t\t\t\t\t\"I'm sorry\",\n\t\t\t\t\t\"ChatGPT said\"\n\t\t\t\t],\n\t\t\t\t\"title\": \"Potential AI-generated content\",\n\t\t\t\t\"message\": \"This text may include [[Wikipedia:Large_language_models#Handling_suspected_LLM-generated_content|AI-generated content]]. Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.\",\n\t\t\t\t\"config\": {\n\t\t\t\t\t\"caseSensitive\": false,\n\t\t\t\t\t\"minimumEditcount\": 10,\n\t\t\t\t\t\"enabled\": true\n\t\t\t\t},\n\t\t\t\t\"expand\": \"paragraph\"\n\t\t\t},\n\t\t\t\"LLM-immediate-indicators\": {\n\t\t\t\t\"query\": [\n\t\t\t\t\t\"indelible mark\",\n\t\t\t\t\t\"deeply rooted\",\n\t\t\t\t\t\"profound heritage\",\n\t\t\t\t\t\"steadfast dedication\",\n\t\t\t\t\t\"continues to captivate\",\n\t\t\t\t\t\"continued to captivate\",\n\t\t\t\t\t\"continuing to captivate\",\n\t\t\t\t\t\"stunning natural\",\n\t\t\t\t\t\"rich artistic landscape\",\n\t\t\t\t\t\"rich cultural landscape\",\n\t\t\t\t\t\"rich literary landscape\",\n\t\t\t\t\t\"rich media landscape\",\n\t\t\t\t\t\"vibrant artistic landscape\",\n\t\t\t\t\t\"vibrant cultural landscape\",\n\t\t\t\t\t\"vibrant literary landscape\",\n\t\t\t\t\t\"vibrant media landscape\",\n\t\t\t\t\t\"diverse artistic landscape\",\n\t\t\t\t\t\"diverse cultural landscape\",\n\t\t\t\t\t\"diverse literary landscape\",\n\t\t\t\t\t\"diverse media landscape\",\n\t\t\t\t\t\"important to note\",\n\t\t\t\t\t\"important to remember\",\n\t\t\t\t\t\"important to consider\",\n\t\t\t\t\t\"critical to note\",\n\t\t\t\t\t\"critical to remember\",\n\t\t\t\t\t\"critical to consider\",\n\t\t\t\t\t\"crucial to note\",\n\t\t\t\t\t\"crucial to remember\",\n\t\t\t\t\t\"crucial to consider\",\n\t\t\t\t\t\"In summary\",\n\t\t\t\t\t\"In conclusion\",\n\t\t\t\t\t\"despite its challenges\",\n\t\t\t\t\t\"faces several challenges\",\n\t\t\t\t\t\"despite these challenges\",\n\t\t\t\t\t\"challenges and legacy\",\n\t\t\t\t\t\"future outlook\",\n\t\t\t\t\t\"Observers have cited\"\n\t\t\t\t],\n\t\t\t\t\"title\": \"Potential AI-generated content\",\n\t\t\t\t\"message\": \"This text may include [[Wikipedia:Large_language_models#Handling_suspected_LLM-generated_content|AI-generated content]]. Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.\",\n\t\t\t\t\"config\": {\n\t\t\t\t\t\"caseSensitive\": false,\n\t\t\t\t\t\"minimumEditcount\": 10,\n\t\t\t\t\t\"enabled\": true\n\t\t\t\t},\n\t\t\t\t\"expand\": \"paragraph\"\n\t\t\t},\n\t\t\t\"LLM-multiple-indicators\": {\n\t\t\t\t\"query\": [\n\t\t\t\t\t\"as a testament\",\n\t\t\t\t\t\"as a reminder\",\n\t\t\t\t\t\"is a testament\",\n\t\t\t\t\t\"is a reminder\",\n\t\t\t\t\t\"playing a vital role\",\n\t\t\t\t\t\"playing a significant role\",\n\t\t\t\t\t\"playing a crucial role\",\n\t\t\t\t\t\"plays a vital role\",\n\t\t\t\t\t\"plays a significant role\",\n\t\t\t\t\t\"plays a crucial role\",\n\t\t\t\t\t\"key turning point\",\n\t\t\t\t\t\"independent coverage\",\n\t\t\t\t\t\"local media outlets\",\n\t\t\t\t\t\"regional media outlets\",\n\t\t\t\t\t\"national media outlets\",\n\t\t\t\t\t\"music outlets\",\n\t\t\t\t\t\"business outlets\",\n\t\t\t\t\t\"tech outlets\",\n\t\t\t\t\t\"ensuring\",\n\t\t\t\t\t\"reflect\",\n\t\t\t\t\t\"reflects\",\n\t\t\t\t\t\"reflecting\",\n\t\t\t\t\t\"contributing to\",\n\t\t\t\t\t\"groundbreaking\",\n\t\t\t\t\t\"intricate\",\n\t\t\t\t\t\"enduring legacy\",\n\t\t\t\t\t\"lasting legacy\",\n\t\t\t\t\t\"nestled\",\n\t\t\t\t\t\"in the heart of\",\n\t\t\t\t\t\"boasts a\",\n\t\t\t\t\t\"may vary\",\n\t\t\t\t\t\"align\",\n\t\t\t\t\t\"aligns\",\n\t\t\t\t\t\"aligning with\",\n\t\t\t\t\t\"crucial\",\n\t\t\t\t\t\"delve\",\n\t\t\t\t\t\"delves\",\n\t\t\t\t\t\"delving\",\n\t\t\t\t\t\"emphasizing\",\n\t\t\t\t\t\"enduring\",\n\t\t\t\t\t\"enhanced\",\n\t\t\t\t\t\"enhance\",\n\t\t\t\t\t\"enhances\",\n\t\t\t\t\t\"enhancing\",\n\t\t\t\t\t\"foster\",\n\t\t\t\t\t\"fosters\",\n\t\t\t\t\t\"fostered\",\n\t\t\t\t\t\"fostering\",\n\t\t\t\t\t\"garner\",\n\t\t\t\t\t\"garners\",\n\t\t\t\t\t\"garnered\",\n\t\t\t\t\t\"garnering\",\n\t\t\t\t\t\"highlight\",\n\t\t\t\t\t\"highlighted\",\n\t\t\t\t\t\"highlighting\",\n\t\t\t\t\t\"highlights\",\n\t\t\t\t\t\"interplay\",\n\t\t\t\t\t\"intricate\",\n\t\t\t\t\t\"intricacies\",\n\t\t\t\t\t\"pivotal\",\n\t\t\t\t\t\"showcase\",\n\t\t\t\t\t\"showcased\",\n\t\t\t\t\t\"showcases\",\n\t\t\t\t\t\"showcasing\",\n\t\t\t\t\t\"tapestry\",\n\t\t\t\t\t\"underscore\",\n\t\t\t\t\t\"underscored\",\n\t\t\t\t\t\"underscores\",\n\t\t\t\t\t\"underscoring\",\n\t\t\t\t\t\"industry reports\",\n\t\t\t\t\t\"Some critics argue\",\n\t\t\t\t\t\"widely available\",\n\t\t\t\t\t\"widely documented\",\n\t\t\t\t\t\"widely disclosed\"\n\t\t\t\t],\n\t\t\t\t\"title\": \"Potential AI-generated content\",\n\t\t\t\t\"message\": \"This text may include [[Wikipedia:Large_language_models#Handling_suspected_LLM-generated_content|AI-generated content]]. Help readers trust the article by removing any AI content or rewriting any inaccurate, unverifiable, or unencyclopedic information.\",\n\t\t\t\t\"config\": {\n\t\t\t\t\t\"caseSensitive\": false,\n\t\t\t\t\t\"minimumEditcount\": 10,\n\t\t\t\t\t\"enabled\": true,\n\t\t\t\t\t\"minOccurrences\": 3\n\t\t\t\t},\n\t\t\t\t\"expand\": \"paragraph\"\n\t\t\t}\n\t\t}\n\t\t// etc...\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Example 2: Imported text-match set"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/w/index.php?title=MediaWiki:Editcheck-config-textmatch-british-english.json&action=raw\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"title\": \"Change English spelling\",\n\t\"mode\": \"replace\",\n\t\"message\": \"This word uses a different [[Wikipedia:Manual_of_Style#Retaining_the_existing_variety|English variety]] than the one used in the rest of this article. Help readers by changing the spelling to match the rest of the article.\",\n\t\"config\": {\n\t\t\"enabled\": true,\n\t\t\"ignoreLeadSection\": true,\n\t\t\"ignoreQuotedContent\": true,\n\t\t\"caseSensitive\": true,\n\t\t\"hasTemplate\": [\n\t\t\t\"Use British English\",\n\t\t\t\"EngvarB\",\n\t\t\t\"EB\",\n\t\t\t\"Eb\",\n\t\t\t\"Use Scottish English\",\n\t\t\t\"En-GB\",\n\t\t\t\"Use European English\",\n\t\t\t\"Use International English\",\n\t\t\t\"Use british english\",\n\t\t\t\"Use British\",\n\t\t\t\"Use british\",\n\t\t\t\"Ube\",\n\t\t\t\"UBE\",\n\t\t\t\"Engvarb\",\n\t\t\t\"Use BrE\",\n\t\t\t\"Use Welsh English\",\n\t\t\t\"Engvar-B\",\n\t\t\t\"Use British English spelling\",\n\t\t\t\"International English\",\n\t\t\t\"Engvar B\",\n\t\t\t\"Uken\",\n\t\t\t\"UKEN\",\n\t\t\t\"Use British English with -ise spellings\",\n\t\t\t\"Use British english\",\n\t\t\t\"Use British spelling\"\n\t\t]\n\t},\n\t\"query\": {\n\t\t\"accouterments\": \"accoutrements\",\n\t\t\"ameba\": \"amoeba\",\n\t\t\"amebas\": \"amoebas\",\n\t\t\"amebic\": \"amoebic\",\n\t\t\"amphitheater\": \"amphitheatre\",\n\t\t\"amphitheaters\": \"amphitheatres\",\n\t\t\"analyze\": \"analyse\",\n\t\t\"analyzed\": \"analysed\",\n\t\t\"analyzer\": \"analyser\",\n\t\t\"analyzers\": \"analysers\",\n\t\t\"analyzes\": \"analyses\",\n\t\t\"analyzing\": \"analysing\",\n\t\t\"anemia\": \"anaemia\",\n\t\t\"anemic\": \"anaemic\",\n\t\t\"appareled\": \"apparelled\",\n\t\t\"appareling\": \"apparelling\",\n\t\t\"arbor\": \"arbour\",\n\t\t\"arbors\": \"arbours\",\n\t\t\"archeological\": \"archaeological\",\n\t\t\"archeologist\": \"archaeologist\",\n\t\t\"archeologists\": \"archaeologists\",\n\t\t\"archeology\": \"archaeology\",\n\t\t\"ardor\": \"ardour\",\n\t\t\"ardors\": \"ardours\",\n\t\t\"armor\": \"armour\",\n\t\t\"armored\": \"armoured\",\n\t\t\"armorer\": \"armourer\",\n\t\t\"armorers\": \"armourers\",\n\t\t\"armories\": \"armouries\",\n\t\t\"armoring\": \"armouring\",\n\t\t\"armors\": \"armours\",\n\t\t\"armory\": \"armoury\",\n\t\t\"backpedaled\": \"backpedalled\",\n\t\t\"backpedaling\": \"backpedalling\",\n\t\t\"barreled\": \"barrelled\",\n\t\t\"barreling\": \"barrelling\",\n\t\t\"bedeviled\": \"bedevilled\",\n\t\t\"bedeviling\": \"bedevilling\",\n\t\t\"behavior\": \"behaviour\",\n\t\t\"behavioral\": \"behavioural\",\n\t\t\"belabor\": \"belabour\",\n\t\t\"belabored\": \"belaboured\",\n\t\t\"belaboring\": \"belabouring\",\n\t\t\"belabors\": \"belabours\",\n\t\t\"beveled\": \"bevelled\",\n\t\t\"beveling\": \"bevelling\",\n\t\t\"busheled\": \"bushelled\",\n\t\t\"busheling\": \"bushelling\",\n\t\t\"caliber\": \"calibre\",\n\t\t\"calibers\": \"calibres\",\n\t\t\"canceled\": \"cancelled\",\n\t\t\"canceling\": \"cancelling\",\n\t\t\"candor\": \"candour\",\n\t\t\"caroled\": \"carolled\",\n\t\t\"caroler\": \"caroller\",\n\t\t\"carolers\": \"carollers\",\n\t\t\"caroling\": \"carolling\",\n\t\t\"catalyze\": \"catalyse\",\n\t\t\"catalyzed\": \"catalysed\",\n\t\t\"catalyzing\": \"catalysing\",\n\t\t\"caviled\": \"cavilled\",\n\t\t\"caviling\": \"cavilling\",\n\t\t\"center\": \"centre\",\n\t\t\"centerfold\": \"centrefold\",\n\t\t\"centerfolds\": \"centrefolds\",\n\t\t\"centerpiece\": \"centrepiece\",\n\t\t\"centerpieces\": \"centrepieces\",\n\t\t\"centers\": \"centres\",\n\t\t\"centiliter\": \"centilitre\",\n\t\t\"centiliters\": \"centilitres\",\n\t\t\"centimeter\": \"centimetre\",\n\t\t\"centimeters\": \"centimetres\",\n\t\t\"cesium\": \"caesium\",\n\t\t\"channeled\": \"channelled\",\n\t\t\"channeling\": \"channelling\",\n\t\t\"chiseled\": \"chiselled\",\n\t\t\"chiseler\": \"chiseller\",\n\t\t\"chiselers\": \"chisellers\",\n\t\t\"chiseling\": \"chiselling\",\n\t\t\"clamor\": \"clamour\",\n\t\t\"clamored\": \"clamoured\",\n\t\t\"clamoring\": \"clamouring\",\n\t\t\"clamors\": \"clamours\",\n\t\t\"clangor\": \"clangour\",\n\t\t\"color\": \"colour\",\n\t\t\"counseled\": \"counselled\",\n\t\t\"counseling\": \"counselling\",\n\t\t\"crueler\": \"crueller\",\n\t\t\"cudgeled\": \"cudgelled\",\n\t\t\"cudgeling\": \"cudgelling\",\n\t\t\"defense\": \"defence\",\n\t\t\"defensed\": \"defenced\",\n\t\t\"defenseless\": \"defenceless\",\n\t\t\"defenses\": \"defences\",\n\t\t\"demeanor\": \"demeanour\",\n\t\t\"deviled\": \"devilled\",\n\t\t\"deviling\": \"devilling\",\n\t\t\"dialed\": \"dialled\",\n\t\t\"dialing\": \"dialling\",\n\t\t\"dialyzes\": \"dialyses\",\n\t\t\"diarrhea\": \"diarrhoea\",\n\t\t\"disemboweled\": \"disembowelled\",\n\t\t\"disemboweling\": \"disembowelling\",\n\t\t\"disfavor\": \"disfavour\",\n\t\t\"disfavored\": \"disfavoured\",\n\t\t\"disfavoring\": \"disfavouring\",\n\t\t\"disfavors\": \"disfavours\",\n\t\t\"disheveled\": \"dishevelled\",\n\t\t\"disheveling\": \"dishevelling\",\n\t\t\"doweled\": \"dowelled\"\n\t\t// etc...\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available as live on-wiki configuration pages read by production tooling.\n\nThe listed endpoints are specifically for English Wikipedia (`en.wikipedia.org`) configuration pages.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-17",
+					"anchor": "inference-17-recent-changes-with-scoring",
+					"headingLine": "## 17) Recent changes with scoring",
+					"titleText": "17) Recent changes with scoring",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint lists the most recent edits on a wiki, similar to the RecentChanges page. The Action API module is supported and not deprecated.\n\n**Deprecated:** When you request `rcprop=...|oresscores|...`, the `oresscores` field carries ORES model outputs. Those scores use the same model family that Wikimedia documents as planned for deprecation in favor of Lift Wing (for example revert-risk models). Prefer calling Lift Wing directly for new integrations; keep using `recentchanges` without `oresscores` if you only need edit metadata.\n\nIt returns normal edit metadata (revision IDs, timestamps, users, comments, tags) and, when requested, `oresscores` from ORES where the wiki serves them.\n\n### Documentation\n\n- [API:Recentchanges](https://www.mediawiki.org/wiki/API:Recentchanges)\n- [Action API main page](https://www.mediawiki.org/wiki/API:Main_page)\n\n### Endpoint\n\n`https://en.wikipedia.org/w/api.php?action=query&list=recentchanges`\n\n### Method\n\n`GET`\n\n### Request shape\n\nCommon parameters for signal retrieval:\n\n- `rcprop=title|timestamp|ids|user|comment|sizes|oresscores|tags`\n- `rclimit=...`\n- `rctype=edit|new`\n- `rctoponly=1`\n- optional `rcshow=oresreview`\n- optional pagination/time filters (`rccontinue`, `rcstart`, `rcend`)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sG \"https://en.wikipedia.org/w/api.php\" \\\n  --data-urlencode \"action=query\" \\\n  --data-urlencode \"list=recentchanges\" \\\n  --data-urlencode \"rcprop=title|timestamp|ids|user|comment|sizes|oresscores|tags\" \\\n  --data-urlencode \"rclimit=1\" \\\n  --data-urlencode \"rctype=edit|new\" \\\n  --data-urlencode \"rctoponly=1\" \\\n  --data-urlencode \"format=json\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"batchcomplete\": \"\",\n\t\"continue\": {\n\t\t\"rccontinue\": \"20260424142405|2020420892\",\n\t\t\"continue\": \"-||\"\n\t},\n\t\"query\": {\n\t\t\"recentchanges\": [\n\t\t\t{\n\t\t\t\t\"type\": \"edit\",\n\t\t\t\t\"ns\": 3,\n\t\t\t\t\"title\": \"User talk:Lordseriouspig\",\n\t\t\t\t\"pageid\": 76977641,\n\t\t\t\t\"revid\": 1350868008,\n\t\t\t\t\"old_revid\": 1350866735,\n\t\t\t\t\"rcid\": 2020420896,\n\t\t\t\t\"user\": \"~2026-24831-23\",\n\t\t\t\t\"temp\": \"\",\n\t\t\t\t\"oldlen\": 32051,\n\t\t\t\t\"newlen\": 32109,\n\t\t\t\t\"timestamp\": \"2026-04-24T14:24:05Z\",\n\t\t\t\t\"comment\": \"/* COI with Hack Club */ clearer\",\n\t\t\t\t\"tags\": [\"wikieditor\"],\n\t\t\t\t\"oresscores\": []\n\t\t\t}\n\t\t]\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module (not deprecated).\n\n**Deprecated (optional `oresscores` only):** ORES fields returned in `oresscores` are legacy relative to ORES and Lift Wing migration notes; the rest of this endpoint is normal/supported.\n\nAvailable on Wikimedia wikis through each wiki's `api.php` endpoint.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-18",
+					"anchor": "inference-18-deprecated-damaging-prediction",
+					"headingLine": "## 18) Deprecated: Damaging prediction",
+					"titleText": "18) Deprecated: Damaging prediction",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts how damaging an edit is for a specific revision.\nIt returns a prediction plus probabilities you can use to estimate the chance that the edit is harmful.\n\n### Documentation\n\n- [Lift Wing damaging reference](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_damaging_prediction)\n- [Lift Wing API usage (Wikitech)](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/{wiki}-damaging:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 12345\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-damaging:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796}'",
+							"responseJson": "{\n\t\"enwiki\": {\n\t\t\"models\": {\n\t\t\t\"damaging\": {\n\t\t\t\t\"version\": \"0.5.1\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"1350687796\": {\n\t\t\t\t\"damaging\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": false,\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"false\": 0.9798684755361872,\n\t\t\t\t\t\t\t\"true\": 0.02013152446381285\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Deprecated:** `revertrisk-language-agnostic` and `revertrisk-multilingual` are recommended as newer alternatives.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\nAvailable for the following: `arwiki`, `bswiki`, `cawiki`, `cswiki`, `dewiki`, `enwiki`, `eswiki`, `eswikibooks`, `eswikiquote`, `etwiki`, `fawiki`, `fiwiki`, `frwiki`, `hewiki`, `hiwiki`, `huwiki`, `itwiki`, `jawiki`, `kowiki`, `lvwiki`, `nlwiki`, `nowiki`, `plwiki`, `ptwiki`, `rowiki`, `ruwiki`, `sqwiki`, `srwiki`, `svwiki`, `ukwiki`, `wikidatawiki`, `zhwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-19",
+					"anchor": "inference-19-deprecated-good-faith-prediction",
+					"headingLine": "## 19) Deprecated: Good faith prediction",
+					"titleText": "19) Deprecated: Good faith prediction",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts whether an edit appears to be made in good faith.\nIt returns a prediction and probabilities so you can separate likely mistakes from likely abuse.\n\n### Documentation\n\n- [Lift Wing goodfaith reference](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_goodfaith_prediction)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/{wiki}-goodfaith:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 12345\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/enwiki-goodfaith:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 1350687796}'",
+							"responseJson": "{\n\t\"enwiki\": {\n\t\t\"models\": {\n\t\t\t\"goodfaith\": {\n\t\t\t\t\"version\": \"0.5.1\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"1350687796\": {\n\t\t\t\t\"goodfaith\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": true,\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"false\": 0.009499006207313698,\n\t\t\t\t\t\t\t\"true\": 0.9905009937926863\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Deprecated:** `revertrisk-language-agnostic` and `revertrisk-multilingual` are recommended as newer alternatives.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\nAvailable for the following: `arwiki`, `bswiki`, `cawiki`, `cswiki`, `dewiki`, `enwiki`, `eswiki`, `eswikibooks`, `eswikiquote`, `etwiki`, `fawiki`, `fiwiki`, `frwiki`, `hewiki`, `hiwiki`, `huwiki`, `itwiki`, `jawiki`, `kowiki`, `lvwiki`, `nlwiki`, `nowiki`, `plwiki`, `ptwiki`, `rowiki`, `ruwiki`, `sqwiki`, `srwiki`, `svwiki`, `ukwiki`, `wikidatawiki`, `zhwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-20",
+					"anchor": "inference-20-deprecated-ores-damaging-and-goodfaith-predictions",
+					"headingLine": "## 20) Deprecated: ORES damaging and goodfaith predictions",
+					"titleText": "20) Deprecated: ORES damaging and goodfaith predictions",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns ORES scores for one or more revision IDs and the model names you request.\nIt is a batch-style scoring endpoint that can return multiple model outputs in one call.\n\n### Documentation\n\n- [ORES overview](https://www.mediawiki.org/wiki/ORES)\n- [ORES on Wikitech](https://wikitech.wikimedia.org/wiki/ORES)\n\n### Endpoint\n\n`https://ores.wikimedia.org/v3/scores/{wikiCode}/?models=damaging|goodfaith&revids={id1}|{id2}|...`\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath:\n\n- `{wikiCode}` (example: `enwiki`)\n\nQuery:\n\n- `models=damaging|goodfaith`\n- `revids=12345|23456`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://ores.wikimedia.org/v3/scores/enwiki/?models=damaging|goodfaith&revids=1350687796\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"enwiki\": {\n\t\t\"models\": {\n\t\t\t\"damaging\": {\n\t\t\t\t\"version\": \"0.5.1\"\n\t\t\t},\n\t\t\t\"goodfaith\": {\n\t\t\t\t\"version\": \"0.5.1\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"1350687796\": {\n\t\t\t\t\"damaging\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": false,\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"false\": 0.9798684755361872,\n\t\t\t\t\t\t\t\"true\": 0.02013152446381285\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t},\n\t\t\t\t\"goodfaith\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": true,\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"false\": 0.009499006207313698,\n\t\t\t\t\t\t\t\"true\": 0.9905009937926863\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Legacy/deprecating:** Lift Wing is the recommended platform for these models.\n\nPublicly available as a legacy compatibility endpoint.\n\nwiki/model pairs still served by ORES; request unsupported pairs and the API returns an unavailable/missing model result.\n\n### Rate limits\n\n[ORES](https://www.mediawiki.org/wiki/ORES)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-21",
+					"anchor": "inference-21-deprecated-reverted-prediction",
+					"headingLine": "## 21) Deprecated: Reverted prediction",
+					"titleText": "21) Deprecated: Reverted prediction",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts whether a wiki revision will be reverted, using the older revscoring reverted model.\nThe official docs mark this model for deprecation and recommend newer revert-risk models.\n\n### Documentation\n\n- [Lift Wing API reference: revscoring reverted prediction](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_revscoring_reverted_prediction)\n- [Multilingual revert risk model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Multilingual_revert_risk) (recommended replacement in docs)\n- [Language-agnostic revert risk model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Language-agnostic_revert_risk) (recommended replacement in docs)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/{wiki}-reverted:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"rev_id\": 74995306\n}\n```\n\nOptional:\n\n- `extended_output` (boolean)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/viwiki-reverted:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"rev_id\": 74995306}'",
+							"responseJson": "{\n\t\"viwiki\": {\n\t\t\"models\": {\n\t\t\t\"reverted\": {\n\t\t\t\t\"version\": \"0.5.0\"\n\t\t\t}\n\t\t},\n\t\t\"scores\": {\n\t\t\t\"74995306\": {\n\t\t\t\t\"reverted\": {\n\t\t\t\t\t\"score\": {\n\t\t\t\t\t\t\"prediction\": false,\n\t\t\t\t\t\t\"probability\": {\n\t\t\t\t\t\t\t\"false\": 0.6663072574407378,\n\t\t\t\t\t\t\t\"true\": 0.33369274255926223\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Deprecated:** `revertrisk-language-agnostic` and `revertrisk-multilingual` are recommended as newer alternatives.\n\nStill callable on supported wikis.\n\nAvailable for the following: `bnwiki`, `elwiki`, `enwiktionary`, `glwiki`, `hrwiki`, `idwiki`, `iswiki`, `tawiki`, `viwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---\n\n**Article recommendations** (sections 22–24)"
+						}
+					]
+				},
+				{
+					"id": "inference-22",
+					"anchor": "inference-22-more-like-search",
+					"headingLine": "## 22) \"More like\" search",
+					"titleText": "22) \"More like\" search",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint performs full-text search, and it can also run \"more like this\" retrieval using `srsearch=morelike:...`.\nIt returns candidate pages that are textually similar to your seed pages.\n\n### Documentation\n\n- [API:Search](https://www.mediawiki.org/wiki/API:Search)\n\n### Endpoint\n\n`https://en.wikipedia.org/w/api.php?action=query&list=search`\n\n### Method\n\n`GET`\n\n### Request shape\n\n- `srsearch=morelike:Earth|Mars`\n- `srwhat=text`\n- `srlimit=10`\n- `sroffset=0`\n- optional `srnamespace=0`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=morelike:Earth|Mars&srwhat=text&srlimit=3&sroffset=0&format=json\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"batchcomplete\": \"\",\n\t\"continue\": {\n\t\t\"sroffset\": 3,\n\t\t\"continue\": \"-||\"\n\t},\n\t\"query\": {\n\t\t\"searchinfo\": {\n\t\t\t\"totalhits\": 1194567\n\t\t},\n\t\t\"search\": [\n\t\t\t{\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Extraterrestrial liquid water\",\n\t\t\t\t\"pageid\": 11322595,\n\t\t\t\t\"size\": 75343,\n\t\t\t\t\"wordcount\": 7535,\n\t\t\t\t\"snippet\": \"Extraterrestrial liquid water is water in its liquid state that naturally occurs outside Earth. It is a subject of wide interest because it is recognized\",\n\t\t\t\t\"timestamp\": \"2026-03-24T19:59:52Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Earth analog\",\n\t\t\t\t\"pageid\": 26780222,\n\t\t\t\t\"size\": 39826,\n\t\t\t\t\"wordcount\": 3940,\n\t\t\t\t\"snippet\": \"An Earth analog, also called an Earth twin or second Earth, is a planet or moon with environmental conditions similar to those found on Earth. The term\",\n\t\t\t\t\"timestamp\": \"2026-04-20T06:48:07Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Planetary surface\",\n\t\t\t\t\"pageid\": 34661457,\n\t\t\t\t\"size\": 42947,\n\t\t\t\t\"wordcount\": 3834,\n\t\t\t\t\"snippet\": \"A planetary surface is where the solid or liquid material of certain types of astronomical objects contacts the atmosphere or outer space. Planetary surfaces\",\n\t\t\t\t\"timestamp\": \"2026-02-22T10:36:18Z\"\n\t\t\t}\n\t\t]\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n_Captured with `srlimit=3` to keep the sample small; your own `search` array may be longer with higher limits._\n\n### Availability\n\n**Active:** Operator behavior depends on the wiki's search backend.\n\nPublicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module.\n\nAvailable where the search backend supports the `morelike:` operator (commonly CirrusSearch-backed wikis).\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-23",
+					"anchor": "inference-23-list-building",
+					"headingLine": "## 23) List-building",
+					"titleText": "23) List-building",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns a ranked list of candidate pages from a multi-source list-building service.\nIt combines several retrieval channels and returns unified results for exploration workflows.\n\n### Documentation\n\nNo official public documentation URL was found in fetched sources; endpoint is observed directly in production usage.\n\n### Endpoint\n\n`https://list-building.toolforge.org/api/serpentine`\n\n### Method\n\n`GET`\n\n### Request shape\n\nQuery params used:\n\n- `lang`\n- `k-reader`\n- `k-links`\n- `k-morelike`\n- optional `page_title`\n- optional `qid`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://list-building.toolforge.org/api/serpentine?lang=en&k-reader=3&k-links=3&k-morelike=3&page_title=Earth\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"qid\": \"Q2\",\n\t\"results\": [\n\t\t{\n\t\t\t\"description\": \"another planet with environmental conditions similar to those found on the planet Earth\",\n\t\t\t\"page_title\": \"Earth analog\",\n\t\t\t\"qid\": \"Q2670101\",\n\t\t\t\"redlink\": false,\n\t\t\t\"source\": \"morelike\"\n\t\t},\n\t\t{\n\t\t\t\"description\": \"geology of Mercury, Venus, Earth, Mars and Ceres\",\n\t\t\t\"page_title\": \"Geology of solar terrestrial planets\",\n\t\t\t\"qid\": \"Q5535416\",\n\t\t\t\"redlink\": false,\n\t\t\t\"source\": \"links\"\n\t\t},\n\t\t{\n\t\t\t\"description\": \"Galilean moon of Jupiter\",\n\t\t\t\"page_title\": \"Europa (moon)\",\n\t\t\t\"qid\": \"Q3143\",\n\t\t\t\"redlink\": false,\n\t\t\t\"source\": \"morelike\"\n\t\t},\n\t\t{\n\t\t\t\"description\": \"apparent mystery that the early Earth seems to have had liquid water, even though the young Sun was less bright, thus presumably completely freezing the Earth\",\n\t\t\t\"page_title\": \"Faint young Sun paradox\",\n\t\t\t\"qid\": \"Q686707\",\n\t\t\t\"redlink\": false,\n\t\t\t\"source\": \"links\"\n\t\t},\n\t\t{\n\t\t\t\"description\": \"water\",\n\t\t\t\"page_title\": \"Extraterrestrial liquid water\",\n\t\t\t\"qid\": \"Q1319471\",\n\t\t\t\"redlink\": false,\n\t\t\t\"source\": \"morelike\"\n\t\t},\n\t\t{\n\t\t\t\"page_title\": \"-\",\n\t\t\t\"qid\": \"Q111954298\",\n\t\t\t\"redlink\": true,\n\t\t\t\"source\": \"links\"\n\t\t},\n\t\t{\n\t\t\t\"description\": \"possible upcoming scenarios for Earth\",\n\t\t\t\"page_title\": \"Future of Earth\",\n\t\t\t\"qid\": \"Q2003654\",\n\t\t\t\"redlink\": false,\n\t\t\t\"source\": \"morelike\"\n\t\t},\n\t\t{\n\t\t\t\"description\": \"structure and composition of the Moon\",\n\t\t\t\"page_title\": \"Geology of the Moon\",\n\t\t\t\"qid\": \"Q1648514\",\n\t\t\t\"redlink\": false,\n\t\t\t\"source\": \"links\"\n\t\t},\n\t\t{\n\t\t\t\"description\": \"fourth planet from the Solar System, tellurian and orange-red due to iron oxide\",\n\t\t\t\"page_title\": \"Mars\",\n\t\t\t\"qid\": \"Q111\",\n\t\t\t\"redlink\": false,\n\t\t\t\"source\": \"morelike\"\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Experimental:** Experimental/community service.\n\nPublicly available Toolforge-hosted service (not a core Wikimedia production API surface).\n\nCross-wiki in input shape (`lang` + optional `page_title`/`qid`), with availability limited to languages/entities present in the service backends.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-24",
+					"anchor": "inference-24-search-with-ranking-profiles",
+					"headingLine": "## 24) Search with ranking profiles",
+					"titleText": "24) Search with ranking profiles",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint runs full-text search and lets you choose ranking profiles with `srqiprofile`.\nProfiles such as `popular_inclinks_pv` bias ranking toward high-pageview and high-inlink results.\n\n### Documentation\n\n- [MediaWiki Action API: Search](https://www.mediawiki.org/wiki/API:Search)\n\n### Endpoint\n\n`https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=Jupiter&srlimit=5&srqiprofile=popular_inclinks_pv&srinfo=totalhits`\n\n### Method\n\n`GET`\n\n### Request shape\n\nQuery parameters:\n\n- `action=query`\n- `list=search`\n- `srsearch` (required)\n- `srqiprofile` (optional ranking profile, examples include `popular_inclinks_pv`, `wsum_inclinks_pv`)\n- `srinfo` (optional metadata, example: `totalhits`)\n- `srlimit` (optional)\n- `sroffset` (optional continuation offset)\n- `format=json`\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=Jupiter&srlimit=3&srqiprofile=popular_inclinks_pv&srinfo=totalhits\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"batchcomplete\": \"\",\n\t\"continue\": {\n\t\t\"sroffset\": 3,\n\t\t\"continue\": \"-||\"\n\t},\n\t\"query\": {\n\t\t\"searchinfo\": {\n\t\t\t\"totalhits\": 26742\n\t\t},\n\t\t\"search\": [\n\t\t\t{\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Jupiter\",\n\t\t\t\t\"pageid\": 38930,\n\t\t\t\t\"size\": 176407,\n\t\t\t\t\"wordcount\": 16375,\n\t\t\t\t\"snippet\": \"<span class=\\\"searchmatch\\\">Jupiter</span> is the fifth planet from the Sun, and the largest in the Solar System. It is a gas giant with a mass nearly 2.5 times that of all the other planets\",\n\t\t\t\t\"timestamp\": \"2026-04-19T01:14:29Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Rory McIlroy\",\n\t\t\t\t\"pageid\": 3949844,\n\t\t\t\t\"size\": 242237,\n\t\t\t\t\"wordcount\": 18997,\n\t\t\t\t\"snippet\": \"Ireland Height 5 ft 9 in (1.75 m) Weight 11+1⁄2 st (161 lb; 73 kg) Residence <span class=\\\"searchmatch\\\">Jupiter</span>, Florida, U.S. Spouse Erica Stoll ​ (m. 2017)​ Children 1 Career Turned\",\n\t\t\t\t\"timestamp\": \"2026-04-21T17:35:50Z\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"ns\": 0,\n\t\t\t\t\"title\": \"Donald Trump\",\n\t\t\t\t\"pageid\": 4848272,\n\t\t\t\t\"size\": 354110,\n\t\t\t\t\"wordcount\": 29050,\n\t\t\t\t\"snippet\": \"York City Mar-a-Lago Golf courses US Bedminster, NJ \"Doral\" Miami, FL <span class=\\\"searchmatch\\\">Jupiter</span>, FL Los Angeles, CA Pine Hill, NJ Washington, D.C. Westchester, NY West\",\n\t\t\t\t\"timestamp\": \"2026-04-24T13:02:19Z\"\n\t\t\t}\n\t\t]\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n_Captured with `srlimit=3`._\n\n### Availability\n\n**Active:** Ranking profile behavior varies by wiki backend configuration.\n\nPublicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module.\n\nAvailable where the Action API search module is enabled; `srqiprofile` effects depend on search backend/profile support.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---\n\n**Edit suggestions** (sections 25–26)"
+						}
+					]
+				},
+				{
+					"id": "inference-25",
+					"anchor": "inference-25-link-suggestions",
+					"headingLine": "## 25) Link suggestions",
+					"titleText": "25) Link suggestions",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint suggests links that could be added to an article.\nIt returns candidate link text, target pages, and context so you can propose concrete linking edits.\n\n### Documentation\n\n- [Link Recommendation API (MediaWiki)](https://www.mediawiki.org/wiki/Link_Recommendation_API)\n- [Add-a-link model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/add-a-link_model)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/linkrecommendation/v1/linkrecommendations/{project}/{lang}/{title}`\n\n### Method\n\n`GET` (read recommendations)\n\n### Request shape\n\n- Path parameters:\n    - `{project}` (example: `wikipedia`)\n    - `{lang}` (example: `en`)\n    - `{title}` (page title)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/linkrecommendation/v1/linkrecommendations/wikipedia/en/Earth\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"links\": [\n\t\t{\n\t\t\t\"context_after\": \" of this m\",\n\t\t\t\"context_before\": \"ed by the \",\n\t\t\t\"link_index\": 0,\n\t\t\t\"link_target\": \"Partial melting\",\n\t\t\t\"link_text\": \"partial melting\",\n\t\t\t\"match_index\": 0,\n\t\t\t\"score\": 0.8778332471847534,\n\t\t\t\"wikitext_offset\": 23595\n\t\t},\n\t\t{\n\t\t\t\"context_after\": \". The two \",\n\t\t\t\"context_before\": \" in \",\n\t\t\t\"link_index\": 1,\n\t\t\t\"link_target\": \"Sedimentary rock\",\n\t\t\t\"link_text\": \"sedimentary rocks\",\n\t\t\t\"match_index\": 0,\n\t\t\t\"score\": 0.5837271809577942,\n\t\t\t\"wikitext_offset\": 24840\n\t\t},\n\t\t{\n\t\t\t\"context_after\": \" within th\",\n\t\t\t\"context_before\": \"hanges in \",\n\t\t\t\"link_index\": 2,\n\t\t\t\"link_target\": \"Crystal structure\",\n\t\t\t\"link_text\": \"crystal structure\",\n\t\t\t\"match_index\": 0,\n\t\t\t\"score\": 0.7161753177642822,\n\t\t\t\"wikitext_offset\": 40127\n\t\t}\n\t\t// etc...\n\t],\n\t\"links_count\": 15,\n\t\"meta\": {\n\t\t\"application_version\": \"4372b3e\",\n\t\t\"dataset_checksums\": {\n\t\t\t\"anchors\": \"ab0a4c3fc5dcf9e6404c45eaad1eb463b38673a4936ab3f80e7dcdbf8130dee5\",\n\t\t\t\"model\": \"c25a9fb36577a272dd7ca101655d6169bf8a86dbfb1edce7c9b6ee445dec8e71\",\n\t\t\t\"pageids\": \"05391e1229aefc087c5076bea2042cddcc0d23bded0f6262cc474898a954c96e\",\n\t\t\t\"redirects\": \"56e8089b9d930b4ff77dbc9495c6a2e67c48d8d8a023f9b148e3bbfe5a98665f\",\n\t\t\t\"w2vfiltered\": \"59cb88563ca2e0d1992d71d28921f04e902880a9bc9d03081360cbef69fa229c\"\n\t\t},\n\t\t\"format_version\": 1\n\t},\n\t\"page_title\": \"Earth\",\n\t\"pageid\": 9228,\n\t\"revid\": 1350687796\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Active:** No deprecation warning is shown in the referenced docs.\n\nPublicly available via Wikimedia production API traffic.\n\nPath is explicit by project and language (`{project}/{lang}/{title}`); availability is only where that project-language pair has a deployed recommendation model.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-26",
+					"anchor": "inference-26-translation-suggestions",
+					"headingLine": "## 26) Translation suggestions",
+					"titleText": "26) Translation suggestions",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint recommends articles to translate from one language wiki to another.\nIt returns ranked candidate articles based on source/target languages and optional seed or topic inputs.\n\n### Documentation\n\n- [Lift Wing API reference: content translation recommendation](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_content_translation_recommendation)\n- [Interactive recommendation API docs](https://api.wikimedia.org/service/lw/recommendation/api/docs)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/recommendation/api/v1/translation`\n\n### Method\n\n`GET`\n\n### Request shape\n\nQuery parameters:\n\n- `source` (required): source wiki language code (example: `en`)\n- `target` (required): target wiki language code (example: `fr`)\n- `count` (optional, default `12`)\n- `seed` (optional)\n- `topic` (optional)\n- `include_pageviews` (optional, default `false`)\n- `search_algorithm` (optional, default `morelike`)\n- `rank_method` (optional, default `default`)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/recommendation/api/v1/translation?source=en&target=fr&count=2&seed=Apple&include_pageviews=true\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"recommendations\": [\n\t\t{\n\t\t\t\"title\": \"Summer squash\",\n\t\t\t\"pageviews\": 120,\n\t\t\t\"wikidata_id\": \"Q17119307\",\n\t\t\t\"rank\": 265,\n\t\t\t\"langlinks_count\": 6,\n\t\t\t\"size\": 7529,\n\t\t\t\"lead_section_size\": null,\n\t\t\t\"collection\": null\n\t\t},\n\t\t{\n\t\t\t\"title\": \"Winesap\",\n\t\t\t\"pageviews\": 22,\n\t\t\t\"wikidata_id\": \"Q16878488\",\n\t\t\t\"rank\": 282,\n\t\t\t\"langlinks_count\": 3,\n\t\t\t\"size\": 5427,\n\t\t\t\"lead_section_size\": null,\n\t\t\t\"collection\": null\n\t\t}\n\t],\n\t\"continue_offset\": null,\n\t\"continue_seed\": null\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Active:** Some request options are marked experimental in ecosystem documentation.\n\nPublicly available via Wikimedia's production recommendation API.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---\n\n**Summary** (sections 27–28)"
+						}
+					]
+				},
+				{
+					"id": "inference-27",
+					"anchor": "inference-27-article-descriptions",
+					"headingLine": "## 27) Article descriptions",
+					"titleText": "27) Article descriptions",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint generates short description text for an article title and language.\nIt returns one or more candidate descriptions that can be used as summary snippets.\n\n### Documentation\n\n- [Lift Wing API reference: article descriptions](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_article_descriptions)\n- [Article descriptions model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Proposed/Article_descriptions)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/article-descriptions:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"lang\": \"en\",\n\t\"title\": \"Clandonald\",\n\t\"num_beams\": 2,\n\t\"debug\": 1\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/article-descriptions:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"lang\":\"en\",\"title\":\"Clandonald\",\"num_beams\":2,\"debug\":1}'",
+							"responseJson": "{\n\t\"lang\": \"en\",\n\t\"title\": \"Clandonald\",\n\t\"blp\": false,\n\t\"num_beams\": 2,\n\t\"groundtruth\": \"Hamlet in Alberta, Canada\",\n\t\"latency\": {\n\t\t\"wikidata-info (s)\": 0.10568404197692871,\n\t\t\"mwapi - first paragraphs (s)\": 0.11831045150756836,\n\t\t\"total network (s)\": 0.153550386428833,\n\t\t\"model (s)\": 6.823495864868164,\n\t\t\"total (s)\": 6.977058410644531\n\t},\n\t\"features\": {\n\t\t\"descriptions\": {\n\t\t\t\"fr\": \"hameau d'Alberta\",\n\t\t\t\"en\": \"hamlet in central Alberta, Canada\"\n\t\t},\n\t\t\"first-paragraphs\": {\n\t\t\t\"en\": \"Clandonald is a hamlet in central Alberta, Canada within the County of Vermilion River. It is located approximately 28 kilometres (17 mi) north of Highway 16 and 58 kilometres (36 mi) northwest of Lloydminster.\",\n\t\t\t\"fr\": \"Clandonald est un hameau (hamlet) du Comté de Vermilion River, situé dans la province canadienne d'Alberta.\"\n\t\t}\n\t},\n\t\"prediction\": [\"Hamlet in Alberta, Canada\", \"human settlement in Alberta, Canada\"]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Active:** Output quality can vary by language and topic domain.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-28",
+					"anchor": "inference-28-edit-types",
+					"headingLine": "## 28) Edit types",
+					"titleText": "28) Edit types",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint analyzes a revision diff and labels the kinds of changes made.\nDepending on the route, it returns summary counts, detailed structured changes, or debug output.\n\n### Documentation\n\n- [edit-types Swagger docs](https://edit-types.wmcloud.org/docs)\n- [edit-types project repository](https://github.com/geohci/edit-types)\n\n### Endpoint\n\n- `https://edit-types.wmcloud.org/diff-summary`\n- `https://edit-types.wmcloud.org/diff-details`\n- `https://edit-types.wmcloud.org/diff-debug`\n\n### Method\n\n`GET`\n\n### Request shape\n\nQuery params:\n\n- `lang`\n- `revid`\n- optional `content_type`\n\n### Example 1: Diff summary"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://edit-types.wmcloud.org/diff-summary?lang=en&revid=1350687796\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"article\": \"https://en.wikipedia.org/wiki/?oldid=1350687796\",\n\t\"summary\": {\n\t\t\"Wikilink\": {\n\t\t\t\"change\": 1,\n\t\t\t\"insert\": 1\n\t\t},\n\t\t\"Section\": {\n\t\t\t\"change\": 1\n\t\t},\n\t\t\"Media\": {\n\t\t\t\"change\": 1\n\t\t},\n\t\t\"Template\": {\n\t\t\t\"change\": 1\n\t\t}\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Example 2: Diff details"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://edit-types.wmcloud.org/diff-details?lang=en&revid=1350687796\" \\\n  -H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"article\": \"https://en.wikipedia.org/wiki/?oldid=1350687796\",\n\t\"summary\": {\n\t\t\"Wikilink\": {\n\t\t\t\"insert\": 1,\n\t\t\t\"change\": 1\n\t\t},\n\t\t\"Template\": {\n\t\t\t\"change\": 1\n\t\t},\n\t\t\"Media\": {\n\t\t\t\"change\": 1\n\t\t},\n\t\t\"Section\": {\n\t\t\t\"change\": 1\n\t\t}\n\t},\n\t\"details\": \"…(truncated: full response includes per-change detail arrays)\"\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\n**Experimental:** Experimental/community service. Behavior and availability may change.\n\nPublicly available Toolforge/WMCS-hosted service (not a core Wikimedia production API surface).\n\nCross-wiki in input shape (`lang` + `revid`), with real availability determined by whether the service can fetch and analyze that revision for the requested language wiki.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---\n\n**Language and country** (sections 29–30)"
+						}
+					]
+				},
+				{
+					"id": "inference-29",
+					"anchor": "inference-29-language-identification",
+					"headingLine": "## 29) Language identification",
+					"titleText": "29) Language identification",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint detects the language of input text.\nIt returns language identifiers and a confidence score for the detected language.\n\n### Documentation\n\n- [Lift Wing API reference: language identification prediction](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_language_identification_prediction)\n- [Language identification model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Proposed/Language_Identification)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/langid:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"text\": \"This is an English sentence about Wikipedia and machine learning.\"\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/langid:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"text\":\"Bonjour le monde\"}'",
+							"responseJson": "{\n\t\"language\": \"fra_Latn\",\n\t\"wikicode\": \"fr\",\n\t\"languagename\": \"French\",\n\t\"score\": 0.9967567920684814\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\nNot tied to a specific wiki; works on raw input text.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-30",
+					"anchor": "inference-30-article-country",
+					"headingLine": "## 30) Article country",
+					"titleText": "30) Article country",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint predicts which countries are most relevant to an article.\nYou provide article title and language, and it returns country candidates with scores and source evidence.\n\n### Documentation\n\n- [Lift Wing API reference: article country](https://api.wikimedia.org/wiki/Lift_Wing_API/Reference/Get_article_country)\n- [Article country model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Proposed/Article_country)\n\n### Endpoint\n\n`https://api.wikimedia.org/service/lw/inference/v1/models/article-country:predict`\n\n### Method\n\n`POST`\n\n### Request shape\n\n```json\n{\n\t\"lang\": \"en\",\n\t\"title\": \"Toni_Morrison\"\n}\n```\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://api.wikimedia.org/service/lw/inference/v1/models/article-country:predict\" \\\n  -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Api-User-Agent: <your tool name> (<contact: URL or email>)\" \\\n  -d '{\"lang\":\"en\",\"title\":\"Earth\"}'",
+							"responseJson": "{\n\t\"model_name\": \"article-country\",\n\t\"model_version\": \"1\",\n\t\"prediction\": {\n\t\t\"article\": \"https://en.wikipedia.org/wiki/Earth\",\n\t\t\"wikidata_item\": \"Q2\",\n\t\t\"results\": []\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+						}
+					]
+				}
+			]
+		}
+	]
+}

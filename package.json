@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "prebuild": "npm run playground",
+    "prebuild": "npm run build-signals && npm run playground",
+    "build-signals": "node scripts/build-real-data-reference.mjs",
     "playground": "npm run generate:playground -w fakewiki",
     "preview": "vite preview",
     "lint": "eslint . --fix --cache && npm run type-check",
@@ -31,11 +32,13 @@
     "d3": "^7.9.0",
     "diff-match-patch": "^1.0.5",
     "fakewiki": "workspace:*",
+    "markdown-it": "^14.1.1",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.10.2",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
