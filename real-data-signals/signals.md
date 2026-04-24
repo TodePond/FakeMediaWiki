@@ -57,7 +57,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**: [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -118,7 +118,7 @@ Supported language codes (API reference): `ka`, `lv`, `ta`, `ur`, `eo`, `lt`, `s
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**: [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -173,7 +173,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**: [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -249,7 +249,7 @@ Single global endpoint. Availability is determined by supported `check_type` val
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**: [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -309,10 +309,9 @@ Available on Wikimedia wikis that expose the feed module via `api.php`.
 
 ### Rate limits
 
-**Inherited/global policy**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -383,10 +382,9 @@ Available where the search backend supports the `morelike:` operator (commonly C
 
 ### Rate limits
 
-**Inherited/global policy**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -448,9 +446,9 @@ Path is explicit by project and language (`{project}/{lang}/{title}`); availabil
 
 ### Rate limits
 
-**Inherited/global policy** (explicitly stated on API page as global Wikimedia API limits):
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -512,7 +510,9 @@ Cross-wiki in input shape (`lang` + `revid`), with real availability determined 
 
 ### Rate limits
 
-**Not explicitly published** in fetched docs.
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
+
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -577,7 +577,9 @@ Cross-wiki in input shape (`lang` + optional `page_title`/`qid`), with availabil
 
 ### Rate limits
 
-**Not explicitly published** in fetched sources.
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
+
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -641,10 +643,9 @@ The listed endpoints are specifically for English Wikipedia (`en.wikipedia.org`)
 
 ### Rate limits
 
-**Inherited/global policy**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -720,12 +721,9 @@ curl "https://api.wikimedia.org/service/lw/inference/v1/models/outlink-topic-mod
 
 Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.
 
-
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -793,9 +791,7 @@ Available for the following: `{wiki}-articletopic` is documented for `arwiki`, `
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -860,9 +856,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -919,9 +913,7 @@ Supported language codes (API reference): `af`, `sq`, `am`, `ar`, `hy`, `as`, `a
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -988,9 +980,7 @@ Available for the following: `enwiki`, `ptwiki`.
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1064,9 +1054,7 @@ Wikidata only (`wikidatawiki`).
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1129,9 +1117,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1200,9 +1186,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1261,9 +1245,7 @@ Not tied to a specific wiki; works on raw input text.
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1343,9 +1325,7 @@ Available for the following: `enwiki`.
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1410,9 +1390,7 @@ Wikidata revisions only.
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1496,9 +1474,7 @@ Available for the following: `{wiki}-articlequality` is documented for `enwiki`,
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1579,9 +1555,7 @@ Wikidata only (`wikidatawiki`).
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1658,9 +1632,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -1731,10 +1703,9 @@ Publicly available via Wikimedia's production recommendation API.
 
 ### Rate limits
 
-**Global policy limits (no endpoint page numeric limit in fetched source set)**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs: Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -1807,10 +1778,11 @@ Available where the Action API search module is enabled; `srqiprofile` effects d
 
 ### Rate limits
 
-**Global policy limits (no endpoint page numeric limit)**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs: Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+
+---
 
 ## 27) AQS: Per-article pageviews
 
@@ -1875,10 +1847,9 @@ Broad Wikimedia project coverage through AQS project identifiers (for example `e
 
 ### Rate limits
 
-**Global policy limits (no endpoint page numeric limit in fetched source set)**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs: Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -1944,10 +1915,9 @@ Broad Wikimedia project coverage through AQS project identifiers.
 
 ### Rate limits
 
-**Global policy limits (no endpoint page numeric limit in fetched source set)**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs: Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -2011,10 +1981,9 @@ Available on Wikimedia wikis via each wiki's `api.php`.
 
 ### Rate limits
 
-**Global policy limits (no endpoint page numeric limit)**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs: Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -2090,11 +2059,9 @@ Available on Wikimedia wikis with interlanguage link data.
 
 ### Rate limits
 
-**Global policy limits (no endpoint page numeric limit)**:
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs: Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
-
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -2171,10 +2138,9 @@ Available on Wikimedia wikis through each wiki's `api.php` endpoint.
 
 ### Rate limits
 
-**Inherited/global policy** (no endpoint-specific req/s or req/hr published on this module page):
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
 
-- [Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
-- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
 
@@ -2236,11 +2202,7 @@ Available for the following: `arwiki`, `bswiki`, `cawiki`, `cswiki`, `dewiki`, `
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)** via [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage):
-
-- Anonymous: `50,000 req/hour` (2026 note also lists `15 req/s`)
-- Authenticated: `100,000 req/hour` (2026 note also lists `100 req/s`)
-- Bots/WMCS/known clients: `200,000 req/hour` (2026 note also lists `200 req/s`)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -2301,7 +2263,7 @@ Available for the following: `arwiki`, `bswiki`, `cawiki`, `cswiki`, `dewiki`, `
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**: [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
 
@@ -2381,12 +2343,7 @@ wiki/model pairs still served by ORES; request unsupported pairs and the API ret
 
 ### Rate limits
 
-**Explicit numeric usage guidance on ORES page**:
-
-- up to `20` revisions per request,
-- up to `4` parallel requests.
-
-Source: [https://www.mediawiki.org/wiki/ORES](https://www.mediawiki.org/wiki/ORES)
+[ORES](https://www.mediawiki.org/wiki/ORES)
 
 ---
 
@@ -2468,8 +2425,6 @@ Available for the following: `bnwiki`, `elwiki`, `enwiktionary`, `glwiki`, `hrwi
 
 ### Rate limits
 
-**Explicit numeric (Lift Wing external usage)**:
-
-- [Machine Learning/LiftWing/API/External usage#Rate limits for external usage](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
+[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
