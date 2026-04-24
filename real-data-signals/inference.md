@@ -1,6 +1,6 @@
 # List of ML and related inference signals for use in MediaWiki prototypes
 
-The numbered sections below are ordered into categories. Ranges are section numbers in this file.
+Categories are given in the table of contents that follows, and the same **category** names appear in the main text as plain **bold** lines (not `##` headings) immediately before the first `##` section in each group.
 
 - **Quality**: Sections 1–6.
 - **Topic**: Sections 7–10.
@@ -11,6 +11,8 @@ The numbered sections below are ordered into categories. Ranges are section numb
 - **Language and country**: Sections 29–30.
 
 ---
+
+**Quality** (sections 1–6)
 
 ## 1) Language agnostic article quality
 
@@ -456,6 +458,8 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
+
+**Topic** (sections 7–10)
 
 ## 7) Article topic
 
@@ -969,6 +973,8 @@ Available for the following: `enwiki`.
 [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
 ---
+
+**Edit checks** (sections 11–21)
 
 ## 11) Language agnostic revert risk
 
@@ -2207,6 +2213,8 @@ Available for the following: `bnwiki`, `elwiki`, `enwiktionary`, `glwiki`, `hrwi
 
 ---
 
+**Article recommendations** (sections 22–24)
+
 ## 22) "More like" search
 
 This endpoint performs full-text search, and it can also run "more like this" retrieval using `srsearch=morelike:...`.
@@ -2533,6 +2541,8 @@ Available where the Action API search module is enabled; `srqiprofile` effects d
 
 ---
 
+**Edit suggestions** (sections 25–26)
+
 ## 25) Link suggestions
 
 This endpoint suggests links that could be added to an article.
@@ -2722,6 +2732,8 @@ Publicly available via Wikimedia's production recommendation API.
 [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
+
+**Summary** (sections 27–28)
 
 ## 27) Article descriptions
 
@@ -2914,6 +2926,8 @@ Cross-wiki in input shape (`lang` + `revid`), with real availability determined 
 [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
 ---
+
+**Language and country** (sections 29–30)
 
 ## 29) Language identification
 
