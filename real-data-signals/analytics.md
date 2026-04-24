@@ -1,6 +1,6 @@
 # Analytics signals for use in MediaWiki prototypes
 
-Example **requests** are copy-pasteable `curl` lines. Example **response** bodies were produced by those requests against Wikimedia’s **live** AQS (not fictional JSON), then trimmed for length where noted.
+Example **requests** are copy-pasteable `curl` lines. Example **response** bodies were produced by those requests against Wikimedia’s **live** public APIs, then trimmed for length where noted: **AQS** (the Analytics/REST `metrics/…` paths) in **sections 1–5**; the **`mostread`** object in **section 6** comes from the per-wiki [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) **`feed/featured`** REST bundle (not AQS, not a standalone `page/most-read/…` route on the public API).
 
 ## 1) Article views
 
@@ -119,7 +119,7 @@ Broad Wikimedia project coverage through AQS project identifiers (for example `e
 
 ## 2) Most viewed articles
 
-This endpoint returns ranked most-viewed pages for a project on a specific day.
+This endpoint returns ranked most-viewed pages for a project on a specific day (the **full** AQS daily leaderboard on `wikimedia.org`). For the **shorter, app-oriented “most read” list** (same day’s view numbers where rows overlap, but with some high-traffic special pages omitted), see **section 6** (`mostread` inside `feed/featured` on a wiki).
 
 ### Documentation
 
@@ -494,6 +494,88 @@ Unmodified `results` for the same date range as the request; the array continues
 ### Availability
 
 Publicly available. Same **latency** caveats as other AQS metrics; check stability labels in the [REST API documentation](https://wikimedia.org/api/rest_v1/?doc) for the specific path.
+
+### Rate limits
+
+[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
+
+[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
+
+---
+
+## 6) Most read articles
+
+To show the same **yesterday’s top read**-style list that powers cards in the official apps’ **Explore** experience, use the aggregated Wikifeeds response and read the **`mostread`** object.
+
+The full `feed/featured` bundle is also documented in [`curation.md`](./curation.md).
+
+### Documentation
+
+- [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) (aggregated `feed/featured` includes the microservice that backs “most read”)
+- [Wikitech: Wikifeeds (public paths)](https://wikitech.wikimedia.org/wiki/Wikifeeds#Overview)
+
+### Endpoint
+
+`https://{wiki}/api/rest_v1/feed/featured/{yyyy}/{mm}/{dd}`
+
+(Example host: `en.wikipedia.org`.) The **`mostread`** field sits inside the JSON body; the **`date`** field inside **`mostread`** is the **UTC** day the view figures refer to (typically the **previous** calendar day relative to the `featured` path’s date).
+
+### Method
+
+`GET`
+
+### Request shape
+
+Path parameters: `yyyy`, `mm`, `dd` (zero-padded; earliest supported year is **2016** per [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds)). Use the [User-Agent](https://www.mediawiki.org/wiki/API:Etiquette) policy. Response: parse JSON, then `response.mostread` (when present—some wikis or days may omit it).
+
+### Example
+
+#### Request
+
+```bash
+curl -sS "https://en.wikipedia.org/api/rest_v1/feed/featured/2026/04/24" \
+  -H "User-Agent: <your tool name> (<contact: URL or email>)"
+```
+
+#### Response (excerpt: `mostread` only, trimmed)
+
+```json
+{
+	"date": "2026-04-23Z",
+	"articles": [
+		{
+			"title": "Nahui_Ollin",
+			"views": 1171179,
+			"rank": 2
+		},
+		{
+			"title": "2026_Tamil_Nadu_Legislative_Assembly_election",
+			"views": 355438,
+			"rank": 4
+		},
+		{
+			"title": "2021_Tamil_Nadu_Legislative_Assembly_election",
+			"views": 257803,
+			"rank": 6
+		},
+		{
+			"title": "2026_West_Bengal_Legislative_Assembly_election",
+			"views": 229632,
+			"rank": 7
+		},
+		{
+			"title": "Michael_(2026_film)",
+			"views": 177083,
+			"rank": 8
+		}
+		// etc...
+	]
+}
+```
+
+### Availability
+
+Public on wikis that expose the [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) REST routes. Stability and field availability follow the `feed/featured` contract (see also [`curation.md`](./curation.md)). Not a substitute for the **AQS** definitions in **sections 1–2** when you need the official metrics API.
 
 ### Rate limits
 
