@@ -4,6 +4,10 @@
  *   `_handleActionApiRequest`).
  * - `w/index.php?action=raw&title=…` is rewritten to `w/rest.php/v1/page/…` like `getPageSource`
  *   in `fakewiki` (raw index does not CORS the same way as the MediaWiki REST `page` route).
+ * - For **Wikimedia GET/HEAD** (no body), the browser `fetch` uses **no custom headers** so the
+ *   request stays a CORS-**simple** request (avoids a failing OPTIONS preflight on hosts such as
+ *   `wikimedia.org` metrics that still return JSON when `origin=*` is in the query string). Copy the
+ *   curl in a terminal to send `-H` User-Agent / `Api-User-Agent` as documented.
  */
 const DEFAULT_UA = "FakeMediaWiki-WikiSignals/1.0 (https://github.com/wikimedia/fake-mediawiki; docs)"
 
@@ -283,15 +287,27 @@ export async function runCurlBash(
 				redirect: init.redirect ?? "follow",
 			})
 		} else {
-			const headers = new Headers(init.headers as HeadersInit)
 			const wmf = isWikimediaFamilyHost(new URL(url).hostname)
-			if (!headers.get("User-Agent") && !headers.get("Api-User-Agent")) {
-				headers.set("User-Agent", DEFAULT_UA)
+			const method = (init.method || "GET").toUpperCase()
+			const hasBody = init.body != null && String(init.body) !== ""
+			// See file header: extra headers (Api-User-Agent) force preflight; many WMF read URLs
+			// do not answer OPTIONS with ACAO, so the fetch fails in the browser.
+			if (wmf && (method === "GET" || method === "HEAD") && !hasBody) {
+				r = await fetch(fetchUrl, {
+					method: method as "GET" | "HEAD",
+					headers: new Headers(),
+					redirect: init.redirect ?? "follow",
+				})
+			} else {
+				const headers = new Headers(init.headers as HeadersInit)
+				if (!headers.get("User-Agent") && !headers.get("Api-User-Agent")) {
+					headers.set("User-Agent", DEFAULT_UA)
+				}
+				if (wmf && !headers.get("Api-User-Agent")) {
+					headers.set("Api-User-Agent", DEFAULT_UA)
+				}
+				r = await fetch(fetchUrl, { ...init, headers })
 			}
-			if (wmf && !headers.get("Api-User-Agent")) {
-				headers.set("Api-User-Agent", DEFAULT_UA)
-			}
-			r = await fetch(fetchUrl, { ...init, headers })
 		}
 		const ct = r.headers.get("content-type") || "text/plain"
 		let text = await r.text()
