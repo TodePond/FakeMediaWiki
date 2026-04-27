@@ -45,6 +45,7 @@
 		"schema",
 		"playground-schema.generated.ts",
 		"playground-overrides.ts",
+		"AGENTS.md",
 		"scripts"
 	],
 	"scripts": {

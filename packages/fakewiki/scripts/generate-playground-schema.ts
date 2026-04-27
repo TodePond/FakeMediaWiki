@@ -1,5 +1,6 @@
 /**
- * Build-time script: parses FakeWiki.ts and its TSDoc to emit playground-schema.generated.ts.
+ * Build-time script: parses FakeWiki.ts and hooks TSDoc to emit playground-schema.generated.ts,
+ * packages/fakewiki/AGENTS.md, and repo-root public/llms.txt.
  * Run from repo root: npx tsx packages/fakewiki/scripts/generate-playground-schema.ts
  * Or from packages/fakewiki: npm run generate:playground
  */
@@ -9,92 +10,21 @@ import * as path from "node:path"
 import { fileURLToPath } from "node:url"
 import * as ts from "typescript"
 
+import {
+	extractFakeWikiMethods,
+	loadAllHookSchemas,
+	type HookSchema,
+	type MethodSchema,
+} from "./lib/doc-parse"
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const pkgRoot = path.dirname(__dirname)
+const repoRoot = path.dirname(path.dirname(pkgRoot))
 const FAKEWIKI_PATH = path.join(pkgRoot, "FakeWiki.ts")
-const OUT_PATH = path.join(pkgRoot, "playground-schema.generated.ts")
-
-function getFullText(node: ts.Node, sourceFile: ts.SourceFile): string {
-	return sourceFile.getFullText().slice(node.getStart(sourceFile), node.getEnd())
-}
-
-function getJSDocComment(node: ts.Node, sourceFile: ts.SourceFile): string | undefined {
-	// Leading trivia (whitespace + comment) is between getFullStart() and getStart()
-	const fullStart = node.getFullStart()
-	const start = node.getStart(sourceFile)
-	const leading = sourceFile.getFullText().slice(fullStart, start)
-	const match = leading.match(/\/\*\*[\s\S]*?\*\//)
-	return match ? match[0] : undefined
-}
-
-function parseParamTags(jsdoc: string): Map<string, string> {
-	const params = new Map<string, string>()
-	const paramRe = /\@param\s+(\w+)\s+[-–—]\s*([^\n*]+)/g
-	let m
-	while ((m = paramRe.exec(jsdoc)) !== null) {
-		params.set(m[1], m[2].trim())
-	}
-	return params
-}
-
-function getSummary(jsdoc: string): string | undefined {
-	const lines = jsdoc.replace(/^\s*\/\*\*?\s*/, "").replace(/\s*\*\/\s*$/, "").split(/\n/)
-	const summary: string[] = []
-	for (const line of lines) {
-		const trimmed = line.replace(/^\s*\*\s?/, "").trim()
-		if (trimmed.startsWith("@") || trimmed === "") break
-		summary.push(trimmed)
-	}
-	return summary.length ? summary.join("\n").trim() : undefined
-}
-
-function getCategory(jsdoc: string): string | undefined {
-	const match = jsdoc.match(/\@category\s+([^\n*]+)/)
-	return match?.[1]?.trim()
-}
-
-type ParamSchema = { key: string; description?: string }
-type MethodSchema = { name: string; description?: string; category?: string; params: ParamSchema[] }
-
-function extractMethods(sourceFile: ts.SourceFile): MethodSchema[] {
-	const methods: MethodSchema[] = []
-
-	function visit(node: ts.Node): void {
-		if (ts.isClassDeclaration(node)) {
-			const name = node.name?.getText(sourceFile)
-			if (name === "FakeWiki") {
-				for (const member of node.members) {
-					if (ts.isMethodDeclaration(member)) {
-						const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined
-						const isPrivate = modifiers?.some((m) => m.kind === ts.SyntaxKind.PrivateKeyword)
-						const isProtected = modifiers?.some((m) => m.kind === ts.SyntaxKind.ProtectedKeyword)
-						const methodName = (member.name as ts.Identifier).getText(sourceFile)
-						if (isPrivate || isProtected || methodName === "request" || methodName.startsWith("_"))
-							continue
-
-						const jsdoc = getJSDocComment(member, sourceFile)
-						const paramDocs = jsdoc ? parseParamTags(jsdoc) : new Map<string, string>()
-						const description = jsdoc ? getSummary(jsdoc) : undefined
-						const category = jsdoc ? getCategory(jsdoc) : undefined
-
-						const params: ParamSchema[] = []
-						for (const param of member.parameters) {
-							const paramName = (param.name as ts.Identifier).getText(sourceFile)
-							params.push({
-								key: paramName,
-								description: paramDocs.get(paramName),
-							})
-						}
-						methods.push({ name: methodName, description, category, params })
-					}
-				}
-			}
-		}
-		ts.forEachChild(node, visit)
-	}
-	visit(sourceFile)
-	return methods
-}
+const HOOKS_DIR = path.join(pkgRoot, "hooks")
+const OUT_PLAYGROUND = path.join(pkgRoot, "playground-schema.generated.ts")
+const OUT_AGENTS = path.join(pkgRoot, "AGENTS.md")
+const OUT_LLMS = path.join(repoRoot, "public", "llms.txt")
 
 function emitTs(methods: MethodSchema[]): string {
 	const lines: string[] = [
@@ -112,7 +42,7 @@ function emitTs(methods: MethodSchema[]): string {
 			: "undefined"
 		const paramsJson = m.params
 			.map(
-				(p) =>
+				p =>
 					`      { key: "${p.key}"${p.description ? `, description: "${p.description.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")}"` : ""} }`
 			)
 			.join(",\n")
@@ -127,14 +57,128 @@ function emitTs(methods: MethodSchema[]): string {
 	return lines.join("\n")
 }
 
+function mdEscapeInline(s: string): string {
+	return s.replace(/\|/g, "\\|")
+}
+
+function emitAgentsMarkdown(methods: MethodSchema[], hooks: HookSchema[]): string {
+	const lines: string[] = []
+	lines.push("# fakewiki API reference")
+	lines.push("")
+	lines.push(
+		"<!-- AUTO-GENERATED by scripts/generate-playground-schema.ts – do not edit manually -->"
+	)
+	lines.push("")
+	lines.push(
+		"This file lists `FakeWiki` instance methods and Vue composables exported from the `fakewiki` package. Regenerate with `npm run playground` from the repo root (or `npm run generate:playground` in `packages/fakewiki`)."
+	)
+	lines.push("")
+	lines.push(
+		"- [API playground](https://todepond.github.io/FakeMediaWiki/Fullscreen/ApiPlayground)"
+	)
+	lines.push("- Repository: https://github.com/todepond/FakeMediaWiki")
+	lines.push("- Package: https://www.npmjs.com/package/fakewiki")
+	lines.push("")
+
+	lines.push("## FakeWiki instance methods")
+	lines.push("")
+
+	const byCategory = new Map<string, MethodSchema[]>()
+	const uncategorized: MethodSchema[] = []
+	for (const m of methods) {
+		if (m.category) {
+			if (!byCategory.has(m.category)) byCategory.set(m.category, [])
+			byCategory.get(m.category)!.push(m)
+		} else {
+			uncategorized.push(m)
+		}
+	}
+	for (const arr of byCategory.values()) {
+		arr.sort((a, b) => a.name.localeCompare(b.name))
+	}
+	uncategorized.sort((a, b) => a.name.localeCompare(b.name))
+
+	const emitMethod = (m: MethodSchema) => {
+		lines.push(`#### \`${m.name}\``)
+		lines.push("")
+		if (m.description) {
+			lines.push(mdEscapeInline(m.description))
+			lines.push("")
+		}
+		if (m.params.length > 0) {
+			lines.push("**Parameters**")
+			lines.push("")
+			for (const p of m.params) {
+				const desc = p.description ? ` — ${mdEscapeInline(p.description)}` : ""
+				lines.push(`- \`${p.key}\`${desc}`)
+			}
+			lines.push("")
+		}
+	}
+
+	const sortedCats = [...byCategory.keys()].sort((a, b) => a.localeCompare(b))
+	for (const cat of sortedCats) {
+		lines.push(`### Category: ${cat}`)
+		lines.push("")
+		for (const m of byCategory.get(cat)!) {
+			emitMethod(m)
+		}
+	}
+	if (uncategorized.length > 0) {
+		lines.push("### General (no `@category` in JSDoc)")
+		lines.push("")
+		for (const m of uncategorized) {
+			emitMethod(m)
+		}
+	}
+
+	lines.push("## Vue composables (`fakewiki` / `fakewiki/hooks`)")
+	lines.push("")
+
+	for (const h of hooks) {
+		lines.push(`### \`${h.name}\``)
+		lines.push("")
+		lines.push(`*Source:* \`hooks/${h.fileBase}\``)
+		lines.push("")
+		if (h.description) {
+			lines.push(mdEscapeInline(h.description))
+			lines.push("")
+		}
+		if (h.paramsSource) {
+			lines.push("```ts")
+			lines.push(`${h.name}(${h.paramsSource})`)
+			lines.push("```")
+			lines.push("")
+		}
+		if (h.params.length > 0) {
+			lines.push("**Parameters (from JSDoc `@param` where present)**")
+			lines.push("")
+			for (const p of h.params) {
+				const desc = p.description ? ` — ${mdEscapeInline(p.description)}` : ""
+				lines.push(`- \`${p.key.replace(/\n/g, " ")}\`${desc}`)
+			}
+			lines.push("")
+		}
+		lines.push(`*Import:* \`import { ${h.name} } from "fakewiki"\``)
+		lines.push("")
+	}
+
+	return lines.join("\n")
+}
+
 const content = fs.readFileSync(FAKEWIKI_PATH, "utf-8")
-const sourceFile = ts.createSourceFile(
-	FAKEWIKI_PATH,
-	content,
-	ts.ScriptTarget.Latest,
-	true
-)
-const methods = extractMethods(sourceFile)
-const out = emitTs(methods)
-fs.writeFileSync(OUT_PATH, out, "utf-8")
-console.log(`Wrote ${methods.length} methods to ${OUT_PATH}`)
+const sourceFile = ts.createSourceFile(FAKEWIKI_PATH, content, ts.ScriptTarget.Latest, true)
+const methods = extractFakeWikiMethods(sourceFile)
+const hooks = loadAllHookSchemas(HOOKS_DIR)
+
+const playgroundOut = emitTs(methods)
+fs.writeFileSync(OUT_PLAYGROUND, playgroundOut, "utf-8")
+console.log(`Wrote ${methods.length} methods to ${OUT_PLAYGROUND}`)
+
+const markdown = emitAgentsMarkdown(methods, hooks)
+fs.writeFileSync(OUT_AGENTS, markdown, "utf-8")
+console.log(`Wrote AGENTS.md (${methods.length} methods, ${hooks.length} hooks) to ${OUT_AGENTS}`)
+
+fs.mkdirSync(path.dirname(OUT_LLMS), { recursive: true })
+fs.writeFileSync(OUT_LLMS, markdown, "utf-8")
+console.log(`Wrote llms.txt to ${OUT_LLMS}`)
