@@ -9,9 +9,8 @@ import type { FakeWiki } from "fakewiki"
  * @param options - Optional `userTypeConfig` override map for display icons and colors
  * @example
  * ```ts
- * const wiki = new FakeWiki()
  * const { getCachedUserCategoryDisplay, getUserCategoryDisplay } = useUser(wiki)
- * getCachedUserCategoryDisplay("Example")
+ * const display = getCachedUserCategoryDisplay("Example")
  * ```
  */
 export function useUser(

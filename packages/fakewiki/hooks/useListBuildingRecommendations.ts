@@ -45,8 +45,8 @@ export interface ListBuildingRecommendationProgress {
  * @example
  * ```ts
  * import { ref } from "vue"
- * import { FakeWiki, useListBuildingRecommendations } from "fakewiki"
- * const wiki = new FakeWiki()
+ * import { useListBuildingRecommendations } from "fakewiki"
+ * // `wiki` is a FakeWiki instance
  * const pageSearchQueries = ref<string[]>(["Cat"])
  * const allRevisionsData = ref([])
  * useListBuildingRecommendations({ wiki, pageSearchQueries, allRevisionsData })

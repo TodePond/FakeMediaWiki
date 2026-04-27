@@ -447,8 +447,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.inspectHistoryCache({ pageNames: ["Cat"] })
+	 * const snapshot = wiki.inspectHistoryCache({ pageNames: ["Cat"] })
 	 * ```
 	 */
 	inspectHistoryCache(options?: {
@@ -481,8 +480,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getWikimediaBase()
+	 * const wikimediaBase = wiki.getWikimediaBase()
 	 * ```
 	 */
 	getWikimediaBase(): string {
@@ -495,8 +493,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getMediawikiBase()
+	 * const mediawikiBase = wiki.getMediawikiBase()
 	 * ```
 	 */
 	getMediawikiBase(): string {
@@ -774,8 +771,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.encodeForUrl("My article")
+	 * const encoded = wiki.encodeForUrl("My article")
 	 * ```
 	 */
 	encodeForUrl(slug: string): string {
@@ -789,8 +785,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageSummary("Cat")
+	 * const summary = await wiki.getPageSummary("Cat")
 	 * ```
 	 */
 	async getPageSummary(pageName: string): Promise<FWPageSummary> {
@@ -808,8 +803,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getShortDescription("Cat")
+	 * const description = await wiki.getShortDescription("Cat")
 	 * ```
 	 */
 	async getShortDescription(pageName: string): Promise<string | null> {
@@ -833,8 +827,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageHtml("Cat")
+	 * const html = await wiki.getPageHtml("Cat")
 	 * ```
 	 */
 	async getPageHtml(pageName: string): Promise<string> {
@@ -856,8 +849,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRevisionHtml("Cat", 12345)
+	 * const html = await wiki.getRevisionHtml("Cat", 12345)
 	 * ```
 	 */
 	async getRevisionHtml(pageName: string, revId: number): Promise<string> {
@@ -898,8 +890,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageSource("Cat")
+	 * const source = await wiki.getPageSource("Cat")
 	 * ```
 	 */
 	async getPageSource(pageName: string): Promise<string> {
@@ -917,8 +908,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPage("Cat")
+	 * const page = await wiki.getPage("Cat")
 	 * ```
 	 */
 	async getPage(pageName: string): Promise<FWPageMetadata> {
@@ -936,8 +926,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.searchTitles("test", 10)
+	 * const titleResults = await wiki.searchTitles("test", 10)
 	 * ```
 	 */
 	async searchTitles(
@@ -958,8 +947,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.searchPages("test", 10)
+	 * const pageResults = await wiki.searchPages("test", 10)
 	 * ```
 	 */
 	async searchPages(
@@ -982,8 +970,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getMoreLikePages(["Cat"], { limit: 5 })
+	 * const related = await wiki.getMoreLikePages(["Cat"], { limit: 5 })
 	 * ```
 	 */
 	async getMoreLikePages(
@@ -1055,8 +1042,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.searchUsers("Alice", 10)
+	 * const users = await wiki.searchUsers("Alice", 10)
 	 * ```
 	 */
 	async searchUsers(query: string, limit = DEFAULT_SEARCH_LIMIT): Promise<FWUserSearchResult[]> {
@@ -1094,8 +1080,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.searchUsersWithAvatars("Bob", 5)
+	 * const users = await wiki.searchUsersWithAvatars("Bob", 5)
 	 * ```
 	 */
 	async searchUsersWithAvatars(
@@ -1128,8 +1113,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageHistory("Cat", { limit: 10 })
+	 * const history = await wiki.getPageHistory("Cat", { limit: 10 })
 	 * ```
 	 */
 	async getPageHistory(
@@ -1206,8 +1190,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getUserHistory("Example", { limit: 10 })
+	 * const history = await wiki.getUserHistory("Example", { limit: 10 })
 	 * ```
 	 */
 	async getUserHistory(
@@ -1337,8 +1320,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getUsersHistory({ userNames: ["A", "B"], limit: 10 })
+	 * const histories = await wiki.getUsersHistory({ userNames: ["A", "B"], limit: 10 })
 	 * ```
 	 */
 	async getUsersHistory(
@@ -1384,8 +1366,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getCombinedFeed({ pageNames: ["Cat"], userNames: [], limit: 10 })
+	 * const revisions = await wiki.getCombinedFeed({ pageNames: ["Cat"], userNames: [], limit: 10 })
 	 * ```
 	 */
 	async getCombinedFeed(options: {
@@ -1492,8 +1473,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRecentChanges({ limit: 20 })
+	 * const changes = await wiki.getRecentChanges({ limit: 20 })
 	 * ```
 	 */
 	async getRecentChanges(
@@ -1585,8 +1565,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRevisionTags([12345, 12346])
+	 * const tags = await wiki.getRevisionTags([12345, 12346])
 	 * ```
 	 */
 	async getRevisionTags(revIds: number[]): Promise<Map<number, string[]>> {
@@ -1638,8 +1617,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getReferenceNeedPrediction("Some paragraph text to score.", { lang: "en" })
+	 * const prediction = await wiki.getReferenceNeedPrediction("Some paragraph text to score.", { lang: "en" })
 	 * ```
 	 */
 	async getReferenceNeedPrediction(
@@ -1694,8 +1672,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getToneCheckPrediction("Some wikitext for tone.", { lang: "en" })
+	 * const prediction = await wiki.getToneCheckPrediction("Some wikitext for tone.", { lang: "en" })
 	 * ```
 	 */
 	async getToneCheckPrediction(
@@ -1817,8 +1794,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getToneCheckForRevision(12345, { pageTitle: "Cat" })
+	 * const prediction = await wiki.getToneCheckForRevision(12345, { pageTitle: "Cat" })
 	 * ```
 	 */
 	async getToneCheckForRevision(
@@ -1845,7 +1821,6 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
 	 * wiki.clearPageHistoryCache()
 	 * ```
 	 */
@@ -1868,8 +1843,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getParentRevisionIdFromCache("Cat", 12345)
+	 * const parentId = wiki.getParentRevisionIdFromCache("Cat", 12345)
 	 * ```
 	 */
 	getParentRevisionIdFromCache(pageName: string, revId: number): number | null | undefined {
@@ -1889,8 +1863,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getParentRevisionId("Cat", 12345)
+	 * const parentId = await wiki.getParentRevisionId("Cat", 12345)
 	 * ```
 	 */
 	async getParentRevisionId(pageName: string, revId: number): Promise<number | null> {
@@ -1934,8 +1907,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRevisionSource(12345)
+	 * const source = await wiki.getRevisionSource(12345)
 	 * ```
 	 */
 	async getRevisionSource(revId: number): Promise<string> {
@@ -1956,8 +1928,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getDiffSource("Cat", 12345)
+	 * const compare = await wiki.getDiffSource("Cat", 12345)
 	 * ```
 	 */
 	async getDiffSource(pageName: string, revId: number): Promise<FWCompareResponse> {
@@ -1983,8 +1954,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRevisionDiff("Cat", 12345)
+	 * const compare = await wiki.getRevisionDiff("Cat", 12345)
 	 * ```
 	 */
 	async getRevisionDiff(pageName: string, revId: number): Promise<FWCompareResponse> {
@@ -2022,9 +1992,8 @@ export class FakeWiki {
 	 * @example
 	 * ```ts
 	 * import type { FWDiffLine } from "fakewiki/types"
-	 * const wiki = new FakeWiki()
 	 * const line = { type: 0, text: "Hello" } as FWDiffLine
-	 * wiki.getDiffLineSegments(line)
+	 * const segments = wiki.getDiffLineSegments(line)
 	 * ```
 	 */
 	getDiffLineSegments(line: FWDiffLine): FWDiffSegment[] {
@@ -2062,8 +2031,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getDiffLineClass(0)
+	 * const className = wiki.getDiffLineClass(0)
 	 * ```
 	 */
 	getDiffLineClass(type: number): string {
@@ -2090,8 +2058,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRandomPage()
+	 * const random = await wiki.getRandomPage()
 	 * ```
 	 */
 	async getRandomPage(
@@ -2118,8 +2085,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getFeaturedPage()
+	 * const featured = await wiki.getFeaturedPage()
 	 * ```
 	 */
 	async getFeaturedPage(date: Date | string = new Date()): Promise<FWFeaturedPage> {
@@ -2141,8 +2107,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getOnThisDay()
+	 * const onThisDay = await wiki.getOnThisDay()
 	 * ```
 	 */
 	async getOnThisDay(
@@ -2166,8 +2131,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getAnnouncements()
+	 * const announcements = await wiki.getAnnouncements()
 	 * ```
 	 */
 	async getAnnouncements(): Promise<unknown> {
@@ -2184,8 +2148,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageMedia("Cat")
+	 * const media = await wiki.getPageMedia("Cat")
 	 * ```
 	 */
 	async getPageMedia(pageName: string): Promise<FWPageMediaResponse> {
@@ -2205,8 +2168,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPagesLinks(["Cat", "Dog"], 50)
+	 * const links = await wiki.getPagesLinks(["Cat", "Dog"], 50)
 	 * ```
 	 */
 	async getPagesLinks(
@@ -2293,8 +2255,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPagesLinksAndBacklinks(["Cat"], 50)
+	 * const links = await wiki.getPagesLinksAndBacklinks(["Cat"], 50)
 	 * ```
 	 */
 	async getPagesLinksAndBacklinks(
@@ -2320,8 +2281,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPagesBacklinks(["Cat"], 50)
+	 * const backlinks = await wiki.getPagesBacklinks(["Cat"], 50)
 	 * ```
 	 */
 	async getPagesBacklinks(
@@ -2401,8 +2361,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRelatedChanges("Cat", { limit: 20, days: 7 })
+	 * const changes = await wiki.getRelatedChanges("Cat", { limit: 20, days: 7 })
 	 * ```
 	 */
 	async getRelatedChanges(
@@ -2536,8 +2495,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getTopRelatedChanges(["Cat", "Dog"], { limit: 20, days: 7, percentage: 10 })
+	 * const topChanges = await wiki.getTopRelatedChanges(["Cat", "Dog"], { limit: 20, days: 7, percentage: 10 })
 	 * ```
 	 */
 	async getTopRelatedChanges(
@@ -2784,8 +2742,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getTopRelatedPages(["Cat"], { limit: 20, days: 7, percentage: 15 })
+	 * const topPages = await wiki.getTopRelatedPages(["Cat"], { limit: 20, days: 7, percentage: 15 })
 	 * ```
 	 */
 	async getTopRelatedPages(
@@ -2814,8 +2771,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageThumbnail("Cat")
+	 * const thumbnail = await wiki.getPageThumbnail("Cat")
 	 * ```
 	 */
 	async getPageThumbnail(pageName: string): Promise<string | null> {
@@ -2955,8 +2911,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageThumbnails(["Cat", "Dog"])
+	 * const thumbnails = await wiki.getPageThumbnails(["Cat", "Dog"])
 	 * ```
 	 */
 	async getPageThumbnails(
@@ -3025,8 +2980,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getListBuilding("en", { pageTitle: "Cat", qid: "Q146", k: 4 })
+	 * const list = await wiki.getListBuilding("en", { pageTitle: "Cat", qid: "Q146", k: 4 })
 	 * ```
 	 */
 	async getListBuilding(
@@ -3077,7 +3031,6 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
 	 * wiki.clearListBuildingCache()
 	 * ```
 	 */
@@ -3173,8 +3126,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getMultiPageListBuilding("en", ["Cat", "Dog"], { k: 4 })
+	 * const list = await wiki.getMultiPageListBuilding("en", ["Cat", "Dog"], { k: 4 })
 	 * ```
 	 */
 	async getMultiPageListBuilding(
@@ -3224,8 +3176,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageHero("Cat")
+	 * const hero = await wiki.getPageHero("Cat")
 	 * ```
 	 */
 	async getPageHero(pageName: string): Promise<string | null> {
@@ -3253,8 +3204,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.transformWikitextToHtml("'''Hi'''", "Sandbox")
+	 * const html = await wiki.transformWikitextToHtml("'''Hi'''", "Sandbox")
 	 * ```
 	 */
 	async transformWikitextToHtml(wikitext: string, pageTitle = "Main_Page"): Promise<string> {
@@ -3275,8 +3225,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageCategories("Cat")
+	 * const categories = await wiki.getPageCategories("Cat")
 	 * ```
 	 */
 	async getPageCategories(pageName: string): Promise<{ categories: string[] }> {
@@ -3308,8 +3257,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getPageMobileHtml("Cat")
+	 * const html = await wiki.getPageMobileHtml("Cat")
 	 * ```
 	 */
 	async getPageMobileHtml(pageName: string): Promise<string> {
@@ -3327,8 +3275,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getUserAvatar("Example")
+	 * const avatarUrl = await wiki.getUserAvatar("Example")
 	 * ```
 	 */
 	async getUserAvatar(userName: string): Promise<string | null> {
@@ -3363,8 +3310,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getUserInfo("Example")
+	 * const userInfo = await wiki.getUserInfo("Example")
 	 * ```
 	 */
 	async getUserInfo(userName: string): Promise<FWUserInfo | null> {
@@ -3436,8 +3382,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.isTemporaryAccount("~20241")
+	 * const isTemp = wiki.isTemporaryAccount("~20241")
 	 * ```
 	 */
 	isTemporaryAccount(userName: string): boolean {
@@ -3451,8 +3396,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.isIPAddress("192.0.2.0")
+	 * const isIp = wiki.isIPAddress("192.0.2.0")
 	 * ```
 	 */
 	isIPAddress(userName: string): boolean {
@@ -3468,8 +3412,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getDaysOfActivity("2020-01-15T00:00:00Z")
+	 * const days = wiki.getDaysOfActivity("2020-01-15T00:00:00Z")
 	 * ```
 	 */
 	getDaysOfActivity(registrationDate: string | undefined): number | null {
@@ -3540,8 +3483,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getUserCategory("Example")
+	 * const category = await wiki.getUserCategory("Example")
 	 * ```
 	 */
 	async getUserCategory(userName: string): Promise<FWUserCategory> {
@@ -3576,8 +3518,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getCachedUserCategoryDisplay("Example", {})
+	 * const display = wiki.getCachedUserCategoryDisplay("Example", {})
 	 * ```
 	 */
 	getCachedUserCategoryDisplay(
@@ -3601,8 +3542,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getUserCategoryDisplay("Example")
+	 * const display = await wiki.getUserCategoryDisplay("Example")
 	 * ```
 	 */
 	async getUserCategoryDisplay(
@@ -3622,8 +3562,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getCachedUserCategory("Example")
+	 * const category = wiki.getCachedUserCategory("Example")
 	 * ```
 	 */
 	getCachedUserCategory(userName: string): FWUserCategory | null {
@@ -3637,8 +3576,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getTableFromEditSummary("(toolbar) | section | comment")
+	 * const table = wiki.getTableFromEditSummary("(toolbar) | section | comment")
 	 * ```
 	 */
 	getTableFromEditSummary(editSummary: string): string {
@@ -3684,8 +3622,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.parseToolbarEditSummary("...")
+	 * const parsed = wiki.parseToolbarEditSummary("...")
 	 * ```
 	 */
 	parseToolbarEditSummary(editSummary: string): FWToolbarComment | null {
@@ -3733,8 +3670,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.preprocessEditSummary("| Lead | minor copyedit", "Cat")
+	 * const preprocessed = wiki.preprocessEditSummary("| Lead | minor copyedit", "Cat")
 	 * ```
 	 */
 	preprocessEditSummary(summary: string, pageName: string): string {
@@ -3754,8 +3690,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getEditSummaryHtml("fix typo", "Cat")
+	 * const html = await wiki.getEditSummaryHtml("fix typo", "Cat")
 	 * ```
 	 */
 	async getEditSummaryHtml(summary: string, pageName: string): Promise<string> {
@@ -3783,8 +3718,7 @@ export class FakeWiki {
 	/** Format date as "DD Month YYYY" or "DD.MM.YY".
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.formatDate("2020-01-15T10:00:00Z", "long")
+	 * const formatted = wiki.formatDate("2020-01-15T10:00:00Z", "long")
 	 * ```
 	 */
 	formatDate(timestamp: string | number | Date, style: "long" | "short" = "long"): string {
@@ -3819,8 +3753,7 @@ export class FakeWiki {
 	/** Convert timestamp to YYYY-MM-DD key for grouping.
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.toDateKey("2020-01-15T10:00:00Z")
+	 * const dateKey = wiki.toDateKey("2020-01-15T10:00:00Z")
 	 * ```
 	 */
 	toDateKey(timestamp: string | number | Date): string {
@@ -3835,8 +3768,7 @@ export class FakeWiki {
 	/** Format time as HH:MM.
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.formatTime("2020-01-15T10:00:00Z")
+	 * const time = wiki.formatTime("2020-01-15T10:00:00Z")
 	 * ```
 	 */
 	formatTime(timestamp: string | number | Date): string {
@@ -3850,8 +3782,7 @@ export class FakeWiki {
 	/** Check whether a timestamp falls on today in local time.
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.isToday(Date.now())
+	 * const today = wiki.isToday(Date.now())
 	 * ```
 	 */
 	isToday(timestamp: string | number | Date): boolean {
@@ -3872,8 +3803,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.formatRelativeTimestamp("2020-01-15T10:00:00Z", "long")
+	 * const relative = wiki.formatRelativeTimestamp("2020-01-15T10:00:00Z", "long")
 	 * ```
 	 */
 	formatRelativeTimestamp(
@@ -4014,8 +3944,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.formatNiceRelativeTimestamp("2020-01-15T10:00:00Z")
+	 * const relativeNice = wiki.formatNiceRelativeTimestamp("2020-01-15T10:00:00Z")
 	 * ```
 	 */
 	formatNiceRelativeTimestamp(timestamp: string | number | Date): string {
@@ -4042,9 +3971,8 @@ export class FakeWiki {
 	 * @example
 	 * ```ts
 	 * import type { FWPageHistoryRevision } from "fakewiki/types"
-	 * const wiki = new FakeWiki()
 	 * const revs: FWPageHistoryRevision[] = []
-	 * wiki.groupRevisionsByDate(revs)
+	 * const groups = wiki.groupRevisionsByDate(revs)
 	 * ```
 	 */
 	groupRevisionsByDate(
@@ -4076,8 +4004,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.formatDelta(3)
+	 * const delta = wiki.formatDelta(3)
 	 * ```
 	 */
 	formatDelta(delta: number | null): string {
@@ -4094,8 +4021,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getUserUrl("Example")
+	 * const url = wiki.getUserUrl("Example")
 	 * ```
 	 */
 	getUserUrl(userName: string): string {
@@ -4110,8 +4036,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getRevisionUrl(123, "Cat")
+	 * const url = wiki.getRevisionUrl(123, "Cat")
 	 * ```
 	 */
 	getRevisionUrl(id: number, pageName: string): string {
@@ -4127,8 +4052,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getRevisionViewUrl(123, "Cat")
+	 * const url = wiki.getRevisionViewUrl(123, "Cat")
 	 * ```
 	 */
 	getRevisionViewUrl(id: number, pageName: string): string {
@@ -4142,8 +4066,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getPageUrl("Cat")
+	 * const url = wiki.getPageUrl("Cat")
 	 * ```
 	 */
 	getPageUrl(pageName: string): string {
@@ -4157,8 +4080,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getHistoryUrl("Cat")
+	 * const url = wiki.getHistoryUrl("Cat")
 	 * ```
 	 */
 	getHistoryUrl(pageName: string): string {
@@ -4172,8 +4094,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getUserTalkUrl("Example")
+	 * const url = wiki.getUserTalkUrl("Example")
 	 * ```
 	 */
 	getUserTalkUrl(userName: string): string {
@@ -4187,8 +4108,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getUserContribsUrl("Example")
+	 * const url = wiki.getUserContribsUrl("Example")
 	 * ```
 	 */
 	getUserContribsUrl(userName: string): string {
@@ -4203,8 +4123,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getEditUrl("Cat", "Lead")
+	 * const url = wiki.getEditUrl("Cat", "Lead")
 	 * ```
 	 */
 	getEditUrl(pageName: string, sectionTitle?: string): string {
@@ -4224,8 +4143,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getThankUrl(12345)
+	 * const url = wiki.getThankUrl(12345)
 	 * ```
 	 */
 	getThankUrl(id: number): string {
@@ -4241,8 +4159,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getAssetUrlFromUploadUrl("https://upload.wikimedia.org/wikipedia/commons/a/aa/Cat.png", "File:Cat.png")
+	 * const url = wiki.getAssetUrlFromUploadUrl("https://upload.wikimedia.org/wikipedia/commons/a/aa/Cat.png", "File:Cat.png")
 	 * ```
 	 */
 	getAssetUrlFromUploadUrl(uploadUrl: string, pageName: string): string {
@@ -4259,8 +4176,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getStorageKey("p", "k")
+	 * const key = wiki.getStorageKey("p", "k")
 	 * ```
 	 */
 	getStorageKey(prototypeName: string, keyName: string): string {
@@ -4276,8 +4192,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getStorageKeys("p", "k", 3)
+	 * const keys = wiki.getStorageKeys("p", "k", 3)
 	 * ```
 	 */
 	getStorageKeys(prototypeName: string, keyName: string, count: number): string[] {
@@ -4292,8 +4207,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.createResult()
+	 * const result = wiki.createResult()
 	 * ```
 	 */
 	createResult<T = FWRevision>(): FWResult<T> {
@@ -4311,8 +4225,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.createResults(3)
+	 * const results = wiki.createResults(3)
 	 * ```
 	 */
 	createResults<T = FWRevision>(count: number): FWResult<T>[] {
@@ -4326,8 +4239,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getDeltaClass(5)
+	 * const className = wiki.getDeltaClass(5)
 	 * ```
 	 */
 	getDeltaClass(delta: number, withSign = true): string {
@@ -4493,8 +4405,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRevisionPredictions([123, 456], ["damaging", "goodfaith"])
+	 * const predictions = await wiki.getRevisionPredictions([123, 456], ["damaging", "goodfaith"])
 	 * ```
 	 */
 	async getRevisionPredictions(
@@ -4537,8 +4448,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getDamagingPrediction(12345)
+	 * const damaging = await wiki.getDamagingPrediction(12345)
 	 * ```
 	 */
 	async getDamagingPrediction(
@@ -4557,8 +4467,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getGoodfaithPrediction(12345)
+	 * const goodfaith = await wiki.getGoodfaithPrediction(12345)
 	 * ```
 	 */
 	async getGoodfaithPrediction(
@@ -4577,8 +4486,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getDamagingPredictions([1, 2, 3])
+	 * const damagingMap = await wiki.getDamagingPredictions([1, 2, 3])
 	 * ```
 	 */
 	async getDamagingPredictions(
@@ -4602,8 +4510,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getGoodFaithPredictions([1, 2, 3])
+	 * const goodfaithMap = await wiki.getGoodFaithPredictions([1, 2, 3])
 	 * ```
 	 */
 	async getGoodFaithPredictions(
@@ -4631,8 +4538,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getRevisionPredictionsFromOres([1, 2, 3])
+	 * const predictions = await wiki.getRevisionPredictionsFromOres([1, 2, 3])
 	 * ```
 	 */
 	async getRevisionPredictionsFromOres(
@@ -4752,8 +4658,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getEditTypesSummary(12345, { lang: "en" })
+	 * const summary = await wiki.getEditTypesSummary(12345, { lang: "en" })
 	 * ```
 	 */
 	async getEditTypesSummary(
@@ -4779,8 +4684,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getStructuredDeltasFromRevision(12345, { lang: "en" })
+	 * const deltas = await wiki.getStructuredDeltasFromRevision(12345, { lang: "en" })
 	 * ```
 	 */
 	async getStructuredDeltasFromRevision(
@@ -4811,8 +4715,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getEditTypesDetails(12345, { lang: "en" })
+	 * const details = await wiki.getEditTypesDetails(12345, { lang: "en" })
 	 * ```
 	 */
 	async getEditTypesDetails(
@@ -4837,8 +4740,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getEditTypesDebug(12345, { lang: "en" })
+	 * const debug = await wiki.getEditTypesDebug(12345, { lang: "en" })
 	 * ```
 	 */
 	async getEditTypesDebug(
@@ -4860,8 +4762,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.normalizeStructuredDeltaSummary({ Paragraph: { add: 1, remove: 0 } })
+	 * const summary = wiki.normalizeStructuredDeltaSummary({ Paragraph: { add: 1, remove: 0 } })
 	 * ```
 	 */
 	normalizeStructuredDeltaSummary(
@@ -4897,9 +4798,8 @@ export class FakeWiki {
 	 * @example
 	 * ```ts
 	 * import type { FWEditTypesDiffSummary } from "fakewiki/types"
-	 * const wiki = new FakeWiki()
-	 * const s = { Paragraph: { add: 1, remove: 0 } } as FWEditTypesDiffSummary
-	 * wiki.getStructuredDeltasFromSummary(s)
+	 * const summary = { Paragraph: { add: 1, remove: 0 } } as FWEditTypesDiffSummary
+	 * const structuredDeltas = wiki.getStructuredDeltasFromSummary(summary)
 	 * ```
 	 */
 	getStructuredDeltasFromSummary(
@@ -5107,8 +5007,7 @@ export class FakeWiki {
 	/** Public for snippet logic: significance level index (0 = most significant).
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * wiki.getStructuredDeltaLevelIndex("Sentence")
+	 * const levelIndex = wiki.getStructuredDeltaLevelIndex("Sentence")
 	 * ```
 	 */
 	getStructuredDeltaLevelIndex(type: FWStructuredDeltaCanonicalType): number {
@@ -5612,8 +5511,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeToneSuggestions("Cat", { maxCandidates: 5 })
+	 * const suggestions = await wiki.getVeToneSuggestions("Cat", { maxCandidates: 5 })
 	 * ```
 	 */
 	async getVeToneSuggestions(
@@ -5682,8 +5580,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeTextMatchSuggestions("Cat")
+	 * const suggestions = await wiki.getVeTextMatchSuggestions("Cat")
 	 * ```
 	 */
 	async getVeTextMatchSuggestions(pageTitle: string): Promise<FWTextMatchSuggestionResponse> {
@@ -5808,8 +5705,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeExternalLinkSuggestions("Cat")
+	 * const suggestions = await wiki.getVeExternalLinkSuggestions("Cat")
 	 * ```
 	 */
 	async getVeExternalLinkSuggestions(
@@ -5873,8 +5769,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeDuplicateLinkSuggestions("Cat")
+	 * const suggestions = await wiki.getVeDuplicateLinkSuggestions("Cat")
 	 * ```
 	 */
 	async getVeDuplicateLinkSuggestions(
@@ -5986,8 +5881,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeDisambiguationSuggestions("Cat")
+	 * const suggestions = await wiki.getVeDisambiguationSuggestions("Cat")
 	 * ```
 	 */
 	async getVeDisambiguationSuggestions(
@@ -6058,8 +5952,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeAddReferenceSuggestions("Cat")
+	 * const suggestions = await wiki.getVeAddReferenceSuggestions("Cat")
 	 * ```
 	 */
 	async getVeAddReferenceSuggestions(
@@ -6122,8 +6015,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeImageCaptionSuggestions("Cat")
+	 * const suggestions = await wiki.getVeImageCaptionSuggestions("Cat")
 	 * ```
 	 */
 	async getVeImageCaptionSuggestions(
@@ -6184,8 +6076,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeYearLinkSuggestions("Cat")
+	 * const suggestions = await wiki.getVeYearLinkSuggestions("Cat")
 	 * ```
 	 */
 	async getVeYearLinkSuggestions(pageTitle: string): Promise<FWYearLinkSuggestionResponse> {
@@ -6235,8 +6126,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeConvertReferenceSuggestions("Cat")
+	 * const suggestions = await wiki.getVeConvertReferenceSuggestions("Cat")
 	 * ```
 	 */
 	async getVeConvertReferenceSuggestions(
@@ -6286,8 +6176,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeCitationNeededSuggestions("Cat")
+	 * const suggestions = await wiki.getVeCitationNeededSuggestions("Cat")
 	 * ```
 	 */
 	async getVeCitationNeededSuggestions(
@@ -6330,8 +6219,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeDoubleBoldSuggestions("Cat")
+	 * const suggestions = await wiki.getVeDoubleBoldSuggestions("Cat")
 	 * ```
 	 */
 	async getVeDoubleBoldSuggestions(pageTitle: string): Promise<FWDoubleBoldSuggestionResponse> {
@@ -6374,8 +6262,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeRequiredTemplateParamSuggestions("Cat")
+	 * const suggestions = await wiki.getVeRequiredTemplateParamSuggestions("Cat")
 	 * ```
 	 */
 	async getVeRequiredTemplateParamSuggestions(
@@ -6431,8 +6318,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeRedirectSuggestions("Cat")
+	 * const suggestions = await wiki.getVeRedirectSuggestions("Cat")
 	 * ```
 	 */
 	async getVeRedirectSuggestions(pageTitle: string): Promise<FWRedirectSuggestionResponse> {
@@ -6495,8 +6381,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeSuggestedLinkSuggestions("Cat")
+	 * const suggestions = await wiki.getVeSuggestedLinkSuggestions("Cat")
 	 * ```
 	 */
 	async getVeSuggestedLinkSuggestions(
@@ -6581,8 +6466,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.getVeFakeHeadingSuggestions("Cat")
+	 * const suggestions = await wiki.getVeFakeHeadingSuggestions("Cat")
 	 * ```
 	 */
 	async getVeFakeHeadingSuggestions(pageTitle: string): Promise<FWFakeHeadingSuggestionResponse> {
@@ -6624,8 +6508,7 @@ export class FakeWiki {
 	 
 	 * @example
 	 * ```ts
-	 * const wiki = new FakeWiki()
-	 * await wiki.runWithConcurrency([1, 2, 3], 2, async (n) => n * 2)
+	 * const results = await wiki.runWithConcurrency([1, 2, 3], 2, async (n) => n * 2)
 	 * ```
 	 */
 	async runWithConcurrency<T, R>(

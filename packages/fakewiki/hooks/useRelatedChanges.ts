@@ -52,8 +52,8 @@ export interface UseRelatedChangesArgs {
  * @example
  * ```ts
  * import { ref } from "vue"
- * import { FakeWiki, useRelatedChanges } from "fakewiki"
- * const wiki = new FakeWiki()
+ * import { useRelatedChanges } from "fakewiki"
+ * // `wiki` is a FakeWiki instance
  * const pageName = ref("Cat")
  * const { loadFeed } = useRelatedChanges({ wiki, pageName, options: {} })
  * await loadFeed()

@@ -49,8 +49,8 @@ export interface RelatedRecommendationProgress {
  * @example
  * ```ts
  * import { ref } from "vue"
- * import { FakeWiki, useRelatedChangesRecommendations } from "fakewiki"
- * const wiki = new FakeWiki()
+ * import { useRelatedChangesRecommendations } from "fakewiki"
+ * // `wiki` is a FakeWiki instance
  * const pageSearchQueries = ref<string[]>(["Cat"])
  * const allRevisionsData = ref([])
  * const filterKeepPercent = ref(15)

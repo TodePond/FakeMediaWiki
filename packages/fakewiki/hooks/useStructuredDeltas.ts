@@ -28,8 +28,8 @@ export interface UseStructuredDeltasArgs {
  * @example
  * ```ts
  * import { ref } from "vue"
- * import { FakeWiki, useStructuredDeltas } from "fakewiki"
- * const wiki = new FakeWiki()
+ * import { useStructuredDeltas } from "fakewiki"
+ * // `wiki` is a FakeWiki instance
  * const revisionIds = ref([12345, 12346])
  * const deltas = useStructuredDeltas({ wiki, revisionIds, autoLoad: false })
  * deltas.loadEditTypesSummaries([12345, 12346])

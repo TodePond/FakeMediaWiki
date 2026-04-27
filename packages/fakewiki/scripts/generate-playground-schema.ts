@@ -62,7 +62,10 @@ function emitTs(methods: MethodSchema[]): string {
 }
 
 function mdEscapeInline(s: string): string {
-	return s.replace(/\|/g, "\\|")
+	return s
+		.replace(/\|/g, "\\|")
+		// Avoid UTF-8 dash mojibake (e.g. â€") when llms.txt is read as Latin-1
+		.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, "-")
 }
 
 function pushExamplesMarkdown(lines: string[], examples: string[] | undefined) {
@@ -126,16 +129,16 @@ function emitAgentsMarkdown(methods: MethodSchema[], hooks: HookSchema[]): strin
 			lines.push(mdEscapeInline(m.description))
 			lines.push("")
 		}
-		pushExamplesMarkdown(lines, m.examples)
 		if (m.params.length > 0) {
 			lines.push("**Parameters**")
 			lines.push("")
 			for (const p of m.params) {
-				const desc = p.description ? ` — ${mdEscapeInline(p.description)}` : ""
+				const desc = p.description ? ` - ${mdEscapeInline(p.description)}` : ""
 				lines.push(`- \`${p.key}\`${desc}`)
 			}
 			lines.push("")
 		}
+		pushExamplesMarkdown(lines, m.examples)
 	}
 
 	const sortedCats = [...byCategory.keys()].sort((a, b) => a.localeCompare(b))
@@ -166,22 +169,22 @@ function emitAgentsMarkdown(methods: MethodSchema[], hooks: HookSchema[]): strin
 			lines.push(mdEscapeInline(h.description))
 			lines.push("")
 		}
-		pushExamplesMarkdown(lines, h.examples)
+		if (h.params.length > 0) {
+			lines.push("**Parameters (from JSDoc `@param` where present)**")
+			lines.push("")
+			for (const p of h.params) {
+				const desc = p.description ? ` - ${mdEscapeInline(p.description)}` : ""
+				lines.push(`- \`${p.key}\`${desc}`)
+			}
+			lines.push("")
+		}
 		if (h.paramsSource) {
 			lines.push("```ts")
 			lines.push(`${h.name}(${h.paramsSource})`)
 			lines.push("```")
 			lines.push("")
 		}
-		if (h.params.length > 0) {
-			lines.push("**Parameters (from JSDoc `@param` where present)**")
-			lines.push("")
-			for (const p of h.params) {
-				const desc = p.description ? ` — ${mdEscapeInline(p.description)}` : ""
-				lines.push(`- \`${p.key}\`${desc}`)
-			}
-			lines.push("")
-		}
+		pushExamplesMarkdown(lines, h.examples)
 		lines.push(`*Import:* \`import { ${h.name} } from "fakewiki"\``)
 		lines.push("")
 	}

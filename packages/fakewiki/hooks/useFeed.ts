@@ -16,8 +16,8 @@ export interface UseFeedArgs {
  * @example
  * ```ts
  * import { ref } from "vue"
- * import { FakeWiki, useFeed } from "fakewiki"
- * const wiki = new FakeWiki()
+ * import { useFeed } from "fakewiki"
+ * // `wiki` is a FakeWiki instance
  * const pageSearchQueries = ref<string[]>(["Cat"])
  * const userSearchQueries = ref<string[]>([])
  * const { loadFeed, allRevisionsData } = useFeed({ wiki, pageSearchQueries, userSearchQueries })

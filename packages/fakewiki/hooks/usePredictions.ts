@@ -121,9 +121,8 @@ function getRiskForModel(model: PredictionModel, prediction: FWLiftWingPredictio
  * @param options - Model source, thresholds, optional debug mode
  * @example
  * ```ts
- * const wiki = new FakeWiki()
  * const pred = usePredictions(wiki, { source: "liftwing", models: ["damaging", "goodfaith"] })
- * void pred.getPrediction(12345, "damaging")
+ * const prediction = pred.getPrediction(12345, "damaging")
  * ```
  */
 export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) {
