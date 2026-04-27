@@ -1,4 +1,4 @@
-# List of ML and related inference signals for use in MediaWiki prototypes
+# ML and related inference signals
 
 Categories are given in the table of contents that follows, and the same **category** names appear in the main text as plain **bold** lines (not `##` headings) immediately before the first `##` section in each group.
 

@@ -4,7 +4,7 @@
 	"files": [
 		{
 			"slug": "analytics",
-			"title": "Analytics signals for use in MediaWiki prototypes",
+			"title": "Analytics signals",
 			"preamble": "",
 			"sections": [
 				{
@@ -307,7 +307,7 @@
 		},
 		{
 			"slug": "inference",
-			"title": "List of ML and related inference signals for use in MediaWiki prototypes",
+			"title": "ML and related inference signals",
 			"preamble": "\nCategories are given in the table of contents that follows, and the same **category** names appear in the main text as plain **bold** lines (not `##` headings) immediately before the first `##` section in each group.\n\n- **Quality**: Sections 1–6.\n- **Topic**: Sections 7–10.\n- **Edit checks**: Sections 11–21.\n- **Article recommendations**: Sections 22–24.\n- **Edit suggestions**: Sections 25–26.\n- **Summary**: Sections 27–28.\n- **Language and country**: Sections 29–30.\n\n---\n\n**Quality** (sections 1–6)",
 			"sections": [
 				{

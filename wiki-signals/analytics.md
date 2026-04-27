@@ -1,4 +1,4 @@
-# Analytics signals for use in MediaWiki prototypes
+# Analytics signals
 
 ## 1) Article views
 
