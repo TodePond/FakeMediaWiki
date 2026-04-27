@@ -967,7 +967,7 @@ export class FakeWiki {
 	 * @param options - Optional search options (limit, offset, and namespace)
 	 * @returns Related pages with total hits and pagination metadata
 	 * @category Search
-	 
+	 *
 	 * @example
 	 * ```ts
 	 * const related = await wiki.getMoreLikePages(["Cat"], { limit: 5 })

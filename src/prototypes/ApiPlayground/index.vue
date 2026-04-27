@@ -65,7 +65,7 @@
 					>
 						<CdxIcon :icon="cdxIconMenu" />
 					</button>
-					<span class="mobile-header-title">API Playground</span>
+					<span class="mobile-header-title">FakeWiki playground</span>
 				</header>
 				<template v-if="selectedMethod">
 					<div class="form-section">

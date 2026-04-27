@@ -1,5 +1,5 @@
 /**
- * UI-only overrides for the API Playground. Do not duplicate param names, types, or descriptions
+ * UI-only overrides for the FakeWiki playground. Do not duplicate param names, types, or descriptions
  * (those come from FakeWiki.ts + TSDoc via the generated schema).
  */
 

@@ -2,7 +2,7 @@
 
 Helpers for building MediaWiki prototypes: API client for Wikipedia and sister sites, Vue composables for feeds and recommendations, shared types, and styles. Use it for page history, search, diffs, discovery feeds, ML predictions, and more.
 
-You can try every `FakeWiki` method with custom parameters in the [playground](https://todepond.github.io/FakeMediaWiki/Fullscreen/ApiPlayground).
+You can try every `FakeWiki` method with custom parameters in the [FakeWiki playground](https://todepond.github.io/FakeMediaWiki/Fullscreen/ApiPlayground).
 
 ## Additional docs
 

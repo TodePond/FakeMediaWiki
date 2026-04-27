@@ -1,5 +1,5 @@
 ---
-description: Keep FakeWiki methods synced with ApiPlayground
+description: Keep FakeWiki methods synced with FakeWiki playground (ApiPlayground)
 globs: packages/fakewiki/**
 alwaysApply: false
 ---
@@ -12,4 +12,4 @@ When adding or changing public `FakeWiki` methods, keep the playground in sync.
 - Ensure any newly added/renamed public method is visible in the playground method list.
 - Add or update `playground-overrides.ts` when result rendering or options grouping needs UI hints.
 - Keep TSDoc descriptions and parameter docs clear so generated playground metadata is usable.
-- Verify the method is callable from `src/prototypes/ApiPlayground`.
+- Verify the method is callable from `src/prototypes/ApiPlayground` (FakeWiki playground).
