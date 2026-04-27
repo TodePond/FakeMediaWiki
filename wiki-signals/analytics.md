@@ -1,7 +1,5 @@
 # Analytics signals for use in MediaWiki prototypes
 
-Example **requests** are copy-pasteable `curl` lines. Example **response** bodies were produced by those requests against Wikimedia’s **live** public APIs, then trimmed for length where noted: **AQS** (the Analytics/REST `metrics/…` paths) in **sections 1–5**; the **`mostread`** object in **section 6** comes from the per-wiki [Wikifeeds](https://www.mediawiki.org/wiki/Wikifeeds) **`feed/featured`** REST bundle (not AQS, not a standalone `page/most-read/…` route on the public API).
-
 ## 1) Article views
 
 This endpoint returns a time series of page view counts for a specific article.
