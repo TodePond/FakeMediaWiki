@@ -44,6 +44,19 @@ export interface RelatedRecommendationProgress {
 	processingLoaded: number
 }
 
+/**
+ * Suggests extra pages from list-building, then loads top-related changes to flag feed rows as recommendations.
+ * @example
+ * ```ts
+ * import { ref } from "vue"
+ * import { FakeWiki, useRelatedChangesRecommendations } from "fakewiki"
+ * const wiki = new FakeWiki()
+ * const pageSearchQueries = ref<string[]>(["Cat"])
+ * const allRevisionsData = ref([])
+ * const filterKeepPercent = ref(15)
+ * useRelatedChangesRecommendations({ wiki, pageSearchQueries, allRevisionsData, filterKeepPercent })
+ * ```
+ */
 export function useRelatedChangesRecommendations({
 	wiki,
 	pageSearchQueries,

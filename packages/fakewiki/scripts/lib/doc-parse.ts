@@ -12,6 +12,8 @@ export type MethodSchema = {
 	description?: string
 	category?: string
 	params: ParamSchema[]
+	/** Code samples from JSDoc `@example` (each block, trimmed). */
+	examples?: string[]
 }
 
 export type HookSchema = {
@@ -21,6 +23,8 @@ export type HookSchema = {
 	params: ParamSchema[]
 	/** Raw parameter list text from source (handles destructuring). */
 	paramsSource: string
+	/** Code samples from JSDoc `@example` (each block, trimmed). */
+	examples?: string[]
 }
 
 export function getJSDocComment(node: ts.Node, sourceFile: ts.SourceFile): string | undefined {
@@ -57,6 +61,70 @@ export function getCategory(jsdoc: string): string | undefined {
 	return match?.[1]?.trim()
 }
 
+/**
+ * If the first and last line are markdown code fences, return inner code only
+ * (so the doc generator can emit a single ` ```ts ` block without nesting).
+ */
+function unwrapOuterCodeFence(text: string): string {
+	const lines = text.split("\n")
+	if (lines.length < 2) return text
+	const first = lines[0].trim()
+	const last = lines[lines.length - 1]!.trim()
+	if (first.startsWith("```") && last === "```") {
+		return lines.slice(1, -1).join("\n").trim()
+	}
+	return text
+}
+
+/**
+ * Extract `@example` code blocks from a JSDoc string.
+ * Stops at the next line that looks like a JSDoc block tag (`@name`) when not inside a ``` fence.
+ */
+export function getExamplesFromJSDoc(jsdoc: string): string[] {
+	if (!jsdoc) return []
+	const raw = jsdoc
+		.replace(/^\s*\/\*\*?\s*/, "")
+		.replace(/\s*\*\/\s*$/, "")
+	const lines = raw.split("\n")
+	const examples: string[] = []
+
+	function stripLine(line: string): string {
+		return line.replace(/^\s*\*\s?/, "")
+	}
+
+	let i = 0
+	while (i < lines.length) {
+		const stripped = stripLine(lines[i])
+		const trimmed = stripped.trim()
+		if (!trimmed.startsWith("@example")) {
+			i++
+			continue
+		}
+		i++
+		const block: string[] = []
+		let inFence = false
+		while (i < lines.length) {
+			const s = stripLine(lines[i])
+			const t = s.trim()
+			if (t.startsWith("```")) {
+				inFence = !inFence
+			}
+			if (!inFence) {
+				if (/^@[a-zA-Z]/.test(t)) {
+					break
+				}
+			}
+			block.push(s)
+			i++
+		}
+		const text = unwrapOuterCodeFence(block.join("\n").trim())
+		if (text.length > 0) {
+			examples.push(text)
+		}
+	}
+	return examples
+}
+
 export function extractFakeWikiMethods(sourceFile: ts.SourceFile): MethodSchema[] {
 	const methods: MethodSchema[] = []
 
@@ -77,6 +145,8 @@ export function extractFakeWikiMethods(sourceFile: ts.SourceFile): MethodSchema[
 						const paramDocs = jsdoc ? parseParamTags(jsdoc) : new Map<string, string>()
 						const description = jsdoc ? getSummary(jsdoc) : undefined
 						const category = jsdoc ? getCategory(jsdoc) : undefined
+						const examples = jsdoc ? getExamplesFromJSDoc(jsdoc) : undefined
+						const examplesOut = examples?.length ? examples : undefined
 
 						const params: ParamSchema[] = []
 						for (const param of member.parameters) {
@@ -86,7 +156,7 @@ export function extractFakeWikiMethods(sourceFile: ts.SourceFile): MethodSchema[
 								description: paramDocs.get(paramName),
 							})
 						}
-						methods.push({ name: methodName, description, category, params })
+						methods.push({ name: methodName, description, category, params, examples: examplesOut })
 					}
 				}
 			}
@@ -121,6 +191,8 @@ export function extractHookFunctions(sourceFile: ts.SourceFile, fileBase: string
 		const jsdoc = getJSDocComment(stmt, sourceFile)
 		const paramDocs = jsdoc ? parseParamTags(jsdoc) : new Map<string, string>()
 		const description = jsdoc ? getSummary(jsdoc) : undefined
+		const examples = jsdoc ? getExamplesFromJSDoc(jsdoc) : undefined
+		const examplesOut = examples?.length ? examples : undefined
 
 		let paramsSource = ""
 		if (stmt.parameters.length > 0) {
@@ -135,7 +207,7 @@ export function extractHookFunctions(sourceFile: ts.SourceFile, fileBase: string
 			params.push({ key, description: paramDocs.get(key) })
 		}
 
-		hooks.push({ name: fnName, fileBase, description, params, paramsSource })
+		hooks.push({ name: fnName, fileBase, description, params, paramsSource, examples: examplesOut })
 	}
 
 	return hooks

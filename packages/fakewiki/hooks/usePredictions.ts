@@ -115,6 +115,17 @@ function getRiskForModel(model: PredictionModel, prediction: FWLiftWingPredictio
 	return getBestProbability(prediction)
 }
 
+/**
+ * Load and resolve damaging / goodfaith (and related) per-revision predictions from Lift Wing or ORES, with shared threshold and icon state.
+ * @param wiki - `FakeWiki` instance
+ * @param options - Model source, thresholds, optional debug mode
+ * @example
+ * ```ts
+ * const wiki = new FakeWiki()
+ * const pred = usePredictions(wiki, { source: "liftwing", models: ["damaging", "goodfaith"] })
+ * void pred.getPrediction(12345, "damaging")
+ * ```
+ */
 export function usePredictions(wiki: FakeWiki, options?: UsePredictionsOptions) {
 	const source = options?.source ?? "liftwing"
 	const models = options?.models ?? DEFAULT_MODELS

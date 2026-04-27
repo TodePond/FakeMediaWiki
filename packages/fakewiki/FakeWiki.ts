@@ -1,17 +1,22 @@
 import type {
 	FWActionApiOptions,
+	FWAddReferenceSuggestionResponse,
 	FWApiOptions,
 	FWCachedRevision,
+	FWCitationNeededSuggestionResponse,
 	FWCompareResponse,
+	FWConvertReferenceSuggestionResponse,
 	FWDiffLine,
 	FWDiffSegment,
 	FWDisambiguationSuggestionResponse,
 	FWDoubleBoldSuggestionResponse,
+	FWDuplicateLinkSuggestionResponse,
 	FWEditTypesDiffDebug,
 	FWEditTypesDiffDetails,
 	FWEditTypesDiffSummary,
-	FWFeaturedPage,
+	FWExternalLinkSuggestionResponse,
 	FWFakeHeadingSuggestionResponse,
+	FWFeaturedPage,
 	FWHistoryCacheEntitySnapshot,
 	FWHistoryCacheSnapshot,
 	FWHistoryCoverageEntry,
@@ -36,10 +41,10 @@ import type {
 	FWRandomPageResult,
 	FWRandomPageSummary,
 	FWRecentChangesResult,
+	FWRedirectSuggestionResponse,
 	FWReferenceNeedPrediction,
 	FWRelativeTimestampOptions,
 	FWRequiredTemplateParamSuggestionResponse,
-	FWRedirectSuggestionResponse,
 	FWRestApiOptions,
 	FWResult,
 	FWRevision,
@@ -71,11 +76,6 @@ import type {
 	FWVeSuggestionItem,
 	FWVeSuggestionResponse,
 	FWYearLinkSuggestionResponse,
-	FWAddReferenceSuggestionResponse,
-	FWExternalLinkSuggestionResponse,
-	FWDuplicateLinkSuggestionResponse,
-	FWConvertReferenceSuggestionResponse,
-	FWCitationNeededSuggestionResponse,
 } from "./types"
 
 import { FakeWikiHttpError } from "./httpError"
@@ -444,6 +444,12 @@ export class FakeWiki {
 	 * Useful for debugging pagination and cache behavior in prototypes.
 	 * @param options - Optional filters for specific page/user keys
 	 * @returns Snapshot of page and user history cache state
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.inspectHistoryCache({ pageNames: ["Cat"] })
+	 * ```
 	 */
 	inspectHistoryCache(options?: {
 		pageNames?: string[]
@@ -472,6 +478,12 @@ export class FakeWiki {
 	/**
 	 * Get the base URL for the Wikimedia REST API
 	 * @returns Wikimedia base URL
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getWikimediaBase()
+	 * ```
 	 */
 	getWikimediaBase(): string {
 		return `${this.base}api/rest_v1/`
@@ -480,6 +492,12 @@ export class FakeWiki {
 	/**
 	 * Get the base URL for the MediaWiki REST API
 	 * @returns MediaWiki base URL
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getMediawikiBase()
+	 * ```
 	 */
 	getMediawikiBase(): string {
 		return `${this.base}w/rest.php/v1/`
@@ -753,6 +771,12 @@ export class FakeWiki {
 	 * Encode a page title for URL usage
 	 * @param slug - Page title
 	 * @returns URL-encoded title
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.encodeForUrl("My article")
+	 * ```
 	 */
 	encodeForUrl(slug: string): string {
 		return encodeURIComponent(slug.replace(/ /g, "_"))
@@ -762,6 +786,12 @@ export class FakeWiki {
 	 * Get a page summary (extract, thumbnail, etc.)
 	 * @param pageName - Page title
 	 * @returns Page summary
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageSummary("Cat")
+	 * ```
 	 */
 	async getPageSummary(pageName: string): Promise<FWPageSummary> {
 		return (await this.request({
@@ -775,6 +805,12 @@ export class FakeWiki {
 	 * Uses the page summary API; results are cached to avoid repeated requests.
 	 * @param pageName - Page title
 	 * @returns Short description string, or null if none or on error
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getShortDescription("Cat")
+	 * ```
 	 */
 	async getShortDescription(pageName: string): Promise<string | null> {
 		const cached = this.shortDescriptionCache.get(pageName)
@@ -794,6 +830,12 @@ export class FakeWiki {
 	 * Get page content as HTML
 	 * @param pageName - Page title
 	 * @returns HTML content
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageHtml("Cat")
+	 * ```
 	 */
 	async getPageHtml(pageName: string): Promise<string> {
 		return (await this.request({
@@ -811,6 +853,12 @@ export class FakeWiki {
 	 * @param pageName - Page title (used for Wikimedia fallback and for API compatibility)
 	 * @param revId - Revision ID
 	 * @returns HTML content for that revision
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRevisionHtml("Cat", 12345)
+	 * ```
 	 */
 	async getRevisionHtml(pageName: string, revId: number): Promise<string> {
 		const key = String(revId)
@@ -847,6 +895,12 @@ export class FakeWiki {
 	 * Get page content as wikitext source
 	 * @param pageName - Page title
 	 * @returns Wikitext source
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageSource("Cat")
+	 * ```
 	 */
 	async getPageSource(pageName: string): Promise<string> {
 		const page = (await this.request({
@@ -860,6 +914,12 @@ export class FakeWiki {
 	 * Get full page metadata and latest revision
 	 * @param pageName - Page title
 	 * @returns Page metadata with source content
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPage("Cat")
+	 * ```
 	 */
 	async getPage(pageName: string): Promise<FWPageMetadata> {
 		return (await this.request({
@@ -873,6 +933,12 @@ export class FakeWiki {
 	 * @param query - Search query
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Search results with pages array
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.searchTitles("test", 10)
+	 * ```
 	 */
 	async searchTitles(
 		query: string,
@@ -889,6 +955,12 @@ export class FakeWiki {
 	 * @param query - Search query
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Search results with pages array
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.searchPages("test", 10)
+	 * ```
 	 */
 	async searchPages(
 		query: string,
@@ -907,6 +979,12 @@ export class FakeWiki {
 	 * @param options - Optional search options (limit, offset, and namespace)
 	 * @returns Related pages with total hits and pagination metadata
 	 * @category Search
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getMoreLikePages(["Cat"], { limit: 5 })
+	 * ```
 	 */
 	async getMoreLikePages(
 		pageTitles: string[],
@@ -974,6 +1052,12 @@ export class FakeWiki {
 	 * @param query - Search query (username or part of username)
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Array of user objects with username and page metadata (no avatar)
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.searchUsers("Alice", 10)
+	 * ```
 	 */
 	async searchUsers(query: string, limit = DEFAULT_SEARCH_LIMIT): Promise<FWUserSearchResult[]> {
 		// Search for users by prefixing with "User:" if not already present
@@ -1007,6 +1091,12 @@ export class FakeWiki {
 	 * @param query - Search query (username or part of username)
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Array of user objects with username, avatar, and page metadata
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.searchUsersWithAvatars("Bob", 5)
+	 * ```
 	 */
 	async searchUsersWithAvatars(
 		query: string,
@@ -1035,6 +1125,12 @@ export class FakeWiki {
 	 * @param options.limit - Maximum results to return (default and max: PAGE_HISTORY_REVISIONS_PER_REQUEST)
 	 * @returns Revision history with revisions array
 	 * @note The MediaWiki REST API returns PAGE_HISTORY_REVISIONS_PER_REQUEST revisions per request.
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageHistory("Cat", { limit: 10 })
+	 * ```
 	 */
 	async getPageHistory(
 		pageName: string,
@@ -1107,6 +1203,12 @@ export class FakeWiki {
 	 * @param options.older_than - Timestamp - for explicit pagination
 	 * @param options.newer_than - Timestamp - for explicit pagination
 	 * @returns User revision history with same structure as getPageHistory
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getUserHistory("Example", { limit: 10 })
+	 * ```
 	 */
 	async getUserHistory(
 		userName: string,
@@ -1232,6 +1334,12 @@ export class FakeWiki {
 	 * @param options.older_than - Timestamp - for explicit pagination
 	 * @param options.newer_than - Timestamp - for explicit pagination
 	 * @returns Map of username to their revision history
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getUsersHistory({ userNames: ["A", "B"], limit: 10 })
+	 * ```
 	 */
 	async getUsersHistory(
 		userNames: string[],
@@ -1273,6 +1381,12 @@ export class FakeWiki {
 	 * @param options.perSourceLimit - Maximum revisions to request per page/user history source before merge
 	 * @param options.after - Map of source (page name or user name) → revision ID to fetch revisions older than (per source). Ensures every page/user keeps paginating.
 	 * @returns Array of revisions sorted by timestamp (newest first), deduplicated by revision ID
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getCombinedFeed({ pageNames: ["Cat"], userNames: [], limit: 10 })
+	 * ```
 	 */
 	async getCombinedFeed(options: {
 		userNames?: string[]
@@ -1375,6 +1489,12 @@ export class FakeWiki {
 	 * @param options.rcstart - Timestamp to start enumerating from (with rcdir=older, must be later than rcend)
 	 * @param options.rcend - Timestamp to end enumerating (with rcdir=older, must be earlier than rcstart)
 	 * @returns Revisions (revision-like) and optional rccontinue for pagination
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRecentChanges({ limit: 20 })
+	 * ```
 	 */
 	async getRecentChanges(
 		options: {
@@ -1462,6 +1582,12 @@ export class FakeWiki {
 	 * Use for revisions from sources that don't include tags (e.g. page history, related changes).
 	 * @param revIds - Revision IDs to fetch tags for
 	 * @returns Map of revision ID to tags array
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRevisionTags([12345, 12346])
+	 * ```
 	 */
 	async getRevisionTags(revIds: number[]): Promise<Map<number, string[]>> {
 		const result = new Map<number, string[]>()
@@ -1509,6 +1635,12 @@ export class FakeWiki {
 	 * @param revId - Revision ID
 	 * @param lang - Language code (e.g. "en"). If not provided, derived from base URL
 	 * @returns Reference need score or null on error
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getReferenceNeedPrediction("Some paragraph text to score.", { lang: "en" })
+	 * ```
 	 */
 	async getReferenceNeedPrediction(
 		revId: number,
@@ -1559,6 +1691,12 @@ export class FakeWiki {
 	 * @param modifiedText - Text after the edit (the new content to check)
 	 * @param options - Optional lang (default from wiki) and pageTitle (default "")
 	 * @returns Tone Check prediction or null on error
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getToneCheckPrediction("Some wikitext for tone.", { lang: "en" })
+	 * ```
 	 */
 	async getToneCheckPrediction(
 		originalText: string,
@@ -1676,6 +1814,12 @@ export class FakeWiki {
 	 * @param revId - Revision ID to check
 	 * @param options - Optional lang (default from wiki) and pageTitle (default pageName)
 	 * @returns Tone Check prediction or null when no changes, no parent, or on error
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getToneCheckForRevision(12345, { pageTitle: "Cat" })
+	 * ```
 	 */
 	async getToneCheckForRevision(
 		pageName: string,
@@ -1698,6 +1842,12 @@ export class FakeWiki {
 	/**
 	 * Clear the page history cache for a page (or all pages if no name given).
 	 * Use when you need fresh data, e.g. when opening the inline history view.
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.clearPageHistoryCache()
+	 * ```
 	 */
 	clearPageHistoryCache(pageName?: string): void {
 		if (pageName) {
@@ -1715,6 +1865,12 @@ export class FakeWiki {
 	 * @param pageName - Page title
 	 * @param revId - Revision ID to look up in the cached page history
 	 * @returns Parent revision ID, null if this is oldest cached revision, or undefined if revId is not cached
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getParentRevisionIdFromCache("Cat", 12345)
+	 * ```
 	 */
 	getParentRevisionIdFromCache(pageName: string, revId: number): number | null | undefined {
 		const revisions = this.pageHistoryCache.get(pageName)
@@ -1730,6 +1886,12 @@ export class FakeWiki {
 	 * @param pageName - Page title
 	 * @param revId - Revision ID (we want the revision immediately older than this)
 	 * @returns Parent revision ID, or null if none (e.g. first revision)
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getParentRevisionId("Cat", 12345)
+	 * ```
 	 */
 	async getParentRevisionId(pageName: string, revId: number): Promise<number | null> {
 		const history = await this.getPageHistory(pageName, {
@@ -1769,6 +1931,12 @@ export class FakeWiki {
 	 * Get wikitext source for a revision by ID.
 	 * @param revId - Revision ID
 	 * @returns Revision source (e.g. wikitext)
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRevisionSource(12345)
+	 * ```
 	 */
 	async getRevisionSource(revId: number): Promise<string> {
 		const revision = (await this.request({
@@ -1785,6 +1953,12 @@ export class FakeWiki {
 	 * @param pageName - Page title
 	 * @param revId - Revision ID to diff
 	 * @returns Source diff from parent to this revision, or a full-content "all added" diff when there is no parent
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getDiffSource("Cat", 12345)
+	 * ```
 	 */
 	async getDiffSource(pageName: string, revId: number): Promise<FWCompareResponse> {
 		const parentId = await this.getParentRevisionId(pageName, revId)
@@ -1806,6 +1980,12 @@ export class FakeWiki {
 
 	/**
 	 * @deprecated Use getDiffSource(pageName, revId) instead.
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRevisionDiff("Cat", 12345)
+	 * ```
 	 */
 	async getRevisionDiff(pageName: string, revId: number): Promise<FWCompareResponse> {
 		return this.getDiffSource(pageName, revId)
@@ -1838,6 +2018,14 @@ export class FakeWiki {
 	 * Converts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.
 	 * @param line - Diff line from compare API
 	 * @returns Ordered segments covering the entire line text
+	 
+	 * @example
+	 * ```ts
+	 * import type { FWDiffLine } from "fakewiki/types"
+	 * const wiki = new FakeWiki()
+	 * const line = { type: 0, text: "Hello" } as FWDiffLine
+	 * wiki.getDiffLineSegments(line)
+	 * ```
 	 */
 	getDiffLineSegments(line: FWDiffLine): FWDiffSegment[] {
 		const text = line.text ?? ""
@@ -1871,6 +2059,12 @@ export class FakeWiki {
 	 * Map compare API diff line type to a CSS class name.
 	 * @param type - Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)
 	 * @returns CSS class for styling the line
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getDiffLineClass(0)
+	 * ```
 	 */
 	getDiffLineClass(type: number): string {
 		switch (type) {
@@ -1893,6 +2087,12 @@ export class FakeWiki {
 	 * Get a random page
 	 * @param format - Format: 'summary', 'html', or 'title' (default: 'summary')
 	 * @returns Random page content - string for 'title' format, RandomPageSummary for 'summary' or 'html' format
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRandomPage()
+	 * ```
 	 */
 	async getRandomPage(
 		format: "summary" | "html" | "title" = "summary"
@@ -1915,6 +2115,12 @@ export class FakeWiki {
 	 * Get featured page for a specific date
 	 * @param date - Date object or YYYY/MM/DD string (leave blank for today's featured page)
 	 * @returns Featured page data
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getFeaturedPage()
+	 * ```
 	 */
 	async getFeaturedPage(date: Date | string = new Date()): Promise<FWFeaturedPage> {
 		const dateStr =
@@ -1932,6 +2138,12 @@ export class FakeWiki {
 	 * @param type - Type: 'events', 'births', 'deaths', 'holidays', 'selected'
 	 * @param date - Date object or MM/DD string
 	 * @returns Array of on-this-day items for the requested type
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getOnThisDay()
+	 * ```
 	 */
 	async getOnThisDay(
 		type: "events" | "births" | "deaths" | "holidays" | "selected" = "events",
@@ -1951,6 +2163,12 @@ export class FakeWiki {
 	/**
 	 * Get current announcements
 	 * @returns Announcements
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getAnnouncements()
+	 * ```
 	 */
 	async getAnnouncements(): Promise<unknown> {
 		return this.request({
@@ -1963,6 +2181,12 @@ export class FakeWiki {
 	 * Get page media (images, audio, etc.)
 	 * @param pageName - Page title
 	 * @returns Media files associated with the page
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageMedia("Cat")
+	 * ```
 	 */
 	async getPageMedia(pageName: string): Promise<FWPageMediaResponse> {
 		return (await this.request({
@@ -1978,6 +2202,12 @@ export class FakeWiki {
 	 * @param options - Options
 	 * @param options.namespace - Filter by namespace (e.g., 0 for main namespace)
 	 * @returns Map of page title to array of linked page titles
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPagesLinks(["Cat", "Dog"], 50)
+	 * ```
 	 */
 	async getPagesLinks(
 		pageNames: string[],
@@ -2060,6 +2290,12 @@ export class FakeWiki {
 	 * @param pageNames - Array of page titles
 	 * @param options - Options (namespace for both; backlinkLimit for backlinks only)
 	 * @returns Object with links and backlinks maps
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPagesLinksAndBacklinks(["Cat"], 50)
+	 * ```
 	 */
 	async getPagesLinksAndBacklinks(
 		pageNames: string[],
@@ -2081,6 +2317,12 @@ export class FakeWiki {
 	 * @param options.namespace - Filter by namespace (e.g., 0 for main namespace)
 	 * @param options.limit - Max backlinks per page (default 500)
 	 * @returns Map of target page title to array of page titles that link to it
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPagesBacklinks(["Cat"], 50)
+	 * ```
 	 */
 	async getPagesBacklinks(
 		pageNames: string[],
@@ -2156,6 +2398,12 @@ export class FakeWiki {
 	 * @param targetPageName - Page title to get related changes for
 	 * @param options - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)
 	 * @returns Array of revision-like items with linkType, sorted by timestamp newest first
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRelatedChanges("Cat", { limit: 20, days: 7 })
+	 * ```
 	 */
 	async getRelatedChanges(
 		targetPageName: string,
@@ -2285,6 +2533,12 @@ export class FakeWiki {
 	 * feedCountBidirectional/Outgoing/Backlink and score are shown on every revision of that page.
 	 * Uses scoreMultipliers (default bidirectional×4, outgoing×2, backlink×1). No extra API calls.
 	 * Order is preserved (by timestamp desc); no extra sorting after filtering.
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getTopRelatedChanges(["Cat", "Dog"], { limit: 20, days: 7, percentage: 10 })
+	 * ```
 	 */
 	async getTopRelatedChanges(
 		pageNames: string[],
@@ -2527,6 +2781,12 @@ export class FakeWiki {
 	 * Same options as getTopRelatedChanges; returns unique page names in order of first appearance,
 	 * each with the score from the first change that introduced that page (static per page),
 	 * plus the changes that were retrieved as part of the scoring process (with sourcePageNames and link-type info).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getTopRelatedPages(["Cat"], { limit: 20, days: 7, percentage: 15 })
+	 * ```
 	 */
 	async getTopRelatedPages(
 		pageNames: string[],
@@ -2551,6 +2811,12 @@ export class FakeWiki {
 	 * first image on the page (e.g. infobox image).
 	 * @param pageName - Page title
 	 * @returns Thumbnail URL or null
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageThumbnail("Cat")
+	 * ```
 	 */
 	async getPageThumbnail(pageName: string): Promise<string | null> {
 		try {
@@ -2686,6 +2952,12 @@ export class FakeWiki {
 	 * @param pageNames - Page titles
 	 * @param baseUrl - Wiki base URL (e.g. https://en.wikipedia.org/). Defaults to this.base
 	 * @returns Map of page title to thumbnail URL (only entries that have a thumbnail)
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageThumbnails(["Cat", "Dog"])
+	 * ```
 	 */
 	async getPageThumbnails(
 		pageNames: string[],
@@ -2750,6 +3022,12 @@ export class FakeWiki {
 	 * @param lang - Language code (e.g. "en")
 	 * @param options - Optional page title (seed), QID, and per-source result count (default 10)
 	 * @returns Serpentine results and optional seed QID
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getListBuilding("en", { pageTitle: "Cat", qid: "Q146", k: 4 })
+	 * ```
 	 */
 	async getListBuilding(
 		lang: string,
@@ -2796,6 +3074,12 @@ export class FakeWiki {
 	/**
 	 * Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding
 	 * calls re-fetch from the API. Use when the user explicitly requests fresh recommendations.
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.clearListBuildingCache()
+	 * ```
 	 */
 	clearListBuildingCache(): void {
 		this.listBuildingCache.clear()
@@ -2886,6 +3170,12 @@ export class FakeWiki {
 	 * @param pageTitles - Seed page titles (deduplicated; empty titles skipped)
 	 * @param options - Optional k and onLoad callback (always processes one seed page at a time)
 	 * @returns Final { entries, completedCount } with entries deduped and sorted
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getMultiPageListBuilding("en", ["Cat", "Dog"], { k: 4 })
+	 * ```
 	 */
 	async getMultiPageListBuilding(
 		lang: string,
@@ -2931,6 +3221,12 @@ export class FakeWiki {
 	 * Get page hero image: thumbnail if present, otherwise the first media image.
 	 * @param pageName - Page title
 	 * @returns Hero image URL or null
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageHero("Cat")
+	 * ```
 	 */
 	async getPageHero(pageName: string): Promise<string | null> {
 		try {
@@ -2954,6 +3250,12 @@ export class FakeWiki {
 	 * @param wikitext - Wikitext content
 	 * @param pageTitle - Page title for context (optional)
 	 * @returns HTML content
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.transformWikitextToHtml("'''Hi'''", "Sandbox")
+	 * ```
 	 */
 	async transformWikitextToHtml(wikitext: string, pageTitle = "Main_Page"): Promise<string> {
 		const html = (await this.request({
@@ -2970,6 +3272,12 @@ export class FakeWiki {
 	 * Get page categories
 	 * @param pageName - Page title
 	 * @returns Page categories (array of category titles, e.g. "Category:British rock music groups")
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageCategories("Cat")
+	 * ```
 	 */
 	async getPageCategories(pageName: string): Promise<{ categories: string[] }> {
 		const data = (await this.request({
@@ -2997,6 +3305,12 @@ export class FakeWiki {
 	 * Get page mobile-optimized HTML
 	 * @param pageName - Page title
 	 * @returns Mobile HTML
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getPageMobileHtml("Cat")
+	 * ```
 	 */
 	async getPageMobileHtml(pageName: string): Promise<string> {
 		return (await this.request({
@@ -3010,6 +3324,12 @@ export class FakeWiki {
 	 * Infer a user avatar image from their user page
 	 * @param userName - Username
 	 * @returns Avatar image URL or null
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getUserAvatar("Example")
+	 * ```
 	 */
 	async getUserAvatar(userName: string): Promise<string | null> {
 		// Get media from the user's user page
@@ -3040,6 +3360,12 @@ export class FakeWiki {
 	 * Results are cached in memory to avoid repeated API calls for the same user.
 	 * @param userName - Username or IP address
 	 * @returns User information including edit count, registration date, and account status
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getUserInfo("Example")
+	 * ```
 	 */
 	async getUserInfo(userName: string): Promise<FWUserInfo | null> {
 		// Check cache first
@@ -3107,6 +3433,12 @@ export class FakeWiki {
 	 * Check if a username is a temporary account (starts with ~)
 	 * @param userName - Username to check
 	 * @returns True if the username is a temporary account
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.isTemporaryAccount("~20241")
+	 * ```
 	 */
 	isTemporaryAccount(userName: string): boolean {
 		return userName.startsWith("~")
@@ -3116,6 +3448,12 @@ export class FakeWiki {
 	 * Check if a username is an IP address
 	 * @param userName - Username to check
 	 * @returns True if the username appears to be an IP address
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.isIPAddress("192.0.2.0")
+	 * ```
 	 */
 	isIPAddress(userName: string): boolean {
 		// Simple check: IP addresses contain dots and/or colons (for IPv6)
@@ -3127,6 +3465,12 @@ export class FakeWiki {
 	 * Calculate days of activity from registration date
 	 * @param registrationDate - ISO timestamp string (e.g., "2007-06-07T16:36:03Z")
 	 * @returns Number of days since registration, or null if date is invalid
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getDaysOfActivity("2020-01-15T00:00:00Z")
+	 * ```
 	 */
 	getDaysOfActivity(registrationDate: string | undefined): number | null {
 		if (!registrationDate) {
@@ -3193,6 +3537,12 @@ export class FakeWiki {
 	 * Reads from category cache when available; otherwise fetches user info and caches the result.
 	 * @param userName - Username to classify
 	 * @returns User category
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getUserCategory("Example")
+	 * ```
 	 */
 	async getUserCategory(userName: string): Promise<FWUserCategory> {
 		const cachedCategory = this.getUserCategoryFromCache(userName)
@@ -3223,6 +3573,12 @@ export class FakeWiki {
 	 * @param userName - Username to look up
 	 * @param options - Optional overrides; `userTypeConfig` merges with the default per-category display config
 	 * @returns Icon and color for the user's category, or null if not cached
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getCachedUserCategoryDisplay("Example", {})
+	 * ```
 	 */
 	getCachedUserCategoryDisplay(
 		userName: string,
@@ -3242,6 +3598,12 @@ export class FakeWiki {
 	 * @param userName - Username to look up
 	 * @param options - Optional overrides; `userTypeConfig` merges with the default per-category display config
 	 * @returns Icon and color for the user's category
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getUserCategoryDisplay("Example")
+	 * ```
 	 */
 	async getUserCategoryDisplay(
 		userName: string,
@@ -3257,6 +3619,12 @@ export class FakeWiki {
 	 * Read a user's category from cache (for UI keys/test ids). Returns null if not yet loaded.
 	 * @param userName - Username to look up
 	 * @returns Cached category or null
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getCachedUserCategory("Example")
+	 * ```
 	 */
 	getCachedUserCategory(userName: string): FWUserCategory | null {
 		return this.getUserCategoryFromCache(userName)
@@ -3266,6 +3634,12 @@ export class FakeWiki {
 	 * Parse a toolbar-style edit summary into a table of contents
 	 * @param editSummary - Edit summary to parse
 	 * @returns Table of contents
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getTableFromEditSummary("(toolbar) | section | comment")
+	 * ```
 	 */
 	getTableFromEditSummary(editSummary: string): string {
 		const toolbar = this.parseToolbarEditSummary(editSummary)
@@ -3307,6 +3681,12 @@ export class FakeWiki {
 	 * Parse a toolbar edit summary into structured parts
 	 * @param editSummary - Edit summary to parse
 	 * @returns Parsed toolbar comment or null if not a toolbar comment
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.parseToolbarEditSummary("...")
+	 * ```
 	 */
 	parseToolbarEditSummary(editSummary: string): FWToolbarComment | null {
 		let parts = editSummary.split(" | ")
@@ -3350,6 +3730,12 @@ export class FakeWiki {
 	 * @param summary - Edit summary to preprocess
 	 * @param pageName - Page name
 	 * @returns Preprocessed edit summary
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.preprocessEditSummary("| Lead | minor copyedit", "Cat")
+	 * ```
 	 */
 	preprocessEditSummary(summary: string, pageName: string): string {
 		summary = summary.replace(/^\/\* (.*) \*\//, `[[${pageName}#$1|→$1]]`)
@@ -3365,6 +3751,12 @@ export class FakeWiki {
 	 * @param summary - Edit summary to get the HTML representation of
 	 * @param pageName - Page name
 	 * @returns HTML representation of the edit summary
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getEditSummaryHtml("fix typo", "Cat")
+	 * ```
 	 */
 	async getEditSummaryHtml(summary: string, pageName: string): Promise<string> {
 		summary = this.preprocessEditSummary(summary, pageName)
@@ -3388,7 +3780,13 @@ export class FakeWiki {
 		return Number.isNaN(date.getTime()) ? null : date
 	}
 
-	/** Format date as "DD Month YYYY" or "DD.MM.YY". */
+	/** Format date as "DD Month YYYY" or "DD.MM.YY".
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.formatDate("2020-01-15T10:00:00Z", "long")
+	 * ```
+	 */
 	formatDate(timestamp: string | number | Date, style: "long" | "short" = "long"): string {
 		const d = this.toValidDate(timestamp)
 		if (!d) return "Invalid date"
@@ -3418,7 +3816,13 @@ export class FakeWiki {
 		return `${day} ${month} ${year}`
 	}
 
-	/** Convert timestamp to YYYY-MM-DD key for grouping. */
+	/** Convert timestamp to YYYY-MM-DD key for grouping.
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.toDateKey("2020-01-15T10:00:00Z")
+	 * ```
+	 */
 	toDateKey(timestamp: string | number | Date): string {
 		const d = this.toValidDate(timestamp)
 		if (!d) return "Invalid date"
@@ -3428,7 +3832,13 @@ export class FakeWiki {
 		return `${year}-${month}-${day}`
 	}
 
-	/** Format time as HH:MM. */
+	/** Format time as HH:MM.
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.formatTime("2020-01-15T10:00:00Z")
+	 * ```
+	 */
 	formatTime(timestamp: string | number | Date): string {
 		const d = this.toValidDate(timestamp)
 		if (!d) return "Invalid date"
@@ -3437,7 +3847,13 @@ export class FakeWiki {
 		return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
 	}
 
-	/** Check whether a timestamp falls on today in local time. */
+	/** Check whether a timestamp falls on today in local time.
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.isToday(Date.now())
+	 * ```
+	 */
 	isToday(timestamp: string | number | Date): boolean {
 		const d = this.toValidDate(timestamp)
 		if (!d) return false
@@ -3453,6 +3869,12 @@ export class FakeWiki {
 	 * Format relative time (e.g. "2 minutes ago", "3 days ago").
 	 * @param timestamp - ISO timestamp string, Date, or epoch
 	 * @param options - Formatting options for different time periods
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.formatRelativeTimestamp("2020-01-15T10:00:00Z", "long")
+	 * ```
 	 */
 	formatRelativeTimestamp(
 		timestamp: string | number | Date,
@@ -3589,6 +4011,12 @@ export class FakeWiki {
 	 *
 	 * @param timestamp - ISO timestamp, epoch milliseconds, or Date instance
 	 * @returns Human-readable relative text (e.g. "Just now", "2 hours ago")
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.formatNiceRelativeTimestamp("2020-01-15T10:00:00Z")
+	 * ```
 	 */
 	formatNiceRelativeTimestamp(timestamp: string | number | Date): string {
 		return this.formatRelativeTimestamp(timestamp, {
@@ -3610,6 +4038,14 @@ export class FakeWiki {
 	 *
 	 * @param revisions - Revisions to group (typically already newest-first)
 	 * @returns Date groups with stable `dateKey`, human `dateLabel`, and revisions
+	 
+	 * @example
+	 * ```ts
+	 * import type { FWPageHistoryRevision } from "fakewiki/types"
+	 * const wiki = new FakeWiki()
+	 * const revs: FWPageHistoryRevision[] = []
+	 * wiki.groupRevisionsByDate(revs)
+	 * ```
 	 */
 	groupRevisionsByDate(
 		revisions: FWRevision[]
@@ -3637,6 +4073,12 @@ export class FakeWiki {
 	 *
 	 * @param delta - Byte delta for a revision; null/NaN are treated as zero
 	 * @returns Signed delta wrapped in parentheses (e.g. "(+120)", "(-4)", "(0)")
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.formatDelta(3)
+	 * ```
 	 */
 	formatDelta(delta: number | null): string {
 		const n = delta != null ? Number(delta) : 0
@@ -3649,6 +4091,12 @@ export class FakeWiki {
 	 * Get URL for a user page
 	 * @param userName - Username
 	 * @returns URL to user page
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getUserUrl("Example")
+	 * ```
 	 */
 	getUserUrl(userName: string): string {
 		return `${this.base}wiki/User:${encodeURIComponent(userName)}`
@@ -3659,6 +4107,12 @@ export class FakeWiki {
 	 * @param id - Revision ID
 	 * @param pageName - Page title
 	 * @returns URL to revision diff
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getRevisionUrl(123, "Cat")
+	 * ```
 	 */
 	getRevisionUrl(id: number, pageName: string): string {
 		return `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&diff=${id}`
@@ -3670,6 +4124,12 @@ export class FakeWiki {
 	 * @param id - Revision ID
 	 * @param pageName - Page title
 	 * @returns URL to view this revision
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getRevisionViewUrl(123, "Cat")
+	 * ```
 	 */
 	getRevisionViewUrl(id: number, pageName: string): string {
 		return `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&oldid=${id}`
@@ -3679,6 +4139,12 @@ export class FakeWiki {
 	 * Get URL for a page
 	 * @param pageName - Page title
 	 * @returns URL to page
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getPageUrl("Cat")
+	 * ```
 	 */
 	getPageUrl(pageName: string): string {
 		return `${this.base}wiki/${this.encodeForUrl(pageName)}`
@@ -3688,6 +4154,12 @@ export class FakeWiki {
 	 * Get URL for page history
 	 * @param pageName - Page title
 	 * @returns URL to page history
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getHistoryUrl("Cat")
+	 * ```
 	 */
 	getHistoryUrl(pageName: string): string {
 		return `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&action=history`
@@ -3697,6 +4169,12 @@ export class FakeWiki {
 	 * Get URL for user talk page
 	 * @param userName - Username
 	 * @returns URL to user talk page
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getUserTalkUrl("Example")
+	 * ```
 	 */
 	getUserTalkUrl(userName: string): string {
 		return `${this.base}wiki/User_talk:${encodeURIComponent(userName)}`
@@ -3706,6 +4184,12 @@ export class FakeWiki {
 	 * Get URL for user contributions
 	 * @param userName - Username
 	 * @returns URL to Special:Contributions
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getUserContribsUrl("Example")
+	 * ```
 	 */
 	getUserContribsUrl(userName: string): string {
 		return `${this.base}wiki/Special:Contributions/${encodeURIComponent(userName)}`
@@ -3716,6 +4200,12 @@ export class FakeWiki {
 	 * @param pageName - Page title
 	 * @param sectionTitle - Optional section name (e.g. from edit summary like \/* Section *\/); appended as fragment #Section_title so the editor can open at that section
 	 * @returns URL to edit page
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getEditUrl("Cat", "Lead")
+	 * ```
 	 */
 	getEditUrl(pageName: string, sectionTitle?: string): string {
 		const url = `${this.base}w/index.php?title=${this.encodeForUrl(pageName)}&action=edit`
@@ -3731,6 +4221,12 @@ export class FakeWiki {
 	 * Get URL for thanking a user for a revision
 	 * @param id - Revision ID
 	 * @returns URL to thank page
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getThankUrl(12345)
+	 * ```
 	 */
 	getThankUrl(id: number): string {
 		return `${this.base}wiki/Special:Thanks/${id}`
@@ -3742,6 +4238,12 @@ export class FakeWiki {
 	 * @param uploadUrl - Upload URL
 	 * @param pageName - Page name where the file is used
 	 * @returns URL to the file page with media fragment (e.g., https://en.wikipedia.org/wiki/Page#/media/File:File.jpg)
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getAssetUrlFromUploadUrl("https://upload.wikimedia.org/wikipedia/commons/a/aa/Cat.png", "File:Cat.png")
+	 * ```
 	 */
 	getAssetUrlFromUploadUrl(uploadUrl: string, pageName: string): string {
 		const parts = uploadUrl.split("/")
@@ -3754,6 +4256,12 @@ export class FakeWiki {
 	 * @param prototypeName - Name of the prototype (e.g., "PageFeed", "CustomPageFeed")
 	 * @param keyName - Name of the key (e.g., "searchQuery", "pageName")
 	 * @returns A unique storage key string
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getStorageKey("p", "k")
+	 * ```
 	 */
 	getStorageKey(prototypeName: string, keyName: string): string {
 		return `${prototypeName}_${keyName}`
@@ -3765,6 +4273,12 @@ export class FakeWiki {
 	 * @param keyName - Base name of the key
 	 * @param count - Number of keys to generate
 	 * @returns Array of storage keys
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getStorageKeys("p", "k", 3)
+	 * ```
 	 */
 	getStorageKeys(prototypeName: string, keyName: string, count: number): string[] {
 		return Array.from({ length: count }, (_, i) =>
@@ -3775,6 +4289,12 @@ export class FakeWiki {
 	/**
 	 * Create a new Result instance with default values
 	 * @returns Result instance with empty data, loading false, and no error
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.createResult()
+	 * ```
 	 */
 	createResult<T = FWRevision>(): FWResult<T> {
 		return {
@@ -3788,6 +4308,12 @@ export class FakeWiki {
 	 * Create multiple Result instances
 	 * @param count - Number of results to create
 	 * @returns Array of Result instances
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.createResults(3)
+	 * ```
 	 */
 	createResults<T = FWRevision>(count: number): FWResult<T>[] {
 		return Array.from({ length: count }, () => this.createResult<T>())
@@ -3797,6 +4323,12 @@ export class FakeWiki {
 	 * Get CSS class name for delta (change size) indicator
 	 * @param delta - Change size (positive, negative, or zero)
 	 * @returns CSS class name: "positive", "negative", or "neutral"
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getDeltaClass(5)
+	 * ```
 	 */
 	getDeltaClass(delta: number, withSign = true): string {
 		if (withSign) {
@@ -3958,6 +4490,12 @@ export class FakeWiki {
 	 * @param models - Lift Wing model slug(s). Defaults to damaging+goodfaith.
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Map of revision ID to predictions keyed by model
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRevisionPredictions([123, 456], ["damaging", "goodfaith"])
+	 * ```
 	 */
 	async getRevisionPredictions(
 		revisionIds: number[],
@@ -3996,6 +4534,12 @@ export class FakeWiki {
 	 * @param revisionId - Revision ID
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Prediction score with probability
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getDamagingPrediction(12345)
+	 * ```
 	 */
 	async getDamagingPrediction(
 		revisionId: number,
@@ -4010,6 +4554,12 @@ export class FakeWiki {
 	 * @param revisionId - Revision ID
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Prediction score with probability
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getGoodfaithPrediction(12345)
+	 * ```
 	 */
 	async getGoodfaithPrediction(
 		revisionId: number,
@@ -4024,6 +4574,12 @@ export class FakeWiki {
 	 * @param revisionIds - Array of revision IDs
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Map of revision ID to prediction score
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getDamagingPredictions([1, 2, 3])
+	 * ```
 	 */
 	async getDamagingPredictions(
 		revisionIds: number[],
@@ -4043,6 +4599,12 @@ export class FakeWiki {
 	 * @param revisionIds - Array of revision IDs
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Map of revision ID to prediction score
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getGoodFaithPredictions([1, 2, 3])
+	 * ```
 	 */
 	async getGoodFaithPredictions(
 		revisionIds: number[],
@@ -4066,6 +4628,12 @@ export class FakeWiki {
 	 * @param revisionIds - Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Map of revision ID to both prediction scores (same shape as getRevisionPredictions)
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getRevisionPredictionsFromOres([1, 2, 3])
+	 * ```
 	 */
 	async getRevisionPredictionsFromOres(
 		revisionIds: number[],
@@ -4181,6 +4749,12 @@ export class FakeWiki {
 	 * @returns Summary e.g. { Template: { change: 1 }, Wikilink: { insert: 1 } }
 	 * @see https://edit-types.wmcloud.org/docs
 	 * @see https://github.com/geohci/edit-types
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getEditTypesSummary(12345, { lang: "en" })
+	 * ```
 	 */
 	async getEditTypesSummary(
 		revisionId: number,
@@ -4202,6 +4776,12 @@ export class FakeWiki {
 	 * @param revisionId - Revision ID
 	 * @param options - Optional edit-types API options (`lang`, `content_type`) and structured-delta settings
 	 * @returns Structured delta result (segments + candidates), or null if no summary output
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getStructuredDeltasFromRevision(12345, { lang: "en" })
+	 * ```
 	 */
 	async getStructuredDeltasFromRevision(
 		revisionId: number,
@@ -4228,6 +4808,12 @@ export class FakeWiki {
 	 * @param options - Optional lang and content_type (default wikitext)
 	 * @returns Structured details
 	 * @see https://edit-types.wmcloud.org/docs
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getEditTypesDetails(12345, { lang: "en" })
+	 * ```
 	 */
 	async getEditTypesDetails(
 		revisionId: number,
@@ -4248,6 +4834,12 @@ export class FakeWiki {
 	 * @param options - Optional lang and content_type (default wikitext)
 	 * @returns Debug payload
 	 * @see https://edit-types.wmcloud.org/docs
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getEditTypesDebug(12345, { lang: "en" })
+	 * ```
 	 */
 	async getEditTypesDebug(
 		revisionId: number,
@@ -4265,6 +4857,12 @@ export class FakeWiki {
 	 * Normalize edit-types response into summary shape used for structured-delta computation.
 	 * Accepts either root summary object or payload containing a `summary` property.
 	 * @category Structured deltas
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.normalizeStructuredDeltaSummary({ Paragraph: { add: 1, remove: 0 } })
+	 * ```
 	 */
 	normalizeStructuredDeltaSummary(
 		raw: Record<string, unknown> | null | undefined
@@ -4295,6 +4893,14 @@ export class FakeWiki {
 	 *
 	 * @param summary - Pre-normalized summary (type -> action -> count)
 	 * @param options - Optional structured-delta settings overrides
+	 
+	 * @example
+	 * ```ts
+	 * import type { FWEditTypesDiffSummary } from "fakewiki/types"
+	 * const wiki = new FakeWiki()
+	 * const s = { Paragraph: { add: 1, remove: 0 } } as FWEditTypesDiffSummary
+	 * wiki.getStructuredDeltasFromSummary(s)
+	 * ```
 	 */
 	getStructuredDeltasFromSummary(
 		summary: FWEditTypesDiffSummary,
@@ -4498,7 +5104,13 @@ export class FakeWiki {
 		return Number.MAX_SAFE_INTEGER
 	}
 
-	/** Public for snippet logic: significance level index (0 = most significant). */
+	/** Public for snippet logic: significance level index (0 = most significant).
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * wiki.getStructuredDeltaLevelIndex("Sentence")
+	 * ```
+	 */
 	getStructuredDeltaLevelIndex(type: FWStructuredDeltaCanonicalType): number {
 		return this.getStructuredDeltaLevel(type)
 	}
@@ -4527,12 +5139,10 @@ export class FakeWiki {
 		return base.endsWith("s") ? `${base}es` : `${base}s`
 	}
 
-	private veTextMatchConfigPromise:
-		| Promise<{
-				matchItems: Record<string, unknown>
-				britishEnglishPairs: Record<string, string>
-		  }>
-		| null = null
+	private veTextMatchConfigPromise: Promise<{
+		matchItems: Record<string, unknown>
+		britishEnglishPairs: Record<string, string>
+	}> | null = null
 
 	private createVeDiagnostics(
 		candidates: FWVeSuggestionCandidate[],
@@ -4731,14 +5341,20 @@ export class FakeWiki {
 		// Remove self-closing refs
 		out = out.replace(/<ref\b[^>]*\/\s*>/gi, " ")
 		// Remove common inline citation templates
-		out = out.replace(/\{\{\s*(?:sfn|sfnp|harv|harvnb|harvp|r|rp|efn|citation needed|cn)\b[\s\S]*?\}\}/gi, " ")
+		out = out.replace(
+			/\{\{\s*(?:sfn|sfnp|harv|harvnb|harvp|r|rp|efn|citation needed|cn)\b[\s\S]*?\}\}/gi,
+			" "
+		)
 		// Remove citation templates often used in reference lists/inline bibliographies
 		out = out.replace(
 			/\{\{\s*(?:cite|citation|vcite|wikicite|cite web|cite news|cite journal|cite book|cite conference|cite report|cite arxiv|cite thesis)\b[\s\S]*?\}\}/gi,
 			" "
 		)
 		// Remove bare list-style reference lines that are mostly citation templates/urls
-		out = out.replace(/^\s*[*#]\s*(?:\{\{[^}]+\}\}|\[https?:\/\/[^\]]+\]|https?:\/\/\S+).*$\n?/gim, " ")
+		out = out.replace(
+			/^\s*[*#]\s*(?:\{\{[^}]+\}\}|\[https?:\/\/[^\]]+\]|https?:\/\/\S+).*$\n?/gim,
+			" "
+		)
 		return out
 	}
 
@@ -4762,8 +5378,13 @@ export class FakeWiki {
 		start: number
 		end: number
 	}> {
-		const links: Array<{ raw: string; target: string; label: string; start: number; end: number }> =
-			[]
+		const links: Array<{
+			raw: string
+			target: string
+			label: string
+			start: number
+			end: number
+		}> = []
 		const re = /\[\[([^\]|#]+(?:#[^\]|]+)?)(?:\|([^\]]+))?\]\]/g
 		let match: RegExpExecArray | null
 		while ((match = re.exec(source)) !== null) {
@@ -4988,13 +5609,23 @@ export class FakeWiki {
 	 * @param pageTitle - Page title to evaluate
 	 * @param options - Optional threshold and max candidates
 	 * @returns Tone suggestion simulation payload
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeToneSuggestions("Cat", { maxCandidates: 5 })
+	 * ```
 	 */
 	async getVeToneSuggestions(
 		pageTitle: string,
 		options?: { threshold?: number; maxCandidates?: number }
 	): Promise<FWToneSuggestionResponse> {
 		const threshold = options?.threshold ?? 0.8
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const paragraphs = this.splitSourceParagraphs(source).filter(p => p.length > 20)
 		const candidates = paragraphs.slice(0, options?.maxCandidates ?? 20).map((text, i) => ({
 			id: `tone-${i}`,
@@ -5022,7 +5653,10 @@ export class FakeWiki {
 			}
 		}
 		const suggestions: FWVeSuggestionItem[] = predictions
-			.filter(item => (item.prediction?.probability ?? 0) >= threshold && item.prediction?.prediction)
+			.filter(
+				item =>
+					(item.prediction?.probability ?? 0) >= threshold && item.prediction?.prediction
+			)
 			.map(item => ({
 				id: item.candidate.id,
 				title: "Tone suggestion",
@@ -5045,9 +5679,19 @@ export class FakeWiki {
 	 * Simulate VE TextMatch suggestions for editor-open behavior (enwiki).
 	 * @param pageTitle - Page title to evaluate
 	 * @returns TextMatch suggestion simulation payload
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeTextMatchSuggestions("Cat")
+	 * ```
 	 */
 	async getVeTextMatchSuggestions(pageTitle: string): Promise<FWTextMatchSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const { matchItems, britishEnglishPairs } = await this.getEnwikiTextMatchData()
 		const ignoredSections = this.getReferenceIgnoredSections()
 		const sourceWithoutReferences = this.stripReferenceContent(source)
@@ -5056,7 +5700,10 @@ export class FakeWiki {
 			.filter(paragraph => !this.isTemplateOrTableLikeParagraph(paragraph.text))
 			.filter(
 				paragraph =>
-					!this.isWithinTemplateOrTableBlock(sourceWithoutReferences, paragraph.startOffset)
+					!this.isWithinTemplateOrTableBlock(
+						sourceWithoutReferences,
+						paragraph.startOffset
+					)
 			)
 			.map(paragraph => paragraph.text)
 			.join("\n\n")
@@ -5076,7 +5723,9 @@ export class FakeWiki {
 				expand?: string
 			}
 			if (itemId === "british-english") {
-				const hasTemplate = (item.config?.hasTemplate ?? []).some(name => templates.has(name))
+				const hasTemplate = (item.config?.hasTemplate ?? []).some(name =>
+					templates.has(name)
+				)
 				if (!hasTemplate) continue
 				let count = 0
 				for (const [us, uk] of Object.entries(britishEnglishPairs).slice(0, 2000)) {
@@ -5085,7 +5734,11 @@ export class FakeWiki {
 					while ((match = re.exec(sourceForMatching)) !== null) {
 						count++
 						const id = `textmatch-${itemId}-${count}`
-						candidates.push({ id, text: us, data: { replacement: uk, index: match.index } })
+						candidates.push({
+							id,
+							text: us,
+							data: { replacement: uk, index: match.index },
+						})
 						suggestions.push({
 							id,
 							title: "Change English spelling",
@@ -5097,19 +5750,24 @@ export class FakeWiki {
 				}
 				continue
 			}
-			const query =
-				Array.isArray(item.query) ?
-					Object.fromEntries(item.query.map(value => [value, null])) :
-					(item.query ?? {})
+			const query = Array.isArray(item.query)
+				? Object.fromEntries(item.query.map(value => [value, null]))
+				: (item.query ?? {})
 			const minOccurrences = item.config?.minOccurrences ?? 1
 			const caseSensitive = item.config?.caseSensitive ?? false
-			const matchedByParagraph = new Map<number, Array<{ term: string; replacement: string | null }>>()
+			const matchedByParagraph = new Map<
+				number,
+				Array<{ term: string; replacement: string | null }>
+			>()
 			for (const [term, replacement] of Object.entries(query)) {
 				const flags = caseSensitive ? "g" : "gi"
 				const re = new RegExp(`\\b${this.escapeRegex(term)}\\b`, flags)
 				let match: RegExpExecArray | null
 				while ((match = re.exec(sourceForMatching)) !== null) {
-					const paragraphIndex = this.getSourceParagraphIndex(sourceForMatching, match.index)
+					const paragraphIndex = this.getSourceParagraphIndex(
+						sourceForMatching,
+						match.index
+					)
 					const bucket = matchedByParagraph.get(paragraphIndex) ?? []
 					bucket.push({ term, replacement: replacement ?? null })
 					matchedByParagraph.set(paragraphIndex, bucket)
@@ -5147,9 +5805,21 @@ export class FakeWiki {
 
 	/**
 	 * Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeExternalLinkSuggestions("Cat")
+	 * ```
 	 */
-	async getVeExternalLinkSuggestions(pageTitle: string): Promise<FWExternalLinkSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+	async getVeExternalLinkSuggestions(
+		pageTitle: string
+	): Promise<FWExternalLinkSuggestionResponse> {
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const sourceForLinks = this.stripReferenceContent(source)
 		const ignoredSections = this.getReferenceIgnoredSections()
 		const sectionedParagraphs = this.parseSourceParagraphsWithSections(sourceForLinks)
@@ -5168,7 +5838,8 @@ export class FakeWiki {
 				const id = `external-${offset}`
 				const section =
 					sectionedParagraphs.find(
-						paragraph => offset >= paragraph.startOffset && offset <= paragraph.endOffset
+						paragraph =>
+							offset >= paragraph.startOffset && offset <= paragraph.endOffset
 					)?.section ?? ""
 				candidates.push({ id, text: url, data: { index: offset, section } })
 				if (this.isLikelyInterwikiExternalUrl(url)) continue
@@ -5176,53 +5847,77 @@ export class FakeWiki {
 				suggestions.push({
 					id,
 					title: "External link in body",
-					message: "Non-interwiki external link detected; VE external-link check would flag this.",
+					message:
+						"Non-interwiki external link detected; VE external-link check would flag this.",
 					severity: "low",
 					data: { url, index: offset, section, action: "remove-or-dismiss" },
 				})
 			}
 		}
-		return this.createVeResponse("externalLink", canonicalTitle, pageId, candidates, suggestions, [
-			"exclude interwiki-like urls",
-			"ignore reference-style sections",
-			"remove/dismiss only",
-		])
+		return this.createVeResponse(
+			"externalLink",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			[
+				"exclude interwiki-like urls",
+				"ignore reference-style sections",
+				"remove/dismiss only",
+			]
+		)
 	}
 
 	/**
 	 * Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeDuplicateLinkSuggestions("Cat")
+	 * ```
 	 */
 	async getVeDuplicateLinkSuggestions(
 		pageTitle: string,
 		options?: { scope?: "paragraph" | "section" }
 	): Promise<FWDuplicateLinkSuggestionResponse> {
 		const scope = options?.scope ?? "paragraph"
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const sourceForLinks = this.stripReferenceContent(source)
 		const ignoredSections = this.getReferenceIgnoredSections()
 		const paragraphs = this.parseSourceParagraphsWithSections(sourceForLinks).filter(
 			paragraph => !ignoredSections.has(paragraph.section)
 		)
 		const units =
-			scope === "section" ?
-				(() => {
-					const mergedBySection = new Map<string, string[]>()
-					const tableRowUnits: string[] = []
-					for (const paragraph of paragraphs) {
-						if (this.isTemplateOrTableLikeParagraph(paragraph.text)) {
-							tableRowUnits.push(...this.splitTableLikeParagraphIntoUnits(paragraph.text))
-							continue
+			scope === "section"
+				? (() => {
+						const mergedBySection = new Map<string, string[]>()
+						const tableRowUnits: string[] = []
+						for (const paragraph of paragraphs) {
+							if (this.isTemplateOrTableLikeParagraph(paragraph.text)) {
+								tableRowUnits.push(
+									...this.splitTableLikeParagraphIntoUnits(paragraph.text)
+								)
+								continue
+							}
+							const list = mergedBySection.get(paragraph.section) ?? []
+							list.push(paragraph.text)
+							mergedBySection.set(paragraph.section, list)
 						}
-						const list = mergedBySection.get(paragraph.section) ?? []
-						list.push(paragraph.text)
-						mergedBySection.set(paragraph.section, list)
-					}
-					return [
-						...Array.from(mergedBySection.values()).map(parts => parts.join("\n\n")),
-						...tableRowUnits,
-					]
-				})()
-			:	paragraphs.flatMap(paragraph => this.splitTableLikeParagraphIntoUnits(paragraph.text))
+						return [
+							...Array.from(mergedBySection.values()).map(parts =>
+								parts.join("\n\n")
+							),
+							...tableRowUnits,
+						]
+					})()
+				: paragraphs.flatMap(paragraph =>
+						this.splitTableLikeParagraphIntoUnits(paragraph.text)
+					)
 		const candidates: FWVeSuggestionCandidate[] = []
 		const suggestions: FWVeSuggestionItem[] = []
 		for (let unitIndex = 0; unitIndex < units.length; unitIndex++) {
@@ -5270,22 +5965,39 @@ export class FakeWiki {
 				})
 			}
 		}
-		return this.createVeResponse("duplicateLink", canonicalTitle, pageId, candidates, suggestions, [
-			`scope=${scope}`,
-			"ignore reference-style sections",
-			"ignore image-caption links for duplicate checks",
-			"first occurrence allowed",
-			"second+ occurrences flagged",
-		])
+		return this.createVeResponse(
+			"duplicateLink",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			[
+				`scope=${scope}`,
+				"ignore reference-style sections",
+				"ignore image-caption links for duplicate checks",
+				"first occurrence allowed",
+				"second+ occurrences flagged",
+			]
+		)
 	}
 
 	/**
 	 * Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeDisambiguationSuggestions("Cat")
+	 * ```
 	 */
 	async getVeDisambiguationSuggestions(
 		pageTitle: string
 	): Promise<FWDisambiguationSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const links = this.extractWikiLinks(source).filter(
 			link =>
 				link.target &&
@@ -5311,7 +6023,9 @@ export class FakeWiki {
 					redirects: 1,
 				},
 			})) as {
-				query?: { pages?: Record<string, { title?: string; pageprops?: Record<string, unknown> }> }
+				query?: {
+					pages?: Record<string, { title?: string; pageprops?: Record<string, unknown> }>
+				}
 			}
 			for (const page of Object.values(data.query?.pages ?? {})) {
 				if (page.pageprops?.disambiguation !== undefined && page.title) {
@@ -5329,17 +6043,33 @@ export class FakeWiki {
 				severity: "medium",
 				data: { target: link.target, label: link.label },
 			}))
-		return this.createVeResponse("disambiguation", canonicalTitle, pageId, candidates, suggestions, [
-			"exclude fragment links",
-			"pageprops.disambiguation check",
-		])
+		return this.createVeResponse(
+			"disambiguation",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			["exclude fragment links", "pageprops.disambiguation check"]
+		)
 	}
 
 	/**
 	 * Simulate VE AddReference suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeAddReferenceSuggestions("Cat")
+	 * ```
 	 */
-	async getVeAddReferenceSuggestions(pageTitle: string): Promise<FWAddReferenceSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+	async getVeAddReferenceSuggestions(
+		pageTitle: string
+	): Promise<FWAddReferenceSuggestionResponse> {
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const sourceForAddReference = this.stripImageFileLinksFromSource(source)
 		const ignoredSections = this.getReferenceIgnoredSections()
 		const paragraphs = this.parseSourceParagraphsWithSections(sourceForAddReference)
@@ -5347,7 +6077,8 @@ export class FakeWiki {
 		const suggestions: FWVeSuggestionItem[] = []
 		paragraphs.forEach((paragraph, i) => {
 			if (this.isTemplateOrTableLikeParagraph(paragraph.text)) return
-			if (this.isWithinTemplateOrTableBlock(sourceForAddReference, paragraph.startOffset)) return
+			if (this.isWithinTemplateOrTableBlock(sourceForAddReference, paragraph.startOffset))
+				return
 			const plainTextLength = this.getApproxVePlainTextLengthFromWikitext(paragraph.text)
 			const id = `addref-${i}`
 			candidates.push({
@@ -5371,21 +6102,38 @@ export class FakeWiki {
 				data: { section: paragraph.section, length: plainTextLength },
 			})
 		})
-		return this.createVeResponse("addReference", canonicalTitle, pageId, candidates, suggestions, [
-			"ignoreLeadSection=true",
-			"ignore reference-style sections",
-			"exclude template/table-like paragraphs",
-			"minimumCharacters=50",
-		])
+		return this.createVeResponse(
+			"addReference",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			[
+				"ignoreLeadSection=true",
+				"ignore reference-style sections",
+				"exclude template/table-like paragraphs",
+				"minimumCharacters=50",
+			]
+		)
 	}
 
 	/**
 	 * Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeImageCaptionSuggestions("Cat")
+	 * ```
 	 */
 	async getVeImageCaptionSuggestions(
 		pageTitle: string
 	): Promise<FWImageCaptionSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const fileRe = /\[\[(?:File|Image):([^\]|]+)([^\]]*)\]\]/gi
 		const candidates: FWVeSuggestionCandidate[] = []
 		const suggestions: FWVeSuggestionItem[] = []
@@ -5414,28 +6162,44 @@ export class FakeWiki {
 				id,
 				title: "Image caption",
 				message:
-					caption.length === 0 ?
-						"Thumbnail image appears to be missing a caption."
-					:	"Thumbnail image caption appears too short to be descriptive.",
+					caption.length === 0
+						? "Thumbnail image appears to be missing a caption."
+						: "Thumbnail image caption appears too short to be descriptive.",
 				severity: "low",
 				data: { file: match[1], captionLength: caption.length },
 			})
 		}
-		return this.createVeResponse("imageCaption", canonicalTitle, pageId, candidates, suggestions, [
-			"thumb images only",
-			"empty caption only",
-		])
+		return this.createVeResponse(
+			"imageCaption",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			["thumb images only", "empty caption only"]
+		)
 	}
 
 	/**
 	 * Simulate VE YearLink suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeYearLinkSuggestions("Cat")
+	 * ```
 	 */
 	async getVeYearLinkSuggestions(pageTitle: string): Promise<FWYearLinkSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
-		const links = this.extractWikiLinks(source).filter(link => !this.isLikelyIgnoredLinkTarget(link.target))
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
+		const links = this.extractWikiLinks(source).filter(
+			link => !this.isLikelyIgnoredLinkTarget(link.target)
+		)
 		const getSingleYear = (text: string): string | null => {
 			const matches = text.match(/\b\d{3,4}\b/g) ?? []
-			return matches.length === 1 ? matches[0] ?? null : null
+			return matches.length === 1 ? (matches[0] ?? null) : null
 		}
 		const candidates: FWVeSuggestionCandidate[] = links.map((link, i) => ({
 			id: `yearlink-${i}`,
@@ -5454,7 +6218,11 @@ export class FakeWiki {
 				title: "Year link mismatch",
 				message: `Link target year and label year differ for "${link.raw}".`,
 				severity: "low",
-				data: { target: link.target, label: link.label, actionChoices: ["useTarget", "useLabel"] },
+				data: {
+					target: link.target,
+					label: link.label,
+					actionChoices: ["useTarget", "useLabel"],
+				},
 			}))
 		return this.createVeResponse("yearLink", canonicalTitle, pageId, candidates, suggestions, [
 			"single year in target and label",
@@ -5464,13 +6232,23 @@ export class FakeWiki {
 
 	/**
 	 * Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeConvertReferenceSuggestions("Cat")
+	 * ```
 	 */
 	async getVeConvertReferenceSuggestions(
 		pageTitle: string,
 		options?: { strict?: "url-only" | "covered" | "any" }
 	): Promise<FWConvertReferenceSuggestionResponse> {
 		const strict = options?.strict ?? "url-only"
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const refRe = /<ref\b[^>]*>([\s\S]*?)<\/ref>/gi
 		const candidates: FWVeSuggestionCandidate[] = []
 		const suggestions: FWVeSuggestionItem[] = []
@@ -5483,7 +6261,8 @@ export class FakeWiki {
 			const hasUrl = /(https?:\/\/\S+)/i.test(content)
 			if (!hasUrl) continue
 			if (strict === "url-only" && !/^https?:\/\/\S+$/i.test(content)) continue
-			if (strict === "covered" && !/^\[https?:\/\/\S+(?:\s+[^\]]+)?\]$/i.test(content)) continue
+			if (strict === "covered" && !/^\[https?:\/\/\S+(?:\s+[^\]]+)?\]$/i.test(content))
+				continue
 			suggestions.push({
 				id,
 				title: "Convert reference",
@@ -5492,19 +6271,33 @@ export class FakeWiki {
 				data: { strict },
 			})
 		}
-		return this.createVeResponse("convertReference", canonicalTitle, pageId, candidates, suggestions, [
-			`strict=${strict}`,
-			"reference contains convertible url",
-		])
+		return this.createVeResponse(
+			"convertReference",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			[`strict=${strict}`, "reference contains convertible url"]
+		)
 	}
 
 	/**
 	 * Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeCitationNeededSuggestions("Cat")
+	 * ```
 	 */
 	async getVeCitationNeededSuggestions(
 		pageTitle: string
 	): Promise<FWCitationNeededSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const re = /\{\{\s*(citation needed|cn)\b([^}]*)\}\}/gi
 		const candidates: FWVeSuggestionCandidate[] = []
 		const suggestions: FWVeSuggestionItem[] = []
@@ -5522,17 +6315,31 @@ export class FakeWiki {
 				data: { index: match.index },
 			})
 		}
-		return this.createVeResponse("citationNeeded", canonicalTitle, pageId, candidates, suggestions, [
-			"showAsSuggestion default=false unless enabled",
-			"template compatibility required",
-		])
+		return this.createVeResponse(
+			"citationNeeded",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			["showAsSuggestion default=false unless enabled", "template compatibility required"]
+		)
 	}
 
 	/**
 	 * Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeDoubleBoldSuggestions("Cat")
+	 * ```
 	 */
 	async getVeDoubleBoldSuggestions(pageTitle: string): Promise<FWDoubleBoldSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const lines = source.split("\n")
 		const candidates: FWVeSuggestionCandidate[] = []
 		const suggestions: FWVeSuggestionItem[] = []
@@ -5552,19 +6359,33 @@ export class FakeWiki {
 				data: { line: i + 1, inHeading, inHeaderCell, inDefinitionTerm },
 			})
 		})
-		return this.createVeResponse("doubleBold", canonicalTitle, pageId, candidates, suggestions, [
-			"heading>=3 or table header or definition term",
-			"bold annotation present",
-		])
+		return this.createVeResponse(
+			"doubleBold",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			["heading>=3 or table header or definition term", "bold annotation present"]
+		)
 	}
 
 	/**
 	 * Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeRequiredTemplateParamSuggestions("Cat")
+	 * ```
 	 */
 	async getVeRequiredTemplateParamSuggestions(
 		pageTitle: string
 	): Promise<FWRequiredTemplateParamSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const templateInvocations = Array.from(
 			source.matchAll(/\{\{\s*([^|}\n]+)((?:\|[^}]*)?)\}\}/gim)
 		).slice(0, 400)
@@ -5607,9 +6428,19 @@ export class FakeWiki {
 
 	/**
 	 * Simulate VE Redirect suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeRedirectSuggestions("Cat")
+	 * ```
 	 */
 	async getVeRedirectSuggestions(pageTitle: string): Promise<FWRedirectSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const links = this.extractWikiLinks(source).filter(
 			link => link.target && !this.isLikelyIgnoredLinkTarget(link.target)
 		)
@@ -5661,29 +6492,37 @@ export class FakeWiki {
 
 	/**
 	 * Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeSuggestedLinkSuggestions("Cat")
+	 * ```
 	 */
 	async getVeSuggestedLinkSuggestions(
 		pageTitle: string,
 		options?: { threshold?: number }
 	): Promise<FWSuggestedLinkSuggestionResponse> {
 		const threshold = options?.threshold ?? 0.8
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const links = this.extractWikiLinks(source)
 		const linkedText = new Set(links.map(link => link.label))
 		const candidates: FWVeSuggestionCandidate[] = []
 		const suggestions: FWVeSuggestionItem[] = []
 		try {
 			const titleVariants = [canonicalTitle, canonicalTitle.replace(/ /g, "_")]
-			let apiLinks:
-				| Array<{
-						link_text?: string
-						link_target?: string
-						score?: number
-						context_before?: string
-						context_after?: string
-						match_index?: number
-				  }>
-				| null = null
+			let apiLinks: Array<{
+				link_text?: string
+				link_target?: string
+				score?: number
+				context_before?: string
+				context_after?: string
+				match_index?: number
+			}> | null = null
 			for (const titleVariant of titleVariants) {
 				if (apiLinks && apiLinks.length > 0) break
 				const encoded = encodeURIComponent(titleVariant)
@@ -5727,18 +6566,31 @@ export class FakeWiki {
 		} catch {
 			// No suggestions on API failure
 		}
-		return this.createVeResponse("suggestedLink", canonicalTitle, pageId, candidates, suggestions, [
-			"wikipedia hostname model",
-			`score>=${threshold}`,
-			"text must be currently unlinked",
-		])
+		return this.createVeResponse(
+			"suggestedLink",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			["wikipedia hostname model", `score>=${threshold}`, "text must be currently unlinked"]
+		)
 	}
 
 	/**
 	 * Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.getVeFakeHeadingSuggestions("Cat")
+	 * ```
 	 */
 	async getVeFakeHeadingSuggestions(pageTitle: string): Promise<FWFakeHeadingSuggestionResponse> {
-		const { pageTitle: canonicalTitle, pageId, source } = await this.resolvePageIdentity(pageTitle)
+		const {
+			pageTitle: canonicalTitle,
+			pageId,
+			source,
+		} = await this.resolvePageIdentity(pageTitle)
 		const lines = source.split("\n")
 		const candidates: FWVeSuggestionCandidate[] = []
 		const suggestions: FWVeSuggestionItem[] = []
@@ -5757,14 +6609,24 @@ export class FakeWiki {
 				data: { line: i + 1, suggestedLevel: 3 },
 			})
 		})
-		return this.createVeResponse("fakeHeading", canonicalTitle, pageId, candidates, suggestions, [
-			"showAsSuggestion default=false unless enabled",
-			"root paragraph bold-only heuristic",
-		])
+		return this.createVeResponse(
+			"fakeHeading",
+			canonicalTitle,
+			pageId,
+			candidates,
+			suggestions,
+			["showAsSuggestion default=false unless enabled", "root paragraph bold-only heuristic"]
+		)
 	}
 
 	/**
 	 * Run async tasks with a concurrency limit; returns results in input order.
+	 
+	 * @example
+	 * ```ts
+	 * const wiki = new FakeWiki()
+	 * await wiki.runWithConcurrency([1, 2, 3], 2, async (n) => n * 2)
+	 * ```
 	 */
 	async runWithConcurrency<T, R>(
 		items: T[],

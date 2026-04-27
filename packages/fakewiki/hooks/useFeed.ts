@@ -11,6 +11,19 @@ export interface UseFeedArgs {
 	allRevisionsDataRef?: Ref<FWRevision[]>
 }
 
+/**
+ * Paginated combined feed of revisions from watchlist-style page and user lists via getCombinedFeed.
+ * @example
+ * ```ts
+ * import { ref } from "vue"
+ * import { FakeWiki, useFeed } from "fakewiki"
+ * const wiki = new FakeWiki()
+ * const pageSearchQueries = ref<string[]>(["Cat"])
+ * const userSearchQueries = ref<string[]>([])
+ * const { loadFeed, allRevisionsData } = useFeed({ wiki, pageSearchQueries, userSearchQueries })
+ * await loadFeed()
+ * ```
+ */
 export function useFeed({
 	wiki,
 	pageSearchQueries,

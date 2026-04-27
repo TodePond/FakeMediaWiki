@@ -23,6 +23,18 @@ export interface UseStructuredDeltasArgs {
 	initialEditTypesErrors?: EditTypesErrorEntries
 }
 
+/**
+ * Fetches edit-types summaries and computes structured-delta candidates per revision, with user-tunable settings.
+ * @example
+ * ```ts
+ * import { ref } from "vue"
+ * import { FakeWiki, useStructuredDeltas } from "fakewiki"
+ * const wiki = new FakeWiki()
+ * const revisionIds = ref([12345, 12346])
+ * const deltas = useStructuredDeltas({ wiki, revisionIds, autoLoad: false })
+ * deltas.loadEditTypesSummaries([12345, 12346])
+ * ```
+ */
 export function useStructuredDeltas({
 	wiki,
 	revisionIds,

@@ -47,6 +47,18 @@ export interface UseRelatedChangesArgs {
 	options?: UseRelatedChangesOptions
 }
 
+/**
+ * Loads related changes for a single page (getRelatedChanges) or multiple seeds (getTopRelatedChanges) and normalizes comment HTML.
+ * @example
+ * ```ts
+ * import { ref } from "vue"
+ * import { FakeWiki, useRelatedChanges } from "fakewiki"
+ * const wiki = new FakeWiki()
+ * const pageName = ref("Cat")
+ * const { loadFeed } = useRelatedChanges({ wiki, pageName, options: {} })
+ * await loadFeed()
+ * ```
+ */
 export function useRelatedChanges({
 	wiki,
 	pageName,

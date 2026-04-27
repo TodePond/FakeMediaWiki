@@ -40,6 +40,18 @@ export interface ListBuildingRecommendationProgress {
 	processingLoaded: number
 }
 
+/**
+ * Watches the feed and enqueues list-building API recommendations, merging tagged revisions into `allRevisionsData`.
+ * @example
+ * ```ts
+ * import { ref } from "vue"
+ * import { FakeWiki, useListBuildingRecommendations } from "fakewiki"
+ * const wiki = new FakeWiki()
+ * const pageSearchQueries = ref<string[]>(["Cat"])
+ * const allRevisionsData = ref([])
+ * useListBuildingRecommendations({ wiki, pageSearchQueries, allRevisionsData })
+ * ```
+ */
 export function useListBuildingRecommendations({
 	wiki,
 	pageSearchQueries,
