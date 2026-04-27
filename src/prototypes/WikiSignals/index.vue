@@ -210,6 +210,10 @@ function scrollToAdjacentSectionHeading(dir: "prev" | "next") {
 	min-width: 0;
 	overflow-x: auto;
 }
+/* Section copy often ends with markdown `---`; it becomes <hr> and reads as a rule between h2 blocks. */
+:deep(.rds-md) hr {
+	display: none;
+}
 :deep(.rds-md p) {
 	margin: 0.5em 0;
 }

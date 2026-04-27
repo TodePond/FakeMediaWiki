@@ -1,6 +1,6 @@
 /**
  * Merges fakewiki playground-schema (generated from FakeWiki.ts + TSDoc) with playground-overrides.
- * Single source of truth: method names and param names/descriptions from schema; UI hints from overrides.
+ * Each method’s category comes from TSDoc `@category` on `FakeWiki` (see `packages/fakewiki/scripts/lib/doc-parse.ts`).
  */
 
 import { playgroundSchema } from "fakewiki/playground-schema"
@@ -225,49 +225,6 @@ const METHOD_PARAM_DEFAULTS: Record<string, Record<string, string | number | boo
 	},
 }
 
-const METHOD_CATEGORY_OVERRIDES: Record<string, string> = {
-	getAnnouncements: "Pages and content",
-	getCombinedFeed: "Revisions and diffs",
-	getRecentChanges: "Revisions and diffs",
-	getDaysOfActivity: "Users",
-	getDeltaClass: "Revisions and diffs",
-	getEditSummaryHtml: "Formatting",
-	getShortDescription: "Pages and content",
-	getToneCheckPrediction: "Predictions",
-	getToneCheckForRevision: "Predictions",
-	getVeToneSuggestions: "Suggestions",
-	getVeTextMatchSuggestions: "Suggestions",
-	getVeExternalLinkSuggestions: "Suggestions",
-	getVeDuplicateLinkSuggestions: "Suggestions",
-	getVeDisambiguationSuggestions: "Suggestions",
-	getVeAddReferenceSuggestions: "Suggestions",
-	getVeImageCaptionSuggestions: "Suggestions",
-	getVeYearLinkSuggestions: "Suggestions",
-	getVeConvertReferenceSuggestions: "Suggestions",
-	getVeCitationNeededSuggestions: "Suggestions",
-	getVeDoubleBoldSuggestions: "Suggestions",
-	getVeRequiredTemplateParamSuggestions: "Suggestions",
-	getVeRedirectSuggestions: "Suggestions",
-	getVeSuggestedLinkSuggestions: "Suggestions",
-	getVeFakeHeadingSuggestions: "Suggestions",
-	getMediawikiBase: "URLs",
-	getOnThisDay: "Pages and content",
-	getTableFromEditSummary: "Formatting",
-	getWikimediaBase: "URLs",
-	isIPAddress: "Users",
-	isTemporaryAccount: "Users",
-	isToday: "Formatting",
-	parseToolbarEditSummary: "Formatting",
-	preprocessEditSummary: "Formatting",
-	searchTitles: "Search",
-	encode: "URLs",
-	createResult: "Requests",
-	createResults: "Requests",
-	getStorageKey: "Persistence",
-	getStorageKeys: "Persistence",
-	runWithConcurrency: "Requests",
-}
-
 function inferType(key: string, override?: { inputType?: string; options?: string[] }): ParamType {
 	if (override?.inputType) {
 		if (override.inputType === "enum" && override.options?.length) return "enum"
@@ -341,32 +298,6 @@ function buildParams(
 	return out
 }
 
-function inferCategoryFromMethodName(methodName: string): string {
-	const explicitCategory = METHOD_CATEGORY_OVERRIDES[methodName]
-	if (explicitCategory) return explicitCategory
-	const lowerMethodName = methodName.toLowerCase()
-	if (lowerMethodName.includes("cache")) return "Cache and diagnostics"
-	if (lowerMethodName.includes("structureddelta") || lowerMethodName.includes("edittypes"))
-		return "Structured deltas"
-	if (lowerMethodName.includes("url")) return "URLs"
-	if (lowerMethodName.includes("prediction")) return "Predictions"
-	if (lowerMethodName.includes("related") || lowerMethodName.includes("listbuilding"))
-		return "Recommendations"
-	if (lowerMethodName.includes("search")) return "Search"
-	if (lowerMethodName.includes("user")) return "Users"
-	if (lowerMethodName.includes("revision") || lowerMethodName.includes("diff"))
-		return "Revisions and diffs"
-	if (lowerMethodName.includes("page") || lowerMethodName.includes("wikitext"))
-		return "Pages and content"
-	if (
-		lowerMethodName.includes("format") ||
-		lowerMethodName.startsWith("todate") ||
-		lowerMethodName.startsWith("group")
-	)
-		return "Formatting"
-	return "Prototyping"
-}
-
 export const playgroundMethods: MethodDescriptor[] = playgroundSchema
 	.filter((m) => !playgroundOverrides[m.name]?.hide)
 	.map((m) => {
@@ -377,7 +308,7 @@ export const playgroundMethods: MethodDescriptor[] = playgroundSchema
 		return {
 			name: m.name,
 			description: m.description,
-			category: m.category ?? inferCategoryFromMethodName(m.name),
+			category: m.category!,
 			params,
 			optionsParamKeys,
 			resultHint: over?.resultHint,

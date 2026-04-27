@@ -8,261 +8,9 @@ This file lists `FakeWiki` instance methods and Vue composables exported from th
 - Repository: https://github.com/todepond/FakeMediaWiki
 - Package: https://www.npmjs.com/package/fakewiki
 
-## FakeWiki instance methods
+## Pages and content
 
-### Category: Search
-
-#### `getMoreLikePages`
-
-Find pages related to one or more seed pages using CirrusSearch `morelike:`.
-Uses Action API search (`action=query&list=search`) with `srsearch=morelike:...`.
-
-**Parameters**
-
-- `pageTitles` - Seed page titles used to construct the morelike query
-- `options` - Optional search options (limit, offset, and namespace)
-
-**Example**
-
-```ts
-const related = await wiki.getMoreLikePages(["Cat"], { limit: 5 })
-```
-
-### Category: Structured deltas
-
-#### `getEditTypesDebug`
-
-Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).
-
-**Parameters**
-
-- `revisionId` - Revision ID
-- `options` - Optional lang and content_type (default wikitext)
-
-**Example**
-
-```ts
-const debug = await wiki.getEditTypesDebug(12345, { lang: "en" })
-```
-
-#### `getEditTypesDetails`
-
-Get structured diff details from edit-types API (context, node-edits, text-edits).
-
-**Parameters**
-
-- `revisionId` - Revision ID
-- `options` - Optional lang and content_type (default wikitext)
-
-**Example**
-
-```ts
-const details = await wiki.getEditTypesDetails(12345, { lang: "en" })
-```
-
-#### `getEditTypesSummary`
-
-Get simple diff summary from edit-types API (counts per change type per action).
-
-**Parameters**
-
-- `revisionId` - Revision ID
-- `options` - Optional lang and content_type (default wikitext)
-
-**Example**
-
-```ts
-const summary = await wiki.getEditTypesSummary(12345, { lang: "en" })
-```
-
-#### `getStructuredDeltasFromRevision`
-
-Get computed structured-delta output for a revision ID in one call.
-Fetches edit-types summary, then computes inline segments with configurable settings.
-
-**Parameters**
-
-- `revisionId` - Revision ID
-- `options` - Optional edit-types API options (`lang`, `content_type`) and structured-delta settings
-
-**Example**
-
-```ts
-const deltas = await wiki.getStructuredDeltasFromRevision(12345, { lang: "en" })
-```
-
-#### `getStructuredDeltasFromSummary`
-
-Compute structured-delta output (segments + candidates) from a normalized summary.
-Returns null when summary is empty or disabled via `improvedDeltaEnabled`.
-
-**Parameters**
-
-- `summary` - Pre-normalized summary (type -> action -> count)
-- `options` - Optional structured-delta settings overrides
-
-**Example**
-
-```ts
-import type { FWEditTypesDiffSummary } from "fakewiki/types"
-const summary = { Paragraph: { add: 1, remove: 0 } } as FWEditTypesDiffSummary
-const structuredDeltas = wiki.getStructuredDeltasFromSummary(summary)
-```
-
-#### `normalizeStructuredDeltaSummary`
-
-Normalize edit-types response into summary shape used for structured-delta computation.
-Accepts either root summary object or payload containing a `summary` property.
-
-**Parameters**
-
-- `raw`
-
-**Example**
-
-```ts
-const summary = wiki.normalizeStructuredDeltaSummary({ Paragraph: { add: 1, remove: 0 } })
-```
-
-### General (no `@category` in JSDoc)
-
-#### `clearListBuildingCache`
-
-Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding
-calls re-fetch from the API. Use when the user explicitly requests fresh recommendations.
-
-**Example**
-
-```ts
-wiki.clearListBuildingCache()
-```
-
-#### `clearPageHistoryCache`
-
-Clear the page history cache for a page (or all pages if no name given).
-Use when you need fresh data, e.g. when opening the inline history view.
-
-**Parameters**
-
-- `pageName`
-
-**Example**
-
-```ts
-wiki.clearPageHistoryCache()
-```
-
-#### `createResult`
-
-Create a new Result instance with default values
-
-**Example**
-
-```ts
-const result = wiki.createResult()
-```
-
-#### `createResults`
-
-Create multiple Result instances
-
-**Parameters**
-
-- `count` - Number of results to create
-
-**Example**
-
-```ts
-const results = wiki.createResults(3)
-```
-
-#### `encodeForUrl`
-
-Encode a page title for URL usage
-
-**Parameters**
-
-- `slug` - Page title
-
-**Example**
-
-```ts
-const encoded = wiki.encodeForUrl("My article")
-```
-
-#### `formatDate`
-
-Format date as "DD Month YYYY" or "DD.MM.YY".
-
-**Parameters**
-
-- `timestamp`
-- `style`
-
-**Example**
-
-```ts
-const formatted = wiki.formatDate("2020-01-15T10:00:00Z", "long")
-```
-
-#### `formatDelta`
-
-Format a revision size delta using watchlist notation.
-
-**Parameters**
-
-- `delta` - Byte delta for a revision; null/NaN are treated as zero
-
-**Example**
-
-```ts
-const delta = wiki.formatDelta(3)
-```
-
-#### `formatNiceRelativeTimestamp`
-
-Format relative time using the standard watchlist display preset.
-
-**Parameters**
-
-- `timestamp` - ISO timestamp, epoch milliseconds, or Date instance
-
-**Example**
-
-```ts
-const relativeNice = wiki.formatNiceRelativeTimestamp("2020-01-15T10:00:00Z")
-```
-
-#### `formatRelativeTimestamp`
-
-Format relative time (e.g. "2 minutes ago", "3 days ago").
-
-**Parameters**
-
-- `timestamp` - ISO timestamp string, Date, or epoch
-- `options` - Formatting options for different time periods
-
-**Example**
-
-```ts
-const relative = wiki.formatRelativeTimestamp("2020-01-15T10:00:00Z", "long")
-```
-
-#### `formatTime`
-
-Format time as HH:MM.
-
-**Parameters**
-
-- `timestamp`
-
-**Example**
-
-```ts
-const time = wiki.formatTime("2020-01-15T10:00:00Z")
-```
-
-#### `getAnnouncements`
+### `getAnnouncements`
 
 Get current announcements
 
@@ -272,208 +20,7 @@ Get current announcements
 const announcements = await wiki.getAnnouncements()
 ```
 
-#### `getAssetUrlFromUploadUrl`
-
-Get file page URL from an upload URL
-Extracts the filename from a Wikimedia Commons upload URL and returns a link to the file page
-
-**Parameters**
-
-- `uploadUrl` - Upload URL
-- `pageName` - Page name where the file is used
-
-**Example**
-
-```ts
-const url = wiki.getAssetUrlFromUploadUrl("https://upload.wikimedia.org/wikipedia/commons/a/aa/Cat.png", "File:Cat.png")
-```
-
-#### `getCachedUserCategory`
-
-Read a user's category from cache (for UI keys/test ids). Returns null if not yet loaded.
-
-**Parameters**
-
-- `userName` - Username to look up
-
-**Example**
-
-```ts
-const category = wiki.getCachedUserCategory("Example")
-```
-
-#### `getCachedUserCategoryDisplay`
-
-Return display config (icon + color) for a user's category from cache only.
-Returns null if the user is not in the cache. Use in templates when the feed has already
-populated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use
-getUserCategoryDisplay instead.
-
-**Parameters**
-
-- `userName` - Username to look up
-- `options` - Optional overrides; `userTypeConfig` merges with the default per-category display config
-
-**Example**
-
-```ts
-const display = wiki.getCachedUserCategoryDisplay("Example", {})
-```
-
-#### `getCombinedFeed`
-
-Get a combined feed of revisions from multiple users and/or pages.
-Returns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.
-Caching is handled internally by getUserHistory and getPageHistory.
-
-**Parameters**
-
-- `options` - Configuration object
-
-**Example**
-
-```ts
-const revisions = await wiki.getCombinedFeed({ pageNames: ["Cat"], userNames: [], limit: 10 })
-```
-
-#### `getDamagingPrediction`
-
-Get damaging prediction for a single revision from Lift Wing API
-
-**Parameters**
-
-- `revisionId` - Revision ID
-- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
-
-**Example**
-
-```ts
-const damaging = await wiki.getDamagingPrediction(12345)
-```
-
-#### `getDamagingPredictions`
-
-Get damaging predictions for multiple revisions in parallel
-
-**Parameters**
-
-- `revisionIds` - Array of revision IDs
-- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
-
-**Example**
-
-```ts
-const damagingMap = await wiki.getDamagingPredictions([1, 2, 3])
-```
-
-#### `getDaysOfActivity`
-
-Calculate days of activity from registration date
-
-**Parameters**
-
-- `registrationDate` - ISO timestamp string (e.g., "2007-06-07T16:36:03Z")
-
-**Example**
-
-```ts
-const days = wiki.getDaysOfActivity("2020-01-15T00:00:00Z")
-```
-
-#### `getDeltaClass`
-
-Get CSS class name for delta (change size) indicator
-
-**Parameters**
-
-- `delta` - Change size (positive, negative, or zero)
-- `withSign`
-
-**Example**
-
-```ts
-const className = wiki.getDeltaClass(5)
-```
-
-#### `getDiffLineClass`
-
-Map compare API diff line type to a CSS class name.
-
-**Parameters**
-
-- `type` - Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)
-
-**Example**
-
-```ts
-const className = wiki.getDiffLineClass(0)
-```
-
-#### `getDiffLineSegments`
-
-Split a diff line into character-level highlight segments.
-Converts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.
-
-**Parameters**
-
-- `line` - Diff line from compare API
-
-**Example**
-
-```ts
-import type { FWDiffLine } from "fakewiki/types"
-const line = { type: 0, text: "Hello" } as FWDiffLine
-const segments = wiki.getDiffLineSegments(line)
-```
-
-#### `getDiffSource`
-
-Get source diff for a revision by comparing it with its parent (previous) revision.
-When there is no parent (e.g. first revision), returns a synthetic diff where
-every line is shown as added.
-
-**Parameters**
-
-- `pageName` - Page title
-- `revId` - Revision ID to diff
-
-**Example**
-
-```ts
-const compare = await wiki.getDiffSource("Cat", 12345)
-```
-
-#### `getEditSummaryHtml`
-
-Get the HTML representation of an edit summary
-
-**Parameters**
-
-- `summary` - Edit summary to get the HTML representation of
-- `pageName` - Page name
-
-**Example**
-
-```ts
-const html = await wiki.getEditSummaryHtml("fix typo", "Cat")
-```
-
-#### `getEditUrl`
-
-Get URL for editing a page
-
-**Parameters**
-
-- `pageName` - Page title
-- `sectionTitle` - Optional section name (e.g. from edit summary like \/
-
-**Example**
-
-```ts
-const url = wiki.getEditUrl("Cat", "Lead")
-```
-
-#### `getFeaturedPage`
+### `getFeaturedPage`
 
 Get featured page for a specific date
 
@@ -487,95 +34,7 @@ Get featured page for a specific date
 const featured = await wiki.getFeaturedPage()
 ```
 
-#### `getGoodfaithPrediction`
-
-Get goodfaith prediction for a single revision from Lift Wing API
-
-**Parameters**
-
-- `revisionId` - Revision ID
-- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
-
-**Example**
-
-```ts
-const goodfaith = await wiki.getGoodfaithPrediction(12345)
-```
-
-#### `getGoodFaithPredictions`
-
-Get goodfaith predictions for multiple revisions in parallel
-
-**Parameters**
-
-- `revisionIds` - Array of revision IDs
-- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
-
-**Example**
-
-```ts
-const goodfaithMap = await wiki.getGoodFaithPredictions([1, 2, 3])
-```
-
-#### `getHistoryUrl`
-
-Get URL for page history
-
-**Parameters**
-
-- `pageName` - Page title
-
-**Example**
-
-```ts
-const url = wiki.getHistoryUrl("Cat")
-```
-
-#### `getListBuilding`
-
-Get a list of articles related to a seed page from the list-building API.
-Combines results from readers, content (links), and morelike models (serpentine order).
-
-**Parameters**
-
-- `lang` - Language code (e.g. "en")
-- `options` - Optional page title (seed), QID, and per-source result count (default 10)
-
-**Example**
-
-```ts
-const list = await wiki.getListBuilding("en", { pageTitle: "Cat", qid: "Q146", k: 4 })
-```
-
-#### `getMediawikiBase`
-
-Get the base URL for the MediaWiki REST API
-
-**Example**
-
-```ts
-const mediawikiBase = wiki.getMediawikiBase()
-```
-
-#### `getMultiPageListBuilding`
-
-Get list-building results for multiple seed pages. Returns the final aggregated list
-deduped by recommended page and sorted by quality (best first). Optionally pass onLoad
-to receive progressively complete lists (each call is the full current list, same shape).
-
-**Parameters**
-
-- `lang` - Language code (e.g. "en")
-- `pageTitles` - Seed page titles (deduplicated; empty titles skipped)
-- `options` - Optional k and onLoad callback (always processes one seed page at a time)
-
-**Example**
-
-```ts
-const list = await wiki.getMultiPageListBuilding("en", ["Cat", "Dog"], { k: 4 })
-```
-
-#### `getOnThisDay`
+### `getOnThisDay`
 
 Get "On This Day" content for a given type
 
@@ -590,7 +49,7 @@ Get "On This Day" content for a given type
 const onThisDay = await wiki.getOnThisDay()
 ```
 
-#### `getPage`
+### `getPage`
 
 Get full page metadata and latest revision
 
@@ -601,10 +60,10 @@ Get full page metadata and latest revision
 **Example**
 
 ```ts
-const page = await wiki.getPage("Cat")
+const page = await wiki.getPage("Wet Leg")
 ```
 
-#### `getPageCategories`
+### `getPageCategories`
 
 Get page categories
 
@@ -615,10 +74,10 @@ Get page categories
 **Example**
 
 ```ts
-const categories = await wiki.getPageCategories("Cat")
+const categories = await wiki.getPageCategories("Wet Leg")
 ```
 
-#### `getPageHero`
+### `getPageHero`
 
 Get page hero image: thumbnail if present, otherwise the first media image.
 
@@ -629,10 +88,10 @@ Get page hero image: thumbnail if present, otherwise the first media image.
 **Example**
 
 ```ts
-const hero = await wiki.getPageHero("Cat")
+const hero = await wiki.getPageHero("Wet Leg")
 ```
 
-#### `getPageHistory`
+### `getPageHistory`
 
 Get page revision history
 Uses caching to avoid fetching the same data twice.
@@ -642,14 +101,17 @@ Uses older_than/newer_than cursors for pagination and filtering.
 
 - `pageName` - Page title
 - `options` - Options
+- `options.older_than` - Revision ID or timestamp - for explicit pagination
+- `options.newer_than` - Revision ID or timestamp - for explicit pagination
+- `options.limit` - Maximum results to return (default and max: PAGE_HISTORY_REVISIONS_PER_REQUEST)
 
 **Example**
 
 ```ts
-const history = await wiki.getPageHistory("Cat", { limit: 10 })
+const history = await wiki.getPageHistory("Wet Leg")
 ```
 
-#### `getPageHtml`
+### `getPageHtml`
 
 Get page content as HTML
 
@@ -660,10 +122,10 @@ Get page content as HTML
 **Example**
 
 ```ts
-const html = await wiki.getPageHtml("Cat")
+const html = await wiki.getPageHtml("Wet Leg")
 ```
 
-#### `getPageMedia`
+### `getPageMedia`
 
 Get page media (images, audio, etc.)
 
@@ -674,10 +136,10 @@ Get page media (images, audio, etc.)
 **Example**
 
 ```ts
-const media = await wiki.getPageMedia("Cat")
+const media = await wiki.getPageMedia("Wet Leg")
 ```
 
-#### `getPageMobileHtml`
+### `getPageMobileHtml`
 
 Get page mobile-optimized HTML
 
@@ -688,10 +150,10 @@ Get page mobile-optimized HTML
 **Example**
 
 ```ts
-const html = await wiki.getPageMobileHtml("Cat")
+const html = await wiki.getPageMobileHtml("Wet Leg")
 ```
 
-#### `getPagesBacklinks`
+### `getPagesBacklinks`
 
 Get pages that link to the given page(s) (backlinks / "What links here")
 Uses MediaWiki Action API prop=linkshere.
@@ -700,14 +162,16 @@ Uses MediaWiki Action API prop=linkshere.
 
 - `pageNames` - Array of page titles to find backlinks for
 - `options` - Options
+- `options.namespace` - Filter by namespace (e.g., 0 for main namespace)
+- `options.limit` - Max backlinks per page (default 500)
 
 **Example**
 
 ```ts
-const backlinks = await wiki.getPagesBacklinks(["Cat"], 50)
+const backlinks = await wiki.getPagesBacklinks(["Wet Leg", "Confidence Man (band)"])
 ```
 
-#### `getPagesLinks`
+### `getPagesLinks`
 
 Get outgoing wikilinks for multiple pages (intra-language links)
 Automatically handles pagination to fetch all links.
@@ -716,14 +180,15 @@ Automatically handles pagination to fetch all links.
 
 - `pageNames` - Array of page titles
 - `options` - Options
+- `options.namespace` - Filter by namespace (e.g., 0 for main namespace)
 
 **Example**
 
 ```ts
-const links = await wiki.getPagesLinks(["Cat", "Dog"], 50)
+const links = await wiki.getPagesLinks(["Wet Leg", "Confidence Man (band)"])
 ```
 
-#### `getPagesLinksAndBacklinks`
+### `getPagesLinksAndBacklinks`
 
 Get outgoing links and backlinks for the given pages in one call.
 Convenience that runs getPagesLinks and getPagesBacklinks in parallel.
@@ -736,10 +201,10 @@ Convenience that runs getPagesLinks and getPagesBacklinks in parallel.
 **Example**
 
 ```ts
-const links = await wiki.getPagesLinksAndBacklinks(["Cat"], 50)
+const links = await wiki.getPagesLinksAndBacklinks(["Wet Leg", "Confidence Man (band)"])
 ```
 
-#### `getPageSource`
+### `getPageSource`
 
 Get page content as wikitext source
 
@@ -750,10 +215,10 @@ Get page content as wikitext source
 **Example**
 
 ```ts
-const source = await wiki.getPageSource("Cat")
+const source = await wiki.getPageSource("Wet Leg")
 ```
 
-#### `getPageSummary`
+### `getPageSummary`
 
 Get a page summary (extract, thumbnail, etc.)
 
@@ -764,10 +229,10 @@ Get a page summary (extract, thumbnail, etc.)
 **Example**
 
 ```ts
-const summary = await wiki.getPageSummary("Cat")
+const summary = await wiki.getPageSummary("Wet Leg")
 ```
 
-#### `getPageThumbnail`
+### `getPageThumbnail`
 
 Get thumbnail image for a page.
 Uses the lead image (page summary) when available; otherwise falls back to the
@@ -780,10 +245,10 @@ first image on the page (e.g. infobox image).
 **Example**
 
 ```ts
-const thumbnail = await wiki.getPageThumbnail("Cat")
+const thumbnail = await wiki.getPageThumbnail("Wet Leg")
 ```
 
-#### `getPageThumbnails`
+### `getPageThumbnails`
 
 Get thumbnail URLs for multiple pages (lead image from each page).
 Uses the Action API pageimages in batches of 50.
@@ -796,55 +261,10 @@ Uses the Action API pageimages in batches of 50.
 **Example**
 
 ```ts
-const thumbnails = await wiki.getPageThumbnails(["Cat", "Dog"])
+const thumbnails = await wiki.getPageThumbnails(["Wet Leg", "Confidence Man (band)"])
 ```
 
-#### `getPageUrl`
-
-Get URL for a page
-
-**Parameters**
-
-- `pageName` - Page title
-
-**Example**
-
-```ts
-const url = wiki.getPageUrl("Cat")
-```
-
-#### `getParentRevisionId`
-
-Get the parent (previous) revision ID for a revision on a page.
-
-**Parameters**
-
-- `pageName` - Page title
-- `revId` - Revision ID (we want the revision immediately older than this)
-
-**Example**
-
-```ts
-const parentId = await wiki.getParentRevisionId("Cat", 12345)
-```
-
-#### `getParentRevisionIdFromCache`
-
-Get the parent (previous) revision ID for a revision on a page from cache only.
-Does not trigger any network request.
-
-**Parameters**
-
-- `pageName` - Page title
-- `revId` - Revision ID to look up in the cached page history
-
-**Example**
-
-```ts
-const parentId = wiki.getParentRevisionIdFromCache("Cat", 12345)
-```
-
-#### `getRandomPage`
+### `getRandomPage`
 
 Get a random page
 
@@ -858,7 +278,146 @@ Get a random page
 const random = await wiki.getRandomPage()
 ```
 
-#### `getRecentChanges`
+### `getShortDescription`
+
+Get the short description for a page (from template or Wikidata).
+Uses the page summary API; results are cached to avoid repeated requests.
+
+**Parameters**
+
+- `pageName` - Page title
+
+**Example**
+
+```ts
+const description = await wiki.getShortDescription("Wet Leg")
+```
+
+### `transformWikitextToHtml`
+
+Transform wikitext to HTML
+
+**Parameters**
+
+- `wikitext` - Wikitext content
+- `pageTitle` - Page title for context (optional)
+
+**Example**
+
+```ts
+const html = await wiki.transformWikitextToHtml("Hello '''world'''", "Main_Page")
+```
+
+## Revisions and diffs
+
+### `getCombinedFeed`
+
+Get a combined feed of revisions from multiple users and/or pages.
+Returns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.
+Caching is handled internally by getUserHistory and getPageHistory.
+
+**Parameters**
+
+- `options` - Configuration object
+- `options.userNames` - Array of usernames to include
+- `options.pageNames` - Array of page titles to include
+- `options.limit` - Maximum total number of revisions to return (default and max: PAGE_HISTORY_REVISIONS_PER_REQUEST)
+- `options.perSourceLimit` - Maximum revisions to request per page/user history source before merge
+- `options.after` - Map of source (page name or user name) → revision ID to fetch revisions older than (per source). Ensures every page/user keeps paginating.
+
+**Example**
+
+```ts
+const revisions = await wiki.getCombinedFeed({
+  userNames: ["Todepond", "Samwalton9"],
+  pageNames: ["Wet Leg", "Confidence Man (band)"],
+  limit: 20,
+})
+```
+
+### `getDeltaClass`
+
+Get CSS class name for delta (change size) indicator
+
+**Parameters**
+
+- `delta` - Change size (positive, negative, or zero)
+- `withSign`
+
+**Example**
+
+```ts
+const className = wiki.getDeltaClass(42)
+```
+
+### `getDiffLineClass`
+
+Map compare API diff line type to a CSS class name.
+
+**Parameters**
+
+- `type` - Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)
+
+**Example**
+
+```ts
+const className = wiki.getDiffLineClass(0)
+```
+
+### `getDiffLineSegments`
+
+Split a diff line into character-level highlight segments.
+Converts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.
+
+**Parameters**
+
+- `line` - Diff line from compare API
+
+**Example**
+
+```ts
+import type { FWDiffLine } from "fakewiki/types"
+const line = {
+  type: 1,
+  text: "Example text",
+  highlightRanges: [{ start: 0, length: 7, type: 0 }],
+} as FWDiffLine
+const segments = wiki.getDiffLineSegments(line)
+```
+
+### `getDiffSource`
+
+Get source diff for a revision by comparing it with its parent (previous) revision.
+When there is no parent (e.g. first revision), returns a synthetic diff where
+every line is shown as added.
+
+**Parameters**
+
+- `pageName` - Page title
+- `revId` - Revision ID to diff
+
+**Example**
+
+```ts
+const compare = await wiki.getDiffSource("Corsica Studios", 1337619110)
+```
+
+### `getParentRevisionId`
+
+Get the parent (previous) revision ID for a revision on a page.
+
+**Parameters**
+
+- `pageName` - Page title
+- `revId` - Revision ID (we want the revision immediately older than this)
+
+**Example**
+
+```ts
+const parentId = await wiki.getParentRevisionId("Corsica Studios", 1337619110)
+```
+
+### `getRecentChanges`
 
 Get global recent changes from the wiki (any pages) via Action API list=recentchanges.
 Optionally restrict to changes that "need review" (high revert risk) with rcshow=oresreview.
@@ -867,47 +426,19 @@ Uses rctoponly so only the latest revision of each page is returned.
 **Parameters**
 
 - `options` - Configuration object
+- `options.limit` - Maximum number of changes to return (default 50, max 500)
+- `options.rccontinue` - Continuation token from a previous response for pagination
+- `options.onlyNeedsReview` - If true, pass rcshow=oresreview so the server returns only high revert risk / "needs review" edits (default false)
+- `options.rcstart` - Timestamp to start enumerating from (with rcdir=older, must be later than rcend)
+- `options.rcend` - Timestamp to end enumerating (with rcdir=older, must be earlier than rcstart)
 
 **Example**
 
 ```ts
-const changes = await wiki.getRecentChanges({ limit: 20 })
+const changes = await wiki.getRecentChanges()
 ```
 
-#### `getReferenceNeedPrediction`
-
-Get reference need prediction for a revision from Lift Wing.
-Predicts the proportion of uncited sentences that need citations (0-1).
-Use for surfacing "needs reference check" flags when tags are unavailable.
-
-**Parameters**
-
-- `revId` - Revision ID
-- `lang` - Language code (e.g. "en"). If not provided, derived from base URL
-
-**Example**
-
-```ts
-const prediction = await wiki.getReferenceNeedPrediction("Some paragraph text to score.", { lang: "en" })
-```
-
-#### `getRelatedChanges`
-
-Get related changes using the Action API feedrecentchanges (1-2 requests total).
-Returns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).
-
-**Parameters**
-
-- `targetPageName` - Page title to get related changes for
-- `options` - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1-50 (default 50); days: 1-30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)
-
-**Example**
-
-```ts
-const changes = await wiki.getRelatedChanges("Cat", { limit: 20, days: 7 })
-```
-
-#### `getRevisionDiff`
+### `getRevisionDiff`
 
 **Parameters**
 
@@ -917,10 +448,10 @@ const changes = await wiki.getRelatedChanges("Cat", { limit: 20, days: 7 })
 **Example**
 
 ```ts
-const compare = await wiki.getRevisionDiff("Cat", 12345)
+const compare = await wiki.getRevisionDiff("Corsica Studios", 1337619110)
 ```
 
-#### `getRevisionHtml`
+### `getRevisionHtml`
 
 Get HTML for a specific revision.
 Uses the MediaWiki REST API endpoint: GET revision/{id}/html.
@@ -935,43 +466,10 @@ Uses caching to avoid re-fetching the same revision.
 **Example**
 
 ```ts
-const html = await wiki.getRevisionHtml("Cat", 12345)
+const html = await wiki.getRevisionHtml("Wet Leg", 1337619110)
 ```
 
-#### `getRevisionPredictions`
-
-Get predictions for multiple revisions and one/many Lift Wing models.
-
-**Parameters**
-
-- `revisionIds` - Array of revision IDs
-- `models` - Lift Wing model slug(s). Defaults to damaging+goodfaith.
-- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
-
-**Example**
-
-```ts
-const predictions = await wiki.getRevisionPredictions([123, 456], ["damaging", "goodfaith"])
-```
-
-#### `getRevisionPredictionsFromOres`
-
-Get damaging and goodfaith predictions from ORES (single request per batch).
-ORES is a scoring aggregator; one call returns both models. Prefer this when
-Lift Wing is unavailable or for lower latency on batch requests.
-
-**Parameters**
-
-- `revisionIds` - Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)
-- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
-
-**Example**
-
-```ts
-const predictions = await wiki.getRevisionPredictionsFromOres([1, 2, 3])
-```
-
-#### `getRevisionSource`
+### `getRevisionSource`
 
 Get wikitext source for a revision by ID.
 
@@ -982,10 +480,10 @@ Get wikitext source for a revision by ID.
 **Example**
 
 ```ts
-const source = await wiki.getRevisionSource(12345)
+const source = await wiki.getRevisionSource(1337619110)
 ```
 
-#### `getRevisionTags`
+### `getRevisionTags`
 
 Fetch edit tags for given revision IDs via Action API.
 Use for revisions from sources that don't include tags (e.g. page history, related changes).
@@ -997,87 +495,90 @@ Use for revisions from sources that don't include tags (e.g. page history, relat
 **Example**
 
 ```ts
-const tags = await wiki.getRevisionTags([12345, 12346])
+const tags = await wiki.getRevisionTags([1337619110])
 ```
 
-#### `getRevisionUrl`
+### `groupRevisionsByDate`
 
-Get URL for viewing a revision diff
+Group revisions by calendar date for watchlist-style rendering.
 
 **Parameters**
 
-- `id` - Revision ID
-- `pageName` - Page title
+- `revisions` - Revisions to group (typically already newest-first)
 
 **Example**
 
 ```ts
-const url = wiki.getRevisionUrl(123, "Cat")
+import type { FWRevision } from "fakewiki/types"
+const revs: FWRevision[] = [
+  {
+    id: 1337619110,
+    timestamp: "2026-02-26T10:30:00Z",
+    user: { name: "Samwalton9" },
+    delta: 42,
+    comment: "Example summary",
+    pageName: "Wet Leg",
+  },
+  {
+    id: 1337619100,
+    timestamp: "2026-02-26T09:15:00Z",
+    user: { name: "Todepond" },
+    delta: -5,
+    comment: "Another example",
+    pageName: "Confidence Man (band)",
+  },
+]
+const groups = wiki.groupRevisionsByDate(revs)
 ```
 
-#### `getRevisionViewUrl`
+## Structured deltas
 
-Get URL for viewing a specific revision (page content at that revision).
-Uses oldid= which shows the revision's content (not the diff).
+### `getEditTypesDebug`
+
+Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).
 
 **Parameters**
 
-- `id` - Revision ID
-- `pageName` - Page title
+- `revisionId` - Revision ID
+- `options` - Optional lang and content_type (default wikitext)
 
 **Example**
 
 ```ts
-const url = wiki.getRevisionViewUrl(123, "Cat")
+const debug = await wiki.getEditTypesDebug(1337619110, { lang: "en" })
 ```
 
-#### `getShortDescription`
+### `getEditTypesDetails`
 
-Get the short description for a page (from template or Wikidata).
-Uses the page summary API; results are cached to avoid repeated requests.
+Get structured diff details from edit-types API (context, node-edits, text-edits).
 
 **Parameters**
 
-- `pageName` - Page title
+- `revisionId` - Revision ID
+- `options` - Optional lang and content_type (default wikitext)
 
 **Example**
 
 ```ts
-const description = await wiki.getShortDescription("Cat")
+const details = await wiki.getEditTypesDetails(1337619110, { lang: "en" })
 ```
 
-#### `getStorageKey`
+### `getEditTypesSummary`
 
-Generate a storage key for a prototype
+Get simple diff summary from edit-types API (counts per change type per action).
 
 **Parameters**
 
-- `prototypeName` - Name of the prototype (e.g., "PageFeed", "CustomPageFeed")
-- `keyName` - Name of the key (e.g., "searchQuery", "pageName")
+- `revisionId` - Revision ID
+- `options` - Optional lang and content_type (default wikitext)
 
 **Example**
 
 ```ts
-const key = wiki.getStorageKey("p", "k")
+const summary = await wiki.getEditTypesSummary(1337619110, { lang: "en" })
 ```
 
-#### `getStorageKeys`
-
-Generate multiple storage keys for a prototype
-
-**Parameters**
-
-- `prototypeName` - Name of the prototype
-- `keyName` - Base name of the key
-- `count` - Number of keys to generate
-
-**Example**
-
-```ts
-const keys = wiki.getStorageKeys("p", "k", 3)
-```
-
-#### `getStructuredDeltaLevelIndex`
+### `getStructuredDeltaLevelIndex`
 
 Public for snippet logic: significance level index (0 = most significant).
 
@@ -1091,69 +592,344 @@ Public for snippet logic: significance level index (0 = most significant).
 const levelIndex = wiki.getStructuredDeltaLevelIndex("Sentence")
 ```
 
-#### `getTableFromEditSummary`
+### `getStructuredDeltasFromRevision`
 
-Parse a toolbar-style edit summary into a table of contents
+Get computed structured-delta output for a revision ID in one call.
+Fetches edit-types summary, then computes inline segments with configurable settings.
 
 **Parameters**
 
-- `editSummary` - Edit summary to parse
+- `revisionId` - Revision ID
+- `options` - Optional edit-types API options (`lang`, `content_type`) and structured-delta settings
 
 **Example**
 
 ```ts
-const table = wiki.getTableFromEditSummary("(toolbar) | section | comment")
+const deltas = await wiki.getStructuredDeltasFromRevision(1337619110, { lang: "en" })
 ```
 
-#### `getThankUrl`
+### `getStructuredDeltasFromSummary`
 
-Get URL for thanking a user for a revision
+Compute structured-delta output (segments + candidates) from a normalized summary.
+Returns null when summary is empty or disabled via `improvedDeltaEnabled`.
 
 **Parameters**
 
-- `id` - Revision ID
+- `summary` - Pre-normalized summary (type -> action -> count)
+- `options` - Optional structured-delta settings overrides
 
 **Example**
 
 ```ts
-const url = wiki.getThankUrl(12345)
+import type { FWEditTypesDiffSummary } from "fakewiki/types"
+const summary = {
+  Sentence: { change: 1 },
+  Punctuation: { remove: 1 },
+} as FWEditTypesDiffSummary
+const structuredDeltas = wiki.getStructuredDeltasFromSummary(summary, {
+  improvedDeltaEnabled: true,
+  relativeDetailLevelEnabled: true,
+  smartFilteringEnabled: true,
+})
 ```
 
-#### `getToneCheckForRevision`
+### `normalizeStructuredDeltaSummary`
 
-Get Tone Check prediction for a revision by comparing it with its parent.
-Fetches the diff, extracts only changed lines (no context), and runs tone check.
+Normalize edit-types response into summary shape used for structured-delta computation.
+Accepts either root summary object or payload containing a `summary` property.
 
 **Parameters**
 
-- `pageName` - Page title
-- `revId` - Revision ID to check
-- `options` - Optional lang (default from wiki) and pageTitle (default pageName)
+- `raw`
 
 **Example**
 
 ```ts
-const prediction = await wiki.getToneCheckForRevision(12345, { pageTitle: "Cat" })
+const summary = wiki.normalizeStructuredDeltaSummary(
+  JSON.parse(
+    '{"summary":{"Sentence":{"change":2,"remove":1},"Punctuation":{"remove":1},"Whitespace":{"change":1},"Comment":{"insert":"2"}},"debug":{"traceId":"demo"}}',
+  ) as Record<string, unknown>,
+)
 ```
 
-#### `getToneCheckPrediction`
+## Search
 
-Get Tone Check prediction from Lift Wing edit-check model.
-Detects promotional, derogatory, or subjective language in text.
+### `getMoreLikePages`
+
+Find pages related to one or more seed pages using CirrusSearch `morelike:`.
+Uses Action API search (`action=query&list=search`) with `srsearch=morelike:...`.
 
 **Parameters**
 
-- `originalText` - Text before the edit
-- `modifiedText` - Text after the edit (the new content to check)
-- `options` - Optional lang (default from wiki) and pageTitle (default "")
+- `pageTitles` - Seed page titles used to construct the morelike query
+- `options` - Optional search options (limit, offset, and namespace)
 
 **Example**
 
 ```ts
-const prediction = await wiki.getToneCheckPrediction("Some wikitext for tone.", { lang: "en" })
+const related = await wiki.getMoreLikePages(
+  ["Wet Leg", "Rizzle Kicks", "Jade Thirlwall"],
+  { limit: 10 },
+)
 ```
 
-#### `getTopRelatedChanges`
+### `searchPages`
+
+Full-text search across page titles and content
+
+**Parameters**
+
+- `query` - Search query
+- `limit` - Maximum results (default: DEFAULT_SEARCH_LIMIT)
+
+**Example**
+
+```ts
+const pageResults = await wiki.searchPages("Wet Leg", 20)
+```
+
+### `searchTitles`
+
+Search for pages by title (autocomplete-style)
+
+**Parameters**
+
+- `query` - Search query
+- `limit` - Maximum results (default: DEFAULT_SEARCH_LIMIT)
+
+**Example**
+
+```ts
+const titleResults = await wiki.searchTitles("Wet Leg", 20)
+```
+
+### `searchUsers`
+
+Search for users by username (without avatars).
+
+**Parameters**
+
+- `query` - Search query (username or part of username)
+- `limit` - Maximum results (default: DEFAULT_SEARCH_LIMIT)
+
+**Example**
+
+```ts
+const users = await wiki.searchUsers("Samwalton9", 20)
+```
+
+### `searchUsersWithAvatars`
+
+Search for users by username and fetch their avatars.
+
+**Parameters**
+
+- `query` - Search query (username or part of username)
+- `limit` - Maximum results (default: DEFAULT_SEARCH_LIMIT)
+
+**Example**
+
+```ts
+const users = await wiki.searchUsersWithAvatars("Samwalton9", 20)
+```
+
+## Users
+
+### `getDaysOfActivity`
+
+Calculate days of activity from registration date
+
+**Parameters**
+
+- `registrationDate` - ISO timestamp string (e.g., "2007-06-07T16:36:03Z")
+
+**Example**
+
+```ts
+const days = wiki.getDaysOfActivity("2025-02-26T10:30:00Z")
+```
+
+### `getUserAvatar`
+
+Infer a user avatar image from their user page
+
+**Parameters**
+
+- `userName` - Username
+
+**Example**
+
+```ts
+const avatarUrl = await wiki.getUserAvatar("Samwalton9")
+```
+
+### `getUserCategory`
+
+Get a user's category (cache-aware main entry point).
+Reads from category cache when available; otherwise fetches user info and caches the result.
+
+**Parameters**
+
+- `userName` - Username to classify
+
+**Example**
+
+```ts
+const category = await wiki.getUserCategory("Samwalton9")
+```
+
+### `getUserCategoryDisplay`
+
+Return display config (icon + color) for a user's category. Uses cache when available;
+otherwise fetches user info and caches the category, then returns the display config.
+
+**Parameters**
+
+- `userName` - Username to look up
+- `options` - Optional overrides; `userTypeConfig` merges with the default per-category display config
+
+**Example**
+
+```ts
+const display = await wiki.getUserCategoryDisplay("Samwalton9")
+```
+
+### `getUserHistory`
+
+Get user contribution history (revisions made by a user)
+Uses caching to avoid fetching the same data twice.
+Uses older_than/newer_than cursors for pagination and filtering.
+
+**Parameters**
+
+- `userName` - Username
+- `options` - Options
+- `options.limit` - Limit (default: DEFAULT_USER_CONTRIBS_LIMIT, max: USER_CONTRIBS_MAX_LIMIT)
+- `options.older_than` - Timestamp - for explicit pagination
+- `options.newer_than` - Timestamp - for explicit pagination
+
+**Example**
+
+```ts
+const history = await wiki.getUserHistory("Samwalton9")
+```
+
+### `getUserInfo`
+
+Get user information including edit count, registration date, and account type
+Results are cached in memory to avoid repeated API calls for the same user.
+
+**Parameters**
+
+- `userName` - Username or IP address
+
+**Example**
+
+```ts
+const userInfo = await wiki.getUserInfo("Samwalton9")
+```
+
+### `getUsersHistory`
+
+Get contributions for multiple users by calling getUserHistory for each.
+Uses caching to avoid fetching the same data twice.
+Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).
+
+**Parameters**
+
+- `userNames` - Array of usernames
+- `options` - Options
+- `options.limit` - Limit per user (default: DEFAULT_USER_CONTRIBS_LIMIT)
+- `options.older_than` - Timestamp - for explicit pagination
+- `options.newer_than` - Timestamp - for explicit pagination
+
+**Example**
+
+```ts
+const histories = await wiki.getUsersHistory(["Todepond", "Samwalton9"])
+```
+
+### `isIPAddress`
+
+Check if a username is an IP address
+
+**Parameters**
+
+- `userName` - Username to check
+
+**Example**
+
+```ts
+const isIp = wiki.isIPAddress("Samwalton9")
+```
+
+### `isTemporaryAccount`
+
+Check if a username is a temporary account (starts with ~)
+
+**Parameters**
+
+- `userName` - Username to check
+
+**Example**
+
+```ts
+const isTemp = wiki.isTemporaryAccount("Samwalton9")
+```
+
+## Recommendations
+
+### `getListBuilding`
+
+Get a list of articles related to a seed page from the list-building API.
+Combines results from readers, content (links), and morelike models (serpentine order).
+
+**Parameters**
+
+- `lang` - Language code (e.g. "en")
+- `options` - Optional page title (seed), QID, and per-source result count (default 10)
+
+**Example**
+
+```ts
+const list = await wiki.getListBuilding("en", { pageTitle: "Wet Leg" })
+```
+
+### `getMultiPageListBuilding`
+
+Get list-building results for multiple seed pages. Returns the final aggregated list
+deduped by recommended page and sorted by quality (best first). Optionally pass onLoad
+to receive progressively complete lists (each call is the full current list, same shape).
+
+**Parameters**
+
+- `lang` - Language code (e.g. "en")
+- `pageTitles` - Seed page titles (deduplicated; empty titles skipped)
+- `options` - Optional k and onLoad callback (always processes one seed page at a time)
+
+**Example**
+
+```ts
+const list = await wiki.getMultiPageListBuilding("en", ["Wet Leg", "Confidence Man (band)"])
+```
+
+### `getRelatedChanges`
+
+Get related changes using the Action API feedrecentchanges (1-2 requests total).
+Returns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).
+
+**Parameters**
+
+- `targetPageName` - Page title to get related changes for
+- `options` - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1-50 (default 50); days: 1-30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)
+
+**Example**
+
+```ts
+const changes = await wiki.getRelatedChanges("Wet Leg")
+```
+
+### `getTopRelatedChanges`
 
 Get related changes from multiple seed pages, merged and filtered to the top N% by score.
 Counts and score are per-page: "which feeds this page appears in" (any revision). Same
@@ -1169,10 +945,13 @@ Order is preserved (by timestamp desc); no extra sorting after filtering.
 **Example**
 
 ```ts
-const topChanges = await wiki.getTopRelatedChanges(["Cat", "Dog"], { limit: 20, days: 7, percentage: 10 })
+const topChanges = await wiki.getTopRelatedChanges(
+  ["Wet Leg", "Confidence Man (band)"],
+  { percentage: 1 },
+)
 ```
 
-#### `getTopRelatedPages`
+### `getTopRelatedPages`
 
 Get the list of page titles that appear in the top N% of related changes by score.
 Same options as getTopRelatedChanges; returns unique page names in order of first appearance,
@@ -1187,146 +966,171 @@ plus the changes that were retrieved as part of the scoring process (with source
 **Example**
 
 ```ts
-const topPages = await wiki.getTopRelatedPages(["Cat"], { limit: 20, days: 7, percentage: 15 })
+const topPages = await wiki.getTopRelatedPages(
+  ["Wet Leg", "Confidence Man (band)"],
+  { percentage: 1 },
+)
 ```
 
-#### `getUserAvatar`
+## Predictions
 
-Infer a user avatar image from their user page
+### `getDamagingPrediction`
+
+Get damaging prediction for a single revision from Lift Wing API
 
 **Parameters**
 
-- `userName` - Username
+- `revisionId` - Revision ID
+- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 
 **Example**
 
 ```ts
-const avatarUrl = await wiki.getUserAvatar("Example")
+const damaging = await wiki.getDamagingPrediction(1337619110)
 ```
 
-#### `getUserCategory`
+### `getDamagingPredictions`
 
-Get a user's category (cache-aware main entry point).
-Reads from category cache when available; otherwise fetches user info and caches the result.
+Get damaging predictions for multiple revisions in parallel
 
 **Parameters**
 
-- `userName` - Username to classify
+- `revisionIds` - Array of revision IDs
+- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 
 **Example**
 
 ```ts
-const category = await wiki.getUserCategory("Example")
+const damagingMap = await wiki.getDamagingPredictions([1337619110])
 ```
 
-#### `getUserCategoryDisplay`
+### `getGoodfaithPrediction`
 
-Return display config (icon + color) for a user's category. Uses cache when available;
-otherwise fetches user info and caches the category, then returns the display config.
+Get goodfaith prediction for a single revision from Lift Wing API
 
 **Parameters**
 
-- `userName` - Username to look up
-- `options` - Optional overrides; `userTypeConfig` merges with the default per-category display config
+- `revisionId` - Revision ID
+- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 
 **Example**
 
 ```ts
-const display = await wiki.getUserCategoryDisplay("Example")
+const goodfaith = await wiki.getGoodfaithPrediction(1337619110)
 ```
 
-#### `getUserContribsUrl`
+### `getGoodFaithPredictions`
 
-Get URL for user contributions
+Get goodfaith predictions for multiple revisions in parallel
 
 **Parameters**
 
-- `userName` - Username
+- `revisionIds` - Array of revision IDs
+- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 
 **Example**
 
 ```ts
-const url = wiki.getUserContribsUrl("Example")
+const goodfaithMap = await wiki.getGoodFaithPredictions([1337619110])
 ```
 
-#### `getUserHistory`
+### `getReferenceNeedPrediction`
 
-Get user contribution history (revisions made by a user)
-Uses caching to avoid fetching the same data twice.
-Uses older_than/newer_than cursors for pagination and filtering.
+Get reference need prediction for a revision from Lift Wing.
+Predicts the proportion of uncited sentences that need citations (0-1).
+Use for surfacing "needs reference check" flags when tags are unavailable.
 
 **Parameters**
 
-- `userName` - Username
-- `options` - Options
+- `revId` - Revision ID
+- `lang` - Language code (e.g. "en"). If not provided, derived from base URL
 
 **Example**
 
 ```ts
-const history = await wiki.getUserHistory("Example", { limit: 10 })
+const prediction = await wiki.getReferenceNeedPrediction(1337619110, "en")
 ```
 
-#### `getUserInfo`
+### `getRevisionPredictions`
 
-Get user information including edit count, registration date, and account type
-Results are cached in memory to avoid repeated API calls for the same user.
+Get predictions for multiple revisions and one/many Lift Wing models.
 
 **Parameters**
 
-- `userName` - Username or IP address
+- `revisionIds` - Array of revision IDs
+- `models` - Lift Wing model slug(s). Defaults to damaging+goodfaith.
+- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 
 **Example**
 
 ```ts
-const userInfo = await wiki.getUserInfo("Example")
+const predictions = await wiki.getRevisionPredictions(
+  [1337619110],
+  ["damaging", "goodfaith", "revertrisk", "revertrisk-multilingual"],
+)
 ```
 
-#### `getUsersHistory`
+### `getRevisionPredictionsFromOres`
 
-Get contributions for multiple users by calling getUserHistory for each.
-Uses caching to avoid fetching the same data twice.
-Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).
+Get damaging and goodfaith predictions from ORES (single request per batch).
+ORES is a scoring aggregator; one call returns both models. Prefer this when
+Lift Wing is unavailable or for lower latency on batch requests.
 
 **Parameters**
 
-- `userNames` - Array of usernames
-- `options` - Options
+- `revisionIds` - Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)
+- `wiki` - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 
 **Example**
 
 ```ts
-const histories = await wiki.getUsersHistory({ userNames: ["A", "B"], limit: 10 })
+const predictions = await wiki.getRevisionPredictionsFromOres([1337619110])
 ```
 
-#### `getUserTalkUrl`
+### `getToneCheckForRevision`
 
-Get URL for user talk page
+Get Tone Check prediction for a revision by comparing it with its parent.
+Fetches the diff, extracts only changed lines (no context), and runs tone check.
 
 **Parameters**
 
-- `userName` - Username
+- `pageName` - Page title
+- `revId` - Revision ID to check
+- `options` - Optional lang (default from wiki) and pageTitle (default pageName)
 
 **Example**
 
 ```ts
-const url = wiki.getUserTalkUrl("Example")
+const prediction = await wiki.getToneCheckForRevision("Corsica Studios", 1337619110, {
+  lang: "en",
+  pageTitle: "Corsica Studios",
+})
 ```
 
-#### `getUserUrl`
+### `getToneCheckPrediction`
 
-Get URL for a user page
+Get Tone Check prediction from Lift Wing edit-check model.
+Detects promotional, derogatory, or subjective language in text.
 
 **Parameters**
 
-- `userName` - Username
+- `originalText` - Text before the edit
+- `modifiedText` - Text after the edit (the new content to check)
+- `options` - Optional lang (default from wiki) and pageTitle (default "")
 
 **Example**
 
 ```ts
-const url = wiki.getUserUrl("Example")
+const prediction = await wiki.getToneCheckPrediction(
+  "The band formed in 2020.",
+  "The band is the most talented and revolutionary group of our generation.",
+  { lang: "en", pageTitle: "Example band" },
+)
 ```
 
-#### `getVeAddReferenceSuggestions`
+## Suggestions
+
+### `getVeAddReferenceSuggestions`
 
 Simulate VE AddReference suggestions for editor-open behavior (enwiki).
 
@@ -1337,10 +1141,10 @@ Simulate VE AddReference suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeAddReferenceSuggestions("Cat")
+const suggestions = await wiki.getVeAddReferenceSuggestions("Wet Leg")
 ```
 
-#### `getVeCitationNeededSuggestions`
+### `getVeCitationNeededSuggestions`
 
 Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).
 
@@ -1351,10 +1155,10 @@ Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeCitationNeededSuggestions("Cat")
+const suggestions = await wiki.getVeCitationNeededSuggestions("United Kingdom")
 ```
 
-#### `getVeConvertReferenceSuggestions`
+### `getVeConvertReferenceSuggestions`
 
 Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).
 
@@ -1366,10 +1170,12 @@ Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeConvertReferenceSuggestions("Cat")
+const suggestions = await wiki.getVeConvertReferenceSuggestions("Wet Leg", {
+  strict: "url-only",
+})
 ```
 
-#### `getVeDisambiguationSuggestions`
+### `getVeDisambiguationSuggestions`
 
 Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).
 
@@ -1380,10 +1186,10 @@ Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeDisambiguationSuggestions("Cat")
+const suggestions = await wiki.getVeDisambiguationSuggestions("United Kingdom")
 ```
 
-#### `getVeDoubleBoldSuggestions`
+### `getVeDoubleBoldSuggestions`
 
 Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).
 
@@ -1394,10 +1200,10 @@ Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeDoubleBoldSuggestions("Cat")
+const suggestions = await wiki.getVeDoubleBoldSuggestions("Glossary of mathematics")
 ```
 
-#### `getVeDuplicateLinkSuggestions`
+### `getVeDuplicateLinkSuggestions`
 
 Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).
 
@@ -1409,10 +1215,12 @@ Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeDuplicateLinkSuggestions("Cat")
+const suggestions = await wiki.getVeDuplicateLinkSuggestions("Little Mix", {
+  scope: "paragraph",
+})
 ```
 
-#### `getVeExternalLinkSuggestions`
+### `getVeExternalLinkSuggestions`
 
 Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).
 
@@ -1423,10 +1231,10 @@ Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeExternalLinkSuggestions("Cat")
+const suggestions = await wiki.getVeExternalLinkSuggestions("Live coding")
 ```
 
-#### `getVeFakeHeadingSuggestions`
+### `getVeFakeHeadingSuggestions`
 
 Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).
 
@@ -1437,10 +1245,10 @@ Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeFakeHeadingSuggestions("Cat")
+const suggestions = await wiki.getVeFakeHeadingSuggestions("Wet Leg")
 ```
 
-#### `getVeImageCaptionSuggestions`
+### `getVeImageCaptionSuggestions`
 
 Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).
 
@@ -1451,10 +1259,10 @@ Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeImageCaptionSuggestions("Cat")
+const suggestions = await wiki.getVeImageCaptionSuggestions("Wet Leg")
 ```
 
-#### `getVeRedirectSuggestions`
+### `getVeRedirectSuggestions`
 
 Simulate VE Redirect suggestions for editor-open behavior (enwiki).
 
@@ -1465,10 +1273,10 @@ Simulate VE Redirect suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeRedirectSuggestions("Cat")
+const suggestions = await wiki.getVeRedirectSuggestions("Wet Leg")
 ```
 
-#### `getVeRequiredTemplateParamSuggestions`
+### `getVeRequiredTemplateParamSuggestions`
 
 Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).
 
@@ -1479,10 +1287,10 @@ Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeRequiredTemplateParamSuggestions("Cat")
+const suggestions = await wiki.getVeRequiredTemplateParamSuggestions("Wet Leg")
 ```
 
-#### `getVeSuggestedLinkSuggestions`
+### `getVeSuggestedLinkSuggestions`
 
 Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).
 
@@ -1494,10 +1302,10 @@ Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeSuggestedLinkSuggestions("Cat")
+const suggestions = await wiki.getVeSuggestedLinkSuggestions("Wet Leg", { threshold: 0.8 })
 ```
 
-#### `getVeTextMatchSuggestions`
+### `getVeTextMatchSuggestions`
 
 Simulate VE TextMatch suggestions for editor-open behavior (enwiki).
 
@@ -1508,10 +1316,10 @@ Simulate VE TextMatch suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeTextMatchSuggestions("Cat")
+const suggestions = await wiki.getVeTextMatchSuggestions("Ips pini")
 ```
 
-#### `getVeToneSuggestions`
+### `getVeToneSuggestions`
 
 Simulate VE Tone suggestions for editor-open behavior (enwiki).
 
@@ -1523,10 +1331,13 @@ Simulate VE Tone suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeToneSuggestions("Cat", { maxCandidates: 5 })
+const suggestions = await wiki.getVeToneSuggestions("Artificial intelligence", {
+  threshold: 0.8,
+  maxCandidates: 20,
+})
 ```
 
-#### `getVeYearLinkSuggestions`
+### `getVeYearLinkSuggestions`
 
 Simulate VE YearLink suggestions for editor-open behavior (enwiki).
 
@@ -1537,79 +1348,123 @@ Simulate VE YearLink suggestions for editor-open behavior (enwiki).
 **Example**
 
 ```ts
-const suggestions = await wiki.getVeYearLinkSuggestions("Cat")
+const suggestions = await wiki.getVeYearLinkSuggestions("United States")
 ```
 
-#### `getWikimediaBase`
+## Formatting
 
-Get the base URL for the Wikimedia REST API
+### `formatDate`
 
-**Example**
-
-```ts
-const wikimediaBase = wiki.getWikimediaBase()
-```
-
-#### `groupRevisionsByDate`
-
-Group revisions by calendar date for watchlist-style rendering.
+Format date as "DD Month YYYY" or "DD.MM.YY".
 
 **Parameters**
 
-- `revisions` - Revisions to group (typically already newest-first)
+- `timestamp`
+- `style`
 
 **Example**
 
 ```ts
-import type { FWPageHistoryRevision } from "fakewiki/types"
-const revs: FWPageHistoryRevision[] = []
-const groups = wiki.groupRevisionsByDate(revs)
+const formatted = wiki.formatDate("2026-02-26T10:30:00Z", "long")
 ```
 
-#### `inspectHistoryCache`
+### `formatDelta`
 
-Inspect cached history revisions and coverage metadata.
-Useful for debugging pagination and cache behavior in prototypes.
+Format a revision size delta using watchlist notation.
 
 **Parameters**
 
-- `options` - Optional filters for specific page/user keys
+- `delta` - Byte delta for a revision; null/NaN are treated as zero
 
 **Example**
 
 ```ts
-const snapshot = wiki.inspectHistoryCache({ pageNames: ["Cat"] })
+const delta = wiki.formatDelta(42)
 ```
 
-#### `isIPAddress`
+### `formatNiceRelativeTimestamp`
 
-Check if a username is an IP address
+Format relative time using the standard watchlist display preset.
 
 **Parameters**
 
-- `userName` - Username to check
+- `timestamp` - ISO timestamp, epoch milliseconds, or Date instance
 
 **Example**
 
 ```ts
-const isIp = wiki.isIPAddress("192.0.2.0")
+const relativeNice = wiki.formatNiceRelativeTimestamp("2026-02-26T10:30:00Z")
 ```
 
-#### `isTemporaryAccount`
+### `formatRelativeTimestamp`
 
-Check if a username is a temporary account (starts with ~)
+Format relative time (e.g. "2 minutes ago", "3 days ago").
 
 **Parameters**
 
-- `userName` - Username to check
+- `timestamp` - ISO timestamp string, Date, or epoch
+- `options` - Formatting options for different time periods
 
 **Example**
 
 ```ts
-const isTemp = wiki.isTemporaryAccount("~20241")
+const relative = wiki.formatRelativeTimestamp("2026-02-26T10:30:00Z", {
+  seconds: "words",
+  minutes: "minutes",
+  hours: "hours",
+  days: "days",
+  weeks: "weeks",
+  months: "months",
+  years: "years",
+})
 ```
 
-#### `isToday`
+### `formatTime`
+
+Format time as HH:MM.
+
+**Parameters**
+
+- `timestamp`
+
+**Example**
+
+```ts
+const time = wiki.formatTime("2026-02-26T10:30:00Z")
+```
+
+### `getEditSummaryHtml`
+
+Get the HTML representation of an edit summary
+
+**Parameters**
+
+- `summary` - Edit summary to get the HTML representation of
+- `pageName` - Page name
+
+**Example**
+
+```ts
+const html = await wiki.getEditSummaryHtml("Fix typo", "Wet Leg")
+```
+
+### `getTableFromEditSummary`
+
+Parse a toolbar-style edit summary into a table of contents
+
+**Parameters**
+
+- `editSummary` - Edit summary to parse
+
+**Example**
+
+```ts
+const table = wiki.getTableFromEditSummary(
+  "Alter: template type, title. Add: journal, authors 1-1. Removed parameters. Some additions/deletions were parameter name changes. | [[User:UcuchaBot|Use this bot]]. [[User talk:Ucucha|Report bugs]]. | Suggested by Abductive | #UCB_toolbar",
+)
+```
+
+### `isToday`
 
 Check whether a timestamp falls on today in local time.
 
@@ -1620,10 +1475,10 @@ Check whether a timestamp falls on today in local time.
 **Example**
 
 ```ts
-const today = wiki.isToday(Date.now())
+const today = wiki.isToday("2026-02-26T10:30:00Z")
 ```
 
-#### `parseToolbarEditSummary`
+### `parseToolbarEditSummary`
 
 Parse a toolbar edit summary into structured parts
 
@@ -1634,10 +1489,12 @@ Parse a toolbar edit summary into structured parts
 **Example**
 
 ```ts
-const parsed = wiki.parseToolbarEditSummary("...")
+const parsed = wiki.parseToolbarEditSummary(
+  "Alter: template type, title. Add: journal, authors 1-1. Removed parameters. Some additions/deletions were parameter name changes. | [[User:UcuchaBot|Use this bot]]. [[User talk:Ucucha|Report bugs]]. | Suggested by Abductive | #UCB_toolbar",
+)
 ```
 
-#### `preprocessEditSummary`
+### `preprocessEditSummary`
 
 Preprocess an edit summary's special wikitext variant to get it ready for transformation.
 
@@ -1649,10 +1506,235 @@ Preprocess an edit summary's special wikitext variant to get it ready for transf
 **Example**
 
 ```ts
-const preprocessed = wiki.preprocessEditSummary("| Lead | minor copyedit", "Cat")
+const preprocessed = wiki.preprocessEditSummary("/* History *" + "/ Fix typo", "Wet Leg")
 ```
 
-#### `runWithConcurrency`
+### `toDateKey`
+
+Convert timestamp to YYYY-MM-DD key for grouping.
+
+**Parameters**
+
+- `timestamp`
+
+**Example**
+
+```ts
+const dateKey = wiki.toDateKey("2026-02-26T10:30:00Z")
+```
+
+## URLs
+
+### `encodeForUrl`
+
+Encode a page title for URL usage
+
+**Parameters**
+
+- `slug` - Page title
+
+**Example**
+
+```ts
+const encoded = wiki.encodeForUrl("")
+```
+
+### `getAssetUrlFromUploadUrl`
+
+Get file page URL from an upload URL
+Extracts the filename from a Wikimedia Commons upload URL and returns a link to the file page
+
+**Parameters**
+
+- `uploadUrl` - Upload URL
+- `pageName` - Page name where the file is used
+
+**Example**
+
+```ts
+const url = wiki.getAssetUrlFromUploadUrl(
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/File.jpg/640px-File.jpg",
+  "Wet Leg",
+)
+```
+
+### `getEditUrl`
+
+Get URL for editing a page
+
+**Parameters**
+
+- `pageName` - Page title
+- `sectionTitle` - Optional section name (e.g. from edit summary like \/
+
+**Example**
+
+```ts
+const url = wiki.getEditUrl("Wet Leg")
+```
+
+### `getHistoryUrl`
+
+Get URL for page history
+
+**Parameters**
+
+- `pageName` - Page title
+
+**Example**
+
+```ts
+const url = wiki.getHistoryUrl("Wet Leg")
+```
+
+### `getMediawikiBase`
+
+Get the base URL for the MediaWiki REST API
+
+**Example**
+
+```ts
+const mediawikiBase = wiki.getMediawikiBase()
+```
+
+### `getPageUrl`
+
+Get URL for a page
+
+**Parameters**
+
+- `pageName` - Page title
+
+**Example**
+
+```ts
+const url = wiki.getPageUrl("Wet Leg")
+```
+
+### `getRevisionUrl`
+
+Get URL for viewing a revision diff
+
+**Parameters**
+
+- `id` - Revision ID
+- `pageName` - Page title
+
+**Example**
+
+```ts
+const url = wiki.getRevisionUrl(1337619110, "Wet Leg")
+```
+
+### `getRevisionViewUrl`
+
+Get URL for viewing a specific revision (page content at that revision).
+Uses oldid= which shows the revision's content (not the diff).
+
+**Parameters**
+
+- `id` - Revision ID
+- `pageName` - Page title
+
+**Example**
+
+```ts
+const url = wiki.getRevisionViewUrl(1337619110, "Wet Leg")
+```
+
+### `getThankUrl`
+
+Get URL for thanking a user for a revision
+
+**Parameters**
+
+- `id` - Revision ID
+
+**Example**
+
+```ts
+const url = wiki.getThankUrl(1337619110)
+```
+
+### `getUserContribsUrl`
+
+Get URL for user contributions
+
+**Parameters**
+
+- `userName` - Username
+
+**Example**
+
+```ts
+const url = wiki.getUserContribsUrl("Samwalton9")
+```
+
+### `getUserTalkUrl`
+
+Get URL for user talk page
+
+**Parameters**
+
+- `userName` - Username
+
+**Example**
+
+```ts
+const url = wiki.getUserTalkUrl("Samwalton9")
+```
+
+### `getUserUrl`
+
+Get URL for a user page
+
+**Parameters**
+
+- `userName` - Username
+
+**Example**
+
+```ts
+const url = wiki.getUserUrl("Samwalton9")
+```
+
+### `getWikimediaBase`
+
+Get the base URL for the Wikimedia REST API
+
+**Example**
+
+```ts
+const wikimediaBase = wiki.getWikimediaBase()
+```
+
+## Requests
+
+### `createResult`
+
+Create a new Result instance with default values
+
+**Example**
+
+```ts
+const result = wiki.createResult()
+```
+
+### `createResults`
+
+Create multiple Result instances
+
+**Parameters**
+
+- `count` - Number of results to create
+
+**Example**
+
+```ts
+const results = wiki.createResults(3)
+```
+
+### `runWithConcurrency`
 
 Run async tasks with a concurrency limit; returns results in input order.
 
@@ -1665,99 +1747,137 @@ Run async tasks with a concurrency limit; returns results in input order.
 **Example**
 
 ```ts
-const results = await wiki.runWithConcurrency([1, 2, 3], 2, async (n) => n * 2)
+const results = await wiki.runWithConcurrency([1, 2, 3], 2, async (item) => item)
 ```
 
-#### `searchPages`
+## Cache and diagnostics
 
-Full-text search across page titles and content
+### `clearListBuildingCache`
 
-**Parameters**
-
-- `query` - Search query
-- `limit` - Maximum results (default: DEFAULT_SEARCH_LIMIT)
+Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding
+calls re-fetch from the API. Use when the user explicitly requests fresh recommendations.
 
 **Example**
 
 ```ts
-const pageResults = await wiki.searchPages("test", 10)
+wiki.clearListBuildingCache()
 ```
 
-#### `searchTitles`
+### `clearPageHistoryCache`
 
-Search for pages by title (autocomplete-style)
+Clear the page history cache for a page (or all pages if no name given).
+Use when you need fresh data, e.g. when opening the inline history view.
 
 **Parameters**
 
-- `query` - Search query
-- `limit` - Maximum results (default: DEFAULT_SEARCH_LIMIT)
+- `pageName`
 
 **Example**
 
 ```ts
-const titleResults = await wiki.searchTitles("test", 10)
+wiki.clearPageHistoryCache("Wet Leg")
 ```
 
-#### `searchUsers`
+### `getCachedUserCategory`
 
-Search for users by username (without avatars).
+Read a user's category from cache (for UI keys/test ids). Returns null if not yet loaded.
 
 **Parameters**
 
-- `query` - Search query (username or part of username)
-- `limit` - Maximum results (default: DEFAULT_SEARCH_LIMIT)
+- `userName` - Username to look up
 
 **Example**
 
 ```ts
-const users = await wiki.searchUsers("Alice", 10)
+const category = wiki.getCachedUserCategory("Samwalton9")
 ```
 
-#### `searchUsersWithAvatars`
+### `getCachedUserCategoryDisplay`
 
-Search for users by username and fetch their avatars.
+Return display config (icon + color) for a user's category from cache only.
+Returns null if the user is not in the cache. Use in templates when the feed has already
+populated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use
+getUserCategoryDisplay instead.
 
 **Parameters**
 
-- `query` - Search query (username or part of username)
-- `limit` - Maximum results (default: DEFAULT_SEARCH_LIMIT)
+- `userName` - Username to look up
+- `options` - Optional overrides; `userTypeConfig` merges with the default per-category display config
 
 **Example**
 
 ```ts
-const users = await wiki.searchUsersWithAvatars("Bob", 5)
+const display = wiki.getCachedUserCategoryDisplay("Samwalton9")
 ```
 
-#### `toDateKey`
+### `getParentRevisionIdFromCache`
 
-Convert timestamp to YYYY-MM-DD key for grouping.
+Get the parent (previous) revision ID for a revision on a page from cache only.
+Does not trigger any network request.
 
 **Parameters**
 
-- `timestamp`
+- `pageName` - Page title
+- `revId` - Revision ID to look up in the cached page history
 
 **Example**
 
 ```ts
-const dateKey = wiki.toDateKey("2020-01-15T10:00:00Z")
+const parentId = wiki.getParentRevisionIdFromCache("Wet Leg", 1337619110)
 ```
 
-#### `transformWikitextToHtml`
+### `inspectHistoryCache`
 
-Transform wikitext to HTML
+Inspect cached history revisions and coverage metadata.
+Useful for debugging pagination and cache behavior in prototypes.
 
 **Parameters**
 
-- `wikitext` - Wikitext content
-- `pageTitle` - Page title for context (optional)
+- `options` - Optional filters for specific page/user keys
 
 **Example**
 
 ```ts
-const html = await wiki.transformWikitextToHtml("'''Hi'''", "Sandbox")
+const snapshot = wiki.inspectHistoryCache({
+  pageNames: ["Wet Leg", "Confidence Man (band)"],
+  userNames: ["Todepond", "Samwalton9"],
+})
 ```
 
-## Vue composables (`fakewiki` / `fakewiki/hooks`)
+## Persistence
+
+### `getStorageKey`
+
+Generate a storage key for a prototype
+
+**Parameters**
+
+- `prototypeName` - Name of the prototype (e.g., "PageFeed", "CustomPageFeed")
+- `keyName` - Name of the key (e.g., "searchQuery", "pageName")
+
+**Example**
+
+```ts
+const key = wiki.getStorageKey("PageFeed", "searchQuery")
+```
+
+### `getStorageKeys`
+
+Generate multiple storage keys for a prototype
+
+**Parameters**
+
+- `prototypeName` - Name of the prototype
+- `keyName` - Base name of the key
+- `count` - Number of keys to generate
+
+**Example**
+
+```ts
+const keys = wiki.getStorageKeys("PageFeed", "searchQuery", 3)
+```
+
+## Hooks
 
 ### `useFeed`
 

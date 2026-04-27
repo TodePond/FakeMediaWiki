@@ -18,6 +18,7 @@ import {
 	type MethodSchema,
 } from "./lib/doc-parse"
 import { renderAgentsMarkdownToHtml } from "./lib/render-reference-html"
+import { comparePlaygroundCategoryOrder } from "./lib/method-categories"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const pkgRoot = path.dirname(__dirname)
@@ -141,9 +142,6 @@ function emitAgentsMarkdown(methods: MethodSchema[], hooks: HookSchema[]): strin
 	lines.push("- Package: https://www.npmjs.com/package/fakewiki")
 	lines.push("")
 
-	lines.push("## FakeWiki instance methods")
-	lines.push("")
-
 	const byCategory = new Map<string, MethodSchema[]>()
 	const uncategorized: MethodSchema[] = []
 	for (const m of methods) {
@@ -160,16 +158,16 @@ function emitAgentsMarkdown(methods: MethodSchema[], hooks: HookSchema[]): strin
 	uncategorized.sort((a, b) => a.name.localeCompare(b.name))
 
 	const emitMethod = (m: MethodSchema) => {
-		lines.push(`#### \`${m.name}\``)
+		lines.push(`### \`${m.name}\``)
 		lines.push("")
 		if (m.description) {
 			lines.push(mdEscapeInline(m.description))
 			lines.push("")
 		}
-		if (m.params.length > 0) {
+		if (m.referenceParams.length > 0) {
 			lines.push("**Parameters**")
 			lines.push("")
-			for (const p of m.params) {
+			for (const p of m.referenceParams) {
 				const desc = p.description ? ` - ${mdEscapeInline(p.description)}` : ""
 				lines.push(`- \`${p.key}\`${desc}`)
 			}
@@ -178,52 +176,54 @@ function emitAgentsMarkdown(methods: MethodSchema[], hooks: HookSchema[]): strin
 		pushExamplesMarkdown(lines, m.examples)
 	}
 
-	const sortedCats = [...byCategory.keys()].sort((a, b) => a.localeCompare(b))
+	const sortedCats = [...byCategory.keys()].sort(comparePlaygroundCategoryOrder)
 	for (const cat of sortedCats) {
-		lines.push(`### Category: ${cat}`)
+		lines.push(`## ${cat}`)
 		lines.push("")
 		for (const m of byCategory.get(cat)!) {
 			emitMethod(m)
 		}
 	}
 	if (uncategorized.length > 0) {
-		lines.push("### General (no `@category` in JSDoc)")
+		lines.push("## General (no category resolved)")
 		lines.push("")
 		for (const m of uncategorized) {
 			emitMethod(m)
 		}
 	}
 
-	lines.push("## Vue composables (`fakewiki` / `fakewiki/hooks`)")
-	lines.push("")
-
-	for (const h of hooks) {
-		lines.push(`### \`${h.name}\``)
+	const hooksSorted = [...hooks].sort((a, b) => a.name.localeCompare(b.name))
+	if (hooksSorted.length > 0) {
+		lines.push("## Hooks")
 		lines.push("")
-		lines.push(`*Source:* \`hooks/${h.fileBase}\``)
-		lines.push("")
-		if (h.description) {
-			lines.push(mdEscapeInline(h.description))
+		for (const h of hooksSorted) {
+			lines.push(`### \`${h.name}\``)
 			lines.push("")
-		}
-		if (h.params.length > 0) {
-			lines.push("**Parameters (from JSDoc `@param` where present)**")
+			lines.push(`*Source:* \`hooks/${h.fileBase}\``)
 			lines.push("")
-			for (const p of h.params) {
-				const desc = p.description ? ` - ${mdEscapeInline(p.description)}` : ""
-				lines.push(`- \`${p.key}\`${desc}`)
+			if (h.description) {
+				lines.push(mdEscapeInline(h.description))
+				lines.push("")
 			}
+			if (h.params.length > 0) {
+				lines.push("**Parameters (from JSDoc `@param` where present)**")
+				lines.push("")
+				for (const p of h.params) {
+					const desc = p.description ? ` - ${mdEscapeInline(p.description)}` : ""
+					lines.push(`- \`${p.key}\`${desc}`)
+				}
+				lines.push("")
+			}
+			if (h.paramsSource) {
+				lines.push("```ts")
+				lines.push(`${h.name}(${h.paramsSource})`)
+				lines.push("```")
+				lines.push("")
+			}
+			pushExamplesMarkdown(lines, h.examples)
+			lines.push(`*Import:* \`import { ${h.name} } from "fakewiki"\``)
 			lines.push("")
 		}
-		if (h.paramsSource) {
-			lines.push("```ts")
-			lines.push(`${h.name}(${h.paramsSource})`)
-			lines.push("```")
-			lines.push("")
-		}
-		pushExamplesMarkdown(lines, h.examples)
-		lines.push(`*Import:* \`import { ${h.name} } from "fakewiki"\``)
-		lines.push("")
 	}
 
 	return lines.join("\n")

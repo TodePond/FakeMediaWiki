@@ -442,6 +442,7 @@ export class FakeWiki {
 	/**
 	 * Inspect cached history revisions and coverage metadata.
 	 * Useful for debugging pagination and cache behavior in prototypes.
+	 * @category Cache and diagnostics
 	 * @param options - Optional filters for specific page/user keys
 	 * @returns Snapshot of page and user history cache state
 	 
@@ -476,6 +477,7 @@ export class FakeWiki {
 
 	/**
 	 * Get the base URL for the Wikimedia REST API
+	 * @category URLs
 	 * @returns Wikimedia base URL
 	 
 	 * @example
@@ -489,6 +491,7 @@ export class FakeWiki {
 
 	/**
 	 * Get the base URL for the MediaWiki REST API
+	 * @category URLs
 	 * @returns MediaWiki base URL
 	 
 	 * @example
@@ -766,6 +769,7 @@ export class FakeWiki {
 
 	/**
 	 * Encode a page title for URL usage
+	 * @category URLs
 	 * @param slug - Page title
 	 * @returns URL-encoded title
 	 
@@ -780,6 +784,7 @@ export class FakeWiki {
 
 	/**
 	 * Get a page summary (extract, thumbnail, etc.)
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Page summary
 	 
@@ -798,6 +803,7 @@ export class FakeWiki {
 	/**
 	 * Get the short description for a page (from template or Wikidata).
 	 * Uses the page summary API; results are cached to avoid repeated requests.
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Short description string, or null if none or on error
 	 
@@ -822,6 +828,7 @@ export class FakeWiki {
 
 	/**
 	 * Get page content as HTML
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns HTML content
 	 
@@ -843,6 +850,7 @@ export class FakeWiki {
 	 * Uses the MediaWiki REST API endpoint: GET revision/{id}/html.
 	 * Falls back to the Wikimedia REST API page/html/{title}/{revision} if needed.
 	 * Uses caching to avoid re-fetching the same revision.
+	 * @category Revisions and diffs
 	 * @param pageName - Page title (used for Wikimedia fallback and for API compatibility)
 	 * @param revId - Revision ID
 	 * @returns HTML content for that revision
@@ -885,6 +893,7 @@ export class FakeWiki {
 
 	/**
 	 * Get page content as wikitext source
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Wikitext source
 	 
@@ -903,6 +912,7 @@ export class FakeWiki {
 
 	/**
 	 * Get full page metadata and latest revision
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Page metadata with source content
 	 
@@ -920,6 +930,7 @@ export class FakeWiki {
 
 	/**
 	 * Search for pages by title (autocomplete-style)
+	 * @category Search
 	 * @param query - Search query
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Search results with pages array
@@ -941,6 +952,7 @@ export class FakeWiki {
 
 	/**
 	 * Full-text search across page titles and content
+	 * @category Search
 	 * @param query - Search query
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Search results with pages array
@@ -1036,6 +1048,7 @@ export class FakeWiki {
 
 	/**
 	 * Search for users by username (without avatars).
+	 * @category Search
 	 * @param query - Search query (username or part of username)
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Array of user objects with username and page metadata (no avatar)
@@ -1074,6 +1087,7 @@ export class FakeWiki {
 
 	/**
 	 * Search for users by username and fetch their avatars.
+	 * @category Search
 	 * @param query - Search query (username or part of username)
 	 * @param limit - Maximum results (default: DEFAULT_SEARCH_LIMIT)
 	 * @returns Array of user objects with username, avatar, and page metadata
@@ -1103,6 +1117,7 @@ export class FakeWiki {
 	 * Get page revision history
 	 * Uses caching to avoid fetching the same data twice.
 	 * Uses older_than/newer_than cursors for pagination and filtering.
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @param options - Options
 	 * @param options.older_than - Revision ID or timestamp - for explicit pagination
@@ -1181,6 +1196,7 @@ export class FakeWiki {
 	 * Get user contribution history (revisions made by a user)
 	 * Uses caching to avoid fetching the same data twice.
 	 * Uses older_than/newer_than cursors for pagination and filtering.
+	 * @category Users
 	 * @param userName - Username
 	 * @param options - Options
 	 * @param options.limit - Limit (default: DEFAULT_USER_CONTRIBS_LIMIT, max: USER_CONTRIBS_MAX_LIMIT)
@@ -1311,6 +1327,7 @@ export class FakeWiki {
 	 * Get contributions for multiple users by calling getUserHistory for each.
 	 * Uses caching to avoid fetching the same data twice.
 	 * Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).
+	 * @category Users
 	 * @param userNames - Array of usernames
 	 * @param options - Options
 	 * @param options.limit - Limit per user (default: DEFAULT_USER_CONTRIBS_LIMIT)
@@ -1356,6 +1373,7 @@ export class FakeWiki {
 	 * Get a combined feed of revisions from multiple users and/or pages.
 	 * Returns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.
 	 * Caching is handled internally by getUserHistory and getPageHistory.
+	 * @category Revisions and diffs
 	 * @param options - Configuration object
 	 * @param options.userNames - Array of usernames to include
 	 * @param options.pageNames - Array of page titles to include
@@ -1463,6 +1481,7 @@ export class FakeWiki {
 	 * Get global recent changes from the wiki (any pages) via Action API list=recentchanges.
 	 * Optionally restrict to changes that "need review" (high revert risk) with rcshow=oresreview.
 	 * Uses rctoponly so only the latest revision of each page is returned.
+	 * @category Revisions and diffs
 	 * @param options - Configuration object
 	 * @param options.limit - Maximum number of changes to return (default 50, max 500)
 	 * @param options.rccontinue - Continuation token from a previous response for pagination
@@ -1560,6 +1579,7 @@ export class FakeWiki {
 	/**
 	 * Fetch edit tags for given revision IDs via Action API.
 	 * Use for revisions from sources that don't include tags (e.g. page history, related changes).
+	 * @category Revisions and diffs
 	 * @param revIds - Revision IDs to fetch tags for
 	 * @returns Map of revision ID to tags array
 	 
@@ -1611,6 +1631,7 @@ export class FakeWiki {
 	 * Get reference need prediction for a revision from Lift Wing.
 	 * Predicts the proportion of uncited sentences that need citations (0-1).
 	 * Use for surfacing "needs reference check" flags when tags are unavailable.
+	 * @category Predictions
 	 * @param revId - Revision ID
 	 * @param lang - Language code (e.g. "en"). If not provided, derived from base URL
 	 * @returns Reference need score or null on error
@@ -1665,6 +1686,7 @@ export class FakeWiki {
 	/**
 	 * Get Tone Check prediction from Lift Wing edit-check model.
 	 * Detects promotional, derogatory, or subjective language in text.
+	 * @category Predictions
 	 * @param originalText - Text before the edit
 	 * @param modifiedText - Text after the edit (the new content to check)
 	 * @param options - Optional lang (default from wiki) and pageTitle (default "")
@@ -1787,6 +1809,7 @@ export class FakeWiki {
 	/**
 	 * Get Tone Check prediction for a revision by comparing it with its parent.
 	 * Fetches the diff, extracts only changed lines (no context), and runs tone check.
+	 * @category Predictions
 	 * @param pageName - Page title
 	 * @param revId - Revision ID to check
 	 * @param options - Optional lang (default from wiki) and pageTitle (default pageName)
@@ -1819,6 +1842,7 @@ export class FakeWiki {
 	 * Clear the page history cache for a page (or all pages if no name given).
 	 * Use when you need fresh data, e.g. when opening the inline history view.
 	 
+	 * @category Cache and diagnostics
 	 * @example
 	 * ```ts
 	 * wiki.clearPageHistoryCache()
@@ -1837,6 +1861,7 @@ export class FakeWiki {
 	/**
 	 * Get the parent (previous) revision ID for a revision on a page from cache only.
 	 * Does not trigger any network request.
+	 * @category Cache and diagnostics
 	 * @param pageName - Page title
 	 * @param revId - Revision ID to look up in the cached page history
 	 * @returns Parent revision ID, null if this is oldest cached revision, or undefined if revId is not cached
@@ -1857,6 +1882,7 @@ export class FakeWiki {
 
 	/**
 	 * Get the parent (previous) revision ID for a revision on a page.
+	 * @category Revisions and diffs
 	 * @param pageName - Page title
 	 * @param revId - Revision ID (we want the revision immediately older than this)
 	 * @returns Parent revision ID, or null if none (e.g. first revision)
@@ -1902,6 +1928,7 @@ export class FakeWiki {
 
 	/**
 	 * Get wikitext source for a revision by ID.
+	 * @category Revisions and diffs
 	 * @param revId - Revision ID
 	 * @returns Revision source (e.g. wikitext)
 	 
@@ -1922,6 +1949,7 @@ export class FakeWiki {
 	 * Get source diff for a revision by comparing it with its parent (previous) revision.
 	 * When there is no parent (e.g. first revision), returns a synthetic diff where
 	 * every line is shown as added.
+	 * @category Revisions and diffs
 	 * @param pageName - Page title
 	 * @param revId - Revision ID to diff
 	 * @returns Source diff from parent to this revision, or a full-content "all added" diff when there is no parent
@@ -1950,6 +1978,7 @@ export class FakeWiki {
 	}
 
 	/**
+	 * @category Revisions and diffs
 	 * @deprecated Use getDiffSource(pageName, revId) instead.
 	 
 	 * @example
@@ -1986,6 +2015,7 @@ export class FakeWiki {
 	/**
 	 * Split a diff line into character-level highlight segments.
 	 * Converts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.
+	 * @category Revisions and diffs
 	 * @param line - Diff line from compare API
 	 * @returns Ordered segments covering the entire line text
 	 
@@ -2026,6 +2056,7 @@ export class FakeWiki {
 
 	/**
 	 * Map compare API diff line type to a CSS class name.
+	 * @category Revisions and diffs
 	 * @param type - Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)
 	 * @returns CSS class for styling the line
 	 
@@ -2053,6 +2084,7 @@ export class FakeWiki {
 
 	/**
 	 * Get a random page
+	 * @category Pages and content
 	 * @param format - Format: 'summary', 'html', or 'title' (default: 'summary')
 	 * @returns Random page content - string for 'title' format, RandomPageSummary for 'summary' or 'html' format
 	 
@@ -2080,6 +2112,7 @@ export class FakeWiki {
 
 	/**
 	 * Get featured page for a specific date
+	 * @category Pages and content
 	 * @param date - Date object or YYYY/MM/DD string (leave blank for today's featured page)
 	 * @returns Featured page data
 	 
@@ -2101,6 +2134,7 @@ export class FakeWiki {
 
 	/**
 	 * Get "On This Day" content for a given type
+	 * @category Pages and content
 	 * @param type - Type: 'events', 'births', 'deaths', 'holidays', 'selected'
 	 * @param date - Date object or MM/DD string
 	 * @returns Array of on-this-day items for the requested type
@@ -2127,6 +2161,7 @@ export class FakeWiki {
 
 	/**
 	 * Get current announcements
+	 * @category Pages and content
 	 * @returns Announcements
 	 
 	 * @example
@@ -2143,6 +2178,7 @@ export class FakeWiki {
 
 	/**
 	 * Get page media (images, audio, etc.)
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Media files associated with the page
 	 
@@ -2161,6 +2197,7 @@ export class FakeWiki {
 	/**
 	 * Get outgoing wikilinks for multiple pages (intra-language links)
 	 * Automatically handles pagination to fetch all links.
+	 * @category Pages and content
 	 * @param pageNames - Array of page titles
 	 * @param options - Options
 	 * @param options.namespace - Filter by namespace (e.g., 0 for main namespace)
@@ -2249,6 +2286,7 @@ export class FakeWiki {
 	/**
 	 * Get outgoing links and backlinks for the given pages in one call.
 	 * Convenience that runs getPagesLinks and getPagesBacklinks in parallel.
+	 * @category Pages and content
 	 * @param pageNames - Array of page titles
 	 * @param options - Options (namespace for both; backlinkLimit for backlinks only)
 	 * @returns Object with links and backlinks maps
@@ -2273,6 +2311,7 @@ export class FakeWiki {
 	/**
 	 * Get pages that link to the given page(s) (backlinks / "What links here")
 	 * Uses MediaWiki Action API prop=linkshere.
+	 * @category Pages and content
 	 * @param pageNames - Array of page titles to find backlinks for
 	 * @param options - Options
 	 * @param options.namespace - Filter by namespace (e.g., 0 for main namespace)
@@ -2355,6 +2394,7 @@ export class FakeWiki {
 	/**
 	 * Get related changes using the Action API feedrecentchanges (1–2 requests total).
 	 * Returns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).
+	 * @category Recommendations
 	 * @param targetPageName - Page title to get related changes for
 	 * @param options - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)
 	 * @returns Array of revision-like items with linkType, sorted by timestamp newest first
@@ -2493,6 +2533,7 @@ export class FakeWiki {
 	 * Uses scoreMultipliers (default bidirectional×4, outgoing×2, backlink×1). No extra API calls.
 	 * Order is preserved (by timestamp desc); no extra sorting after filtering.
 	 
+	 * @category Recommendations
 	 * @example
 	 * ```ts
 	 * const topChanges = await wiki.getTopRelatedChanges(["Cat", "Dog"], { limit: 20, days: 7, percentage: 10 })
@@ -2740,6 +2781,7 @@ export class FakeWiki {
 	 * each with the score from the first change that introduced that page (static per page),
 	 * plus the changes that were retrieved as part of the scoring process (with sourcePageNames and link-type info).
 	 
+	 * @category Recommendations
 	 * @example
 	 * ```ts
 	 * const topPages = await wiki.getTopRelatedPages(["Cat"], { limit: 20, days: 7, percentage: 15 })
@@ -2766,6 +2808,7 @@ export class FakeWiki {
 	 * Get thumbnail image for a page.
 	 * Uses the lead image (page summary) when available; otherwise falls back to the
 	 * first image on the page (e.g. infobox image).
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Thumbnail URL or null
 	 
@@ -2905,6 +2948,7 @@ export class FakeWiki {
 	/**
 	 * Get thumbnail URLs for multiple pages (lead image from each page).
 	 * Uses the Action API pageimages in batches of 50.
+	 * @category Pages and content
 	 * @param pageNames - Page titles
 	 * @param baseUrl - Wiki base URL (e.g. https://en.wikipedia.org/). Defaults to this.base
 	 * @returns Map of page title to thumbnail URL (only entries that have a thumbnail)
@@ -2974,6 +3018,7 @@ export class FakeWiki {
 	/**
 	 * Get a list of articles related to a seed page from the list-building API.
 	 * Combines results from readers, content (links), and morelike models (serpentine order).
+	 * @category Recommendations
 	 * @param lang - Language code (e.g. "en")
 	 * @param options - Optional page title (seed), QID, and per-source result count (default 10)
 	 * @returns Serpentine results and optional seed QID
@@ -3029,6 +3074,7 @@ export class FakeWiki {
 	 * Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding
 	 * calls re-fetch from the API. Use when the user explicitly requests fresh recommendations.
 	 
+	 * @category Cache and diagnostics
 	 * @example
 	 * ```ts
 	 * wiki.clearListBuildingCache()
@@ -3119,6 +3165,7 @@ export class FakeWiki {
 	 * Get list-building results for multiple seed pages. Returns the final aggregated list
 	 * deduped by recommended page and sorted by quality (best first). Optionally pass onLoad
 	 * to receive progressively complete lists (each call is the full current list, same shape).
+	 * @category Recommendations
 	 * @param lang - Language code (e.g. "en")
 	 * @param pageTitles - Seed page titles (deduplicated; empty titles skipped)
 	 * @param options - Optional k and onLoad callback (always processes one seed page at a time)
@@ -3171,6 +3218,7 @@ export class FakeWiki {
 
 	/**
 	 * Get page hero image: thumbnail if present, otherwise the first media image.
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Hero image URL or null
 	 
@@ -3198,6 +3246,7 @@ export class FakeWiki {
 
 	/**
 	 * Transform wikitext to HTML
+	 * @category Pages and content
 	 * @param wikitext - Wikitext content
 	 * @param pageTitle - Page title for context (optional)
 	 * @returns HTML content
@@ -3220,6 +3269,7 @@ export class FakeWiki {
 
 	/**
 	 * Get page categories
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Page categories (array of category titles, e.g. "Category:British rock music groups")
 	 
@@ -3252,6 +3302,7 @@ export class FakeWiki {
 
 	/**
 	 * Get page mobile-optimized HTML
+	 * @category Pages and content
 	 * @param pageName - Page title
 	 * @returns Mobile HTML
 	 
@@ -3270,6 +3321,7 @@ export class FakeWiki {
 
 	/**
 	 * Infer a user avatar image from their user page
+	 * @category Users
 	 * @param userName - Username
 	 * @returns Avatar image URL or null
 	 
@@ -3305,6 +3357,7 @@ export class FakeWiki {
 	/**
 	 * Get user information including edit count, registration date, and account type
 	 * Results are cached in memory to avoid repeated API calls for the same user.
+	 * @category Users
 	 * @param userName - Username or IP address
 	 * @returns User information including edit count, registration date, and account status
 	 
@@ -3377,6 +3430,7 @@ export class FakeWiki {
 
 	/**
 	 * Check if a username is a temporary account (starts with ~)
+	 * @category Users
 	 * @param userName - Username to check
 	 * @returns True if the username is a temporary account
 	 
@@ -3391,6 +3445,7 @@ export class FakeWiki {
 
 	/**
 	 * Check if a username is an IP address
+	 * @category Users
 	 * @param userName - Username to check
 	 * @returns True if the username appears to be an IP address
 	 
@@ -3407,6 +3462,7 @@ export class FakeWiki {
 
 	/**
 	 * Calculate days of activity from registration date
+	 * @category Users
 	 * @param registrationDate - ISO timestamp string (e.g., "2007-06-07T16:36:03Z")
 	 * @returns Number of days since registration, or null if date is invalid
 	 
@@ -3478,6 +3534,7 @@ export class FakeWiki {
 	/**
 	 * Get a user's category (cache-aware main entry point).
 	 * Reads from category cache when available; otherwise fetches user info and caches the result.
+	 * @category Users
 	 * @param userName - Username to classify
 	 * @returns User category
 	 
@@ -3512,6 +3569,7 @@ export class FakeWiki {
 	 * Returns null if the user is not in the cache. Use in templates when the feed has already
 	 * populated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use
 	 * getUserCategoryDisplay instead.
+	 * @category Cache and diagnostics
 	 * @param userName - Username to look up
 	 * @param options - Optional overrides; `userTypeConfig` merges with the default per-category display config
 	 * @returns Icon and color for the user's category, or null if not cached
@@ -3536,6 +3594,7 @@ export class FakeWiki {
 	/**
 	 * Return display config (icon + color) for a user's category. Uses cache when available;
 	 * otherwise fetches user info and caches the category, then returns the display config.
+	 * @category Users
 	 * @param userName - Username to look up
 	 * @param options - Optional overrides; `userTypeConfig` merges with the default per-category display config
 	 * @returns Icon and color for the user's category
@@ -3557,6 +3616,7 @@ export class FakeWiki {
 
 	/**
 	 * Read a user's category from cache (for UI keys/test ids). Returns null if not yet loaded.
+	 * @category Cache and diagnostics
 	 * @param userName - Username to look up
 	 * @returns Cached category or null
 	 
@@ -3571,6 +3631,7 @@ export class FakeWiki {
 
 	/**
 	 * Parse a toolbar-style edit summary into a table of contents
+	 * @category Formatting
 	 * @param editSummary - Edit summary to parse
 	 * @returns Table of contents
 	 
@@ -3617,6 +3678,7 @@ export class FakeWiki {
 
 	/**
 	 * Parse a toolbar edit summary into structured parts
+	 * @category Formatting
 	 * @param editSummary - Edit summary to parse
 	 * @returns Parsed toolbar comment or null if not a toolbar comment
 	 
@@ -3664,6 +3726,7 @@ export class FakeWiki {
 
 	/**
 	 * Preprocess an edit summary's special wikitext variant to get it ready for transformation.
+	 * @category Formatting
 	 * @param summary - Edit summary to preprocess
 	 * @param pageName - Page name
 	 * @returns Preprocessed edit summary
@@ -3684,6 +3747,7 @@ export class FakeWiki {
 
 	/**
 	 * Get the HTML representation of an edit summary
+	 * @category Formatting
 	 * @param summary - Edit summary to get the HTML representation of
 	 * @param pageName - Page name
 	 * @returns HTML representation of the edit summary
@@ -3715,7 +3779,9 @@ export class FakeWiki {
 		return Number.isNaN(date.getTime()) ? null : date
 	}
 
-	/** Format date as "DD Month YYYY" or "DD.MM.YY".
+	/**
+Format date as "DD Month YYYY" or "DD.MM.YY".
+	 * @category Formatting
 	 * @example
 	 * ```ts
 	 * const formatted = wiki.formatDate("2020-01-15T10:00:00Z", "long")
@@ -3750,7 +3816,9 @@ export class FakeWiki {
 		return `${day} ${month} ${year}`
 	}
 
-	/** Convert timestamp to YYYY-MM-DD key for grouping.
+	/**
+Convert timestamp to YYYY-MM-DD key for grouping.
+	 * @category Formatting
 	 * @example
 	 * ```ts
 	 * const dateKey = wiki.toDateKey("2020-01-15T10:00:00Z")
@@ -3765,7 +3833,9 @@ export class FakeWiki {
 		return `${year}-${month}-${day}`
 	}
 
-	/** Format time as HH:MM.
+	/**
+Format time as HH:MM.
+	 * @category Formatting
 	 * @example
 	 * ```ts
 	 * const time = wiki.formatTime("2020-01-15T10:00:00Z")
@@ -3779,7 +3849,9 @@ export class FakeWiki {
 		return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
 	}
 
-	/** Check whether a timestamp falls on today in local time.
+	/**
+Check whether a timestamp falls on today in local time.
+	 * @category Formatting
 	 * @example
 	 * ```ts
 	 * const today = wiki.isToday(Date.now())
@@ -3798,6 +3870,7 @@ export class FakeWiki {
 
 	/**
 	 * Format relative time (e.g. "2 minutes ago", "3 days ago").
+	 * @category Formatting
 	 * @param timestamp - ISO timestamp string, Date, or epoch
 	 * @param options - Formatting options for different time periods
 	 
@@ -3939,6 +4012,7 @@ export class FakeWiki {
 	 * This is a convenience wrapper around `formatRelativeTimestamp()` with
 	 * period-specific options tuned for watchlist UIs.
 	 *
+	 * @category Formatting
 	 * @param timestamp - ISO timestamp, epoch milliseconds, or Date instance
 	 * @returns Human-readable relative text (e.g. "Just now", "2 hours ago")
 	 
@@ -3965,6 +4039,7 @@ export class FakeWiki {
 	 * Output is sorted by date descending (newest day first), while revision
 	 * order inside each day is preserved from the input array.
 	 *
+	 * @category Revisions and diffs
 	 * @param revisions - Revisions to group (typically already newest-first)
 	 * @returns Date groups with stable `dateKey`, human `dateLabel`, and revisions
 	 
@@ -3999,6 +4074,7 @@ export class FakeWiki {
 	/**
 	 * Format a revision size delta using watchlist notation.
 	 *
+	 * @category Formatting
 	 * @param delta - Byte delta for a revision; null/NaN are treated as zero
 	 * @returns Signed delta wrapped in parentheses (e.g. "(+120)", "(-4)", "(0)")
 	 
@@ -4016,6 +4092,7 @@ export class FakeWiki {
 
 	/**
 	 * Get URL for a user page
+	 * @category URLs
 	 * @param userName - Username
 	 * @returns URL to user page
 	 
@@ -4030,6 +4107,7 @@ export class FakeWiki {
 
 	/**
 	 * Get URL for viewing a revision diff
+	 * @category URLs
 	 * @param id - Revision ID
 	 * @param pageName - Page title
 	 * @returns URL to revision diff
@@ -4046,6 +4124,7 @@ export class FakeWiki {
 	/**
 	 * Get URL for viewing a specific revision (page content at that revision).
 	 * Uses oldid= which shows the revision's content (not the diff).
+	 * @category URLs
 	 * @param id - Revision ID
 	 * @param pageName - Page title
 	 * @returns URL to view this revision
@@ -4061,6 +4140,7 @@ export class FakeWiki {
 
 	/**
 	 * Get URL for a page
+	 * @category URLs
 	 * @param pageName - Page title
 	 * @returns URL to page
 	 
@@ -4075,6 +4155,7 @@ export class FakeWiki {
 
 	/**
 	 * Get URL for page history
+	 * @category URLs
 	 * @param pageName - Page title
 	 * @returns URL to page history
 	 
@@ -4089,6 +4170,7 @@ export class FakeWiki {
 
 	/**
 	 * Get URL for user talk page
+	 * @category URLs
 	 * @param userName - Username
 	 * @returns URL to user talk page
 	 
@@ -4103,6 +4185,7 @@ export class FakeWiki {
 
 	/**
 	 * Get URL for user contributions
+	 * @category URLs
 	 * @param userName - Username
 	 * @returns URL to Special:Contributions
 	 
@@ -4117,6 +4200,7 @@ export class FakeWiki {
 
 	/**
 	 * Get URL for editing a page
+	 * @category URLs
 	 * @param pageName - Page title
 	 * @param sectionTitle - Optional section name (e.g. from edit summary like \/* Section *\/); appended as fragment #Section_title so the editor can open at that section
 	 * @returns URL to edit page
@@ -4138,6 +4222,7 @@ export class FakeWiki {
 
 	/**
 	 * Get URL for thanking a user for a revision
+	 * @category URLs
 	 * @param id - Revision ID
 	 * @returns URL to thank page
 	 
@@ -4153,6 +4238,7 @@ export class FakeWiki {
 	/**
 	 * Get file page URL from an upload URL
 	 * Extracts the filename from a Wikimedia Commons upload URL and returns a link to the file page
+	 * @category URLs
 	 * @param uploadUrl - Upload URL
 	 * @param pageName - Page name where the file is used
 	 * @returns URL to the file page with media fragment (e.g., https://en.wikipedia.org/wiki/Page#/media/File:File.jpg)
@@ -4170,6 +4256,7 @@ export class FakeWiki {
 
 	/**
 	 * Generate a storage key for a prototype
+	 * @category Persistence
 	 * @param prototypeName - Name of the prototype (e.g., "PageFeed", "CustomPageFeed")
 	 * @param keyName - Name of the key (e.g., "searchQuery", "pageName")
 	 * @returns A unique storage key string
@@ -4185,6 +4272,7 @@ export class FakeWiki {
 
 	/**
 	 * Generate multiple storage keys for a prototype
+	 * @category Persistence
 	 * @param prototypeName - Name of the prototype
 	 * @param keyName - Base name of the key
 	 * @param count - Number of keys to generate
@@ -4203,6 +4291,7 @@ export class FakeWiki {
 
 	/**
 	 * Create a new Result instance with default values
+	 * @category Requests
 	 * @returns Result instance with empty data, loading false, and no error
 	 
 	 * @example
@@ -4220,6 +4309,7 @@ export class FakeWiki {
 
 	/**
 	 * Create multiple Result instances
+	 * @category Requests
 	 * @param count - Number of results to create
 	 * @returns Array of Result instances
 	 
@@ -4234,6 +4324,7 @@ export class FakeWiki {
 
 	/**
 	 * Get CSS class name for delta (change size) indicator
+	 * @category Revisions and diffs
 	 * @param delta - Change size (positive, negative, or zero)
 	 * @returns CSS class name: "positive", "negative", or "neutral"
 	 
@@ -4398,6 +4489,7 @@ export class FakeWiki {
 
 	/**
 	 * Get predictions for multiple revisions and one/many Lift Wing models.
+	 * @category Predictions
 	 * @param revisionIds - Array of revision IDs
 	 * @param models - Lift Wing model slug(s). Defaults to damaging+goodfaith.
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
@@ -4442,6 +4534,7 @@ export class FakeWiki {
 
 	/**
 	 * Get damaging prediction for a single revision from Lift Wing API
+	 * @category Predictions
 	 * @param revisionId - Revision ID
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Prediction score with probability
@@ -4461,6 +4554,7 @@ export class FakeWiki {
 
 	/**
 	 * Get goodfaith prediction for a single revision from Lift Wing API
+	 * @category Predictions
 	 * @param revisionId - Revision ID
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Prediction score with probability
@@ -4480,6 +4574,7 @@ export class FakeWiki {
 
 	/**
 	 * Get damaging predictions for multiple revisions in parallel
+	 * @category Predictions
 	 * @param revisionIds - Array of revision IDs
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Map of revision ID to prediction score
@@ -4504,6 +4599,7 @@ export class FakeWiki {
 
 	/**
 	 * Get goodfaith predictions for multiple revisions in parallel
+	 * @category Predictions
 	 * @param revisionIds - Array of revision IDs
 	 * @param wiki - Wiki code (e.g., "enwiki"). If not provided, extracted from base URL
 	 * @returns Map of revision ID to prediction score
@@ -4530,6 +4626,7 @@ export class FakeWiki {
 	 * Get damaging and goodfaith predictions from ORES (single request per batch).
 	 * ORES is a scoring aggregator; one call returns both models. Prefer this when
 	 * Lift Wing is unavailable or for lower latency on batch requests.
+	 * @category Predictions
 	 * @see https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/Usage
 	 * @see https://www.mediawiki.org/wiki/ORES
 	 * @param revisionIds - Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)
@@ -5004,7 +5101,9 @@ export class FakeWiki {
 		return Number.MAX_SAFE_INTEGER
 	}
 
-	/** Public for snippet logic: significance level index (0 = most significant).
+	/**
+Public for snippet logic: significance level index (0 = most significant).
+	 * @category Structured deltas
 	 * @example
 	 * ```ts
 	 * const levelIndex = wiki.getStructuredDeltaLevelIndex("Sentence")
@@ -5505,6 +5604,7 @@ export class FakeWiki {
 
 	/**
 	 * Simulate VE Tone suggestions for editor-open behavior (enwiki).
+	 * @category Suggestions
 	 * @param pageTitle - Page title to evaluate
 	 * @param options - Optional threshold and max candidates
 	 * @returns Tone suggestion simulation payload
@@ -5575,6 +5675,7 @@ export class FakeWiki {
 
 	/**
 	 * Simulate VE TextMatch suggestions for editor-open behavior (enwiki).
+	 * @category Suggestions
 	 * @param pageTitle - Page title to evaluate
 	 * @returns TextMatch suggestion simulation payload
 	 
@@ -5703,6 +5804,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeExternalLinkSuggestions("Cat")
@@ -5767,6 +5869,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeDuplicateLinkSuggestions("Cat")
@@ -5879,6 +5982,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeDisambiguationSuggestions("Cat")
@@ -5950,6 +6054,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE AddReference suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeAddReferenceSuggestions("Cat")
@@ -6013,6 +6118,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeImageCaptionSuggestions("Cat")
@@ -6074,6 +6180,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE YearLink suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeYearLinkSuggestions("Cat")
@@ -6124,6 +6231,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeConvertReferenceSuggestions("Cat")
@@ -6174,6 +6282,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeCitationNeededSuggestions("Cat")
@@ -6217,6 +6326,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeDoubleBoldSuggestions("Cat")
@@ -6260,6 +6370,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeRequiredTemplateParamSuggestions("Cat")
@@ -6316,6 +6427,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE Redirect suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeRedirectSuggestions("Cat")
@@ -6379,6 +6491,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeSuggestedLinkSuggestions("Cat")
@@ -6464,6 +6577,7 @@ export class FakeWiki {
 	/**
 	 * Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).
 	 
+	 * @category Suggestions
 	 * @example
 	 * ```ts
 	 * const suggestions = await wiki.getVeFakeHeadingSuggestions("Cat")
@@ -6506,6 +6620,7 @@ export class FakeWiki {
 	/**
 	 * Run async tasks with a concurrency limit; returns results in input order.
 	 
+	 * @category Requests
 	 * @example
 	 * ```ts
 	 * const results = await wiki.runWithConcurrency([1, 2, 3], 2, async (n) => n * 2)

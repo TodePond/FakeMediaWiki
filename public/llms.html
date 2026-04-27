@@ -5,313 +5,13 @@
 <li>Repository: <a href="https://github.com/todepond/FakeMediaWiki">https://github.com/todepond/FakeMediaWiki</a></li>
 <li>Package: <a href="https://www.npmjs.com/package/fakewiki">https://www.npmjs.com/package/fakewiki</a></li>
 </ul>
-<h2 id="fakewiki-instance-methods" tabindex="-1">FakeWiki instance methods</h2>
-<h3 id="category%3A-search" tabindex="-1">Category: Search</h3>
-<h4 id="getmorelikepages" tabindex="-1"><code>getMoreLikePages</code></h4>
-<p>Find pages related to one or more seed pages using CirrusSearch <code>morelike:</code>.<br>
-Uses Action API search (<code>action=query&amp;list=search</code>) with <code>srsearch=morelike:...</code>.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>pageTitles</code> - Seed page titles used to construct the morelike query</li>
-<li><code>options</code> - Optional search options (limit, offset, and namespace)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const related = await wiki.getMoreLikePages([&quot;Cat&quot;], { limit: 5 })
-</code></pre>
-<h3 id="category%3A-structured-deltas" tabindex="-1">Category: Structured deltas</h3>
-<h4 id="getedittypesdebug" tabindex="-1"><code>getEditTypesDebug</code></h4>
-<p>Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionId</code> - Revision ID</li>
-<li><code>options</code> - Optional lang and content_type (default wikitext)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const debug = await wiki.getEditTypesDebug(12345, { lang: &quot;en&quot; })
-</code></pre>
-<h4 id="getedittypesdetails" tabindex="-1"><code>getEditTypesDetails</code></h4>
-<p>Get structured diff details from edit-types API (context, node-edits, text-edits).</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionId</code> - Revision ID</li>
-<li><code>options</code> - Optional lang and content_type (default wikitext)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const details = await wiki.getEditTypesDetails(12345, { lang: &quot;en&quot; })
-</code></pre>
-<h4 id="getedittypessummary" tabindex="-1"><code>getEditTypesSummary</code></h4>
-<p>Get simple diff summary from edit-types API (counts per change type per action).</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionId</code> - Revision ID</li>
-<li><code>options</code> - Optional lang and content_type (default wikitext)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const summary = await wiki.getEditTypesSummary(12345, { lang: &quot;en&quot; })
-</code></pre>
-<h4 id="getstructureddeltasfromrevision" tabindex="-1"><code>getStructuredDeltasFromRevision</code></h4>
-<p>Get computed structured-delta output for a revision ID in one call.<br>
-Fetches edit-types summary, then computes inline segments with configurable settings.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionId</code> - Revision ID</li>
-<li><code>options</code> - Optional edit-types API options (<code>lang</code>, <code>content_type</code>) and structured-delta settings</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const deltas = await wiki.getStructuredDeltasFromRevision(12345, { lang: &quot;en&quot; })
-</code></pre>
-<h4 id="getstructureddeltasfromsummary" tabindex="-1"><code>getStructuredDeltasFromSummary</code></h4>
-<p>Compute structured-delta output (segments + candidates) from a normalized summary.<br>
-Returns null when summary is empty or disabled via <code>improvedDeltaEnabled</code>.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>summary</code> - Pre-normalized summary (type -&gt; action -&gt; count)</li>
-<li><code>options</code> - Optional structured-delta settings overrides</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">import type { FWEditTypesDiffSummary } from &quot;fakewiki/types&quot;
-const summary = { Paragraph: { add: 1, remove: 0 } } as FWEditTypesDiffSummary
-const structuredDeltas = wiki.getStructuredDeltasFromSummary(summary)
-</code></pre>
-<h4 id="normalizestructureddeltasummary" tabindex="-1"><code>normalizeStructuredDeltaSummary</code></h4>
-<p>Normalize edit-types response into summary shape used for structured-delta computation.<br>
-Accepts either root summary object or payload containing a <code>summary</code> property.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>raw</code></li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const summary = wiki.normalizeStructuredDeltaSummary({ Paragraph: { add: 1, remove: 0 } })
-</code></pre>
-<h3 id="general-(no-%40category-in-jsdoc)" tabindex="-1">General (no <code>@category</code> in JSDoc)</h3>
-<h4 id="clearlistbuildingcache" tabindex="-1"><code>clearListBuildingCache</code></h4>
-<p>Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding<br>
-calls re-fetch from the API. Use when the user explicitly requests fresh recommendations.</p>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">wiki.clearListBuildingCache()
-</code></pre>
-<h4 id="clearpagehistorycache" tabindex="-1"><code>clearPageHistoryCache</code></h4>
-<p>Clear the page history cache for a page (or all pages if no name given).<br>
-Use when you need fresh data, e.g. when opening the inline history view.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>pageName</code></li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">wiki.clearPageHistoryCache()
-</code></pre>
-<h4 id="createresult" tabindex="-1"><code>createResult</code></h4>
-<p>Create a new Result instance with default values</p>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const result = wiki.createResult()
-</code></pre>
-<h4 id="createresults" tabindex="-1"><code>createResults</code></h4>
-<p>Create multiple Result instances</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>count</code> - Number of results to create</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const results = wiki.createResults(3)
-</code></pre>
-<h4 id="encodeforurl" tabindex="-1"><code>encodeForUrl</code></h4>
-<p>Encode a page title for URL usage</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>slug</code> - Page title</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const encoded = wiki.encodeForUrl(&quot;My article&quot;)
-</code></pre>
-<h4 id="formatdate" tabindex="-1"><code>formatDate</code></h4>
-<p>Format date as “DD Month YYYY” or “DD.MM.YY”.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>timestamp</code></li>
-<li><code>style</code></li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const formatted = wiki.formatDate(&quot;2020-01-15T10:00:00Z&quot;, &quot;long&quot;)
-</code></pre>
-<h4 id="formatdelta" tabindex="-1"><code>formatDelta</code></h4>
-<p>Format a revision size delta using watchlist notation.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>delta</code> - Byte delta for a revision; null/NaN are treated as zero</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const delta = wiki.formatDelta(3)
-</code></pre>
-<h4 id="formatnicerelativetimestamp" tabindex="-1"><code>formatNiceRelativeTimestamp</code></h4>
-<p>Format relative time using the standard watchlist display preset.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>timestamp</code> - ISO timestamp, epoch milliseconds, or Date instance</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const relativeNice = wiki.formatNiceRelativeTimestamp(&quot;2020-01-15T10:00:00Z&quot;)
-</code></pre>
-<h4 id="formatrelativetimestamp" tabindex="-1"><code>formatRelativeTimestamp</code></h4>
-<p>Format relative time (e.g. “2 minutes ago”, “3 days ago”).</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>timestamp</code> - ISO timestamp string, Date, or epoch</li>
-<li><code>options</code> - Formatting options for different time periods</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const relative = wiki.formatRelativeTimestamp(&quot;2020-01-15T10:00:00Z&quot;, &quot;long&quot;)
-</code></pre>
-<h4 id="formattime" tabindex="-1"><code>formatTime</code></h4>
-<p>Format time as HH:MM.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>timestamp</code></li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const time = wiki.formatTime(&quot;2020-01-15T10:00:00Z&quot;)
-</code></pre>
-<h4 id="getannouncements" tabindex="-1"><code>getAnnouncements</code></h4>
+<h2 id="pages-and-content" tabindex="-1">Pages and content</h2>
+<h3 id="getannouncements" tabindex="-1"><code>getAnnouncements</code></h3>
 <p>Get current announcements</p>
 <p><strong>Example</strong></p>
 <pre><code class="language-ts">const announcements = await wiki.getAnnouncements()
 </code></pre>
-<h4 id="getasseturlfromuploadurl" tabindex="-1"><code>getAssetUrlFromUploadUrl</code></h4>
-<p>Get file page URL from an upload URL<br>
-Extracts the filename from a Wikimedia Commons upload URL and returns a link to the file page</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>uploadUrl</code> - Upload URL</li>
-<li><code>pageName</code> - Page name where the file is used</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getAssetUrlFromUploadUrl(&quot;https://upload.wikimedia.org/wikipedia/commons/a/aa/Cat.png&quot;, &quot;File:Cat.png&quot;)
-</code></pre>
-<h4 id="getcachedusercategory" tabindex="-1"><code>getCachedUserCategory</code></h4>
-<p>Read a user’s category from cache (for UI keys/test ids). Returns null if not yet loaded.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>userName</code> - Username to look up</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const category = wiki.getCachedUserCategory(&quot;Example&quot;)
-</code></pre>
-<h4 id="getcachedusercategorydisplay" tabindex="-1"><code>getCachedUserCategoryDisplay</code></h4>
-<p>Return display config (icon + color) for a user’s category from cache only.<br>
-Returns null if the user is not in the cache. Use in templates when the feed has already<br>
-populated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use<br>
-getUserCategoryDisplay instead.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>userName</code> - Username to look up</li>
-<li><code>options</code> - Optional overrides; <code>userTypeConfig</code> merges with the default per-category display config</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const display = wiki.getCachedUserCategoryDisplay(&quot;Example&quot;, {})
-</code></pre>
-<h4 id="getcombinedfeed" tabindex="-1"><code>getCombinedFeed</code></h4>
-<p>Get a combined feed of revisions from multiple users and/or pages.<br>
-Returns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.<br>
-Caching is handled internally by getUserHistory and getPageHistory.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>options</code> - Configuration object</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const revisions = await wiki.getCombinedFeed({ pageNames: [&quot;Cat&quot;], userNames: [], limit: 10 })
-</code></pre>
-<h4 id="getdamagingprediction" tabindex="-1"><code>getDamagingPrediction</code></h4>
-<p>Get damaging prediction for a single revision from Lift Wing API</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionId</code> - Revision ID</li>
-<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const damaging = await wiki.getDamagingPrediction(12345)
-</code></pre>
-<h4 id="getdamagingpredictions" tabindex="-1"><code>getDamagingPredictions</code></h4>
-<p>Get damaging predictions for multiple revisions in parallel</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionIds</code> - Array of revision IDs</li>
-<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const damagingMap = await wiki.getDamagingPredictions([1, 2, 3])
-</code></pre>
-<h4 id="getdaysofactivity" tabindex="-1"><code>getDaysOfActivity</code></h4>
-<p>Calculate days of activity from registration date</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>registrationDate</code> - ISO timestamp string (e.g., “2007-06-07T16:36:03Z”)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const days = wiki.getDaysOfActivity(&quot;2020-01-15T00:00:00Z&quot;)
-</code></pre>
-<h4 id="getdeltaclass" tabindex="-1"><code>getDeltaClass</code></h4>
-<p>Get CSS class name for delta (change size) indicator</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>delta</code> - Change size (positive, negative, or zero)</li>
-<li><code>withSign</code></li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const className = wiki.getDeltaClass(5)
-</code></pre>
-<h4 id="getdifflineclass" tabindex="-1"><code>getDiffLineClass</code></h4>
-<p>Map compare API diff line type to a CSS class name.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>type</code> - Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const className = wiki.getDiffLineClass(0)
-</code></pre>
-<h4 id="getdifflinesegments" tabindex="-1"><code>getDiffLineSegments</code></h4>
-<p>Split a diff line into character-level highlight segments.<br>
-Converts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>line</code> - Diff line from compare API</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">import type { FWDiffLine } from &quot;fakewiki/types&quot;
-const line = { type: 0, text: &quot;Hello&quot; } as FWDiffLine
-const segments = wiki.getDiffLineSegments(line)
-</code></pre>
-<h4 id="getdiffsource" tabindex="-1"><code>getDiffSource</code></h4>
-<p>Get source diff for a revision by comparing it with its parent (previous) revision.<br>
-When there is no parent (e.g. first revision), returns a synthetic diff where<br>
-every line is shown as added.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>pageName</code> - Page title</li>
-<li><code>revId</code> - Revision ID to diff</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const compare = await wiki.getDiffSource(&quot;Cat&quot;, 12345)
-</code></pre>
-<h4 id="geteditsummaryhtml" tabindex="-1"><code>getEditSummaryHtml</code></h4>
-<p>Get the HTML representation of an edit summary</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>summary</code> - Edit summary to get the HTML representation of</li>
-<li><code>pageName</code> - Page name</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const html = await wiki.getEditSummaryHtml(&quot;fix typo&quot;, &quot;Cat&quot;)
-</code></pre>
-<h4 id="getediturl" tabindex="-1"><code>getEditUrl</code></h4>
-<p>Get URL for editing a page</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>pageName</code> - Page title</li>
-<li><code>sectionTitle</code> - Optional section name (e.g. from edit summary like /</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getEditUrl(&quot;Cat&quot;, &quot;Lead&quot;)
-</code></pre>
-<h4 id="getfeaturedpage" tabindex="-1"><code>getFeaturedPage</code></h4>
+<h3 id="getfeaturedpage" tabindex="-1"><code>getFeaturedPage</code></h3>
 <p>Get featured page for a specific date</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -320,65 +20,7 @@ every line is shown as added.</p>
 <p><strong>Example</strong></p>
 <pre><code class="language-ts">const featured = await wiki.getFeaturedPage()
 </code></pre>
-<h4 id="getgoodfaithprediction" tabindex="-1"><code>getGoodfaithPrediction</code></h4>
-<p>Get goodfaith prediction for a single revision from Lift Wing API</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionId</code> - Revision ID</li>
-<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const goodfaith = await wiki.getGoodfaithPrediction(12345)
-</code></pre>
-<h4 id="getgoodfaithpredictions" tabindex="-1"><code>getGoodFaithPredictions</code></h4>
-<p>Get goodfaith predictions for multiple revisions in parallel</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionIds</code> - Array of revision IDs</li>
-<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const goodfaithMap = await wiki.getGoodFaithPredictions([1, 2, 3])
-</code></pre>
-<h4 id="gethistoryurl" tabindex="-1"><code>getHistoryUrl</code></h4>
-<p>Get URL for page history</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>pageName</code> - Page title</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getHistoryUrl(&quot;Cat&quot;)
-</code></pre>
-<h4 id="getlistbuilding" tabindex="-1"><code>getListBuilding</code></h4>
-<p>Get a list of articles related to a seed page from the list-building API.<br>
-Combines results from readers, content (links), and morelike models (serpentine order).</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>lang</code> - Language code (e.g. “en”)</li>
-<li><code>options</code> - Optional page title (seed), QID, and per-source result count (default 10)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const list = await wiki.getListBuilding(&quot;en&quot;, { pageTitle: &quot;Cat&quot;, qid: &quot;Q146&quot;, k: 4 })
-</code></pre>
-<h4 id="getmediawikibase" tabindex="-1"><code>getMediawikiBase</code></h4>
-<p>Get the base URL for the MediaWiki REST API</p>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const mediawikiBase = wiki.getMediawikiBase()
-</code></pre>
-<h4 id="getmultipagelistbuilding" tabindex="-1"><code>getMultiPageListBuilding</code></h4>
-<p>Get list-building results for multiple seed pages. Returns the final aggregated list<br>
-deduped by recommended page and sorted by quality (best first). Optionally pass onLoad<br>
-to receive progressively complete lists (each call is the full current list, same shape).</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>lang</code> - Language code (e.g. “en”)</li>
-<li><code>pageTitles</code> - Seed page titles (deduplicated; empty titles skipped)</li>
-<li><code>options</code> - Optional k and onLoad callback (always processes one seed page at a time)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const list = await wiki.getMultiPageListBuilding(&quot;en&quot;, [&quot;Cat&quot;, &quot;Dog&quot;], { k: 4 })
-</code></pre>
-<h4 id="getonthisday" tabindex="-1"><code>getOnThisDay</code></h4>
+<h3 id="getonthisday" tabindex="-1"><code>getOnThisDay</code></h3>
 <p>Get “On This Day” content for a given type</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -388,34 +30,34 @@ to receive progressively complete lists (each call is the full current list, sam
 <p><strong>Example</strong></p>
 <pre><code class="language-ts">const onThisDay = await wiki.getOnThisDay()
 </code></pre>
-<h4 id="getpage" tabindex="-1"><code>getPage</code></h4>
+<h3 id="getpage" tabindex="-1"><code>getPage</code></h3>
 <p>Get full page metadata and latest revision</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const page = await wiki.getPage(&quot;Cat&quot;)
+<pre><code class="language-ts">const page = await wiki.getPage(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagecategories" tabindex="-1"><code>getPageCategories</code></h4>
+<h3 id="getpagecategories" tabindex="-1"><code>getPageCategories</code></h3>
 <p>Get page categories</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const categories = await wiki.getPageCategories(&quot;Cat&quot;)
+<pre><code class="language-ts">const categories = await wiki.getPageCategories(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagehero" tabindex="-1"><code>getPageHero</code></h4>
+<h3 id="getpagehero" tabindex="-1"><code>getPageHero</code></h3>
 <p>Get page hero image: thumbnail if present, otherwise the first media image.</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const hero = await wiki.getPageHero(&quot;Cat&quot;)
+<pre><code class="language-ts">const hero = await wiki.getPageHero(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagehistory" tabindex="-1"><code>getPageHistory</code></h4>
+<h3 id="getpagehistory" tabindex="-1"><code>getPageHistory</code></h3>
 <p>Get page revision history<br>
 Uses caching to avoid fetching the same data twice.<br>
 Uses older_than/newer_than cursors for pagination and filtering.</p>
@@ -423,60 +65,66 @@ Uses older_than/newer_than cursors for pagination and filtering.</p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 <li><code>options</code> - Options</li>
+<li><code>options.older_than</code> - Revision ID or timestamp - for explicit pagination</li>
+<li><code>options.newer_than</code> - Revision ID or timestamp - for explicit pagination</li>
+<li><code>options.limit</code> - Maximum results to return (default and max: PAGE_HISTORY_REVISIONS_PER_REQUEST)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const history = await wiki.getPageHistory(&quot;Cat&quot;, { limit: 10 })
+<pre><code class="language-ts">const history = await wiki.getPageHistory(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagehtml" tabindex="-1"><code>getPageHtml</code></h4>
+<h3 id="getpagehtml" tabindex="-1"><code>getPageHtml</code></h3>
 <p>Get page content as HTML</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const html = await wiki.getPageHtml(&quot;Cat&quot;)
+<pre><code class="language-ts">const html = await wiki.getPageHtml(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagemedia" tabindex="-1"><code>getPageMedia</code></h4>
+<h3 id="getpagemedia" tabindex="-1"><code>getPageMedia</code></h3>
 <p>Get page media (images, audio, etc.)</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const media = await wiki.getPageMedia(&quot;Cat&quot;)
+<pre><code class="language-ts">const media = await wiki.getPageMedia(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagemobilehtml" tabindex="-1"><code>getPageMobileHtml</code></h4>
+<h3 id="getpagemobilehtml" tabindex="-1"><code>getPageMobileHtml</code></h3>
 <p>Get page mobile-optimized HTML</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const html = await wiki.getPageMobileHtml(&quot;Cat&quot;)
+<pre><code class="language-ts">const html = await wiki.getPageMobileHtml(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagesbacklinks" tabindex="-1"><code>getPagesBacklinks</code></h4>
+<h3 id="getpagesbacklinks" tabindex="-1"><code>getPagesBacklinks</code></h3>
 <p>Get pages that link to the given page(s) (backlinks / “What links here”)<br>
 Uses MediaWiki Action API prop=linkshere.</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageNames</code> - Array of page titles to find backlinks for</li>
 <li><code>options</code> - Options</li>
+<li><code>options.namespace</code> - Filter by namespace (e.g., 0 for main namespace)</li>
+<li><code>options.limit</code> - Max backlinks per page (default 500)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const backlinks = await wiki.getPagesBacklinks([&quot;Cat&quot;], 50)
+<pre><code class="language-ts">const backlinks = await wiki.getPagesBacklinks([&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;])
 </code></pre>
-<h4 id="getpageslinks" tabindex="-1"><code>getPagesLinks</code></h4>
+<h3 id="getpageslinks" tabindex="-1"><code>getPagesLinks</code></h3>
 <p>Get outgoing wikilinks for multiple pages (intra-language links)<br>
 Automatically handles pagination to fetch all links.</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageNames</code> - Array of page titles</li>
 <li><code>options</code> - Options</li>
+<li><code>options.namespace</code> - Filter by namespace (e.g., 0 for main namespace)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const links = await wiki.getPagesLinks([&quot;Cat&quot;, &quot;Dog&quot;], 50)
+<pre><code class="language-ts">const links = await wiki.getPagesLinks([&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;])
 </code></pre>
-<h4 id="getpageslinksandbacklinks" tabindex="-1"><code>getPagesLinksAndBacklinks</code></h4>
+<h3 id="getpageslinksandbacklinks" tabindex="-1"><code>getPagesLinksAndBacklinks</code></h3>
 <p>Get outgoing links and backlinks for the given pages in one call.<br>
 Convenience that runs getPagesLinks and getPagesBacklinks in parallel.</p>
 <p><strong>Parameters</strong></p>
@@ -485,27 +133,27 @@ Convenience that runs getPagesLinks and getPagesBacklinks in parallel.</p>
 <li><code>options</code> - Options (namespace for both; backlinkLimit for backlinks only)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const links = await wiki.getPagesLinksAndBacklinks([&quot;Cat&quot;], 50)
+<pre><code class="language-ts">const links = await wiki.getPagesLinksAndBacklinks([&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;])
 </code></pre>
-<h4 id="getpagesource" tabindex="-1"><code>getPageSource</code></h4>
+<h3 id="getpagesource" tabindex="-1"><code>getPageSource</code></h3>
 <p>Get page content as wikitext source</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const source = await wiki.getPageSource(&quot;Cat&quot;)
+<pre><code class="language-ts">const source = await wiki.getPageSource(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagesummary" tabindex="-1"><code>getPageSummary</code></h4>
+<h3 id="getpagesummary" tabindex="-1"><code>getPageSummary</code></h3>
 <p>Get a page summary (extract, thumbnail, etc.)</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const summary = await wiki.getPageSummary(&quot;Cat&quot;)
+<pre><code class="language-ts">const summary = await wiki.getPageSummary(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagethumbnail" tabindex="-1"><code>getPageThumbnail</code></h4>
+<h3 id="getpagethumbnail" tabindex="-1"><code>getPageThumbnail</code></h3>
 <p>Get thumbnail image for a page.<br>
 Uses the lead image (page summary) when available; otherwise falls back to the<br>
 first image on the page (e.g. infobox image).</p>
@@ -514,9 +162,9 @@ first image on the page (e.g. infobox image).</p>
 <li><code>pageName</code> - Page title</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const thumbnail = await wiki.getPageThumbnail(&quot;Cat&quot;)
+<pre><code class="language-ts">const thumbnail = await wiki.getPageThumbnail(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getpagethumbnails" tabindex="-1"><code>getPageThumbnails</code></h4>
+<h3 id="getpagethumbnails" tabindex="-1"><code>getPageThumbnails</code></h3>
 <p>Get thumbnail URLs for multiple pages (lead image from each page).<br>
 Uses the Action API pageimages in batches of 50.</p>
 <p><strong>Parameters</strong></p>
@@ -525,39 +173,9 @@ Uses the Action API pageimages in batches of 50.</p>
 <li><code>baseUrl</code> - Wiki base URL (e.g. <a href="https://en.wikipedia.org/">https://en.wikipedia.org/</a>). Defaults to this.base</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const thumbnails = await wiki.getPageThumbnails([&quot;Cat&quot;, &quot;Dog&quot;])
+<pre><code class="language-ts">const thumbnails = await wiki.getPageThumbnails([&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;])
 </code></pre>
-<h4 id="getpageurl" tabindex="-1"><code>getPageUrl</code></h4>
-<p>Get URL for a page</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>pageName</code> - Page title</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getPageUrl(&quot;Cat&quot;)
-</code></pre>
-<h4 id="getparentrevisionid" tabindex="-1"><code>getParentRevisionId</code></h4>
-<p>Get the parent (previous) revision ID for a revision on a page.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>pageName</code> - Page title</li>
-<li><code>revId</code> - Revision ID (we want the revision immediately older than this)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const parentId = await wiki.getParentRevisionId(&quot;Cat&quot;, 12345)
-</code></pre>
-<h4 id="getparentrevisionidfromcache" tabindex="-1"><code>getParentRevisionIdFromCache</code></h4>
-<p>Get the parent (previous) revision ID for a revision on a page from cache only.<br>
-Does not trigger any network request.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>pageName</code> - Page title</li>
-<li><code>revId</code> - Revision ID to look up in the cached page history</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const parentId = wiki.getParentRevisionIdFromCache(&quot;Cat&quot;, 12345)
-</code></pre>
-<h4 id="getrandompage" tabindex="-1"><code>getRandomPage</code></h4>
+<h3 id="getrandompage" tabindex="-1"><code>getRandomPage</code></h3>
 <p>Get a random page</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -566,50 +184,130 @@ Does not trigger any network request.</p>
 <p><strong>Example</strong></p>
 <pre><code class="language-ts">const random = await wiki.getRandomPage()
 </code></pre>
-<h4 id="getrecentchanges" tabindex="-1"><code>getRecentChanges</code></h4>
+<h3 id="getshortdescription" tabindex="-1"><code>getShortDescription</code></h3>
+<p>Get the short description for a page (from template or Wikidata).<br>
+Uses the page summary API; results are cached to avoid repeated requests.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>pageName</code> - Page title</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const description = await wiki.getShortDescription(&quot;Wet Leg&quot;)
+</code></pre>
+<h3 id="transformwikitexttohtml" tabindex="-1"><code>transformWikitextToHtml</code></h3>
+<p>Transform wikitext to HTML</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>wikitext</code> - Wikitext content</li>
+<li><code>pageTitle</code> - Page title for context (optional)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const html = await wiki.transformWikitextToHtml(&quot;Hello '''world'''&quot;, &quot;Main_Page&quot;)
+</code></pre>
+<h2 id="revisions-and-diffs" tabindex="-1">Revisions and diffs</h2>
+<h3 id="getcombinedfeed" tabindex="-1"><code>getCombinedFeed</code></h3>
+<p>Get a combined feed of revisions from multiple users and/or pages.<br>
+Returns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.<br>
+Caching is handled internally by getUserHistory and getPageHistory.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>options</code> - Configuration object</li>
+<li><code>options.userNames</code> - Array of usernames to include</li>
+<li><code>options.pageNames</code> - Array of page titles to include</li>
+<li><code>options.limit</code> - Maximum total number of revisions to return (default and max: PAGE_HISTORY_REVISIONS_PER_REQUEST)</li>
+<li><code>options.perSourceLimit</code> - Maximum revisions to request per page/user history source before merge</li>
+<li><code>options.after</code> - Map of source (page name or user name) → revision ID to fetch revisions older than (per source). Ensures every page/user keeps paginating.</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const revisions = await wiki.getCombinedFeed({
+  userNames: [&quot;Todepond&quot;, &quot;Samwalton9&quot;],
+  pageNames: [&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;],
+  limit: 20,
+})
+</code></pre>
+<h3 id="getdeltaclass" tabindex="-1"><code>getDeltaClass</code></h3>
+<p>Get CSS class name for delta (change size) indicator</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>delta</code> - Change size (positive, negative, or zero)</li>
+<li><code>withSign</code></li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const className = wiki.getDeltaClass(42)
+</code></pre>
+<h3 id="getdifflineclass" tabindex="-1"><code>getDiffLineClass</code></h3>
+<p>Map compare API diff line type to a CSS class name.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>type</code> - Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const className = wiki.getDiffLineClass(0)
+</code></pre>
+<h3 id="getdifflinesegments" tabindex="-1"><code>getDiffLineSegments</code></h3>
+<p>Split a diff line into character-level highlight segments.<br>
+Converts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>line</code> - Diff line from compare API</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">import type { FWDiffLine } from &quot;fakewiki/types&quot;
+const line = {
+  type: 1,
+  text: &quot;Example text&quot;,
+  highlightRanges: [{ start: 0, length: 7, type: 0 }],
+} as FWDiffLine
+const segments = wiki.getDiffLineSegments(line)
+</code></pre>
+<h3 id="getdiffsource" tabindex="-1"><code>getDiffSource</code></h3>
+<p>Get source diff for a revision by comparing it with its parent (previous) revision.<br>
+When there is no parent (e.g. first revision), returns a synthetic diff where<br>
+every line is shown as added.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>pageName</code> - Page title</li>
+<li><code>revId</code> - Revision ID to diff</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const compare = await wiki.getDiffSource(&quot;Corsica Studios&quot;, 1337619110)
+</code></pre>
+<h3 id="getparentrevisionid" tabindex="-1"><code>getParentRevisionId</code></h3>
+<p>Get the parent (previous) revision ID for a revision on a page.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>pageName</code> - Page title</li>
+<li><code>revId</code> - Revision ID (we want the revision immediately older than this)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const parentId = await wiki.getParentRevisionId(&quot;Corsica Studios&quot;, 1337619110)
+</code></pre>
+<h3 id="getrecentchanges" tabindex="-1"><code>getRecentChanges</code></h3>
 <p>Get global recent changes from the wiki (any pages) via Action API list=recentchanges.<br>
 Optionally restrict to changes that “need review” (high revert risk) with rcshow=oresreview.<br>
 Uses rctoponly so only the latest revision of each page is returned.</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>options</code> - Configuration object</li>
+<li><code>options.limit</code> - Maximum number of changes to return (default 50, max 500)</li>
+<li><code>options.rccontinue</code> - Continuation token from a previous response for pagination</li>
+<li><code>options.onlyNeedsReview</code> - If true, pass rcshow=oresreview so the server returns only high revert risk / “needs review” edits (default false)</li>
+<li><code>options.rcstart</code> - Timestamp to start enumerating from (with rcdir=older, must be later than rcend)</li>
+<li><code>options.rcend</code> - Timestamp to end enumerating (with rcdir=older, must be earlier than rcstart)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const changes = await wiki.getRecentChanges({ limit: 20 })
+<pre><code class="language-ts">const changes = await wiki.getRecentChanges()
 </code></pre>
-<h4 id="getreferenceneedprediction" tabindex="-1"><code>getReferenceNeedPrediction</code></h4>
-<p>Get reference need prediction for a revision from Lift Wing.<br>
-Predicts the proportion of uncited sentences that need citations (0-1).<br>
-Use for surfacing “needs reference check” flags when tags are unavailable.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revId</code> - Revision ID</li>
-<li><code>lang</code> - Language code (e.g. “en”). If not provided, derived from base URL</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const prediction = await wiki.getReferenceNeedPrediction(&quot;Some paragraph text to score.&quot;, { lang: &quot;en&quot; })
-</code></pre>
-<h4 id="getrelatedchanges" tabindex="-1"><code>getRelatedChanges</code></h4>
-<p>Get related changes using the Action API feedrecentchanges (1-2 requests total).<br>
-Returns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>targetPageName</code> - Page title to get related changes for</li>
-<li><code>options</code> - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1-50 (default 50); days: 1-30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const changes = await wiki.getRelatedChanges(&quot;Cat&quot;, { limit: 20, days: 7 })
-</code></pre>
-<h4 id="getrevisiondiff" tabindex="-1"><code>getRevisionDiff</code></h4>
+<h3 id="getrevisiondiff" tabindex="-1"><code>getRevisionDiff</code></h3>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageName</code></li>
 <li><code>revId</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const compare = await wiki.getRevisionDiff(&quot;Cat&quot;, 12345)
+<pre><code class="language-ts">const compare = await wiki.getRevisionDiff(&quot;Corsica Studios&quot;, 1337619110)
 </code></pre>
-<h4 id="getrevisionhtml" tabindex="-1"><code>getRevisionHtml</code></h4>
+<h3 id="getrevisionhtml" tabindex="-1"><code>getRevisionHtml</code></h3>
 <p>Get HTML for a specific revision.<br>
 Uses the MediaWiki REST API endpoint: GET revision/{id}/html.<br>
 Falls back to the Wikimedia REST API page/html/{title}/{revision} if needed.<br>
@@ -620,41 +318,18 @@ Uses caching to avoid re-fetching the same revision.</p>
 <li><code>revId</code> - Revision ID</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const html = await wiki.getRevisionHtml(&quot;Cat&quot;, 12345)
+<pre><code class="language-ts">const html = await wiki.getRevisionHtml(&quot;Wet Leg&quot;, 1337619110)
 </code></pre>
-<h4 id="getrevisionpredictions" tabindex="-1"><code>getRevisionPredictions</code></h4>
-<p>Get predictions for multiple revisions and one/many Lift Wing models.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionIds</code> - Array of revision IDs</li>
-<li><code>models</code> - Lift Wing model slug(s). Defaults to damaging+goodfaith.</li>
-<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const predictions = await wiki.getRevisionPredictions([123, 456], [&quot;damaging&quot;, &quot;goodfaith&quot;])
-</code></pre>
-<h4 id="getrevisionpredictionsfromores" tabindex="-1"><code>getRevisionPredictionsFromOres</code></h4>
-<p>Get damaging and goodfaith predictions from ORES (single request per batch).<br>
-ORES is a scoring aggregator; one call returns both models. Prefer this when<br>
-Lift Wing is unavailable or for lower latency on batch requests.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>revisionIds</code> - Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)</li>
-<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const predictions = await wiki.getRevisionPredictionsFromOres([1, 2, 3])
-</code></pre>
-<h4 id="getrevisionsource" tabindex="-1"><code>getRevisionSource</code></h4>
+<h3 id="getrevisionsource" tabindex="-1"><code>getRevisionSource</code></h3>
 <p>Get wikitext source for a revision by ID.</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>revId</code> - Revision ID</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const source = await wiki.getRevisionSource(12345)
+<pre><code class="language-ts">const source = await wiki.getRevisionSource(1337619110)
 </code></pre>
-<h4 id="getrevisiontags" tabindex="-1"><code>getRevisionTags</code></h4>
+<h3 id="getrevisiontags" tabindex="-1"><code>getRevisionTags</code></h3>
 <p>Fetch edit tags for given revision IDs via Action API.<br>
 Use for revisions from sources that don’t include tags (e.g. page history, related changes).</p>
 <p><strong>Parameters</strong></p>
@@ -662,61 +337,68 @@ Use for revisions from sources that don’t include tags (e.g. page history, rel
 <li><code>revIds</code> - Revision IDs to fetch tags for</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const tags = await wiki.getRevisionTags([12345, 12346])
+<pre><code class="language-ts">const tags = await wiki.getRevisionTags([1337619110])
 </code></pre>
-<h4 id="getrevisionurl" tabindex="-1"><code>getRevisionUrl</code></h4>
-<p>Get URL for viewing a revision diff</p>
+<h3 id="grouprevisionsbydate" tabindex="-1"><code>groupRevisionsByDate</code></h3>
+<p>Group revisions by calendar date for watchlist-style rendering.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>id</code> - Revision ID</li>
-<li><code>pageName</code> - Page title</li>
+<li><code>revisions</code> - Revisions to group (typically already newest-first)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getRevisionUrl(123, &quot;Cat&quot;)
+<pre><code class="language-ts">import type { FWRevision } from &quot;fakewiki/types&quot;
+const revs: FWRevision[] = [
+  {
+    id: 1337619110,
+    timestamp: &quot;2026-02-26T10:30:00Z&quot;,
+    user: { name: &quot;Samwalton9&quot; },
+    delta: 42,
+    comment: &quot;Example summary&quot;,
+    pageName: &quot;Wet Leg&quot;,
+  },
+  {
+    id: 1337619100,
+    timestamp: &quot;2026-02-26T09:15:00Z&quot;,
+    user: { name: &quot;Todepond&quot; },
+    delta: -5,
+    comment: &quot;Another example&quot;,
+    pageName: &quot;Confidence Man (band)&quot;,
+  },
+]
+const groups = wiki.groupRevisionsByDate(revs)
 </code></pre>
-<h4 id="getrevisionviewurl" tabindex="-1"><code>getRevisionViewUrl</code></h4>
-<p>Get URL for viewing a specific revision (page content at that revision).<br>
-Uses oldid= which shows the revision’s content (not the diff).</p>
+<h2 id="structured-deltas" tabindex="-1">Structured deltas</h2>
+<h3 id="getedittypesdebug" tabindex="-1"><code>getEditTypesDebug</code></h3>
+<p>Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>id</code> - Revision ID</li>
-<li><code>pageName</code> - Page title</li>
+<li><code>revisionId</code> - Revision ID</li>
+<li><code>options</code> - Optional lang and content_type (default wikitext)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getRevisionViewUrl(123, &quot;Cat&quot;)
+<pre><code class="language-ts">const debug = await wiki.getEditTypesDebug(1337619110, { lang: &quot;en&quot; })
 </code></pre>
-<h4 id="getshortdescription" tabindex="-1"><code>getShortDescription</code></h4>
-<p>Get the short description for a page (from template or Wikidata).<br>
-Uses the page summary API; results are cached to avoid repeated requests.</p>
+<h3 id="getedittypesdetails" tabindex="-1"><code>getEditTypesDetails</code></h3>
+<p>Get structured diff details from edit-types API (context, node-edits, text-edits).</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>pageName</code> - Page title</li>
+<li><code>revisionId</code> - Revision ID</li>
+<li><code>options</code> - Optional lang and content_type (default wikitext)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const description = await wiki.getShortDescription(&quot;Cat&quot;)
+<pre><code class="language-ts">const details = await wiki.getEditTypesDetails(1337619110, { lang: &quot;en&quot; })
 </code></pre>
-<h4 id="getstoragekey" tabindex="-1"><code>getStorageKey</code></h4>
-<p>Generate a storage key for a prototype</p>
+<h3 id="getedittypessummary" tabindex="-1"><code>getEditTypesSummary</code></h3>
+<p>Get simple diff summary from edit-types API (counts per change type per action).</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>prototypeName</code> - Name of the prototype (e.g., “PageFeed”, “CustomPageFeed”)</li>
-<li><code>keyName</code> - Name of the key (e.g., “searchQuery”, “pageName”)</li>
+<li><code>revisionId</code> - Revision ID</li>
+<li><code>options</code> - Optional lang and content_type (default wikitext)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const key = wiki.getStorageKey(&quot;p&quot;, &quot;k&quot;)
+<pre><code class="language-ts">const summary = await wiki.getEditTypesSummary(1337619110, { lang: &quot;en&quot; })
 </code></pre>
-<h4 id="getstoragekeys" tabindex="-1"><code>getStorageKeys</code></h4>
-<p>Generate multiple storage keys for a prototype</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>prototypeName</code> - Name of the prototype</li>
-<li><code>keyName</code> - Base name of the key</li>
-<li><code>count</code> - Number of keys to generate</li>
-</ul>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const keys = wiki.getStorageKeys(&quot;p&quot;, &quot;k&quot;, 3)
-</code></pre>
-<h4 id="getstructureddeltalevelindex" tabindex="-1"><code>getStructuredDeltaLevelIndex</code></h4>
+<h3 id="getstructureddeltalevelindex" tabindex="-1"><code>getStructuredDeltaLevelIndex</code></h3>
 <p>Public for snippet logic: significance level index (0 = most significant).</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -725,49 +407,241 @@ Uses the page summary API; results are cached to avoid repeated requests.</p>
 <p><strong>Example</strong></p>
 <pre><code class="language-ts">const levelIndex = wiki.getStructuredDeltaLevelIndex(&quot;Sentence&quot;)
 </code></pre>
-<h4 id="gettablefromeditsummary" tabindex="-1"><code>getTableFromEditSummary</code></h4>
-<p>Parse a toolbar-style edit summary into a table of contents</p>
+<h3 id="getstructureddeltasfromrevision" tabindex="-1"><code>getStructuredDeltasFromRevision</code></h3>
+<p>Get computed structured-delta output for a revision ID in one call.<br>
+Fetches edit-types summary, then computes inline segments with configurable settings.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>editSummary</code> - Edit summary to parse</li>
+<li><code>revisionId</code> - Revision ID</li>
+<li><code>options</code> - Optional edit-types API options (<code>lang</code>, <code>content_type</code>) and structured-delta settings</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const table = wiki.getTableFromEditSummary(&quot;(toolbar) | section | comment&quot;)
+<pre><code class="language-ts">const deltas = await wiki.getStructuredDeltasFromRevision(1337619110, { lang: &quot;en&quot; })
 </code></pre>
-<h4 id="getthankurl" tabindex="-1"><code>getThankUrl</code></h4>
-<p>Get URL for thanking a user for a revision</p>
+<h3 id="getstructureddeltasfromsummary" tabindex="-1"><code>getStructuredDeltasFromSummary</code></h3>
+<p>Compute structured-delta output (segments + candidates) from a normalized summary.<br>
+Returns null when summary is empty or disabled via <code>improvedDeltaEnabled</code>.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>id</code> - Revision ID</li>
+<li><code>summary</code> - Pre-normalized summary (type -&gt; action -&gt; count)</li>
+<li><code>options</code> - Optional structured-delta settings overrides</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getThankUrl(12345)
+<pre><code class="language-ts">import type { FWEditTypesDiffSummary } from &quot;fakewiki/types&quot;
+const summary = {
+  Sentence: { change: 1 },
+  Punctuation: { remove: 1 },
+} as FWEditTypesDiffSummary
+const structuredDeltas = wiki.getStructuredDeltasFromSummary(summary, {
+  improvedDeltaEnabled: true,
+  relativeDetailLevelEnabled: true,
+  smartFilteringEnabled: true,
+})
 </code></pre>
-<h4 id="gettonecheckforrevision" tabindex="-1"><code>getToneCheckForRevision</code></h4>
-<p>Get Tone Check prediction for a revision by comparing it with its parent.<br>
-Fetches the diff, extracts only changed lines (no context), and runs tone check.</p>
+<h3 id="normalizestructureddeltasummary" tabindex="-1"><code>normalizeStructuredDeltaSummary</code></h3>
+<p>Normalize edit-types response into summary shape used for structured-delta computation.<br>
+Accepts either root summary object or payload containing a <code>summary</code> property.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>pageName</code> - Page title</li>
-<li><code>revId</code> - Revision ID to check</li>
-<li><code>options</code> - Optional lang (default from wiki) and pageTitle (default pageName)</li>
+<li><code>raw</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const prediction = await wiki.getToneCheckForRevision(12345, { pageTitle: &quot;Cat&quot; })
+<pre><code class="language-ts">const summary = wiki.normalizeStructuredDeltaSummary(
+  JSON.parse(
+    '{&quot;summary&quot;:{&quot;Sentence&quot;:{&quot;change&quot;:2,&quot;remove&quot;:1},&quot;Punctuation&quot;:{&quot;remove&quot;:1},&quot;Whitespace&quot;:{&quot;change&quot;:1},&quot;Comment&quot;:{&quot;insert&quot;:&quot;2&quot;}},&quot;debug&quot;:{&quot;traceId&quot;:&quot;demo&quot;}}',
+  ) as Record&lt;string, unknown&gt;,
+)
 </code></pre>
-<h4 id="gettonecheckprediction" tabindex="-1"><code>getToneCheckPrediction</code></h4>
-<p>Get Tone Check prediction from Lift Wing edit-check model.<br>
-Detects promotional, derogatory, or subjective language in text.</p>
+<h2 id="search" tabindex="-1">Search</h2>
+<h3 id="getmorelikepages" tabindex="-1"><code>getMoreLikePages</code></h3>
+<p>Find pages related to one or more seed pages using CirrusSearch <code>morelike:</code>.<br>
+Uses Action API search (<code>action=query&amp;list=search</code>) with <code>srsearch=morelike:...</code>.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>originalText</code> - Text before the edit</li>
-<li><code>modifiedText</code> - Text after the edit (the new content to check)</li>
-<li><code>options</code> - Optional lang (default from wiki) and pageTitle (default “”)</li>
+<li><code>pageTitles</code> - Seed page titles used to construct the morelike query</li>
+<li><code>options</code> - Optional search options (limit, offset, and namespace)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const prediction = await wiki.getToneCheckPrediction(&quot;Some wikitext for tone.&quot;, { lang: &quot;en&quot; })
+<pre><code class="language-ts">const related = await wiki.getMoreLikePages(
+  [&quot;Wet Leg&quot;, &quot;Rizzle Kicks&quot;, &quot;Jade Thirlwall&quot;],
+  { limit: 10 },
+)
 </code></pre>
-<h4 id="gettoprelatedchanges" tabindex="-1"><code>getTopRelatedChanges</code></h4>
+<h3 id="searchpages" tabindex="-1"><code>searchPages</code></h3>
+<p>Full-text search across page titles and content</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>query</code> - Search query</li>
+<li><code>limit</code> - Maximum results (default: DEFAULT_SEARCH_LIMIT)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const pageResults = await wiki.searchPages(&quot;Wet Leg&quot;, 20)
+</code></pre>
+<h3 id="searchtitles" tabindex="-1"><code>searchTitles</code></h3>
+<p>Search for pages by title (autocomplete-style)</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>query</code> - Search query</li>
+<li><code>limit</code> - Maximum results (default: DEFAULT_SEARCH_LIMIT)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const titleResults = await wiki.searchTitles(&quot;Wet Leg&quot;, 20)
+</code></pre>
+<h3 id="searchusers" tabindex="-1"><code>searchUsers</code></h3>
+<p>Search for users by username (without avatars).</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>query</code> - Search query (username or part of username)</li>
+<li><code>limit</code> - Maximum results (default: DEFAULT_SEARCH_LIMIT)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const users = await wiki.searchUsers(&quot;Samwalton9&quot;, 20)
+</code></pre>
+<h3 id="searchuserswithavatars" tabindex="-1"><code>searchUsersWithAvatars</code></h3>
+<p>Search for users by username and fetch their avatars.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>query</code> - Search query (username or part of username)</li>
+<li><code>limit</code> - Maximum results (default: DEFAULT_SEARCH_LIMIT)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const users = await wiki.searchUsersWithAvatars(&quot;Samwalton9&quot;, 20)
+</code></pre>
+<h2 id="users" tabindex="-1">Users</h2>
+<h3 id="getdaysofactivity" tabindex="-1"><code>getDaysOfActivity</code></h3>
+<p>Calculate days of activity from registration date</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>registrationDate</code> - ISO timestamp string (e.g., “2007-06-07T16:36:03Z”)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const days = wiki.getDaysOfActivity(&quot;2025-02-26T10:30:00Z&quot;)
+</code></pre>
+<h3 id="getuseravatar" tabindex="-1"><code>getUserAvatar</code></h3>
+<p>Infer a user avatar image from their user page</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const avatarUrl = await wiki.getUserAvatar(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="getusercategory" tabindex="-1"><code>getUserCategory</code></h3>
+<p>Get a user’s category (cache-aware main entry point).<br>
+Reads from category cache when available; otherwise fetches user info and caches the result.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username to classify</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const category = await wiki.getUserCategory(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="getusercategorydisplay" tabindex="-1"><code>getUserCategoryDisplay</code></h3>
+<p>Return display config (icon + color) for a user’s category. Uses cache when available;<br>
+otherwise fetches user info and caches the category, then returns the display config.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username to look up</li>
+<li><code>options</code> - Optional overrides; <code>userTypeConfig</code> merges with the default per-category display config</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const display = await wiki.getUserCategoryDisplay(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="getuserhistory" tabindex="-1"><code>getUserHistory</code></h3>
+<p>Get user contribution history (revisions made by a user)<br>
+Uses caching to avoid fetching the same data twice.<br>
+Uses older_than/newer_than cursors for pagination and filtering.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username</li>
+<li><code>options</code> - Options</li>
+<li><code>options.limit</code> - Limit (default: DEFAULT_USER_CONTRIBS_LIMIT, max: USER_CONTRIBS_MAX_LIMIT)</li>
+<li><code>options.older_than</code> - Timestamp - for explicit pagination</li>
+<li><code>options.newer_than</code> - Timestamp - for explicit pagination</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const history = await wiki.getUserHistory(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="getuserinfo" tabindex="-1"><code>getUserInfo</code></h3>
+<p>Get user information including edit count, registration date, and account type<br>
+Results are cached in memory to avoid repeated API calls for the same user.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username or IP address</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const userInfo = await wiki.getUserInfo(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="getusershistory" tabindex="-1"><code>getUsersHistory</code></h3>
+<p>Get contributions for multiple users by calling getUserHistory for each.<br>
+Uses caching to avoid fetching the same data twice.<br>
+Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userNames</code> - Array of usernames</li>
+<li><code>options</code> - Options</li>
+<li><code>options.limit</code> - Limit per user (default: DEFAULT_USER_CONTRIBS_LIMIT)</li>
+<li><code>options.older_than</code> - Timestamp - for explicit pagination</li>
+<li><code>options.newer_than</code> - Timestamp - for explicit pagination</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const histories = await wiki.getUsersHistory([&quot;Todepond&quot;, &quot;Samwalton9&quot;])
+</code></pre>
+<h3 id="isipaddress" tabindex="-1"><code>isIPAddress</code></h3>
+<p>Check if a username is an IP address</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username to check</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const isIp = wiki.isIPAddress(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="istemporaryaccount" tabindex="-1"><code>isTemporaryAccount</code></h3>
+<p>Check if a username is a temporary account (starts with ~)</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username to check</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const isTemp = wiki.isTemporaryAccount(&quot;Samwalton9&quot;)
+</code></pre>
+<h2 id="recommendations" tabindex="-1">Recommendations</h2>
+<h3 id="getlistbuilding" tabindex="-1"><code>getListBuilding</code></h3>
+<p>Get a list of articles related to a seed page from the list-building API.<br>
+Combines results from readers, content (links), and morelike models (serpentine order).</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>lang</code> - Language code (e.g. “en”)</li>
+<li><code>options</code> - Optional page title (seed), QID, and per-source result count (default 10)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const list = await wiki.getListBuilding(&quot;en&quot;, { pageTitle: &quot;Wet Leg&quot; })
+</code></pre>
+<h3 id="getmultipagelistbuilding" tabindex="-1"><code>getMultiPageListBuilding</code></h3>
+<p>Get list-building results for multiple seed pages. Returns the final aggregated list<br>
+deduped by recommended page and sorted by quality (best first). Optionally pass onLoad<br>
+to receive progressively complete lists (each call is the full current list, same shape).</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>lang</code> - Language code (e.g. “en”)</li>
+<li><code>pageTitles</code> - Seed page titles (deduplicated; empty titles skipped)</li>
+<li><code>options</code> - Optional k and onLoad callback (always processes one seed page at a time)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const list = await wiki.getMultiPageListBuilding(&quot;en&quot;, [&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;])
+</code></pre>
+<h3 id="getrelatedchanges" tabindex="-1"><code>getRelatedChanges</code></h3>
+<p>Get related changes using the Action API feedrecentchanges (1-2 requests total).<br>
+Returns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>targetPageName</code> - Page title to get related changes for</li>
+<li><code>options</code> - showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1-50 (default 50); days: 1-30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const changes = await wiki.getRelatedChanges(&quot;Wet Leg&quot;)
+</code></pre>
+<h3 id="gettoprelatedchanges" tabindex="-1"><code>getTopRelatedChanges</code></h3>
 <p>Get related changes from multiple seed pages, merged and filtered to the top N% by score.<br>
 Counts and score are per-page: “which feeds this page appears in” (any revision). Same<br>
 feedCountBidirectional/Outgoing/Backlink and score are shown on every revision of that page.<br>
@@ -779,9 +653,12 @@ Order is preserved (by timestamp desc); no extra sorting after filtering.</p>
 <li><code>options</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const topChanges = await wiki.getTopRelatedChanges([&quot;Cat&quot;, &quot;Dog&quot;], { limit: 20, days: 7, percentage: 10 })
+<pre><code class="language-ts">const topChanges = await wiki.getTopRelatedChanges(
+  [&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;],
+  { percentage: 1 },
+)
 </code></pre>
-<h4 id="gettoprelatedpages" tabindex="-1"><code>getTopRelatedPages</code></h4>
+<h3 id="gettoprelatedpages" tabindex="-1"><code>getTopRelatedPages</code></h3>
 <p>Get the list of page titles that appear in the top N% of related changes by score.<br>
 Same options as getTopRelatedChanges; returns unique page names in order of first appearance,<br>
 each with the score from the first change that introduced that page (static per page),<br>
@@ -792,118 +669,141 @@ plus the changes that were retrieved as part of the scoring process (with source
 <li><code>options</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const topPages = await wiki.getTopRelatedPages([&quot;Cat&quot;], { limit: 20, days: 7, percentage: 15 })
+<pre><code class="language-ts">const topPages = await wiki.getTopRelatedPages(
+  [&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;],
+  { percentage: 1 },
+)
 </code></pre>
-<h4 id="getuseravatar" tabindex="-1"><code>getUserAvatar</code></h4>
-<p>Infer a user avatar image from their user page</p>
+<h2 id="predictions" tabindex="-1">Predictions</h2>
+<h3 id="getdamagingprediction" tabindex="-1"><code>getDamagingPrediction</code></h3>
+<p>Get damaging prediction for a single revision from Lift Wing API</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username</li>
+<li><code>revisionId</code> - Revision ID</li>
+<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const avatarUrl = await wiki.getUserAvatar(&quot;Example&quot;)
+<pre><code class="language-ts">const damaging = await wiki.getDamagingPrediction(1337619110)
 </code></pre>
-<h4 id="getusercategory" tabindex="-1"><code>getUserCategory</code></h4>
-<p>Get a user’s category (cache-aware main entry point).<br>
-Reads from category cache when available; otherwise fetches user info and caches the result.</p>
+<h3 id="getdamagingpredictions" tabindex="-1"><code>getDamagingPredictions</code></h3>
+<p>Get damaging predictions for multiple revisions in parallel</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username to classify</li>
+<li><code>revisionIds</code> - Array of revision IDs</li>
+<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const category = await wiki.getUserCategory(&quot;Example&quot;)
+<pre><code class="language-ts">const damagingMap = await wiki.getDamagingPredictions([1337619110])
 </code></pre>
-<h4 id="getusercategorydisplay" tabindex="-1"><code>getUserCategoryDisplay</code></h4>
-<p>Return display config (icon + color) for a user’s category. Uses cache when available;<br>
-otherwise fetches user info and caches the category, then returns the display config.</p>
+<h3 id="getgoodfaithprediction" tabindex="-1"><code>getGoodfaithPrediction</code></h3>
+<p>Get goodfaith prediction for a single revision from Lift Wing API</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username to look up</li>
-<li><code>options</code> - Optional overrides; <code>userTypeConfig</code> merges with the default per-category display config</li>
+<li><code>revisionId</code> - Revision ID</li>
+<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const display = await wiki.getUserCategoryDisplay(&quot;Example&quot;)
+<pre><code class="language-ts">const goodfaith = await wiki.getGoodfaithPrediction(1337619110)
 </code></pre>
-<h4 id="getusercontribsurl" tabindex="-1"><code>getUserContribsUrl</code></h4>
-<p>Get URL for user contributions</p>
+<h3 id="getgoodfaithpredictions" tabindex="-1"><code>getGoodFaithPredictions</code></h3>
+<p>Get goodfaith predictions for multiple revisions in parallel</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username</li>
+<li><code>revisionIds</code> - Array of revision IDs</li>
+<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getUserContribsUrl(&quot;Example&quot;)
+<pre><code class="language-ts">const goodfaithMap = await wiki.getGoodFaithPredictions([1337619110])
 </code></pre>
-<h4 id="getuserhistory" tabindex="-1"><code>getUserHistory</code></h4>
-<p>Get user contribution history (revisions made by a user)<br>
-Uses caching to avoid fetching the same data twice.<br>
-Uses older_than/newer_than cursors for pagination and filtering.</p>
+<h3 id="getreferenceneedprediction" tabindex="-1"><code>getReferenceNeedPrediction</code></h3>
+<p>Get reference need prediction for a revision from Lift Wing.<br>
+Predicts the proportion of uncited sentences that need citations (0-1).<br>
+Use for surfacing “needs reference check” flags when tags are unavailable.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username</li>
-<li><code>options</code> - Options</li>
+<li><code>revId</code> - Revision ID</li>
+<li><code>lang</code> - Language code (e.g. “en”). If not provided, derived from base URL</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const history = await wiki.getUserHistory(&quot;Example&quot;, { limit: 10 })
+<pre><code class="language-ts">const prediction = await wiki.getReferenceNeedPrediction(1337619110, &quot;en&quot;)
 </code></pre>
-<h4 id="getuserinfo" tabindex="-1"><code>getUserInfo</code></h4>
-<p>Get user information including edit count, registration date, and account type<br>
-Results are cached in memory to avoid repeated API calls for the same user.</p>
+<h3 id="getrevisionpredictions" tabindex="-1"><code>getRevisionPredictions</code></h3>
+<p>Get predictions for multiple revisions and one/many Lift Wing models.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username or IP address</li>
+<li><code>revisionIds</code> - Array of revision IDs</li>
+<li><code>models</code> - Lift Wing model slug(s). Defaults to damaging+goodfaith.</li>
+<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const userInfo = await wiki.getUserInfo(&quot;Example&quot;)
+<pre><code class="language-ts">const predictions = await wiki.getRevisionPredictions(
+  [1337619110],
+  [&quot;damaging&quot;, &quot;goodfaith&quot;, &quot;revertrisk&quot;, &quot;revertrisk-multilingual&quot;],
+)
 </code></pre>
-<h4 id="getusershistory" tabindex="-1"><code>getUsersHistory</code></h4>
-<p>Get contributions for multiple users by calling getUserHistory for each.<br>
-Uses caching to avoid fetching the same data twice.<br>
-Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).</p>
+<h3 id="getrevisionpredictionsfromores" tabindex="-1"><code>getRevisionPredictionsFromOres</code></h3>
+<p>Get damaging and goodfaith predictions from ORES (single request per batch).<br>
+ORES is a scoring aggregator; one call returns both models. Prefer this when<br>
+Lift Wing is unavailable or for lower latency on batch requests.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userNames</code> - Array of usernames</li>
-<li><code>options</code> - Options</li>
+<li><code>revisionIds</code> - Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)</li>
+<li><code>wiki</code> - Wiki code (e.g., “enwiki”). If not provided, extracted from base URL</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const histories = await wiki.getUsersHistory({ userNames: [&quot;A&quot;, &quot;B&quot;], limit: 10 })
+<pre><code class="language-ts">const predictions = await wiki.getRevisionPredictionsFromOres([1337619110])
 </code></pre>
-<h4 id="getusertalkurl" tabindex="-1"><code>getUserTalkUrl</code></h4>
-<p>Get URL for user talk page</p>
+<h3 id="gettonecheckforrevision" tabindex="-1"><code>getToneCheckForRevision</code></h3>
+<p>Get Tone Check prediction for a revision by comparing it with its parent.<br>
+Fetches the diff, extracts only changed lines (no context), and runs tone check.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username</li>
+<li><code>pageName</code> - Page title</li>
+<li><code>revId</code> - Revision ID to check</li>
+<li><code>options</code> - Optional lang (default from wiki) and pageTitle (default pageName)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getUserTalkUrl(&quot;Example&quot;)
+<pre><code class="language-ts">const prediction = await wiki.getToneCheckForRevision(&quot;Corsica Studios&quot;, 1337619110, {
+  lang: &quot;en&quot;,
+  pageTitle: &quot;Corsica Studios&quot;,
+})
 </code></pre>
-<h4 id="getuserurl" tabindex="-1"><code>getUserUrl</code></h4>
-<p>Get URL for a user page</p>
+<h3 id="gettonecheckprediction" tabindex="-1"><code>getToneCheckPrediction</code></h3>
+<p>Get Tone Check prediction from Lift Wing edit-check model.<br>
+Detects promotional, derogatory, or subjective language in text.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username</li>
+<li><code>originalText</code> - Text before the edit</li>
+<li><code>modifiedText</code> - Text after the edit (the new content to check)</li>
+<li><code>options</code> - Optional lang (default from wiki) and pageTitle (default “”)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const url = wiki.getUserUrl(&quot;Example&quot;)
+<pre><code class="language-ts">const prediction = await wiki.getToneCheckPrediction(
+  &quot;The band formed in 2020.&quot;,
+  &quot;The band is the most talented and revolutionary group of our generation.&quot;,
+  { lang: &quot;en&quot;, pageTitle: &quot;Example band&quot; },
+)
 </code></pre>
-<h4 id="getveaddreferencesuggestions" tabindex="-1"><code>getVeAddReferenceSuggestions</code></h4>
+<h2 id="suggestions" tabindex="-1">Suggestions</h2>
+<h3 id="getveaddreferencesuggestions" tabindex="-1"><code>getVeAddReferenceSuggestions</code></h3>
 <p>Simulate VE AddReference suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeAddReferenceSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeAddReferenceSuggestions(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getvecitationneededsuggestions" tabindex="-1"><code>getVeCitationNeededSuggestions</code></h4>
+<h3 id="getvecitationneededsuggestions" tabindex="-1"><code>getVeCitationNeededSuggestions</code></h3>
 <p>Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeCitationNeededSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeCitationNeededSuggestions(&quot;United Kingdom&quot;)
 </code></pre>
-<h4 id="getveconvertreferencesuggestions" tabindex="-1"><code>getVeConvertReferenceSuggestions</code></h4>
+<h3 id="getveconvertreferencesuggestions" tabindex="-1"><code>getVeConvertReferenceSuggestions</code></h3>
 <p>Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -911,27 +811,29 @@ Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few co
 <li><code>options</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeConvertReferenceSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeConvertReferenceSuggestions(&quot;Wet Leg&quot;, {
+  strict: &quot;url-only&quot;,
+})
 </code></pre>
-<h4 id="getvedisambiguationsuggestions" tabindex="-1"><code>getVeDisambiguationSuggestions</code></h4>
+<h3 id="getvedisambiguationsuggestions" tabindex="-1"><code>getVeDisambiguationSuggestions</code></h3>
 <p>Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeDisambiguationSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeDisambiguationSuggestions(&quot;United Kingdom&quot;)
 </code></pre>
-<h4 id="getvedoubleboldsuggestions" tabindex="-1"><code>getVeDoubleBoldSuggestions</code></h4>
+<h3 id="getvedoubleboldsuggestions" tabindex="-1"><code>getVeDoubleBoldSuggestions</code></h3>
 <p>Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeDoubleBoldSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeDoubleBoldSuggestions(&quot;Glossary of mathematics&quot;)
 </code></pre>
-<h4 id="getveduplicatelinksuggestions" tabindex="-1"><code>getVeDuplicateLinkSuggestions</code></h4>
+<h3 id="getveduplicatelinksuggestions" tabindex="-1"><code>getVeDuplicateLinkSuggestions</code></h3>
 <p>Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -939,54 +841,56 @@ Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few co
 <li><code>options</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeDuplicateLinkSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeDuplicateLinkSuggestions(&quot;Little Mix&quot;, {
+  scope: &quot;paragraph&quot;,
+})
 </code></pre>
-<h4 id="getveexternallinksuggestions" tabindex="-1"><code>getVeExternalLinkSuggestions</code></h4>
+<h3 id="getveexternallinksuggestions" tabindex="-1"><code>getVeExternalLinkSuggestions</code></h3>
 <p>Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeExternalLinkSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeExternalLinkSuggestions(&quot;Live coding&quot;)
 </code></pre>
-<h4 id="getvefakeheadingsuggestions" tabindex="-1"><code>getVeFakeHeadingSuggestions</code></h4>
+<h3 id="getvefakeheadingsuggestions" tabindex="-1"><code>getVeFakeHeadingSuggestions</code></h3>
 <p>Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeFakeHeadingSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeFakeHeadingSuggestions(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getveimagecaptionsuggestions" tabindex="-1"><code>getVeImageCaptionSuggestions</code></h4>
+<h3 id="getveimagecaptionsuggestions" tabindex="-1"><code>getVeImageCaptionSuggestions</code></h3>
 <p>Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeImageCaptionSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeImageCaptionSuggestions(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getveredirectsuggestions" tabindex="-1"><code>getVeRedirectSuggestions</code></h4>
+<h3 id="getveredirectsuggestions" tabindex="-1"><code>getVeRedirectSuggestions</code></h3>
 <p>Simulate VE Redirect suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeRedirectSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeRedirectSuggestions(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getverequiredtemplateparamsuggestions" tabindex="-1"><code>getVeRequiredTemplateParamSuggestions</code></h4>
+<h3 id="getverequiredtemplateparamsuggestions" tabindex="-1"><code>getVeRequiredTemplateParamSuggestions</code></h3>
 <p>Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeRequiredTemplateParamSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeRequiredTemplateParamSuggestions(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="getvesuggestedlinksuggestions" tabindex="-1"><code>getVeSuggestedLinkSuggestions</code></h4>
+<h3 id="getvesuggestedlinksuggestions" tabindex="-1"><code>getVeSuggestedLinkSuggestions</code></h3>
 <p>Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -994,18 +898,18 @@ Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few co
 <li><code>options</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeSuggestedLinkSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeSuggestedLinkSuggestions(&quot;Wet Leg&quot;, { threshold: 0.8 })
 </code></pre>
-<h4 id="getvetextmatchsuggestions" tabindex="-1"><code>getVeTextMatchSuggestions</code></h4>
+<h3 id="getvetextmatchsuggestions" tabindex="-1"><code>getVeTextMatchSuggestions</code></h3>
 <p>Simulate VE TextMatch suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code> - Page title to evaluate</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeTextMatchSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeTextMatchSuggestions(&quot;Ips pini&quot;)
 </code></pre>
-<h4 id="getvetonesuggestions" tabindex="-1"><code>getVeToneSuggestions</code></h4>
+<h3 id="getvetonesuggestions" tabindex="-1"><code>getVeToneSuggestions</code></h3>
 <p>Simulate VE Tone suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -1013,80 +917,118 @@ Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few co
 <li><code>options</code> - Optional threshold and max candidates</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeToneSuggestions(&quot;Cat&quot;, { maxCandidates: 5 })
+<pre><code class="language-ts">const suggestions = await wiki.getVeToneSuggestions(&quot;Artificial intelligence&quot;, {
+  threshold: 0.8,
+  maxCandidates: 20,
+})
 </code></pre>
-<h4 id="getveyearlinksuggestions" tabindex="-1"><code>getVeYearLinkSuggestions</code></h4>
+<h3 id="getveyearlinksuggestions" tabindex="-1"><code>getVeYearLinkSuggestions</code></h3>
 <p>Simulate VE YearLink suggestions for editor-open behavior (enwiki).</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>pageTitle</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const suggestions = await wiki.getVeYearLinkSuggestions(&quot;Cat&quot;)
+<pre><code class="language-ts">const suggestions = await wiki.getVeYearLinkSuggestions(&quot;United States&quot;)
 </code></pre>
-<h4 id="getwikimediabase" tabindex="-1"><code>getWikimediaBase</code></h4>
-<p>Get the base URL for the Wikimedia REST API</p>
-<p><strong>Example</strong></p>
-<pre><code class="language-ts">const wikimediaBase = wiki.getWikimediaBase()
-</code></pre>
-<h4 id="grouprevisionsbydate" tabindex="-1"><code>groupRevisionsByDate</code></h4>
-<p>Group revisions by calendar date for watchlist-style rendering.</p>
+<h2 id="formatting" tabindex="-1">Formatting</h2>
+<h3 id="formatdate" tabindex="-1"><code>formatDate</code></h3>
+<p>Format date as “DD Month YYYY” or “DD.MM.YY”.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>revisions</code> - Revisions to group (typically already newest-first)</li>
+<li><code>timestamp</code></li>
+<li><code>style</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">import type { FWPageHistoryRevision } from &quot;fakewiki/types&quot;
-const revs: FWPageHistoryRevision[] = []
-const groups = wiki.groupRevisionsByDate(revs)
+<pre><code class="language-ts">const formatted = wiki.formatDate(&quot;2026-02-26T10:30:00Z&quot;, &quot;long&quot;)
 </code></pre>
-<h4 id="inspecthistorycache" tabindex="-1"><code>inspectHistoryCache</code></h4>
-<p>Inspect cached history revisions and coverage metadata.<br>
-Useful for debugging pagination and cache behavior in prototypes.</p>
+<h3 id="formatdelta" tabindex="-1"><code>formatDelta</code></h3>
+<p>Format a revision size delta using watchlist notation.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>options</code> - Optional filters for specific page/user keys</li>
+<li><code>delta</code> - Byte delta for a revision; null/NaN are treated as zero</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const snapshot = wiki.inspectHistoryCache({ pageNames: [&quot;Cat&quot;] })
+<pre><code class="language-ts">const delta = wiki.formatDelta(42)
 </code></pre>
-<h4 id="isipaddress" tabindex="-1"><code>isIPAddress</code></h4>
-<p>Check if a username is an IP address</p>
+<h3 id="formatnicerelativetimestamp" tabindex="-1"><code>formatNiceRelativeTimestamp</code></h3>
+<p>Format relative time using the standard watchlist display preset.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username to check</li>
+<li><code>timestamp</code> - ISO timestamp, epoch milliseconds, or Date instance</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const isIp = wiki.isIPAddress(&quot;192.0.2.0&quot;)
+<pre><code class="language-ts">const relativeNice = wiki.formatNiceRelativeTimestamp(&quot;2026-02-26T10:30:00Z&quot;)
 </code></pre>
-<h4 id="istemporaryaccount" tabindex="-1"><code>isTemporaryAccount</code></h4>
-<p>Check if a username is a temporary account (starts with ~)</p>
+<h3 id="formatrelativetimestamp" tabindex="-1"><code>formatRelativeTimestamp</code></h3>
+<p>Format relative time (e.g. “2 minutes ago”, “3 days ago”).</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>userName</code> - Username to check</li>
+<li><code>timestamp</code> - ISO timestamp string, Date, or epoch</li>
+<li><code>options</code> - Formatting options for different time periods</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const isTemp = wiki.isTemporaryAccount(&quot;~20241&quot;)
+<pre><code class="language-ts">const relative = wiki.formatRelativeTimestamp(&quot;2026-02-26T10:30:00Z&quot;, {
+  seconds: &quot;words&quot;,
+  minutes: &quot;minutes&quot;,
+  hours: &quot;hours&quot;,
+  days: &quot;days&quot;,
+  weeks: &quot;weeks&quot;,
+  months: &quot;months&quot;,
+  years: &quot;years&quot;,
+})
 </code></pre>
-<h4 id="istoday" tabindex="-1"><code>isToday</code></h4>
+<h3 id="formattime" tabindex="-1"><code>formatTime</code></h3>
+<p>Format time as HH:MM.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>timestamp</code></li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const time = wiki.formatTime(&quot;2026-02-26T10:30:00Z&quot;)
+</code></pre>
+<h3 id="geteditsummaryhtml" tabindex="-1"><code>getEditSummaryHtml</code></h3>
+<p>Get the HTML representation of an edit summary</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>summary</code> - Edit summary to get the HTML representation of</li>
+<li><code>pageName</code> - Page name</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const html = await wiki.getEditSummaryHtml(&quot;Fix typo&quot;, &quot;Wet Leg&quot;)
+</code></pre>
+<h3 id="gettablefromeditsummary" tabindex="-1"><code>getTableFromEditSummary</code></h3>
+<p>Parse a toolbar-style edit summary into a table of contents</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>editSummary</code> - Edit summary to parse</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const table = wiki.getTableFromEditSummary(
+  &quot;Alter: template type, title. Add: journal, authors 1-1. Removed parameters. Some additions/deletions were parameter name changes. | [[User:UcuchaBot|Use this bot]]. [[User talk:Ucucha|Report bugs]]. | Suggested by Abductive | #UCB_toolbar&quot;,
+)
+</code></pre>
+<h3 id="istoday" tabindex="-1"><code>isToday</code></h3>
 <p>Check whether a timestamp falls on today in local time.</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>timestamp</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const today = wiki.isToday(Date.now())
+<pre><code class="language-ts">const today = wiki.isToday(&quot;2026-02-26T10:30:00Z&quot;)
 </code></pre>
-<h4 id="parsetoolbareditsummary" tabindex="-1"><code>parseToolbarEditSummary</code></h4>
+<h3 id="parsetoolbareditsummary" tabindex="-1"><code>parseToolbarEditSummary</code></h3>
 <p>Parse a toolbar edit summary into structured parts</p>
 <p><strong>Parameters</strong></p>
 <ul>
 <li><code>editSummary</code> - Edit summary to parse</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const parsed = wiki.parseToolbarEditSummary(&quot;...&quot;)
+<pre><code class="language-ts">const parsed = wiki.parseToolbarEditSummary(
+  &quot;Alter: template type, title. Add: journal, authors 1-1. Removed parameters. Some additions/deletions were parameter name changes. | [[User:UcuchaBot|Use this bot]]. [[User talk:Ucucha|Report bugs]]. | Suggested by Abductive | #UCB_toolbar&quot;,
+)
 </code></pre>
-<h4 id="preprocesseditsummary" tabindex="-1"><code>preprocessEditSummary</code></h4>
+<h3 id="preprocesseditsummary" tabindex="-1"><code>preprocessEditSummary</code></h3>
 <p>Preprocess an edit summary’s special wikitext variant to get it ready for transformation.</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -1094,9 +1036,152 @@ Useful for debugging pagination and cache behavior in prototypes.</p>
 <li><code>pageName</code> - Page name</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const preprocessed = wiki.preprocessEditSummary(&quot;| Lead | minor copyedit&quot;, &quot;Cat&quot;)
+<pre><code class="language-ts">const preprocessed = wiki.preprocessEditSummary(&quot;/* History *&quot; + &quot;/ Fix typo&quot;, &quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="runwithconcurrency" tabindex="-1"><code>runWithConcurrency</code></h4>
+<h3 id="todatekey" tabindex="-1"><code>toDateKey</code></h3>
+<p>Convert timestamp to YYYY-MM-DD key for grouping.</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>timestamp</code></li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const dateKey = wiki.toDateKey(&quot;2026-02-26T10:30:00Z&quot;)
+</code></pre>
+<h2 id="urls" tabindex="-1">URLs</h2>
+<h3 id="encodeforurl" tabindex="-1"><code>encodeForUrl</code></h3>
+<p>Encode a page title for URL usage</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>slug</code> - Page title</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const encoded = wiki.encodeForUrl(&quot;&quot;)
+</code></pre>
+<h3 id="getasseturlfromuploadurl" tabindex="-1"><code>getAssetUrlFromUploadUrl</code></h3>
+<p>Get file page URL from an upload URL<br>
+Extracts the filename from a Wikimedia Commons upload URL and returns a link to the file page</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>uploadUrl</code> - Upload URL</li>
+<li><code>pageName</code> - Page name where the file is used</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getAssetUrlFromUploadUrl(
+  &quot;https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/File.jpg/640px-File.jpg&quot;,
+  &quot;Wet Leg&quot;,
+)
+</code></pre>
+<h3 id="getediturl" tabindex="-1"><code>getEditUrl</code></h3>
+<p>Get URL for editing a page</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>pageName</code> - Page title</li>
+<li><code>sectionTitle</code> - Optional section name (e.g. from edit summary like /</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getEditUrl(&quot;Wet Leg&quot;)
+</code></pre>
+<h3 id="gethistoryurl" tabindex="-1"><code>getHistoryUrl</code></h3>
+<p>Get URL for page history</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>pageName</code> - Page title</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getHistoryUrl(&quot;Wet Leg&quot;)
+</code></pre>
+<h3 id="getmediawikibase" tabindex="-1"><code>getMediawikiBase</code></h3>
+<p>Get the base URL for the MediaWiki REST API</p>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const mediawikiBase = wiki.getMediawikiBase()
+</code></pre>
+<h3 id="getpageurl" tabindex="-1"><code>getPageUrl</code></h3>
+<p>Get URL for a page</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>pageName</code> - Page title</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getPageUrl(&quot;Wet Leg&quot;)
+</code></pre>
+<h3 id="getrevisionurl" tabindex="-1"><code>getRevisionUrl</code></h3>
+<p>Get URL for viewing a revision diff</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>id</code> - Revision ID</li>
+<li><code>pageName</code> - Page title</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getRevisionUrl(1337619110, &quot;Wet Leg&quot;)
+</code></pre>
+<h3 id="getrevisionviewurl" tabindex="-1"><code>getRevisionViewUrl</code></h3>
+<p>Get URL for viewing a specific revision (page content at that revision).<br>
+Uses oldid= which shows the revision’s content (not the diff).</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>id</code> - Revision ID</li>
+<li><code>pageName</code> - Page title</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getRevisionViewUrl(1337619110, &quot;Wet Leg&quot;)
+</code></pre>
+<h3 id="getthankurl" tabindex="-1"><code>getThankUrl</code></h3>
+<p>Get URL for thanking a user for a revision</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>id</code> - Revision ID</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getThankUrl(1337619110)
+</code></pre>
+<h3 id="getusercontribsurl" tabindex="-1"><code>getUserContribsUrl</code></h3>
+<p>Get URL for user contributions</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getUserContribsUrl(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="getusertalkurl" tabindex="-1"><code>getUserTalkUrl</code></h3>
+<p>Get URL for user talk page</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getUserTalkUrl(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="getuserurl" tabindex="-1"><code>getUserUrl</code></h3>
+<p>Get URL for a user page</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>userName</code> - Username</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const url = wiki.getUserUrl(&quot;Samwalton9&quot;)
+</code></pre>
+<h3 id="getwikimediabase" tabindex="-1"><code>getWikimediaBase</code></h3>
+<p>Get the base URL for the Wikimedia REST API</p>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const wikimediaBase = wiki.getWikimediaBase()
+</code></pre>
+<h2 id="requests" tabindex="-1">Requests</h2>
+<h3 id="createresult" tabindex="-1"><code>createResult</code></h3>
+<p>Create a new Result instance with default values</p>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const result = wiki.createResult()
+</code></pre>
+<h3 id="createresults" tabindex="-1"><code>createResults</code></h3>
+<p>Create multiple Result instances</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>count</code> - Number of results to create</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const results = wiki.createResults(3)
+</code></pre>
+<h3 id="runwithconcurrency" tabindex="-1"><code>runWithConcurrency</code></h3>
 <p>Run async tasks with a concurrency limit; returns results in input order.</p>
 <p><strong>Parameters</strong></p>
 <ul>
@@ -1105,68 +1190,94 @@ Useful for debugging pagination and cache behavior in prototypes.</p>
 <li><code>fn</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const results = await wiki.runWithConcurrency([1, 2, 3], 2, async (n) =&gt; n * 2)
+<pre><code class="language-ts">const results = await wiki.runWithConcurrency([1, 2, 3], 2, async (item) =&gt; item)
 </code></pre>
-<h4 id="searchpages" tabindex="-1"><code>searchPages</code></h4>
-<p>Full-text search across page titles and content</p>
+<h2 id="cache-and-diagnostics" tabindex="-1">Cache and diagnostics</h2>
+<h3 id="clearlistbuildingcache" tabindex="-1"><code>clearListBuildingCache</code></h3>
+<p>Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding<br>
+calls re-fetch from the API. Use when the user explicitly requests fresh recommendations.</p>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">wiki.clearListBuildingCache()
+</code></pre>
+<h3 id="clearpagehistorycache" tabindex="-1"><code>clearPageHistoryCache</code></h3>
+<p>Clear the page history cache for a page (or all pages if no name given).<br>
+Use when you need fresh data, e.g. when opening the inline history view.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>query</code> - Search query</li>
-<li><code>limit</code> - Maximum results (default: DEFAULT_SEARCH_LIMIT)</li>
+<li><code>pageName</code></li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const pageResults = await wiki.searchPages(&quot;test&quot;, 10)
+<pre><code class="language-ts">wiki.clearPageHistoryCache(&quot;Wet Leg&quot;)
 </code></pre>
-<h4 id="searchtitles" tabindex="-1"><code>searchTitles</code></h4>
-<p>Search for pages by title (autocomplete-style)</p>
+<h3 id="getcachedusercategory" tabindex="-1"><code>getCachedUserCategory</code></h3>
+<p>Read a user’s category from cache (for UI keys/test ids). Returns null if not yet loaded.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>query</code> - Search query</li>
-<li><code>limit</code> - Maximum results (default: DEFAULT_SEARCH_LIMIT)</li>
+<li><code>userName</code> - Username to look up</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const titleResults = await wiki.searchTitles(&quot;test&quot;, 10)
+<pre><code class="language-ts">const category = wiki.getCachedUserCategory(&quot;Samwalton9&quot;)
 </code></pre>
-<h4 id="searchusers" tabindex="-1"><code>searchUsers</code></h4>
-<p>Search for users by username (without avatars).</p>
+<h3 id="getcachedusercategorydisplay" tabindex="-1"><code>getCachedUserCategoryDisplay</code></h3>
+<p>Return display config (icon + color) for a user’s category from cache only.<br>
+Returns null if the user is not in the cache. Use in templates when the feed has already<br>
+populated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use<br>
+getUserCategoryDisplay instead.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>query</code> - Search query (username or part of username)</li>
-<li><code>limit</code> - Maximum results (default: DEFAULT_SEARCH_LIMIT)</li>
+<li><code>userName</code> - Username to look up</li>
+<li><code>options</code> - Optional overrides; <code>userTypeConfig</code> merges with the default per-category display config</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const users = await wiki.searchUsers(&quot;Alice&quot;, 10)
+<pre><code class="language-ts">const display = wiki.getCachedUserCategoryDisplay(&quot;Samwalton9&quot;)
 </code></pre>
-<h4 id="searchuserswithavatars" tabindex="-1"><code>searchUsersWithAvatars</code></h4>
-<p>Search for users by username and fetch their avatars.</p>
+<h3 id="getparentrevisionidfromcache" tabindex="-1"><code>getParentRevisionIdFromCache</code></h3>
+<p>Get the parent (previous) revision ID for a revision on a page from cache only.<br>
+Does not trigger any network request.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>query</code> - Search query (username or part of username)</li>
-<li><code>limit</code> - Maximum results (default: DEFAULT_SEARCH_LIMIT)</li>
+<li><code>pageName</code> - Page title</li>
+<li><code>revId</code> - Revision ID to look up in the cached page history</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const users = await wiki.searchUsersWithAvatars(&quot;Bob&quot;, 5)
+<pre><code class="language-ts">const parentId = wiki.getParentRevisionIdFromCache(&quot;Wet Leg&quot;, 1337619110)
 </code></pre>
-<h4 id="todatekey" tabindex="-1"><code>toDateKey</code></h4>
-<p>Convert timestamp to YYYY-MM-DD key for grouping.</p>
+<h3 id="inspecthistorycache" tabindex="-1"><code>inspectHistoryCache</code></h3>
+<p>Inspect cached history revisions and coverage metadata.<br>
+Useful for debugging pagination and cache behavior in prototypes.</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>timestamp</code></li>
+<li><code>options</code> - Optional filters for specific page/user keys</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const dateKey = wiki.toDateKey(&quot;2020-01-15T10:00:00Z&quot;)
+<pre><code class="language-ts">const snapshot = wiki.inspectHistoryCache({
+  pageNames: [&quot;Wet Leg&quot;, &quot;Confidence Man (band)&quot;],
+  userNames: [&quot;Todepond&quot;, &quot;Samwalton9&quot;],
+})
 </code></pre>
-<h4 id="transformwikitexttohtml" tabindex="-1"><code>transformWikitextToHtml</code></h4>
-<p>Transform wikitext to HTML</p>
+<h2 id="persistence" tabindex="-1">Persistence</h2>
+<h3 id="getstoragekey" tabindex="-1"><code>getStorageKey</code></h3>
+<p>Generate a storage key for a prototype</p>
 <p><strong>Parameters</strong></p>
 <ul>
-<li><code>wikitext</code> - Wikitext content</li>
-<li><code>pageTitle</code> - Page title for context (optional)</li>
+<li><code>prototypeName</code> - Name of the prototype (e.g., “PageFeed”, “CustomPageFeed”)</li>
+<li><code>keyName</code> - Name of the key (e.g., “searchQuery”, “pageName”)</li>
 </ul>
 <p><strong>Example</strong></p>
-<pre><code class="language-ts">const html = await wiki.transformWikitextToHtml(&quot;'''Hi'''&quot;, &quot;Sandbox&quot;)
+<pre><code class="language-ts">const key = wiki.getStorageKey(&quot;PageFeed&quot;, &quot;searchQuery&quot;)
 </code></pre>
-<h2 id="vue-composables-(fakewiki-%2F-fakewiki%2Fhooks)" tabindex="-1">Vue composables (<code>fakewiki</code> / <code>fakewiki/hooks</code>)</h2>
+<h3 id="getstoragekeys" tabindex="-1"><code>getStorageKeys</code></h3>
+<p>Generate multiple storage keys for a prototype</p>
+<p><strong>Parameters</strong></p>
+<ul>
+<li><code>prototypeName</code> - Name of the prototype</li>
+<li><code>keyName</code> - Base name of the key</li>
+<li><code>count</code> - Number of keys to generate</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-ts">const keys = wiki.getStorageKeys(&quot;PageFeed&quot;, &quot;searchQuery&quot;, 3)
+</code></pre>
+<h2 id="hooks" tabindex="-1">Hooks</h2>
 <h3 id="usefeed" tabindex="-1"><code>useFeed</code></h3>
 <p><em>Source:</em> <code>hooks/useFeed.ts</code></p>
 <p>Paginated combined feed of revisions from watchlist-style page and user lists via getCombinedFeed.</p>

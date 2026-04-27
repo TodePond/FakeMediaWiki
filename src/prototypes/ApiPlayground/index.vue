@@ -175,6 +175,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import type { MethodDescriptor } from "./playground-data"
 import { playgroundMethods } from "./playground-data"
+import { comparePlaygroundCategoryOrder } from "../../../packages/fakewiki/scripts/lib/method-categories"
 import ResultCode from "./ResultCode.vue"
 import ResultImage from "./ResultImage.vue"
 import ResultTablesByKey from "./ResultTablesByKey.vue"
@@ -202,27 +203,6 @@ const filteredMethods = computed(() => {
 	)
 })
 
-const CATEGORY_ORDER = [
-	"Pages and content",
-	"Revisions and diffs",
-	"Structured deltas",
-	"Search",
-	"Users",
-	"Recommendations",
-	"Predictions",
-	"Formatting",
-	"URLs",
-	"Prototyping",
-	"Requests",
-	"Utilities",
-	"Cache and diagnostics",
-	"Persistence",
-] as const
-
-const CATEGORY_ORDER_INDEX = new Map<string, number>(
-	CATEGORY_ORDER.map((name, index) => [name, index])
-)
-
 const groupedFilteredMethods = computed(() => {
 	const groups = new Map<string, MethodDescriptor[]>()
 	for (const method of filteredMethods.value) {
@@ -231,14 +211,7 @@ const groupedFilteredMethods = computed(() => {
 		groups.get(category)!.push(method)
 	}
 	return Array.from(groups.entries())
-		.sort(([a], [b]) => {
-			const ia = CATEGORY_ORDER_INDEX.get(a)
-			const ib = CATEGORY_ORDER_INDEX.get(b)
-			if (ia !== undefined && ib !== undefined) return ia - ib
-			if (ia !== undefined) return -1
-			if (ib !== undefined) return 1
-			return a.localeCompare(b)
-		})
+		.sort(([a], [b]) => comparePlaygroundCategoryOrder(a, b))
 		.map(([category, methods]) => ({ category, methods }))
 })
 

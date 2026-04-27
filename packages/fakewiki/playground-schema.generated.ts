@@ -5,417 +5,417 @@ export type PlaygroundParamSchema = { key: string; description?: string }
 export type PlaygroundMethodSchema = { name: string; description?: string; category?: string; params: PlaygroundParamSchema[]; examples?: string[] }
 
 export const playgroundSchema: PlaygroundMethodSchema[] = [
-  { name: "inspectHistoryCache", description: "Inspect cached history revisions and coverage metadata.\nUseful for debugging pagination and cache behavior in prototypes.", category: undefined, params: [
+  { name: "inspectHistoryCache", description: "Inspect cached history revisions and coverage metadata.\nUseful for debugging pagination and cache behavior in prototypes.", category: "Cache and diagnostics", params: [
       { key: "options", description: "Optional filters for specific page/user keys" }
-  ], examples: ["const snapshot = wiki.inspectHistoryCache({ pageNames: [\"Cat\"] })"] },
-  { name: "getWikimediaBase", description: "Get the base URL for the Wikimedia REST API", category: undefined, params: [
+  ], examples: ["const snapshot = wiki.inspectHistoryCache({\n  pageNames: [\"Wet Leg\", \"Confidence Man (band)\"],\n  userNames: [\"Todepond\", \"Samwalton9\"],\n})"] },
+  { name: "getWikimediaBase", description: "Get the base URL for the Wikimedia REST API", category: "URLs", params: [
 
   ], examples: ["const wikimediaBase = wiki.getWikimediaBase()"] },
-  { name: "getMediawikiBase", description: "Get the base URL for the MediaWiki REST API", category: undefined, params: [
+  { name: "getMediawikiBase", description: "Get the base URL for the MediaWiki REST API", category: "URLs", params: [
 
   ], examples: ["const mediawikiBase = wiki.getMediawikiBase()"] },
-  { name: "encodeForUrl", description: "Encode a page title for URL usage", category: undefined, params: [
+  { name: "encodeForUrl", description: "Encode a page title for URL usage", category: "URLs", params: [
       { key: "slug", description: "Page title" }
-  ], examples: ["const encoded = wiki.encodeForUrl(\"My article\")"] },
-  { name: "getPageSummary", description: "Get a page summary (extract, thumbnail, etc.)", category: undefined, params: [
+  ], examples: ["const encoded = wiki.encodeForUrl(\"\")"] },
+  { name: "getPageSummary", description: "Get a page summary (extract, thumbnail, etc.)", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const summary = await wiki.getPageSummary(\"Cat\")"] },
-  { name: "getShortDescription", description: "Get the short description for a page (from template or Wikidata).\nUses the page summary API; results are cached to avoid repeated requests.", category: undefined, params: [
+  ], examples: ["const summary = await wiki.getPageSummary(\"Wet Leg\")"] },
+  { name: "getShortDescription", description: "Get the short description for a page (from template or Wikidata).\nUses the page summary API; results are cached to avoid repeated requests.", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const description = await wiki.getShortDescription(\"Cat\")"] },
-  { name: "getPageHtml", description: "Get page content as HTML", category: undefined, params: [
+  ], examples: ["const description = await wiki.getShortDescription(\"Wet Leg\")"] },
+  { name: "getPageHtml", description: "Get page content as HTML", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const html = await wiki.getPageHtml(\"Cat\")"] },
-  { name: "getRevisionHtml", description: "Get HTML for a specific revision.\nUses the MediaWiki REST API endpoint: GET revision/{id}/html.\nFalls back to the Wikimedia REST API page/html/{title}/{revision} if needed.\nUses caching to avoid re-fetching the same revision.", category: undefined, params: [
+  ], examples: ["const html = await wiki.getPageHtml(\"Wet Leg\")"] },
+  { name: "getRevisionHtml", description: "Get HTML for a specific revision.\nUses the MediaWiki REST API endpoint: GET revision/{id}/html.\nFalls back to the Wikimedia REST API page/html/{title}/{revision} if needed.\nUses caching to avoid re-fetching the same revision.", category: "Revisions and diffs", params: [
       { key: "pageName", description: "Page title (used for Wikimedia fallback and for API compatibility)" },
       { key: "revId", description: "Revision ID" }
-  ], examples: ["const html = await wiki.getRevisionHtml(\"Cat\", 12345)"] },
-  { name: "getPageSource", description: "Get page content as wikitext source", category: undefined, params: [
+  ], examples: ["const html = await wiki.getRevisionHtml(\"Wet Leg\", 1337619110)"] },
+  { name: "getPageSource", description: "Get page content as wikitext source", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const source = await wiki.getPageSource(\"Cat\")"] },
-  { name: "getPage", description: "Get full page metadata and latest revision", category: undefined, params: [
+  ], examples: ["const source = await wiki.getPageSource(\"Wet Leg\")"] },
+  { name: "getPage", description: "Get full page metadata and latest revision", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const page = await wiki.getPage(\"Cat\")"] },
-  { name: "searchTitles", description: "Search for pages by title (autocomplete-style)", category: undefined, params: [
+  ], examples: ["const page = await wiki.getPage(\"Wet Leg\")"] },
+  { name: "searchTitles", description: "Search for pages by title (autocomplete-style)", category: "Search", params: [
       { key: "query", description: "Search query" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
-  ], examples: ["const titleResults = await wiki.searchTitles(\"test\", 10)"] },
-  { name: "searchPages", description: "Full-text search across page titles and content", category: undefined, params: [
+  ], examples: ["const titleResults = await wiki.searchTitles(\"Wet Leg\", 20)"] },
+  { name: "searchPages", description: "Full-text search across page titles and content", category: "Search", params: [
       { key: "query", description: "Search query" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
-  ], examples: ["const pageResults = await wiki.searchPages(\"test\", 10)"] },
+  ], examples: ["const pageResults = await wiki.searchPages(\"Wet Leg\", 20)"] },
   { name: "getMoreLikePages", description: "Find pages related to one or more seed pages using CirrusSearch `morelike:`.\nUses Action API search (`action=query&list=search`) with `srsearch=morelike:...`.", category: "Search", params: [
       { key: "pageTitles", description: "Seed page titles used to construct the morelike query" },
       { key: "options", description: "Optional search options (limit, offset, and namespace)" }
-  ], examples: ["const related = await wiki.getMoreLikePages([\"Cat\"], { limit: 5 })"] },
-  { name: "searchUsers", description: "Search for users by username (without avatars).", category: undefined, params: [
+  ], examples: ["const related = await wiki.getMoreLikePages(\n  [\"Wet Leg\", \"Rizzle Kicks\", \"Jade Thirlwall\"],\n  { limit: 10 },\n)"] },
+  { name: "searchUsers", description: "Search for users by username (without avatars).", category: "Search", params: [
       { key: "query", description: "Search query (username or part of username)" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
-  ], examples: ["const users = await wiki.searchUsers(\"Alice\", 10)"] },
-  { name: "searchUsersWithAvatars", description: "Search for users by username and fetch their avatars.", category: undefined, params: [
+  ], examples: ["const users = await wiki.searchUsers(\"Samwalton9\", 20)"] },
+  { name: "searchUsersWithAvatars", description: "Search for users by username and fetch their avatars.", category: "Search", params: [
       { key: "query", description: "Search query (username or part of username)" },
       { key: "limit", description: "Maximum results (default: DEFAULT_SEARCH_LIMIT)" }
-  ], examples: ["const users = await wiki.searchUsersWithAvatars(\"Bob\", 5)"] },
-  { name: "getPageHistory", description: "Get page revision history\nUses caching to avoid fetching the same data twice.\nUses older_than/newer_than cursors for pagination and filtering.", category: undefined, params: [
+  ], examples: ["const users = await wiki.searchUsersWithAvatars(\"Samwalton9\", 20)"] },
+  { name: "getPageHistory", description: "Get page revision history\nUses caching to avoid fetching the same data twice.\nUses older_than/newer_than cursors for pagination and filtering.", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" },
       { key: "options", description: "Options" }
-  ], examples: ["const history = await wiki.getPageHistory(\"Cat\", { limit: 10 })"] },
-  { name: "getUserHistory", description: "Get user contribution history (revisions made by a user)\nUses caching to avoid fetching the same data twice.\nUses older_than/newer_than cursors for pagination and filtering.", category: undefined, params: [
+  ], examples: ["const history = await wiki.getPageHistory(\"Wet Leg\")"] },
+  { name: "getUserHistory", description: "Get user contribution history (revisions made by a user)\nUses caching to avoid fetching the same data twice.\nUses older_than/newer_than cursors for pagination and filtering.", category: "Users", params: [
       { key: "userName", description: "Username" },
       { key: "options", description: "Options" }
-  ], examples: ["const history = await wiki.getUserHistory(\"Example\", { limit: 10 })"] },
-  { name: "getUsersHistory", description: "Get contributions for multiple users by calling getUserHistory for each.\nUses caching to avoid fetching the same data twice.\nUses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).", category: undefined, params: [
+  ], examples: ["const history = await wiki.getUserHistory(\"Samwalton9\")"] },
+  { name: "getUsersHistory", description: "Get contributions for multiple users by calling getUserHistory for each.\nUses caching to avoid fetching the same data twice.\nUses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few concurrent Action requests).", category: "Users", params: [
       { key: "userNames", description: "Array of usernames" },
       { key: "options", description: "Options" }
-  ], examples: ["const histories = await wiki.getUsersHistory({ userNames: [\"A\", \"B\"], limit: 10 })"] },
-  { name: "getCombinedFeed", description: "Get a combined feed of revisions from multiple users and/or pages.\nReturns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.\nCaching is handled internally by getUserHistory and getPageHistory.", category: undefined, params: [
+  ], examples: ["const histories = await wiki.getUsersHistory([\"Todepond\", \"Samwalton9\"])"] },
+  { name: "getCombinedFeed", description: "Get a combined feed of revisions from multiple users and/or pages.\nReturns revisions that match ANY of the provided users OR pages, deduplicated and sorted by timestamp.\nCaching is handled internally by getUserHistory and getPageHistory.", category: "Revisions and diffs", params: [
       { key: "options", description: "Configuration object" }
-  ], examples: ["const revisions = await wiki.getCombinedFeed({ pageNames: [\"Cat\"], userNames: [], limit: 10 })"] },
-  { name: "getRecentChanges", description: "Get global recent changes from the wiki (any pages) via Action API list=recentchanges.\nOptionally restrict to changes that \"need review\" (high revert risk) with rcshow=oresreview.\nUses rctoponly so only the latest revision of each page is returned.", category: undefined, params: [
+  ], examples: ["const revisions = await wiki.getCombinedFeed({\n  userNames: [\"Todepond\", \"Samwalton9\"],\n  pageNames: [\"Wet Leg\", \"Confidence Man (band)\"],\n  limit: 20,\n})"] },
+  { name: "getRecentChanges", description: "Get global recent changes from the wiki (any pages) via Action API list=recentchanges.\nOptionally restrict to changes that \"need review\" (high revert risk) with rcshow=oresreview.\nUses rctoponly so only the latest revision of each page is returned.", category: "Revisions and diffs", params: [
       { key: "options", description: "Configuration object" }
-  ], examples: ["const changes = await wiki.getRecentChanges({ limit: 20 })"] },
-  { name: "getRevisionTags", description: "Fetch edit tags for given revision IDs via Action API.\nUse for revisions from sources that don't include tags (e.g. page history, related changes).", category: undefined, params: [
+  ], examples: ["const changes = await wiki.getRecentChanges()"] },
+  { name: "getRevisionTags", description: "Fetch edit tags for given revision IDs via Action API.\nUse for revisions from sources that don't include tags (e.g. page history, related changes).", category: "Revisions and diffs", params: [
       { key: "revIds", description: "Revision IDs to fetch tags for" }
-  ], examples: ["const tags = await wiki.getRevisionTags([12345, 12346])"] },
-  { name: "getReferenceNeedPrediction", description: "Get reference need prediction for a revision from Lift Wing.\nPredicts the proportion of uncited sentences that need citations (0-1).\nUse for surfacing \"needs reference check\" flags when tags are unavailable.", category: undefined, params: [
+  ], examples: ["const tags = await wiki.getRevisionTags([1337619110])"] },
+  { name: "getReferenceNeedPrediction", description: "Get reference need prediction for a revision from Lift Wing.\nPredicts the proportion of uncited sentences that need citations (0-1).\nUse for surfacing \"needs reference check\" flags when tags are unavailable.", category: "Predictions", params: [
       { key: "revId", description: "Revision ID" },
       { key: "lang", description: "Language code (e.g. \"en\"). If not provided, derived from base URL" }
-  ], examples: ["const prediction = await wiki.getReferenceNeedPrediction(\"Some paragraph text to score.\", { lang: \"en\" })"] },
-  { name: "getToneCheckPrediction", description: "Get Tone Check prediction from Lift Wing edit-check model.\nDetects promotional, derogatory, or subjective language in text.", category: undefined, params: [
+  ], examples: ["const prediction = await wiki.getReferenceNeedPrediction(1337619110, \"en\")"] },
+  { name: "getToneCheckPrediction", description: "Get Tone Check prediction from Lift Wing edit-check model.\nDetects promotional, derogatory, or subjective language in text.", category: "Predictions", params: [
       { key: "originalText", description: "Text before the edit" },
       { key: "modifiedText", description: "Text after the edit (the new content to check)" },
       { key: "options", description: "Optional lang (default from wiki) and pageTitle (default \"\")" }
-  ], examples: ["const prediction = await wiki.getToneCheckPrediction(\"Some wikitext for tone.\", { lang: \"en\" })"] },
-  { name: "getToneCheckForRevision", description: "Get Tone Check prediction for a revision by comparing it with its parent.\nFetches the diff, extracts only changed lines (no context), and runs tone check.", category: undefined, params: [
+  ], examples: ["const prediction = await wiki.getToneCheckPrediction(\n  \"The band formed in 2020.\",\n  \"The band is the most talented and revolutionary group of our generation.\",\n  { lang: \"en\", pageTitle: \"Example band\" },\n)"] },
+  { name: "getToneCheckForRevision", description: "Get Tone Check prediction for a revision by comparing it with its parent.\nFetches the diff, extracts only changed lines (no context), and runs tone check.", category: "Predictions", params: [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID to check" },
       { key: "options", description: "Optional lang (default from wiki) and pageTitle (default pageName)" }
-  ], examples: ["const prediction = await wiki.getToneCheckForRevision(12345, { pageTitle: \"Cat\" })"] },
-  { name: "clearPageHistoryCache", description: "Clear the page history cache for a page (or all pages if no name given).\nUse when you need fresh data, e.g. when opening the inline history view.", category: undefined, params: [
+  ], examples: ["const prediction = await wiki.getToneCheckForRevision(\"Corsica Studios\", 1337619110, {\n  lang: \"en\",\n  pageTitle: \"Corsica Studios\",\n})"] },
+  { name: "clearPageHistoryCache", description: "Clear the page history cache for a page (or all pages if no name given).\nUse when you need fresh data, e.g. when opening the inline history view.", category: "Cache and diagnostics", params: [
       { key: "pageName" }
-  ], examples: ["wiki.clearPageHistoryCache()"] },
-  { name: "getParentRevisionIdFromCache", description: "Get the parent (previous) revision ID for a revision on a page from cache only.\nDoes not trigger any network request.", category: undefined, params: [
+  ], examples: ["wiki.clearPageHistoryCache(\"Wet Leg\")"] },
+  { name: "getParentRevisionIdFromCache", description: "Get the parent (previous) revision ID for a revision on a page from cache only.\nDoes not trigger any network request.", category: "Cache and diagnostics", params: [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID to look up in the cached page history" }
-  ], examples: ["const parentId = wiki.getParentRevisionIdFromCache(\"Cat\", 12345)"] },
-  { name: "getParentRevisionId", description: "Get the parent (previous) revision ID for a revision on a page.", category: undefined, params: [
+  ], examples: ["const parentId = wiki.getParentRevisionIdFromCache(\"Wet Leg\", 1337619110)"] },
+  { name: "getParentRevisionId", description: "Get the parent (previous) revision ID for a revision on a page.", category: "Revisions and diffs", params: [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID (we want the revision immediately older than this)" }
-  ], examples: ["const parentId = await wiki.getParentRevisionId(\"Cat\", 12345)"] },
-  { name: "getRevisionSource", description: "Get wikitext source for a revision by ID.", category: undefined, params: [
+  ], examples: ["const parentId = await wiki.getParentRevisionId(\"Corsica Studios\", 1337619110)"] },
+  { name: "getRevisionSource", description: "Get wikitext source for a revision by ID.", category: "Revisions and diffs", params: [
       { key: "revId", description: "Revision ID" }
-  ], examples: ["const source = await wiki.getRevisionSource(12345)"] },
-  { name: "getDiffSource", description: "Get source diff for a revision by comparing it with its parent (previous) revision.\nWhen there is no parent (e.g. first revision), returns a synthetic diff where\nevery line is shown as added.", category: undefined, params: [
+  ], examples: ["const source = await wiki.getRevisionSource(1337619110)"] },
+  { name: "getDiffSource", description: "Get source diff for a revision by comparing it with its parent (previous) revision.\nWhen there is no parent (e.g. first revision), returns a synthetic diff where\nevery line is shown as added.", category: "Revisions and diffs", params: [
       { key: "pageName", description: "Page title" },
       { key: "revId", description: "Revision ID to diff" }
-  ], examples: ["const compare = await wiki.getDiffSource(\"Cat\", 12345)"] },
-  { name: "getRevisionDiff", description: undefined, category: undefined, params: [
+  ], examples: ["const compare = await wiki.getDiffSource(\"Corsica Studios\", 1337619110)"] },
+  { name: "getRevisionDiff", description: undefined, category: "Revisions and diffs", params: [
       { key: "pageName" },
       { key: "revId" }
-  ], examples: ["const compare = await wiki.getRevisionDiff(\"Cat\", 12345)"] },
-  { name: "getDiffLineSegments", description: "Split a diff line into character-level highlight segments.\nConverts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.", category: undefined, params: [
+  ], examples: ["const compare = await wiki.getRevisionDiff(\"Corsica Studios\", 1337619110)"] },
+  { name: "getDiffLineSegments", description: "Split a diff line into character-level highlight segments.\nConverts API byte-based highlight ranges into string segments that can be rendered with add/remove styles.", category: "Revisions and diffs", params: [
       { key: "line", description: "Diff line from compare API" }
-  ], examples: ["import type { FWDiffLine } from \"fakewiki/types\"\nconst line = { type: 0, text: \"Hello\" } as FWDiffLine\nconst segments = wiki.getDiffLineSegments(line)"] },
-  { name: "getDiffLineClass", description: "Map compare API diff line type to a CSS class name.", category: undefined, params: [
+  ], examples: ["import type { FWDiffLine } from \"fakewiki/types\"\nconst line = {\n  type: 1,\n  text: \"Example text\",\n  highlightRanges: [{ start: 0, length: 7, type: 0 }],\n} as FWDiffLine\nconst segments = wiki.getDiffLineSegments(line)"] },
+  { name: "getDiffLineClass", description: "Map compare API diff line type to a CSS class name.", category: "Revisions and diffs", params: [
       { key: "type", description: "Diff line type (0=context, 1=add, 2=remove, 3/4/5=change)" }
   ], examples: ["const className = wiki.getDiffLineClass(0)"] },
-  { name: "getRandomPage", description: "Get a random page", category: undefined, params: [
+  { name: "getRandomPage", description: "Get a random page", category: "Pages and content", params: [
       { key: "format", description: "Format: 'summary', 'html', or 'title' (default: 'summary')" }
   ], examples: ["const random = await wiki.getRandomPage()"] },
-  { name: "getFeaturedPage", description: "Get featured page for a specific date", category: undefined, params: [
+  { name: "getFeaturedPage", description: "Get featured page for a specific date", category: "Pages and content", params: [
       { key: "date", description: "Date object or YYYY/MM/DD string (leave blank for today's featured page)" }
   ], examples: ["const featured = await wiki.getFeaturedPage()"] },
-  { name: "getOnThisDay", description: "Get \"On This Day\" content for a given type", category: undefined, params: [
+  { name: "getOnThisDay", description: "Get \"On This Day\" content for a given type", category: "Pages and content", params: [
       { key: "type", description: "Type: 'events', 'births', 'deaths', 'holidays', 'selected'" },
       { key: "date", description: "Date object or MM/DD string" }
   ], examples: ["const onThisDay = await wiki.getOnThisDay()"] },
-  { name: "getAnnouncements", description: "Get current announcements", category: undefined, params: [
+  { name: "getAnnouncements", description: "Get current announcements", category: "Pages and content", params: [
 
   ], examples: ["const announcements = await wiki.getAnnouncements()"] },
-  { name: "getPageMedia", description: "Get page media (images, audio, etc.)", category: undefined, params: [
+  { name: "getPageMedia", description: "Get page media (images, audio, etc.)", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const media = await wiki.getPageMedia(\"Cat\")"] },
-  { name: "getPagesLinks", description: "Get outgoing wikilinks for multiple pages (intra-language links)\nAutomatically handles pagination to fetch all links.", category: undefined, params: [
+  ], examples: ["const media = await wiki.getPageMedia(\"Wet Leg\")"] },
+  { name: "getPagesLinks", description: "Get outgoing wikilinks for multiple pages (intra-language links)\nAutomatically handles pagination to fetch all links.", category: "Pages and content", params: [
       { key: "pageNames", description: "Array of page titles" },
       { key: "options", description: "Options" }
-  ], examples: ["const links = await wiki.getPagesLinks([\"Cat\", \"Dog\"], 50)"] },
-  { name: "getPagesLinksAndBacklinks", description: "Get outgoing links and backlinks for the given pages in one call.\nConvenience that runs getPagesLinks and getPagesBacklinks in parallel.", category: undefined, params: [
+  ], examples: ["const links = await wiki.getPagesLinks([\"Wet Leg\", \"Confidence Man (band)\"])"] },
+  { name: "getPagesLinksAndBacklinks", description: "Get outgoing links and backlinks for the given pages in one call.\nConvenience that runs getPagesLinks and getPagesBacklinks in parallel.", category: "Pages and content", params: [
       { key: "pageNames", description: "Array of page titles" },
       { key: "options", description: "Options (namespace for both; backlinkLimit for backlinks only)" }
-  ], examples: ["const links = await wiki.getPagesLinksAndBacklinks([\"Cat\"], 50)"] },
-  { name: "getPagesBacklinks", description: "Get pages that link to the given page(s) (backlinks / \"What links here\")\nUses MediaWiki Action API prop=linkshere.", category: undefined, params: [
+  ], examples: ["const links = await wiki.getPagesLinksAndBacklinks([\"Wet Leg\", \"Confidence Man (band)\"])"] },
+  { name: "getPagesBacklinks", description: "Get pages that link to the given page(s) (backlinks / \"What links here\")\nUses MediaWiki Action API prop=linkshere.", category: "Pages and content", params: [
       { key: "pageNames", description: "Array of page titles to find backlinks for" },
       { key: "options", description: "Options" }
-  ], examples: ["const backlinks = await wiki.getPagesBacklinks([\"Cat\"], 50)"] },
-  { name: "getRelatedChanges", description: "Get related changes using the Action API feedrecentchanges (1–2 requests total).\nReturns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).", category: undefined, params: [
+  ], examples: ["const backlinks = await wiki.getPagesBacklinks([\"Wet Leg\", \"Confidence Man (band)\"])"] },
+  { name: "getRelatedChanges", description: "Get related changes using the Action API feedrecentchanges (1–2 requests total).\nReturns recent edits on pages linked from the target (outgoing) and/or pages that link to the target (incoming).", category: "Recommendations", params: [
       { key: "targetPageName", description: "Page title to get related changes for" },
       { key: "options", description: "showOutgoing: changes on pages the target links to (default true); showIncoming: changes on pages that link to the target (default true); limit: max items per direction 1–50 (default 50); days: 1–30 (default 7); from: optional lower-bound timestamp; to: optional upper-bound timestamp (useful for older-page pagination)" }
-  ], examples: ["const changes = await wiki.getRelatedChanges(\"Cat\", { limit: 20, days: 7 })"] },
-  { name: "getTopRelatedChanges", description: "Get related changes from multiple seed pages, merged and filtered to the top N% by score.\nCounts and score are per-page: \"which feeds this page appears in\" (any revision). Same\nfeedCountBidirectional/Outgoing/Backlink and score are shown on every revision of that page.\nUses scoreMultipliers (default bidirectional×4, outgoing×2, backlink×1). No extra API calls.\nOrder is preserved (by timestamp desc); no extra sorting after filtering.", category: undefined, params: [
+  ], examples: ["const changes = await wiki.getRelatedChanges(\"Wet Leg\")"] },
+  { name: "getTopRelatedChanges", description: "Get related changes from multiple seed pages, merged and filtered to the top N% by score.\nCounts and score are per-page: \"which feeds this page appears in\" (any revision). Same\nfeedCountBidirectional/Outgoing/Backlink and score are shown on every revision of that page.\nUses scoreMultipliers (default bidirectional×4, outgoing×2, backlink×1). No extra API calls.\nOrder is preserved (by timestamp desc); no extra sorting after filtering.", category: "Recommendations", params: [
       { key: "pageNames" },
       { key: "options" }
-  ], examples: ["const topChanges = await wiki.getTopRelatedChanges([\"Cat\", \"Dog\"], { limit: 20, days: 7, percentage: 10 })"] },
-  { name: "getTopRelatedPages", description: "Get the list of page titles that appear in the top N% of related changes by score.\nSame options as getTopRelatedChanges; returns unique page names in order of first appearance,\neach with the score from the first change that introduced that page (static per page),\nplus the changes that were retrieved as part of the scoring process (with sourcePageNames and link-type info).", category: undefined, params: [
+  ], examples: ["const topChanges = await wiki.getTopRelatedChanges(\n  [\"Wet Leg\", \"Confidence Man (band)\"],\n  { percentage: 1 },\n)"] },
+  { name: "getTopRelatedPages", description: "Get the list of page titles that appear in the top N% of related changes by score.\nSame options as getTopRelatedChanges; returns unique page names in order of first appearance,\neach with the score from the first change that introduced that page (static per page),\nplus the changes that were retrieved as part of the scoring process (with sourcePageNames and link-type info).", category: "Recommendations", params: [
       { key: "pageNames" },
       { key: "options" }
-  ], examples: ["const topPages = await wiki.getTopRelatedPages([\"Cat\"], { limit: 20, days: 7, percentage: 15 })"] },
-  { name: "getPageThumbnail", description: "Get thumbnail image for a page.\nUses the lead image (page summary) when available; otherwise falls back to the\nfirst image on the page (e.g. infobox image).", category: undefined, params: [
+  ], examples: ["const topPages = await wiki.getTopRelatedPages(\n  [\"Wet Leg\", \"Confidence Man (band)\"],\n  { percentage: 1 },\n)"] },
+  { name: "getPageThumbnail", description: "Get thumbnail image for a page.\nUses the lead image (page summary) when available; otherwise falls back to the\nfirst image on the page (e.g. infobox image).", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const thumbnail = await wiki.getPageThumbnail(\"Cat\")"] },
-  { name: "getPageThumbnails", description: "Get thumbnail URLs for multiple pages (lead image from each page).\nUses the Action API pageimages in batches of 50.", category: undefined, params: [
+  ], examples: ["const thumbnail = await wiki.getPageThumbnail(\"Wet Leg\")"] },
+  { name: "getPageThumbnails", description: "Get thumbnail URLs for multiple pages (lead image from each page).\nUses the Action API pageimages in batches of 50.", category: "Pages and content", params: [
       { key: "pageNames", description: "Page titles" },
       { key: "baseUrl", description: "Wiki base URL (e.g. https://en.wikipedia.org/). Defaults to this.base" }
-  ], examples: ["const thumbnails = await wiki.getPageThumbnails([\"Cat\", \"Dog\"])"] },
-  { name: "getListBuilding", description: "Get a list of articles related to a seed page from the list-building API.\nCombines results from readers, content (links), and morelike models (serpentine order).", category: undefined, params: [
+  ], examples: ["const thumbnails = await wiki.getPageThumbnails([\"Wet Leg\", \"Confidence Man (band)\"])"] },
+  { name: "getListBuilding", description: "Get a list of articles related to a seed page from the list-building API.\nCombines results from readers, content (links), and morelike models (serpentine order).", category: "Recommendations", params: [
       { key: "lang", description: "Language code (e.g. \"en\")" },
       { key: "options", description: "Optional page title (seed), QID, and per-source result count (default 10)" }
-  ], examples: ["const list = await wiki.getListBuilding(\"en\", { pageTitle: \"Cat\", qid: \"Q146\", k: 4 })"] },
-  { name: "clearListBuildingCache", description: "Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding\ncalls re-fetch from the API. Use when the user explicitly requests fresh recommendations.", category: undefined, params: [
+  ], examples: ["const list = await wiki.getListBuilding(\"en\", { pageTitle: \"Wet Leg\" })"] },
+  { name: "clearListBuildingCache", description: "Clear the list-building cache so the next getListBuilding / getMultiPageListBuilding\ncalls re-fetch from the API. Use when the user explicitly requests fresh recommendations.", category: "Cache and diagnostics", params: [
 
   ], examples: ["wiki.clearListBuildingCache()"] },
-  { name: "getMultiPageListBuilding", description: "Get list-building results for multiple seed pages. Returns the final aggregated list\ndeduped by recommended page and sorted by quality (best first). Optionally pass onLoad\nto receive progressively complete lists (each call is the full current list, same shape).", category: undefined, params: [
+  { name: "getMultiPageListBuilding", description: "Get list-building results for multiple seed pages. Returns the final aggregated list\ndeduped by recommended page and sorted by quality (best first). Optionally pass onLoad\nto receive progressively complete lists (each call is the full current list, same shape).", category: "Recommendations", params: [
       { key: "lang", description: "Language code (e.g. \"en\")" },
       { key: "pageTitles", description: "Seed page titles (deduplicated; empty titles skipped)" },
       { key: "options", description: "Optional k and onLoad callback (always processes one seed page at a time)" }
-  ], examples: ["const list = await wiki.getMultiPageListBuilding(\"en\", [\"Cat\", \"Dog\"], { k: 4 })"] },
-  { name: "getPageHero", description: "Get page hero image: thumbnail if present, otherwise the first media image.", category: undefined, params: [
+  ], examples: ["const list = await wiki.getMultiPageListBuilding(\"en\", [\"Wet Leg\", \"Confidence Man (band)\"])"] },
+  { name: "getPageHero", description: "Get page hero image: thumbnail if present, otherwise the first media image.", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const hero = await wiki.getPageHero(\"Cat\")"] },
-  { name: "transformWikitextToHtml", description: "Transform wikitext to HTML", category: undefined, params: [
+  ], examples: ["const hero = await wiki.getPageHero(\"Wet Leg\")"] },
+  { name: "transformWikitextToHtml", description: "Transform wikitext to HTML", category: "Pages and content", params: [
       { key: "wikitext", description: "Wikitext content" },
       { key: "pageTitle", description: "Page title for context (optional)" }
-  ], examples: ["const html = await wiki.transformWikitextToHtml(\"'''Hi'''\", \"Sandbox\")"] },
-  { name: "getPageCategories", description: "Get page categories", category: undefined, params: [
+  ], examples: ["const html = await wiki.transformWikitextToHtml(\"Hello '''world'''\", \"Main_Page\")"] },
+  { name: "getPageCategories", description: "Get page categories", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const categories = await wiki.getPageCategories(\"Cat\")"] },
-  { name: "getPageMobileHtml", description: "Get page mobile-optimized HTML", category: undefined, params: [
+  ], examples: ["const categories = await wiki.getPageCategories(\"Wet Leg\")"] },
+  { name: "getPageMobileHtml", description: "Get page mobile-optimized HTML", category: "Pages and content", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const html = await wiki.getPageMobileHtml(\"Cat\")"] },
-  { name: "getUserAvatar", description: "Infer a user avatar image from their user page", category: undefined, params: [
+  ], examples: ["const html = await wiki.getPageMobileHtml(\"Wet Leg\")"] },
+  { name: "getUserAvatar", description: "Infer a user avatar image from their user page", category: "Users", params: [
       { key: "userName", description: "Username" }
-  ], examples: ["const avatarUrl = await wiki.getUserAvatar(\"Example\")"] },
-  { name: "getUserInfo", description: "Get user information including edit count, registration date, and account type\nResults are cached in memory to avoid repeated API calls for the same user.", category: undefined, params: [
+  ], examples: ["const avatarUrl = await wiki.getUserAvatar(\"Samwalton9\")"] },
+  { name: "getUserInfo", description: "Get user information including edit count, registration date, and account type\nResults are cached in memory to avoid repeated API calls for the same user.", category: "Users", params: [
       { key: "userName", description: "Username or IP address" }
-  ], examples: ["const userInfo = await wiki.getUserInfo(\"Example\")"] },
-  { name: "isTemporaryAccount", description: "Check if a username is a temporary account (starts with ~)", category: undefined, params: [
+  ], examples: ["const userInfo = await wiki.getUserInfo(\"Samwalton9\")"] },
+  { name: "isTemporaryAccount", description: "Check if a username is a temporary account (starts with ~)", category: "Users", params: [
       { key: "userName", description: "Username to check" }
-  ], examples: ["const isTemp = wiki.isTemporaryAccount(\"~20241\")"] },
-  { name: "isIPAddress", description: "Check if a username is an IP address", category: undefined, params: [
+  ], examples: ["const isTemp = wiki.isTemporaryAccount(\"Samwalton9\")"] },
+  { name: "isIPAddress", description: "Check if a username is an IP address", category: "Users", params: [
       { key: "userName", description: "Username to check" }
-  ], examples: ["const isIp = wiki.isIPAddress(\"192.0.2.0\")"] },
-  { name: "getDaysOfActivity", description: "Calculate days of activity from registration date", category: undefined, params: [
+  ], examples: ["const isIp = wiki.isIPAddress(\"Samwalton9\")"] },
+  { name: "getDaysOfActivity", description: "Calculate days of activity from registration date", category: "Users", params: [
       { key: "registrationDate", description: "ISO timestamp string (e.g., \"2007-06-07T16:36:03Z\")" }
-  ], examples: ["const days = wiki.getDaysOfActivity(\"2020-01-15T00:00:00Z\")"] },
-  { name: "getUserCategory", description: "Get a user's category (cache-aware main entry point).\nReads from category cache when available; otherwise fetches user info and caches the result.", category: undefined, params: [
+  ], examples: ["const days = wiki.getDaysOfActivity(\"2025-02-26T10:30:00Z\")"] },
+  { name: "getUserCategory", description: "Get a user's category (cache-aware main entry point).\nReads from category cache when available; otherwise fetches user info and caches the result.", category: "Users", params: [
       { key: "userName", description: "Username to classify" }
-  ], examples: ["const category = await wiki.getUserCategory(\"Example\")"] },
-  { name: "getCachedUserCategoryDisplay", description: "Return display config (icon + color) for a user's category from cache only.\nReturns null if the user is not in the cache. Use in templates when the feed has already\npopulated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use\ngetUserCategoryDisplay instead.", category: undefined, params: [
+  ], examples: ["const category = await wiki.getUserCategory(\"Samwalton9\")"] },
+  { name: "getCachedUserCategoryDisplay", description: "Return display config (icon + color) for a user's category from cache only.\nReturns null if the user is not in the cache. Use in templates when the feed has already\npopulated the cache (e.g. via getUserCategory in feed hooks). For on-demand fetch use\ngetUserCategoryDisplay instead.", category: "Cache and diagnostics", params: [
       { key: "userName", description: "Username to look up" },
       { key: "options", description: "Optional overrides; `userTypeConfig` merges with the default per-category display config" }
-  ], examples: ["const display = wiki.getCachedUserCategoryDisplay(\"Example\", {})"] },
-  { name: "getUserCategoryDisplay", description: "Return display config (icon + color) for a user's category. Uses cache when available;\notherwise fetches user info and caches the category, then returns the display config.", category: undefined, params: [
+  ], examples: ["const display = wiki.getCachedUserCategoryDisplay(\"Samwalton9\")"] },
+  { name: "getUserCategoryDisplay", description: "Return display config (icon + color) for a user's category. Uses cache when available;\notherwise fetches user info and caches the category, then returns the display config.", category: "Users", params: [
       { key: "userName", description: "Username to look up" },
       { key: "options", description: "Optional overrides; `userTypeConfig` merges with the default per-category display config" }
-  ], examples: ["const display = await wiki.getUserCategoryDisplay(\"Example\")"] },
-  { name: "getCachedUserCategory", description: "Read a user's category from cache (for UI keys/test ids). Returns null if not yet loaded.", category: undefined, params: [
+  ], examples: ["const display = await wiki.getUserCategoryDisplay(\"Samwalton9\")"] },
+  { name: "getCachedUserCategory", description: "Read a user's category from cache (for UI keys/test ids). Returns null if not yet loaded.", category: "Cache and diagnostics", params: [
       { key: "userName", description: "Username to look up" }
-  ], examples: ["const category = wiki.getCachedUserCategory(\"Example\")"] },
-  { name: "getTableFromEditSummary", description: "Parse a toolbar-style edit summary into a table of contents", category: undefined, params: [
+  ], examples: ["const category = wiki.getCachedUserCategory(\"Samwalton9\")"] },
+  { name: "getTableFromEditSummary", description: "Parse a toolbar-style edit summary into a table of contents", category: "Formatting", params: [
       { key: "editSummary", description: "Edit summary to parse" }
-  ], examples: ["const table = wiki.getTableFromEditSummary(\"(toolbar) | section | comment\")"] },
-  { name: "parseToolbarEditSummary", description: "Parse a toolbar edit summary into structured parts", category: undefined, params: [
+  ], examples: ["const table = wiki.getTableFromEditSummary(\n  \"Alter: template type, title. Add: journal, authors 1-1. Removed parameters. Some additions/deletions were parameter name changes. | [[User:UcuchaBot|Use this bot]]. [[User talk:Ucucha|Report bugs]]. | Suggested by Abductive | #UCB_toolbar\",\n)"] },
+  { name: "parseToolbarEditSummary", description: "Parse a toolbar edit summary into structured parts", category: "Formatting", params: [
       { key: "editSummary", description: "Edit summary to parse" }
-  ], examples: ["const parsed = wiki.parseToolbarEditSummary(\"...\")"] },
-  { name: "preprocessEditSummary", description: "Preprocess an edit summary's special wikitext variant to get it ready for transformation.", category: undefined, params: [
+  ], examples: ["const parsed = wiki.parseToolbarEditSummary(\n  \"Alter: template type, title. Add: journal, authors 1-1. Removed parameters. Some additions/deletions were parameter name changes. | [[User:UcuchaBot|Use this bot]]. [[User talk:Ucucha|Report bugs]]. | Suggested by Abductive | #UCB_toolbar\",\n)"] },
+  { name: "preprocessEditSummary", description: "Preprocess an edit summary's special wikitext variant to get it ready for transformation.", category: "Formatting", params: [
       { key: "summary", description: "Edit summary to preprocess" },
       { key: "pageName", description: "Page name" }
-  ], examples: ["const preprocessed = wiki.preprocessEditSummary(\"| Lead | minor copyedit\", \"Cat\")"] },
-  { name: "getEditSummaryHtml", description: "Get the HTML representation of an edit summary", category: undefined, params: [
+  ], examples: ["const preprocessed = wiki.preprocessEditSummary(\"/* History *\" + \"/ Fix typo\", \"Wet Leg\")"] },
+  { name: "getEditSummaryHtml", description: "Get the HTML representation of an edit summary", category: "Formatting", params: [
       { key: "summary", description: "Edit summary to get the HTML representation of" },
       { key: "pageName", description: "Page name" }
-  ], examples: ["const html = await wiki.getEditSummaryHtml(\"fix typo\", \"Cat\")"] },
-  { name: "formatDate", description: "Format date as \"DD Month YYYY\" or \"DD.MM.YY\".", category: undefined, params: [
+  ], examples: ["const html = await wiki.getEditSummaryHtml(\"Fix typo\", \"Wet Leg\")"] },
+  { name: "formatDate", description: "Format date as \"DD Month YYYY\" or \"DD.MM.YY\".", category: "Formatting", params: [
       { key: "timestamp" },
       { key: "style" }
-  ], examples: ["const formatted = wiki.formatDate(\"2020-01-15T10:00:00Z\", \"long\")"] },
-  { name: "toDateKey", description: "Convert timestamp to YYYY-MM-DD key for grouping.", category: undefined, params: [
+  ], examples: ["const formatted = wiki.formatDate(\"2026-02-26T10:30:00Z\", \"long\")"] },
+  { name: "toDateKey", description: "Convert timestamp to YYYY-MM-DD key for grouping.", category: "Formatting", params: [
       { key: "timestamp" }
-  ], examples: ["const dateKey = wiki.toDateKey(\"2020-01-15T10:00:00Z\")"] },
-  { name: "formatTime", description: "Format time as HH:MM.", category: undefined, params: [
+  ], examples: ["const dateKey = wiki.toDateKey(\"2026-02-26T10:30:00Z\")"] },
+  { name: "formatTime", description: "Format time as HH:MM.", category: "Formatting", params: [
       { key: "timestamp" }
-  ], examples: ["const time = wiki.formatTime(\"2020-01-15T10:00:00Z\")"] },
-  { name: "isToday", description: "Check whether a timestamp falls on today in local time.", category: undefined, params: [
+  ], examples: ["const time = wiki.formatTime(\"2026-02-26T10:30:00Z\")"] },
+  { name: "isToday", description: "Check whether a timestamp falls on today in local time.", category: "Formatting", params: [
       { key: "timestamp" }
-  ], examples: ["const today = wiki.isToday(Date.now())"] },
-  { name: "formatRelativeTimestamp", description: "Format relative time (e.g. \"2 minutes ago\", \"3 days ago\").", category: undefined, params: [
+  ], examples: ["const today = wiki.isToday(\"2026-02-26T10:30:00Z\")"] },
+  { name: "formatRelativeTimestamp", description: "Format relative time (e.g. \"2 minutes ago\", \"3 days ago\").", category: "Formatting", params: [
       { key: "timestamp", description: "ISO timestamp string, Date, or epoch" },
       { key: "options", description: "Formatting options for different time periods" }
-  ], examples: ["const relative = wiki.formatRelativeTimestamp(\"2020-01-15T10:00:00Z\", \"long\")"] },
-  { name: "formatNiceRelativeTimestamp", description: "Format relative time using the standard watchlist display preset.", category: undefined, params: [
+  ], examples: ["const relative = wiki.formatRelativeTimestamp(\"2026-02-26T10:30:00Z\", {\n  seconds: \"words\",\n  minutes: \"minutes\",\n  hours: \"hours\",\n  days: \"days\",\n  weeks: \"weeks\",\n  months: \"months\",\n  years: \"years\",\n})"] },
+  { name: "formatNiceRelativeTimestamp", description: "Format relative time using the standard watchlist display preset.", category: "Formatting", params: [
       { key: "timestamp", description: "ISO timestamp, epoch milliseconds, or Date instance" }
-  ], examples: ["const relativeNice = wiki.formatNiceRelativeTimestamp(\"2020-01-15T10:00:00Z\")"] },
-  { name: "groupRevisionsByDate", description: "Group revisions by calendar date for watchlist-style rendering.", category: undefined, params: [
+  ], examples: ["const relativeNice = wiki.formatNiceRelativeTimestamp(\"2026-02-26T10:30:00Z\")"] },
+  { name: "groupRevisionsByDate", description: "Group revisions by calendar date for watchlist-style rendering.", category: "Revisions and diffs", params: [
       { key: "revisions", description: "Revisions to group (typically already newest-first)" }
-  ], examples: ["import type { FWPageHistoryRevision } from \"fakewiki/types\"\nconst revs: FWPageHistoryRevision[] = []\nconst groups = wiki.groupRevisionsByDate(revs)"] },
-  { name: "formatDelta", description: "Format a revision size delta using watchlist notation.", category: undefined, params: [
+  ], examples: ["import type { FWRevision } from \"fakewiki/types\"\nconst revs: FWRevision[] = [\n  {\n    id: 1337619110,\n    timestamp: \"2026-02-26T10:30:00Z\",\n    user: { name: \"Samwalton9\" },\n    delta: 42,\n    comment: \"Example summary\",\n    pageName: \"Wet Leg\",\n  },\n  {\n    id: 1337619100,\n    timestamp: \"2026-02-26T09:15:00Z\",\n    user: { name: \"Todepond\" },\n    delta: -5,\n    comment: \"Another example\",\n    pageName: \"Confidence Man (band)\",\n  },\n]\nconst groups = wiki.groupRevisionsByDate(revs)"] },
+  { name: "formatDelta", description: "Format a revision size delta using watchlist notation.", category: "Formatting", params: [
       { key: "delta", description: "Byte delta for a revision; null/NaN are treated as zero" }
-  ], examples: ["const delta = wiki.formatDelta(3)"] },
-  { name: "getUserUrl", description: "Get URL for a user page", category: undefined, params: [
+  ], examples: ["const delta = wiki.formatDelta(42)"] },
+  { name: "getUserUrl", description: "Get URL for a user page", category: "URLs", params: [
       { key: "userName", description: "Username" }
-  ], examples: ["const url = wiki.getUserUrl(\"Example\")"] },
-  { name: "getRevisionUrl", description: "Get URL for viewing a revision diff", category: undefined, params: [
+  ], examples: ["const url = wiki.getUserUrl(\"Samwalton9\")"] },
+  { name: "getRevisionUrl", description: "Get URL for viewing a revision diff", category: "URLs", params: [
       { key: "id", description: "Revision ID" },
       { key: "pageName", description: "Page title" }
-  ], examples: ["const url = wiki.getRevisionUrl(123, \"Cat\")"] },
-  { name: "getRevisionViewUrl", description: "Get URL for viewing a specific revision (page content at that revision).\nUses oldid= which shows the revision's content (not the diff).", category: undefined, params: [
+  ], examples: ["const url = wiki.getRevisionUrl(1337619110, \"Wet Leg\")"] },
+  { name: "getRevisionViewUrl", description: "Get URL for viewing a specific revision (page content at that revision).\nUses oldid= which shows the revision's content (not the diff).", category: "URLs", params: [
       { key: "id", description: "Revision ID" },
       { key: "pageName", description: "Page title" }
-  ], examples: ["const url = wiki.getRevisionViewUrl(123, \"Cat\")"] },
-  { name: "getPageUrl", description: "Get URL for a page", category: undefined, params: [
+  ], examples: ["const url = wiki.getRevisionViewUrl(1337619110, \"Wet Leg\")"] },
+  { name: "getPageUrl", description: "Get URL for a page", category: "URLs", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const url = wiki.getPageUrl(\"Cat\")"] },
-  { name: "getHistoryUrl", description: "Get URL for page history", category: undefined, params: [
+  ], examples: ["const url = wiki.getPageUrl(\"Wet Leg\")"] },
+  { name: "getHistoryUrl", description: "Get URL for page history", category: "URLs", params: [
       { key: "pageName", description: "Page title" }
-  ], examples: ["const url = wiki.getHistoryUrl(\"Cat\")"] },
-  { name: "getUserTalkUrl", description: "Get URL for user talk page", category: undefined, params: [
+  ], examples: ["const url = wiki.getHistoryUrl(\"Wet Leg\")"] },
+  { name: "getUserTalkUrl", description: "Get URL for user talk page", category: "URLs", params: [
       { key: "userName", description: "Username" }
-  ], examples: ["const url = wiki.getUserTalkUrl(\"Example\")"] },
-  { name: "getUserContribsUrl", description: "Get URL for user contributions", category: undefined, params: [
+  ], examples: ["const url = wiki.getUserTalkUrl(\"Samwalton9\")"] },
+  { name: "getUserContribsUrl", description: "Get URL for user contributions", category: "URLs", params: [
       { key: "userName", description: "Username" }
-  ], examples: ["const url = wiki.getUserContribsUrl(\"Example\")"] },
-  { name: "getEditUrl", description: "Get URL for editing a page", category: undefined, params: [
+  ], examples: ["const url = wiki.getUserContribsUrl(\"Samwalton9\")"] },
+  { name: "getEditUrl", description: "Get URL for editing a page", category: "URLs", params: [
       { key: "pageName", description: "Page title" },
       { key: "sectionTitle", description: "Optional section name (e.g. from edit summary like \\/" }
-  ], examples: ["const url = wiki.getEditUrl(\"Cat\", \"Lead\")"] },
-  { name: "getThankUrl", description: "Get URL for thanking a user for a revision", category: undefined, params: [
+  ], examples: ["const url = wiki.getEditUrl(\"Wet Leg\")"] },
+  { name: "getThankUrl", description: "Get URL for thanking a user for a revision", category: "URLs", params: [
       { key: "id", description: "Revision ID" }
-  ], examples: ["const url = wiki.getThankUrl(12345)"] },
-  { name: "getAssetUrlFromUploadUrl", description: "Get file page URL from an upload URL\nExtracts the filename from a Wikimedia Commons upload URL and returns a link to the file page", category: undefined, params: [
+  ], examples: ["const url = wiki.getThankUrl(1337619110)"] },
+  { name: "getAssetUrlFromUploadUrl", description: "Get file page URL from an upload URL\nExtracts the filename from a Wikimedia Commons upload URL and returns a link to the file page", category: "URLs", params: [
       { key: "uploadUrl", description: "Upload URL" },
       { key: "pageName", description: "Page name where the file is used" }
-  ], examples: ["const url = wiki.getAssetUrlFromUploadUrl(\"https://upload.wikimedia.org/wikipedia/commons/a/aa/Cat.png\", \"File:Cat.png\")"] },
-  { name: "getStorageKey", description: "Generate a storage key for a prototype", category: undefined, params: [
+  ], examples: ["const url = wiki.getAssetUrlFromUploadUrl(\n  \"https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/File.jpg/640px-File.jpg\",\n  \"Wet Leg\",\n)"] },
+  { name: "getStorageKey", description: "Generate a storage key for a prototype", category: "Persistence", params: [
       { key: "prototypeName", description: "Name of the prototype (e.g., \"PageFeed\", \"CustomPageFeed\")" },
       { key: "keyName", description: "Name of the key (e.g., \"searchQuery\", \"pageName\")" }
-  ], examples: ["const key = wiki.getStorageKey(\"p\", \"k\")"] },
-  { name: "getStorageKeys", description: "Generate multiple storage keys for a prototype", category: undefined, params: [
+  ], examples: ["const key = wiki.getStorageKey(\"PageFeed\", \"searchQuery\")"] },
+  { name: "getStorageKeys", description: "Generate multiple storage keys for a prototype", category: "Persistence", params: [
       { key: "prototypeName", description: "Name of the prototype" },
       { key: "keyName", description: "Base name of the key" },
       { key: "count", description: "Number of keys to generate" }
-  ], examples: ["const keys = wiki.getStorageKeys(\"p\", \"k\", 3)"] },
-  { name: "createResult", description: "Create a new Result instance with default values", category: undefined, params: [
+  ], examples: ["const keys = wiki.getStorageKeys(\"PageFeed\", \"searchQuery\", 3)"] },
+  { name: "createResult", description: "Create a new Result instance with default values", category: "Requests", params: [
 
   ], examples: ["const result = wiki.createResult()"] },
-  { name: "createResults", description: "Create multiple Result instances", category: undefined, params: [
+  { name: "createResults", description: "Create multiple Result instances", category: "Requests", params: [
       { key: "count", description: "Number of results to create" }
   ], examples: ["const results = wiki.createResults(3)"] },
-  { name: "getDeltaClass", description: "Get CSS class name for delta (change size) indicator", category: undefined, params: [
+  { name: "getDeltaClass", description: "Get CSS class name for delta (change size) indicator", category: "Revisions and diffs", params: [
       { key: "delta", description: "Change size (positive, negative, or zero)" },
       { key: "withSign" }
-  ], examples: ["const className = wiki.getDeltaClass(5)"] },
-  { name: "getRevisionPredictions", description: "Get predictions for multiple revisions and one/many Lift Wing models.", category: undefined, params: [
+  ], examples: ["const className = wiki.getDeltaClass(42)"] },
+  { name: "getRevisionPredictions", description: "Get predictions for multiple revisions and one/many Lift Wing models.", category: "Predictions", params: [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "models", description: "Lift Wing model slug(s). Defaults to damaging+goodfaith." },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
-  ], examples: ["const predictions = await wiki.getRevisionPredictions([123, 456], [\"damaging\", \"goodfaith\"])"] },
-  { name: "getDamagingPrediction", description: "Get damaging prediction for a single revision from Lift Wing API", category: undefined, params: [
+  ], examples: ["const predictions = await wiki.getRevisionPredictions(\n  [1337619110],\n  [\"damaging\", \"goodfaith\", \"revertrisk\", \"revertrisk-multilingual\"],\n)"] },
+  { name: "getDamagingPrediction", description: "Get damaging prediction for a single revision from Lift Wing API", category: "Predictions", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
-  ], examples: ["const damaging = await wiki.getDamagingPrediction(12345)"] },
-  { name: "getGoodfaithPrediction", description: "Get goodfaith prediction for a single revision from Lift Wing API", category: undefined, params: [
+  ], examples: ["const damaging = await wiki.getDamagingPrediction(1337619110)"] },
+  { name: "getGoodfaithPrediction", description: "Get goodfaith prediction for a single revision from Lift Wing API", category: "Predictions", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
-  ], examples: ["const goodfaith = await wiki.getGoodfaithPrediction(12345)"] },
-  { name: "getDamagingPredictions", description: "Get damaging predictions for multiple revisions in parallel", category: undefined, params: [
+  ], examples: ["const goodfaith = await wiki.getGoodfaithPrediction(1337619110)"] },
+  { name: "getDamagingPredictions", description: "Get damaging predictions for multiple revisions in parallel", category: "Predictions", params: [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
-  ], examples: ["const damagingMap = await wiki.getDamagingPredictions([1, 2, 3])"] },
-  { name: "getGoodFaithPredictions", description: "Get goodfaith predictions for multiple revisions in parallel", category: undefined, params: [
+  ], examples: ["const damagingMap = await wiki.getDamagingPredictions([1337619110])"] },
+  { name: "getGoodFaithPredictions", description: "Get goodfaith predictions for multiple revisions in parallel", category: "Predictions", params: [
       { key: "revisionIds", description: "Array of revision IDs" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
-  ], examples: ["const goodfaithMap = await wiki.getGoodFaithPredictions([1, 2, 3])"] },
-  { name: "getRevisionPredictionsFromOres", description: "Get damaging and goodfaith predictions from ORES (single request per batch).\nORES is a scoring aggregator; one call returns both models. Prefer this when\nLift Wing is unavailable or for lower latency on batch requests.", category: undefined, params: [
+  ], examples: ["const goodfaithMap = await wiki.getGoodFaithPredictions([1337619110])"] },
+  { name: "getRevisionPredictionsFromOres", description: "Get damaging and goodfaith predictions from ORES (single request per batch).\nORES is a scoring aggregator; one call returns both models. Prefer this when\nLift Wing is unavailable or for lower latency on batch requests.", category: "Predictions", params: [
       { key: "revisionIds", description: "Array of revision IDs (batched internally; ORES recommends ≤20 per request, ≤4 parallel)" },
       { key: "wiki", description: "Wiki code (e.g., \"enwiki\"). If not provided, extracted from base URL" }
-  ], examples: ["const predictions = await wiki.getRevisionPredictionsFromOres([1, 2, 3])"] },
+  ], examples: ["const predictions = await wiki.getRevisionPredictionsFromOres([1337619110])"] },
   { name: "getEditTypesSummary", description: "Get simple diff summary from edit-types API (counts per change type per action).", category: "Structured deltas", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "options", description: "Optional lang and content_type (default wikitext)" }
-  ], examples: ["const summary = await wiki.getEditTypesSummary(12345, { lang: \"en\" })"] },
+  ], examples: ["const summary = await wiki.getEditTypesSummary(1337619110, { lang: \"en\" })"] },
   { name: "getStructuredDeltasFromRevision", description: "Get computed structured-delta output for a revision ID in one call.\nFetches edit-types summary, then computes inline segments with configurable settings.", category: "Structured deltas", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "options", description: "Optional edit-types API options (`lang`, `content_type`) and structured-delta settings" }
-  ], examples: ["const deltas = await wiki.getStructuredDeltasFromRevision(12345, { lang: \"en\" })"] },
+  ], examples: ["const deltas = await wiki.getStructuredDeltasFromRevision(1337619110, { lang: \"en\" })"] },
   { name: "getEditTypesDetails", description: "Get structured diff details from edit-types API (context, node-edits, text-edits).", category: "Structured deltas", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "options", description: "Optional lang and content_type (default wikitext)" }
-  ], examples: ["const details = await wiki.getEditTypesDetails(12345, { lang: \"en\" })"] },
+  ], examples: ["const details = await wiki.getEditTypesDetails(1337619110, { lang: \"en\" })"] },
   { name: "getEditTypesDebug", description: "Get diff debug payload from edit-types API (full diff, tree diff, simple diff for comparison).", category: "Structured deltas", params: [
       { key: "revisionId", description: "Revision ID" },
       { key: "options", description: "Optional lang and content_type (default wikitext)" }
-  ], examples: ["const debug = await wiki.getEditTypesDebug(12345, { lang: \"en\" })"] },
+  ], examples: ["const debug = await wiki.getEditTypesDebug(1337619110, { lang: \"en\" })"] },
   { name: "normalizeStructuredDeltaSummary", description: "Normalize edit-types response into summary shape used for structured-delta computation.\nAccepts either root summary object or payload containing a `summary` property.", category: "Structured deltas", params: [
       { key: "raw" }
-  ], examples: ["const summary = wiki.normalizeStructuredDeltaSummary({ Paragraph: { add: 1, remove: 0 } })"] },
+  ], examples: ["const summary = wiki.normalizeStructuredDeltaSummary(\n  JSON.parse(\n    '{\"summary\":{\"Sentence\":{\"change\":2,\"remove\":1},\"Punctuation\":{\"remove\":1},\"Whitespace\":{\"change\":1},\"Comment\":{\"insert\":\"2\"}},\"debug\":{\"traceId\":\"demo\"}}',\n  ) as Record<string, unknown>,\n)"] },
   { name: "getStructuredDeltasFromSummary", description: "Compute structured-delta output (segments + candidates) from a normalized summary.\nReturns null when summary is empty or disabled via `improvedDeltaEnabled`.", category: "Structured deltas", params: [
       { key: "summary", description: "Pre-normalized summary (type -> action -> count)" },
       { key: "options", description: "Optional structured-delta settings overrides" }
-  ], examples: ["import type { FWEditTypesDiffSummary } from \"fakewiki/types\"\nconst summary = { Paragraph: { add: 1, remove: 0 } } as FWEditTypesDiffSummary\nconst structuredDeltas = wiki.getStructuredDeltasFromSummary(summary)"] },
-  { name: "getStructuredDeltaLevelIndex", description: "Public for snippet logic: significance level index (0 = most significant).", category: undefined, params: [
+  ], examples: ["import type { FWEditTypesDiffSummary } from \"fakewiki/types\"\nconst summary = {\n  Sentence: { change: 1 },\n  Punctuation: { remove: 1 },\n} as FWEditTypesDiffSummary\nconst structuredDeltas = wiki.getStructuredDeltasFromSummary(summary, {\n  improvedDeltaEnabled: true,\n  relativeDetailLevelEnabled: true,\n  smartFilteringEnabled: true,\n})"] },
+  { name: "getStructuredDeltaLevelIndex", description: "Public for snippet logic: significance level index (0 = most significant).", category: "Structured deltas", params: [
       { key: "type" }
   ], examples: ["const levelIndex = wiki.getStructuredDeltaLevelIndex(\"Sentence\")"] },
-  { name: "getVeToneSuggestions", description: "Simulate VE Tone suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  { name: "getVeToneSuggestions", description: "Simulate VE Tone suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle", description: "Page title to evaluate" },
       { key: "options", description: "Optional threshold and max candidates" }
-  ], examples: ["const suggestions = await wiki.getVeToneSuggestions(\"Cat\", { maxCandidates: 5 })"] },
-  { name: "getVeTextMatchSuggestions", description: "Simulate VE TextMatch suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeToneSuggestions(\"Artificial intelligence\", {\n  threshold: 0.8,\n  maxCandidates: 20,\n})"] },
+  { name: "getVeTextMatchSuggestions", description: "Simulate VE TextMatch suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle", description: "Page title to evaluate" }
-  ], examples: ["const suggestions = await wiki.getVeTextMatchSuggestions(\"Cat\")"] },
-  { name: "getVeExternalLinkSuggestions", description: "Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeTextMatchSuggestions(\"Ips pini\")"] },
+  { name: "getVeExternalLinkSuggestions", description: "Simulate VE ExternalLink suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeExternalLinkSuggestions(\"Cat\")"] },
-  { name: "getVeDuplicateLinkSuggestions", description: "Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeExternalLinkSuggestions(\"Live coding\")"] },
+  { name: "getVeDuplicateLinkSuggestions", description: "Simulate VE DuplicateLink suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" },
       { key: "options" }
-  ], examples: ["const suggestions = await wiki.getVeDuplicateLinkSuggestions(\"Cat\")"] },
-  { name: "getVeDisambiguationSuggestions", description: "Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeDuplicateLinkSuggestions(\"Little Mix\", {\n  scope: \"paragraph\",\n})"] },
+  { name: "getVeDisambiguationSuggestions", description: "Simulate VE Disambiguation suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeDisambiguationSuggestions(\"Cat\")"] },
-  { name: "getVeAddReferenceSuggestions", description: "Simulate VE AddReference suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeDisambiguationSuggestions(\"United Kingdom\")"] },
+  { name: "getVeAddReferenceSuggestions", description: "Simulate VE AddReference suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeAddReferenceSuggestions(\"Cat\")"] },
-  { name: "getVeImageCaptionSuggestions", description: "Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeAddReferenceSuggestions(\"Wet Leg\")"] },
+  { name: "getVeImageCaptionSuggestions", description: "Simulate VE ImageCaption suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeImageCaptionSuggestions(\"Cat\")"] },
-  { name: "getVeYearLinkSuggestions", description: "Simulate VE YearLink suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeImageCaptionSuggestions(\"Wet Leg\")"] },
+  { name: "getVeYearLinkSuggestions", description: "Simulate VE YearLink suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeYearLinkSuggestions(\"Cat\")"] },
-  { name: "getVeConvertReferenceSuggestions", description: "Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeYearLinkSuggestions(\"United States\")"] },
+  { name: "getVeConvertReferenceSuggestions", description: "Simulate VE ConvertReference suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" },
       { key: "options" }
-  ], examples: ["const suggestions = await wiki.getVeConvertReferenceSuggestions(\"Cat\")"] },
-  { name: "getVeCitationNeededSuggestions", description: "Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeConvertReferenceSuggestions(\"Wet Leg\", {\n  strict: \"url-only\",\n})"] },
+  { name: "getVeCitationNeededSuggestions", description: "Simulate VE CitationNeeded suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeCitationNeededSuggestions(\"Cat\")"] },
-  { name: "getVeDoubleBoldSuggestions", description: "Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeCitationNeededSuggestions(\"United Kingdom\")"] },
+  { name: "getVeDoubleBoldSuggestions", description: "Simulate VE DoubleBold suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeDoubleBoldSuggestions(\"Cat\")"] },
-  { name: "getVeRequiredTemplateParamSuggestions", description: "Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeDoubleBoldSuggestions(\"Glossary of mathematics\")"] },
+  { name: "getVeRequiredTemplateParamSuggestions", description: "Simulate VE RequiredTemplateParam suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeRequiredTemplateParamSuggestions(\"Cat\")"] },
-  { name: "getVeRedirectSuggestions", description: "Simulate VE Redirect suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeRequiredTemplateParamSuggestions(\"Wet Leg\")"] },
+  { name: "getVeRedirectSuggestions", description: "Simulate VE Redirect suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeRedirectSuggestions(\"Cat\")"] },
-  { name: "getVeSuggestedLinkSuggestions", description: "Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeRedirectSuggestions(\"Wet Leg\")"] },
+  { name: "getVeSuggestedLinkSuggestions", description: "Simulate VE SuggestedLink suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" },
       { key: "options" }
-  ], examples: ["const suggestions = await wiki.getVeSuggestedLinkSuggestions(\"Cat\")"] },
-  { name: "getVeFakeHeadingSuggestions", description: "Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeSuggestedLinkSuggestions(\"Wet Leg\", { threshold: 0.8 })"] },
+  { name: "getVeFakeHeadingSuggestions", description: "Simulate VE FakeHeading suggestions for editor-open behavior (enwiki).", category: "Suggestions", params: [
       { key: "pageTitle" }
-  ], examples: ["const suggestions = await wiki.getVeFakeHeadingSuggestions(\"Cat\")"] },
-  { name: "runWithConcurrency", description: "Run async tasks with a concurrency limit; returns results in input order.", category: undefined, params: [
+  ], examples: ["const suggestions = await wiki.getVeFakeHeadingSuggestions(\"Wet Leg\")"] },
+  { name: "runWithConcurrency", description: "Run async tasks with a concurrency limit; returns results in input order.", category: "Requests", params: [
       { key: "items" },
       { key: "concurrency" },
       { key: "fn" }
-  ], examples: ["const results = await wiki.runWithConcurrency([1, 2, 3], 2, async (n) => n * 2)"] },
+  ], examples: ["const results = await wiki.runWithConcurrency([1, 2, 3], 2, async (item) => item)"] },
 ]

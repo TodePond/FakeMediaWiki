@@ -52,6 +52,9 @@ import LlmS from "./generated/llms.vue"
 	margin: 1em 0 0.4em;
 	scroll-margin-top: 0.5rem;
 }
+:deep(.fwr-generated-body h3:not(h2 + h3)) {
+	padding-top: 2em;
+}
 :deep(.fwr-generated-body h4) {
 	font-size: var(--font-size-medium, 1.05rem);
 	margin: 0.75em 0 0.35em;

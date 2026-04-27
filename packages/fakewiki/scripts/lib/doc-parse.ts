@@ -1,5 +1,6 @@
 /**
  * Shared parsing for FakeWiki.ts and fakewiki hooks (JSDoc, method/hook extraction).
+ * Each public `FakeWiki` method must include `@category` in JSDoc; the generator fails otherwise.
  */
 
 import * as fs from "node:fs"
@@ -11,7 +12,10 @@ export type MethodSchema = {
 	name: string
 	description?: string
 	category?: string
+	/** Top-level only (matches TS signature) — used for playground schema. */
 	params: ParamSchema[]
+	/** JSDoc order, includes nested keys (e.g. `options.namespace`) for AGENTS / llms. */
+	referenceParams: ParamSchema[]
 	/** Code samples from JSDoc `@example` (each block, trimmed). */
 	examples?: string[]
 }
@@ -35,14 +39,24 @@ export function getJSDocComment(node: ts.Node, sourceFile: ts.SourceFile): strin
 	return match ? match[0] : undefined
 }
 
-export function parseParamTags(jsdoc: string): Map<string, string> {
-	const params = new Map<string, string>()
-	const paramRe = /\@param\s+(\w+)\s+[-–—]\s*([^\n*]+)/g
-	let m
+export function parseParamTagEntries(jsdoc: string): { key: string; description: string }[] {
+	if (!jsdoc) return []
+	const out: { key: string; description: string }[] = []
+	/* Name may be `options` or `options.namespace` (and optional JSDoc `{Type}` before the name) */
+	const paramRe = /\@param(?:\s+\{[^}]*\})?\s+([\w.]+)\s*[-–—]\s*([^\n*]+)/g
+	let m: RegExpExecArray | null
 	while ((m = paramRe.exec(jsdoc)) !== null) {
-		params.set(m[1], m[2].trim())
+		out.push({ key: m[1], description: m[2].trim() })
 	}
-	return params
+	return out
+}
+
+export function parseParamTags(jsdoc: string): Map<string, string> {
+	const map = new Map<string, string>()
+	for (const e of parseParamTagEntries(jsdoc)) {
+		map.set(e.key, e.description)
+	}
+	return map
 }
 
 export function getSummary(jsdoc: string): string | undefined {
@@ -125,6 +139,51 @@ export function getExamplesFromJSDoc(jsdoc: string): string[] {
 	return examples
 }
 
+function methodParamNameForDoc(
+	param: ts.ParameterDeclaration,
+	sourceFile: ts.SourceFile
+): string {
+	return param.name.getText(sourceFile).replace(/\s+/g, " ").trim()
+}
+
+function buildReferenceParamsForMethod(
+	member: ts.MethodDeclaration,
+	sourceFile: ts.SourceFile,
+	jsdoc: string | undefined
+): ParamSchema[] {
+	const paramDocs = jsdoc ? parseParamTags(jsdoc) : new Map<string, string>()
+	const tsParamNames: string[] = []
+	for (const p of member.parameters) {
+		tsParamNames.push(methodParamNameForDoc(p, sourceFile))
+	}
+	if (tsParamNames.length === 0) return []
+	const entries = jsdoc ? parseParamTagEntries(jsdoc) : []
+	const valid = entries.filter(
+		e =>
+			tsParamNames.includes(e.key) ||
+			(e.key.includes(".") &&
+				tsParamNames.includes(e.key.slice(0, e.key.indexOf("."))))
+	)
+	if (valid.length === 0) {
+		return tsParamNames.map(k => ({ key: k, description: paramDocs.get(k) }))
+	}
+	const out: ParamSchema[] = []
+	for (const t of tsParamNames) {
+		const top = valid.find(e => e.key === t)
+		if (top) {
+			out.push({ key: top.key, description: top.description })
+		} else {
+			out.push({ key: t, description: paramDocs.get(t) })
+		}
+		for (const e of valid) {
+			if (e.key.startsWith(`${t}.`) && e.key.length > t.length + 1) {
+				out.push({ key: e.key, description: e.description })
+			}
+		}
+	}
+	return out
+}
+
 export function extractFakeWikiMethods(sourceFile: ts.SourceFile): MethodSchema[] {
 	const methods: MethodSchema[] = []
 
@@ -144,19 +203,37 @@ export function extractFakeWikiMethods(sourceFile: ts.SourceFile): MethodSchema[
 						const jsdoc = getJSDocComment(member, sourceFile)
 						const paramDocs = jsdoc ? parseParamTags(jsdoc) : new Map<string, string>()
 						const description = jsdoc ? getSummary(jsdoc) : undefined
-						const category = jsdoc ? getCategory(jsdoc) : undefined
+						const categoryRaw = jsdoc ? getCategory(jsdoc) : undefined
+						if (!categoryRaw?.trim()) {
+							throw new Error(
+								`FakeWiki public method "${methodName}" is missing @category in JSDoc (${sourceFile.fileName})`
+							)
+						}
+						const category = categoryRaw.trim()
 						const examples = jsdoc ? getExamplesFromJSDoc(jsdoc) : undefined
 						const examplesOut = examples?.length ? examples : undefined
 
 						const params: ParamSchema[] = []
 						for (const param of member.parameters) {
-							const paramName = (param.name as ts.Identifier).getText(sourceFile)
+							const paramName = methodParamNameForDoc(param, sourceFile)
 							params.push({
 								key: paramName,
 								description: paramDocs.get(paramName),
 							})
 						}
-						methods.push({ name: methodName, description, category, params, examples: examplesOut })
+						const referenceParams = buildReferenceParamsForMethod(
+							member,
+							sourceFile,
+							jsdoc
+						)
+						methods.push({
+							name: methodName,
+							description,
+							category,
+							params,
+							referenceParams,
+							examples: examplesOut,
+						})
 					}
 				}
 			}
