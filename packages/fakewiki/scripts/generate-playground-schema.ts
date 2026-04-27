@@ -155,7 +155,7 @@ function emitAgentsMarkdown(methods: MethodSchema[], hooks: HookSchema[]): strin
 			lines.push("")
 			for (const p of h.params) {
 				const desc = p.description ? ` — ${mdEscapeInline(p.description)}` : ""
-				lines.push(`- \`${p.key.replace(/\n/g, " ")}\`${desc}`)
+				lines.push(`- \`${p.key}\`${desc}`)
 			}
 			lines.push("")
 		}

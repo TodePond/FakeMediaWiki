@@ -1066,7 +1066,7 @@ useFeed({
 
 **Parameters (from JSDoc `@param` where present)**
 
-- `{ 	wiki, 	pageSearchQueries, 	userSearchQueries, 	allRevisionsDataRef, }`
+- `{ wiki, pageSearchQueries, userSearchQueries, allRevisionsDataRef, }`
 
 *Import:* `import { useFeed } from "fakewiki"`
 
@@ -1085,7 +1085,7 @@ useListBuildingRecommendations({
 
 **Parameters (from JSDoc `@param` where present)**
 
-- `{ 	wiki, 	pageSearchQueries, 	allRevisionsData, 	options: opts, }`
+- `{ wiki, pageSearchQueries, allRevisionsData, options: opts, }`
 
 *Import:* `import { useListBuildingRecommendations } from "fakewiki"`
 
@@ -1118,7 +1118,7 @@ useRelatedChanges({
 
 **Parameters (from JSDoc `@param` where present)**
 
-- `{ 	wiki, 	pageName, 	options: opts, }`
+- `{ wiki, pageName, options: opts, }`
 
 *Import:* `import { useRelatedChanges } from "fakewiki"`
 
@@ -1138,7 +1138,7 @@ useRelatedChangesRecommendations({
 
 **Parameters (from JSDoc `@param` where present)**
 
-- `{ 	wiki, 	pageSearchQueries, 	allRevisionsData, 	filterKeepPercent, 	options: opts, }`
+- `{ wiki, pageSearchQueries, allRevisionsData, filterKeepPercent, options: opts, }`
 
 *Import:* `import { useRelatedChangesRecommendations } from "fakewiki"`
 
@@ -1160,7 +1160,7 @@ useStructuredDeltas({
 
 **Parameters (from JSDoc `@param` where present)**
 
-- `{ 	wiki, 	revisionIds, 	initialSettings, 	loadConcurrency: loadConcurrencyArg, 	autoLoad = true, 	initialEditTypesSummaries, 	initialEditTypesErrors, }`
+- `{ wiki, revisionIds, initialSettings, loadConcurrency: loadConcurrencyArg, autoLoad = true, initialEditTypesSummaries, initialEditTypesErrors, }`
 
 *Import:* `import { useStructuredDeltas } from "fakewiki"`
 

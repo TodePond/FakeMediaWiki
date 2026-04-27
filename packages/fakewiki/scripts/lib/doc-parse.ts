@@ -102,8 +102,13 @@ function isExported(node: ts.FunctionDeclaration): boolean {
 	return modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) ?? false
 }
 
+/** Collapse whitespace so multi-line binding patterns render as one readable line. */
+export function normalizeBindingPatternText(text: string): string {
+	return text.replace(/\s+/g, " ").trim()
+}
+
 function paramBindingKey(param: ts.ParameterDeclaration, sourceFile: ts.SourceFile): string {
-	return param.name.getText(sourceFile)
+	return normalizeBindingPatternText(param.name.getText(sourceFile))
 }
 
 export function extractHookFunctions(sourceFile: ts.SourceFile, fileBase: string): HookSchema[] {
