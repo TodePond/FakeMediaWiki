@@ -13,3 +13,4 @@ When adding or changing public `FakeWiki` methods, keep the playground in sync.
 - Add or update `playground-overrides.ts` when result rendering or options grouping needs UI hints.
 - Each public `FakeWiki` method must include `@category` in its JSDoc (labels used in the playground, `AGENTS.md`, and `llms.txt`). Add a new label only if needed; for ordering of section headers, see `PLAYGROUND_CATEGORY_ORDER` in `scripts/lib/method-categories.ts`.
 - Verify the method is callable from `src/prototypes/ApiPlayground` (FakeWiki playground).
+- Keep JSDoc `@example` fenced code aligned with the playground’s default parameter values and options shape (`src/prototypes/ApiPlayground/playground-data.ts` and `packages/fakewiki/playground-overrides.ts`), even when the UI string input differs (e.g. comma-separated page names vs. a `string[]` in the example).
