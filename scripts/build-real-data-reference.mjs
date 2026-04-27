@@ -1,7 +1,6 @@
 /**
- * Parses real-data-signals/*.md into a JSON model for the WikiSignals prototype.
- * Run: node scripts/build-real-data-reference.mjs
- * Or: npm run build-signals
+ * Parses wiki-signals/*.md into a JSON model for the WikiSignals prototype.
+ * Invoked by `npm run generate` (see packages/fakewiki). Or run directly: node scripts/build-real-data-reference.mjs
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
@@ -10,7 +9,7 @@ import { fileURLToPath } from "node:url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(__dirname, "..")
-const signalsDir = join(repoRoot, "real-data-signals")
+const signalsDir = join(repoRoot, "wiki-signals")
 const outDir = join(repoRoot, "src/prototypes/WikiSignals/generated")
 const outFile = join(outDir, "sections.json")
 

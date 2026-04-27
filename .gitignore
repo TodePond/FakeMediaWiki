@@ -40,4 +40,4 @@ entry-points/
 */watchlists/**/*
 
 # Local API capture payloads (used when regenerating signal examples)
-real-data-signals/_captures/
+wiki-signals/_captures/

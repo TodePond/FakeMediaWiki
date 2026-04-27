@@ -6,8 +6,8 @@ You can try every `FakeWiki` method with custom parameters in the [playground](h
 
 ## Additional docs
 
-- **docs/VE_SUGGESTION_TYPES_REPORT.md** – VisualEditor suggestion badge logic and suggestion-type breakdown
-- **docs/CODEX_ICONS_IN_REPO.md** – Codex icons currently used across the repo
+- **docs/VE_SUGGESTION_TYPES_REPORT.md** - VisualEditor suggestion badge logic and suggestion-type breakdown
+- **docs/CODEX_ICONS_IN_REPO.md** - Codex icons currently used across the repo
 
 ## Install
 
@@ -17,7 +17,7 @@ npm install fakewiki
 
 ## Usage
 
-**Page content** – summary (extract + thumbnail), full metadata, HTML, wikitext, or media:
+**Page content** - summary (extract + thumbnail), full metadata, HTML, wikitext, or media:
 
 ```typescript
 const summary = await wiki.getPageSummary("Wikipedia")
@@ -27,7 +27,7 @@ const source = await wiki.getPageSource("Wikipedia")
 const media = await wiki.getPageMedia("Wikipedia")
 ```
 
-**Revision feeds** – by page, user, or combined; supports `limit`, `older_than`, `newer_than`:
+**Revision feeds** - by page, user, or combined; supports `limit`, `older_than`, `newer_than`:
 
 ```typescript
 const { revisions } = await wiki.getPageHistory("Wikipedia", { limit: 20 })
@@ -39,7 +39,7 @@ const combined = await wiki.getCombinedFeed({
 })
 ```
 
-**Search** – full-text page search, title prefix (autocomplete), or users:
+**Search** - full-text page search, title prefix (autocomplete), or users:
 
 ```typescript
 const { pages } = await wiki.searchPages("quantum physics", 10)
@@ -47,7 +47,7 @@ const { pages: titleHits } = await wiki.searchTitles("Albert")
 const users = await wiki.searchUsers("Admin", 5)
 ```
 
-**Diffs and revisions** – compare revisions, fetch parent or source, parse diff lines for UI:
+**Diffs and revisions** - compare revisions, fetch parent or source, parse diff lines for UI:
 
 ```typescript
 const diff = await wiki.getRevisionDiff("Wikipedia", 123456789)
@@ -57,7 +57,7 @@ const segments = wiki.getDiffLineSegments(diff.diff[0])
 const lineClass = wiki.getDiffLineClass(line.type)
 ```
 
-**Structured deltas** – fetch edit-types summaries and compute inline structured delta segments:
+**Structured deltas** - fetch edit-types summaries and compute inline structured delta segments:
 
 ```typescript
 const summary = await wiki.getEditTypesSummary(revisionId)
@@ -66,7 +66,7 @@ const structuredForRevision = await wiki.getStructuredDeltasFromRevision(revisio
 const segments = structured?.segments ?? null
 ```
 
-**Discovery and feeds** – random page, featured article, on-this-day; related changes; link graph; list-building API:
+**Discovery and feeds** - random page, featured article, on-this-day; related changes; link graph; list-building API:
 
 ```typescript
 const random = await wiki.getRandomPage("summary")
@@ -77,7 +77,7 @@ const linksMap = await wiki.getPagesLinks(["Wikipedia", "Wet Leg"])
 const listBuilding = await wiki.getListBuilding("en", { qid: "Q123", k: 10 })
 ```
 
-**Users** – user info, avatar, category (cached); display config async or sync for templates:
+**Users** - user info, avatar, category (cached); display config async or sync for templates:
 
 ```typescript
 const user = await wiki.getUserInfo("Todepond")
@@ -85,7 +85,7 @@ const avatar = await wiki.getUserAvatar("Todepond")
 const display = await wiki.getUserCategoryDisplay("Todepond")
 ```
 
-**ML predictions** – damaging/goodfaith plus `revertrisk`:
+**ML predictions** - damaging/goodfaith plus `revertrisk`:
 
 ```typescript
 const damaging = await wiki.getDamagingPrediction(revId)
@@ -101,7 +101,7 @@ const revertriskScoresMultilingual = await wiki.getRevisionPredictions(
 const predictionsOres = await wiki.getRevisionPredictionsFromOres([revId1, revId2])
 ```
 
-**URLs and formatting** – page/revision/user/history/edit URLs; date and delta formatting; delta CSS class:
+**URLs and formatting** - page/revision/user/history/edit URLs; date and delta formatting; delta CSS class:
 
 ```typescript
 const pageUrl = wiki.getPageUrl("Wikipedia")
@@ -110,7 +110,7 @@ const formatted = wiki.formatDate(rev.timestamp, "short")
 const deltaClass = wiki.getDeltaClass(rev.delta)
 ```
 
-**Result and state helpers** – loading/error/data state for UI; storage keys for prototypes:
+**Result and state helpers** - loading/error/data state for UI; storage keys for prototypes:
 
 ```typescript
 const result = wiki.createResult<FWRevision>()
@@ -121,7 +121,7 @@ const keys = wiki.getStorageKeys("MyPrototype", "query", 3)
 
 Composables that work with `FakeWiki` for common prototype patterns. Feed hooks populate the user category cache; use `wiki.getCachedUserCategoryDisplay(userName)` in templates for icon/color.
 
-**`useFeed`** – combined feed from page and user search queries, with load-more and edit-summary processing.
+**`useFeed`** - combined feed from page and user search queries, with load-more and edit-summary processing.
 
 ```typescript
 import { useFeed } from "fakewiki"
@@ -137,7 +137,7 @@ const { allRevisionsData, loadFeed, isLoading, hasMore, loadMore } = useFeed({
 await loadFeed()
 ```
 
-**`useRelatedChanges`** – single or multi-page related changes feed with summarized comments.
+**`useRelatedChanges`** - single or multi-page related changes feed with summarized comments.
 
 ```typescript
 import { useRelatedChanges } from "fakewiki"
@@ -150,7 +150,7 @@ const { allRevisionsData, loadFeed, isLoading } = useRelatedChanges({
 await loadFeed()
 ```
 
-**`usePredictions`** – lazy-load damaging/goodfaith predictions for revision IDs, with icon/color and text for UI.
+**`usePredictions`** - lazy-load damaging/goodfaith predictions for revision IDs, with icon/color and text for UI.
 
 ```typescript
 import { usePredictions } from "fakewiki"
@@ -164,7 +164,7 @@ const state = getPredictionIcon(revisionId)
 const message = getPredictionText(revisionId)
 ```
 
-**`useRelatedChangesRecommendations`** – recommend related pages from a feed’s revisions and merge recommended revisions into the feed.
+**`useRelatedChangesRecommendations`** - recommend related pages from a feed’s revisions and merge recommended revisions into the feed.
 
 ```typescript
 import { useRelatedChangesRecommendations } from "fakewiki"
@@ -182,7 +182,7 @@ const { interleavedRevisions, loadRecommendations, recommendationProgress } =
 await loadRecommendations()
 ```
 
-**`useListBuildingRecommendations`** – recommend pages from list-building API and merge those revisions into the feed.
+**`useListBuildingRecommendations`** - recommend pages from list-building API and merge those revisions into the feed.
 
 ```typescript
 import { useListBuildingRecommendations } from "fakewiki"
@@ -198,7 +198,7 @@ const { interleavedRevisions, loadRecommendations, recommendationProgress } =
 await loadRecommendations()
 ```
 
-**`useStructuredDeltas`** – load edit-types summaries for revision IDs and compute inline structured delta segments reactively. This hook does not persist settings; pass your own refs/storage wiring if needed.
+**`useStructuredDeltas`** - load edit-types summaries for revision IDs and compute inline structured delta segments reactively. This hook does not persist settings; pass your own refs/storage wiring if needed.
 
 ```typescript
 import { useStructuredDeltas } from "fakewiki"
@@ -228,14 +228,14 @@ See the source for full options and return shapes.
 
 ## API bases
 
-- **Wikimedia REST API** – `https://en.wikipedia.org/api/rest_v1/`
-- **MediaWiki REST API** – `https://en.wikipedia.org/w/rest.php/v1/`
-- **MediaWiki Action API** – `https://en.wikipedia.org/w/api.php`
+- **Wikimedia REST API** - `https://en.wikipedia.org/api/rest_v1/`
+- **MediaWiki REST API** - `https://en.wikipedia.org/w/rest.php/v1/`
+- **MediaWiki Action API** - `https://en.wikipedia.org/w/api.php`
 
 ## Reference docs (in repo)
 
-- **docs/CODEX_REFERENCE.md** – Codex components and design tokens
-- **docs/ICON_REFERENCE.md** – Codex icons used in the project
+- **docs/CODEX_REFERENCE.md** - Codex components and design tokens
+- **docs/ICON_REFERENCE.md** - Codex icons used in the project
 
 ## External references
 

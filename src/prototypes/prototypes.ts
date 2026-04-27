@@ -128,7 +128,7 @@ export const prototypeMetadata: PrototypeTypes.PrototypeDefinition<"prototype" |
 		id: "WikiSignals",
 		name: "Wiki signals",
 		description:
-			"Interactive copy of real-data-signals markdown: run each curl example and see live responses.",
+			"Interactive copy of wiki-signals markdown: run each curl example and see live responses.",
 		category: "api",
 		wrapper: "Fullscreen",
 		title: "Wiki signals",

@@ -6,12 +6,12 @@ This project uses [Codex](https://doc.wikimedia.org/codex/), the Wikimedia desig
 
 Commonly used Codex components:
 
-- **CdxButton** – Buttons
-- **CdxTextInput** – Text inputs
-- **CdxLabel** – Form labels
-- **CdxProgressIndicator** – Loading state
-- **CdxIcon** – Icons (icons come from `@wikimedia/codex-icons`)
-- **CdxCard** – Cards
+- **CdxButton** - Buttons
+- **CdxTextInput** - Text inputs
+- **CdxLabel** - Form labels
+- **CdxProgressIndicator** - Loading state
+- **CdxIcon** - Icons (icons come from `@wikimedia/codex-icons`)
+- **CdxCard** - Cards
 
 Example:
 
@@ -35,10 +35,10 @@ Icons are provided by `@wikimedia/codex-icons` and rendered with `CdxIcon`. For 
 
 Codex exposes design tokens as CSS variables (e.g. in your app's `tokens.css` or equivalent). Typical names:
 
-- **Colors** – `--color-base`, `--color-progressive`, `--color-destructive`, `--color-subtle`
-- **Spacing** – `--spacing-50`, `--spacing-100`, ...
-- **Border** – `--border-color-base`, `--border-color-subtle`
-- **Background** – `--background-color-base`, `--background-color-interactive`
+- **Colors** - `--color-base`, `--color-progressive`, `--color-destructive`, `--color-subtle`
+- **Spacing** - `--spacing-50`, `--spacing-100`, ...
+- **Border** - `--border-color-base`, `--border-color-subtle`
+- **Background** - `--background-color-base`, `--background-color-interactive`
 
 The delta styles in `fakewiki/style/delta.css` use `--color-content-added` and `--color-content-removed`.
 

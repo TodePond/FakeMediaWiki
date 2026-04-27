@@ -358,11 +358,7 @@ export interface FWLiftWingPrediction {
 }
 
 /** Supported Lift Wing prediction model slugs used by watchlist prototypes. */
-export type FWPredictionModel =
-	| "damaging"
-	| "goodfaith"
-	| "revertrisk"
-	| "revertrisk-multilingual"
+export type FWPredictionModel = "damaging" | "goodfaith" | "revertrisk" | "revertrisk-multilingual"
 
 /** Prediction shape keyed by model slug (allows partial data per revision). */
 export type FWPredictionByModel = Partial<Record<FWPredictionModel, FWLiftWingPrediction>>
@@ -390,7 +386,7 @@ export interface FWRevisionPredictions {
 	[revisionId: number]: FWPredictionByModel
 }
 
-/** Reference need prediction from Lift Wing (proportion of uncited sentences needing citations, 0–1). */
+/** Reference need prediction from Lift Wing (proportion of uncited sentences needing citations, 0-1). */
 export interface FWReferenceNeedPrediction {
 	rn_score: number
 }

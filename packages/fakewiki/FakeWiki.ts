@@ -1609,7 +1609,7 @@ export class FakeWiki {
 
 	/**
 	 * Get reference need prediction for a revision from Lift Wing.
-	 * Predicts the proportion of uncited sentences that need citations (0–1).
+	 * Predicts the proportion of uncited sentences that need citations (0-1).
 	 * Use for surfacing "needs reference check" flags when tags are unavailable.
 	 * @param revId - Revision ID
 	 * @param lang - Language code (e.g. "en"). If not provided, derived from base URL
