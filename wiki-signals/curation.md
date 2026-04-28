@@ -1,4 +1,4 @@
-# List of endpoints for community-curated and daily “Explore”-style data
+# Curation signals
 
 ## 1) Daily featured feed (aggregated)
 

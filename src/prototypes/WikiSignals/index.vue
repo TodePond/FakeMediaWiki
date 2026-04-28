@@ -23,7 +23,7 @@
 		<h1>Wiki signals</h1>
 		<header class="rds-header">
 			<nav class="rds-toc" aria-label="Table of contents">
-				<div v-for="f in data.files" :key="f.slug" class="rds-toc__group">
+				<div v-for="f in sortedFiles" :key="f.slug" class="rds-toc__group">
 					<a :href="`#${f.slug}`" class="rds-toc__file">{{ f.title }}</a>
 					<ul>
 						<li v-for="sec in f.sections" :key="sec.id">
@@ -34,7 +34,7 @@
 			</nav>
 		</header>
 
-		<template v-for="f in data.files" :key="f.slug">
+		<template v-for="f in sortedFiles" :key="f.slug">
 			<section :id="f.slug" class="rds-file">
 				<div class="rds-h1" v-html="md.render(`# ${f.title}`)" />
 				<div v-if="f.preamble" class="rds-md" v-html="md.render(f.preamble)" />
@@ -71,6 +71,13 @@ import RunRequestBlock from "./RunRequestBlock.vue"
 import { type SectionsPayload } from "./types"
 
 const data = rawData as SectionsPayload
+
+/** Top-level doc groups (TOC + body), alphabetical by their H1 title. */
+const sortedFiles = computed(() =>
+	[...data.files].sort((a, b) =>
+		a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+	),
+)
 
 const md = new MarkdownIt({ html: true, linkify: true, typographer: true, breaks: true })
 

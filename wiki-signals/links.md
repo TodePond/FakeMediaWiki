@@ -1,4 +1,4 @@
-# List of endpoints for determining links between pages
+# Links signals
 
 ## 1) Outlinks
 
