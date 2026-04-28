@@ -13,7 +13,7 @@ const signalsDir = join(repoRoot, "wiki-signals")
 const outDir = join(repoRoot, "src/prototypes/WikiSignals/generated")
 const outFile = join(outDir, "sections.json")
 
-const SOURCES = ["analytics.md", "curation.md", "links.md", "inference.md"]
+const SOURCES = ["analytics.md", "curation.md", "links.md", "attribution.md", "inference.md"]
 
 function slugify(s) {
 	return s

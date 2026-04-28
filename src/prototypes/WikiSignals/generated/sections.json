@@ -306,6 +306,34 @@
 			]
 		},
 		{
+			"slug": "attribution",
+			"title": "Attribution signals",
+			"preamble": "",
+			"sections": [
+				{
+					"id": "attribution-1",
+					"anchor": "attribution-1-page-attribution-signals",
+					"headingLine": "## 1) Page attribution signals",
+					"titleText": "1) Page attribution signals",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nThis endpoint returns structured **attribution signals** for a wiki page so off-wiki experiences can credit Wikimedia content in line with the [Wikimedia attribution framework](https://iw.toolforge.org/wikimedia-attribution). It is a **beta** module; response shape and field semantics may change before a stable v1.\n\n### Documentation\n\n- [Attribution API](https://www.mediawiki.org/wiki/Attribution_API)\n- [REST sandbox (attribution.v0-beta)](https://www.mediawiki.org/w/index.php?title=Special:RestSandbox&api=attribution.v0-beta)\n- [Wikimedia attribution framework](https://iw.toolforge.org/wikimedia-attribution)\n- [Wikimedia APIs: access policy](https://www.mediawiki.org/wiki/Wikimedia_APIs/Access_policy)\n- [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette) (use a descriptive `User-Agent`)\n- Announcement: [wikitech-l — Attribution API (Beta) launch](https://lists.wikimedia.org/hyperkitty/list/wikitech-l@lists.wikimedia.org/thread/X46T5M3DZWV5WC3VOISSTGPYWUAVUYGQ/)\n\n### Endpoint\n\n`https://{wiki}/w/rest.php/attribution/v0-beta/pages/{title}/signals`\n\n### Method\n\n`GET`\n\n### Request shape\n\nPath parameters:\n\n- `{wiki}` — project host (example: `en.wikipedia.org`)\n- `{title}` — page title (URL-encode spaces and special characters when needed; example: `Earth`)\n\nThe route is available on Wikimedia Foundation wikis; only Wikipedia articles and media through Commons or local Wikipedia are **fully** supported at this time—other page types may return incomplete data.\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://en.wikipedia.org/w/rest.php/attribution/v0-beta/pages/Earth/signals\" \\\n\t-H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"essential\": {\n\t\t\"title\": \"Earth\",\n\t\t\"license\": {\n\t\t\t\"url\": \"https://creativecommons.org/licenses/by-sa/4.0/deed.en\",\n\t\t\t\"title\": \"Creative Commons Attribution-Share Alike 4.0\"\n\t\t},\n\t\t\"link\": \"https://en.wikipedia.org/wiki/Earth\",\n\t\t\"default_brand_marks\": [\n\t\t\t{\n\t\t\t\t\"name\": \"Default logo\",\n\t\t\t\t\"url\": \"https://en.wikipedia.org/static/images/project-logos/enwiki-25.png\",\n\t\t\t\t\"type\": \"logo\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"name\": \"Site icon\",\n\t\t\t\t\"url\": \"https://en.wikipedia.org/static/images/icons/enwiki-25.svg\",\n\t\t\t\t\"type\": \"icon\"\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"name\": \"Sound logo\",\n\t\t\t\t\"url\": \"https://upload.wikimedia.org/wikipedia/commons/9/91/Wikimedia_Sonic_Logo_-_4-seconds.wav\",\n\t\t\t\t\"type\": \"audio\"\n\t\t\t}\n\t\t],\n\t\t\"source_wiki\": {\n\t\t\t\"site_id\": \"enwiki\",\n\t\t\t\"site_language\": \"en\",\n\t\t\t\"page_language\": \"en\"\n\t\t}\n\t},\n\t\"source_wiki\": {\n\t\t\"site_name\": \"English Wikipedia\",\n\t\t\"project_family\": \"wikipedia\"\n\t}\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n(Live response for this title at documentation time; the beta API may add or adjust top-level keys and nested objects.)\n\n### Availability\n\n[Wikimedia production wikis](https://www.mediawiki.org/wiki/Attribution_API#Supported_project_and_content_types) where the Attribution module is deployed; not available on generic third-party MediaWiki sites.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)"
+						}
+					]
+				}
+			]
+		},
+		{
 			"slug": "inference",
 			"title": "ML and related inference signals",
 			"preamble": "\nCategories are given in the table of contents that follows, and the same **category** names appear in the main text as plain **bold** lines (not `##` headings) immediately before the first `##` section in each group.\n\n- **Quality**: Sections 1–6.\n- **Topic**: Sections 7–10.\n- **Edit checks**: Sections 11–21.\n- **Article recommendations**: Sections 22–24.\n- **Edit suggestions**: Sections 25–26.\n- **Summary**: Sections 27–28.\n- **Language and country**: Sections 29–30.\n\n---\n\n**Quality** (sections 1–6)",
