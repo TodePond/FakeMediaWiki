@@ -1255,6 +1255,8 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 This endpoint runs Edit Check models on text you provide.
 For tone checks, you send before-and-after text and the endpoint returns whether the new wording is likely to violate tone guidance.
 
+Powers the **tone** suggestions in the Visual Editor.
+
 ### Documentation
 
 - [Tone Check model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Tone_Check)
@@ -2547,6 +2549,8 @@ Available where the Action API search module is enabled; `srqiprofile` effects d
 
 This endpoint suggests links that could be added to an article.
 It returns candidate link text, target pages, and context so you can propose concrete linking edits.
+
+Powers the **add a link** suggestions in the Visual Editor.
 
 ### Documentation
 
