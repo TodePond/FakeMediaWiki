@@ -40,7 +40,16 @@
 				<div v-if="f.preamble" class="rds-md" v-html="md.render(f.preamble)" />
 
 				<template v-for="sec in f.sections" :key="sec.id">
-					<section :id="sec.anchor" class="rds-section">
+					<section class="rds-section">
+						<div class="rds-section__anchors" aria-hidden="true">
+							<span :id="sec.anchor" class="rds-anchor-id" />
+							<span
+								v-for="lid in sec.legacyAnchors ?? []"
+								:key="lid"
+								:id="lid"
+								class="rds-anchor-id"
+							/>
+						</div>
 						<div class="rds-h2" v-html="md.render(`${sec.headingLine}\n`)" />
 						<template v-for="(seg, si) in sec.segments" :key="`${sec.id}-${si}`">
 							<div
@@ -211,6 +220,21 @@ function scrollToAdjacentSectionHeading(dir: "prev" | "next") {
 .rds-section {
 	margin: 1.5rem 0 2rem;
 	scroll-margin-top: 0.5rem;
+	position: relative;
+}
+.rds-section__anchors {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 0;
+	height: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+.rds-anchor-id {
+	display: block;
+	width: 1px;
+	height: 1px;
 }
 /* Prose: long inline `` `...` `` URLs must wrap; wiki `load.css` can leave code unbounded. */
 .rds-md {

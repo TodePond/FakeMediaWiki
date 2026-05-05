@@ -23,6 +23,32 @@ function slugify(s) {
 		.slice(0, 80) || "section"
 }
 
+/** Strip `##` line prefix like `42) ` so anchors stay stable when section numbers shift. */
+function stripLeadingSectionNumber(titleText) {
+	return String(titleText).replace(/^\d+\)\s+/, "").trim()
+}
+
+/**
+ * Extra `#hash` ids that must keep working after title/slug changes. Key: section id
+ * `{fileSlug}-{1-based index}` (same as `SectionBlock.id`).
+ */
+const EXTRA_LEGACY_ANCHORS = {
+	"inference-25": ["inference-25-microtask-generator-articles-from-category"],
+	"inference-26": ["inference-26-microtask-generator-category-name-suggestions"],
+	"inference-27": [
+		"inference-27-article-quality-and-suggested-edits",
+		"inference-29-microtask-generator-article-analysis",
+		"inference-31-microtask-generator-article-analysis-toolforge",
+		"inference-31-microtask-generator-article-analysis",
+	],
+	"inference-28": ["inference-27-link-suggestions", "inference-28-link-suggestions"],
+	"inference-29": ["inference-28-translation-suggestions", "inference-29-translation-suggestions"],
+}
+
+function uniqueStrings(list) {
+	return [...new Set(list.filter(Boolean))]
+}
+
 /**
  * @param {string} text
  * @returns {{ heading: string, body: string }[] }
@@ -157,11 +183,20 @@ function parseFile(filename) {
 
 	const sections = sectionBlocks.map((sec, idx) => {
 		const id = `${slug}-${idx + 1}`
-		const anchor = `${slug}-${slugify(sec.titleText)}`
+		const stableTitle = stripLeadingSectionNumber(sec.titleText)
+		const anchor = `${slug}-${slugify(stableTitle)}`
+		const numberedSlug = `${slug}-${slugify(sec.titleText)}`
+		const legacy = []
+		if (numberedSlug !== anchor) {
+			legacy.push(numberedSlug)
+		}
+		const extras = EXTRA_LEGACY_ANCHORS[id] ?? []
+		const legacyAnchors = uniqueStrings([...legacy, ...extras]).filter(l => l !== anchor)
 		const segments = parseSectionIntoSegments(sec.body)
 		return {
 			id,
 			anchor,
+			...(legacyAnchors.length > 0 ? { legacyAnchors } : {}),
 			headingLine: sec.heading,
 			titleText: sec.titleText,
 			segments,

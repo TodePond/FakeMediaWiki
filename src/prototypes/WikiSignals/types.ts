@@ -11,6 +11,8 @@ export type ContentSegment = ProseSegment | RequestPairSegment
 export type SectionBlock = {
 	id: string
 	anchor: string
+	/** Prior `#hash` ids for the same section (stable primary is `anchor`). */
+	legacyAnchors?: string[]
 	headingLine: string
 	titleText: string
 	segments: ContentSegment[]

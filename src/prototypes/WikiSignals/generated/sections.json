@@ -9,7 +9,10 @@
 			"sections": [
 				{
 					"id": "analytics-1",
-					"anchor": "analytics-1-article-views",
+					"anchor": "analytics-article-views",
+					"legacyAnchors": [
+						"analytics-1-article-views"
+					],
 					"headingLine": "## 1) Article views",
 					"titleText": "1) Article views",
 					"segments": [
@@ -30,7 +33,10 @@
 				},
 				{
 					"id": "analytics-2",
-					"anchor": "analytics-2-most-viewed-articles",
+					"anchor": "analytics-most-viewed-articles",
+					"legacyAnchors": [
+						"analytics-2-most-viewed-articles"
+					],
 					"headingLine": "## 2) Most viewed articles",
 					"titleText": "2) Most viewed articles",
 					"segments": [
@@ -51,7 +57,10 @@
 				},
 				{
 					"id": "analytics-3",
-					"anchor": "analytics-3-most-edited-articles",
+					"anchor": "analytics-most-edited-articles",
+					"legacyAnchors": [
+						"analytics-3-most-edited-articles"
+					],
 					"headingLine": "## 3) Most edited articles",
 					"titleText": "3) Most edited articles",
 					"segments": [
@@ -72,7 +81,10 @@
 				},
 				{
 					"id": "analytics-4",
-					"anchor": "analytics-4-article-edit-counts",
+					"anchor": "analytics-article-edit-counts",
+					"legacyAnchors": [
+						"analytics-4-article-edit-counts"
+					],
 					"headingLine": "## 4) Article edit counts",
 					"titleText": "4) Article edit counts",
 					"segments": [
@@ -93,7 +105,10 @@
 				},
 				{
 					"id": "analytics-5",
-					"anchor": "analytics-5-global-edit-counts",
+					"anchor": "analytics-global-edit-counts",
+					"legacyAnchors": [
+						"analytics-5-global-edit-counts"
+					],
 					"headingLine": "## 5) Global edit counts",
 					"titleText": "5) Global edit counts",
 					"segments": [
@@ -114,7 +129,10 @@
 				},
 				{
 					"id": "analytics-6",
-					"anchor": "analytics-6-most-read-articles",
+					"anchor": "analytics-most-read-articles",
+					"legacyAnchors": [
+						"analytics-6-most-read-articles"
+					],
 					"headingLine": "## 6) Most read articles",
 					"titleText": "6) Most read articles",
 					"segments": [
@@ -142,7 +160,10 @@
 			"sections": [
 				{
 					"id": "curation-1",
-					"anchor": "curation-1-daily-featured-feed-aggregated",
+					"anchor": "curation-daily-featured-feed-aggregated",
+					"legacyAnchors": [
+						"curation-1-daily-featured-feed-aggregated"
+					],
 					"headingLine": "## 1) Daily featured feed (aggregated)",
 					"titleText": "1) Daily featured feed (aggregated)",
 					"segments": [
@@ -163,7 +184,10 @@
 				},
 				{
 					"id": "curation-2",
-					"anchor": "curation-2-on-this-day",
+					"anchor": "curation-on-this-day",
+					"legacyAnchors": [
+						"curation-2-on-this-day"
+					],
 					"headingLine": "## 2) On this day",
 					"titleText": "2) On this day",
 					"segments": [
@@ -184,7 +208,10 @@
 				},
 				{
 					"id": "curation-3",
-					"anchor": "curation-3-app-announcements",
+					"anchor": "curation-app-announcements",
+					"legacyAnchors": [
+						"curation-3-app-announcements"
+					],
 					"headingLine": "## 3) App announcements",
 					"titleText": "3) App announcements",
 					"segments": [
@@ -205,7 +232,10 @@
 				},
 				{
 					"id": "curation-4",
-					"anchor": "curation-4-random-page",
+					"anchor": "curation-random-page",
+					"legacyAnchors": [
+						"curation-4-random-page"
+					],
 					"headingLine": "## 4) Random page",
 					"titleText": "4) Random page",
 					"segments": [
@@ -242,7 +272,10 @@
 			"sections": [
 				{
 					"id": "links-1",
-					"anchor": "links-1-outlinks",
+					"anchor": "links-outlinks",
+					"legacyAnchors": [
+						"links-1-outlinks"
+					],
 					"headingLine": "## 1) Outlinks",
 					"titleText": "1) Outlinks",
 					"segments": [
@@ -263,7 +296,10 @@
 				},
 				{
 					"id": "links-2",
-					"anchor": "links-2-backlinks",
+					"anchor": "links-backlinks",
+					"legacyAnchors": [
+						"links-2-backlinks"
+					],
 					"headingLine": "## 2) Backlinks",
 					"titleText": "2) Backlinks",
 					"segments": [
@@ -284,7 +320,10 @@
 				},
 				{
 					"id": "links-3",
-					"anchor": "links-3-language-links",
+					"anchor": "links-language-links",
+					"legacyAnchors": [
+						"links-3-language-links"
+					],
 					"headingLine": "## 3) Language links",
 					"titleText": "3) Language links",
 					"segments": [
@@ -312,7 +351,10 @@
 			"sections": [
 				{
 					"id": "attribution-1",
-					"anchor": "attribution-1-page-attribution-signals",
+					"anchor": "attribution-page-attribution-signals",
+					"legacyAnchors": [
+						"attribution-1-page-attribution-signals"
+					],
 					"headingLine": "## 1) Page attribution signals",
 					"titleText": "1) Page attribution signals",
 					"segments": [
@@ -336,11 +378,14 @@
 		{
 			"slug": "inference",
 			"title": "Inference and ML signals",
-			"preamble": "\nCategories are given in the table of contents that follows, and the same **category** names appear in the main text as plain **bold** lines (not `##` headings) immediately before the first `##` section in each group.\n\n- **Quality**: Sections 1–6.\n- **Topic**: Sections 7–10.\n- **Edit checks**: Sections 11–21.\n- **Article recommendations**: Sections 22–24.\n- **Edit suggestions**: Sections 25–26.\n- **Summary**: Sections 27–28.\n- **Language and country**: Sections 29–30.\n\n---\n\n**Quality** (sections 1–6)",
+			"preamble": "",
 			"sections": [
 				{
 					"id": "inference-1",
-					"anchor": "inference-1-language-agnostic-article-quality",
+					"anchor": "inference-language-agnostic-article-quality",
+					"legacyAnchors": [
+						"inference-1-language-agnostic-article-quality"
+					],
 					"headingLine": "## 1) Language agnostic article quality",
 					"titleText": "1) Language agnostic article quality",
 					"segments": [
@@ -361,7 +406,10 @@
 				},
 				{
 					"id": "inference-2",
-					"anchor": "inference-2-article-readability",
+					"anchor": "inference-article-readability",
+					"legacyAnchors": [
+						"inference-2-article-readability"
+					],
 					"headingLine": "## 2) Article readability",
 					"titleText": "2) Article readability",
 					"segments": [
@@ -382,7 +430,10 @@
 				},
 				{
 					"id": "inference-3",
-					"anchor": "inference-3-draft-quality",
+					"anchor": "inference-draft-quality",
+					"legacyAnchors": [
+						"inference-3-draft-quality"
+					],
 					"headingLine": "## 3) Draft quality",
 					"titleText": "3) Draft quality",
 					"segments": [
@@ -403,7 +454,10 @@
 				},
 				{
 					"id": "inference-4",
-					"anchor": "inference-4-revision-quality",
+					"anchor": "inference-revision-quality",
+					"legacyAnchors": [
+						"inference-4-revision-quality"
+					],
 					"headingLine": "## 4) Revision quality",
 					"titleText": "4) Revision quality",
 					"segments": [
@@ -424,7 +478,10 @@
 				},
 				{
 					"id": "inference-5",
-					"anchor": "inference-5-wikidata-item-quality",
+					"anchor": "inference-wikidata-item-quality",
+					"legacyAnchors": [
+						"inference-5-wikidata-item-quality"
+					],
 					"headingLine": "## 5) Wikidata item quality",
 					"titleText": "5) Wikidata item quality",
 					"segments": [
@@ -445,7 +502,10 @@
 				},
 				{
 					"id": "inference-6",
-					"anchor": "inference-6-reference-need",
+					"anchor": "inference-reference-need",
+					"legacyAnchors": [
+						"inference-6-reference-need"
+					],
 					"headingLine": "## 6) Reference need",
 					"titleText": "6) Reference need",
 					"segments": [
@@ -460,13 +520,16 @@
 						},
 						{
 							"type": "markdown",
-							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---\n\n**Topic** (sections 7–10)"
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)"
 						}
 					]
 				},
 				{
 					"id": "inference-7",
-					"anchor": "inference-7-article-topic",
+					"anchor": "inference-article-topic",
+					"legacyAnchors": [
+						"inference-7-article-topic"
+					],
 					"headingLine": "## 7) Article topic",
 					"titleText": "7) Article topic",
 					"segments": [
@@ -487,7 +550,10 @@
 				},
 				{
 					"id": "inference-8",
-					"anchor": "inference-8-revision-topic",
+					"anchor": "inference-revision-topic",
+					"legacyAnchors": [
+						"inference-8-revision-topic"
+					],
 					"headingLine": "## 8) Revision topic",
 					"titleText": "8) Revision topic",
 					"segments": [
@@ -508,7 +574,10 @@
 				},
 				{
 					"id": "inference-9",
-					"anchor": "inference-9-wikidata-item-topic",
+					"anchor": "inference-wikidata-item-topic",
+					"legacyAnchors": [
+						"inference-9-wikidata-item-topic"
+					],
 					"headingLine": "## 9) Wikidata item topic",
 					"titleText": "9) Wikidata item topic",
 					"segments": [
@@ -529,7 +598,10 @@
 				},
 				{
 					"id": "inference-10",
-					"anchor": "inference-10-draft-topic",
+					"anchor": "inference-draft-topic",
+					"legacyAnchors": [
+						"inference-10-draft-topic"
+					],
 					"headingLine": "## 10) Draft topic",
 					"titleText": "10) Draft topic",
 					"segments": [
@@ -544,13 +616,16 @@
 						},
 						{
 							"type": "markdown",
-							"content": "\n### Availability\n\n**Active:** where this model is deployed.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing revscoring deployment.\n\nAvailable for the following: `enwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---\n\n**Edit checks** (sections 11–21)"
+							"content": "\n### Availability\n\n**Active:** where this model is deployed.\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing revscoring deployment.\n\nAvailable for the following: `enwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)"
 						}
 					]
 				},
 				{
 					"id": "inference-11",
-					"anchor": "inference-11-language-agnostic-revert-risk",
+					"anchor": "inference-language-agnostic-revert-risk",
+					"legacyAnchors": [
+						"inference-11-language-agnostic-revert-risk"
+					],
 					"headingLine": "## 11) Language agnostic revert risk",
 					"titleText": "11) Language agnostic revert risk",
 					"segments": [
@@ -571,7 +646,10 @@
 				},
 				{
 					"id": "inference-12",
-					"anchor": "inference-12-multilingual-revert-risk",
+					"anchor": "inference-multilingual-revert-risk",
+					"legacyAnchors": [
+						"inference-12-multilingual-revert-risk"
+					],
 					"headingLine": "## 12) Multilingual revert risk",
 					"titleText": "12) Multilingual revert risk",
 					"segments": [
@@ -592,7 +670,10 @@
 				},
 				{
 					"id": "inference-13",
-					"anchor": "inference-13-wikidata-revert-risk",
+					"anchor": "inference-wikidata-revert-risk",
+					"legacyAnchors": [
+						"inference-13-wikidata-revert-risk"
+					],
 					"headingLine": "## 13) Wikidata revert risk",
 					"titleText": "13) Wikidata revert risk",
 					"segments": [
@@ -613,7 +694,10 @@
 				},
 				{
 					"id": "inference-14",
-					"anchor": "inference-14-reference-risk",
+					"anchor": "inference-reference-risk",
+					"legacyAnchors": [
+						"inference-14-reference-risk"
+					],
 					"headingLine": "## 14) Reference risk",
 					"titleText": "14) Reference risk",
 					"segments": [
@@ -634,7 +718,10 @@
 				},
 				{
 					"id": "inference-15",
-					"anchor": "inference-15-tone-check",
+					"anchor": "inference-tone-check",
+					"legacyAnchors": [
+						"inference-15-tone-check"
+					],
 					"headingLine": "## 15) Tone check",
 					"titleText": "15) Tone check",
 					"segments": [
@@ -655,7 +742,10 @@
 				},
 				{
 					"id": "inference-16",
-					"anchor": "inference-16-edit-check-config",
+					"anchor": "inference-edit-check-config",
+					"legacyAnchors": [
+						"inference-16-edit-check-config"
+					],
 					"headingLine": "## 16) Edit check config",
 					"titleText": "16) Edit check config",
 					"segments": [
@@ -685,7 +775,10 @@
 				},
 				{
 					"id": "inference-17",
-					"anchor": "inference-17-recent-changes-with-scoring",
+					"anchor": "inference-recent-changes-with-scoring",
+					"legacyAnchors": [
+						"inference-17-recent-changes-with-scoring"
+					],
 					"headingLine": "## 17) Recent changes with scoring",
 					"titleText": "17) Recent changes with scoring",
 					"segments": [
@@ -706,7 +799,10 @@
 				},
 				{
 					"id": "inference-18",
-					"anchor": "inference-18-deprecated-damaging-prediction",
+					"anchor": "inference-deprecated-damaging-prediction",
+					"legacyAnchors": [
+						"inference-18-deprecated-damaging-prediction"
+					],
 					"headingLine": "## 18) Deprecated: Damaging prediction",
 					"titleText": "18) Deprecated: Damaging prediction",
 					"segments": [
@@ -727,7 +823,10 @@
 				},
 				{
 					"id": "inference-19",
-					"anchor": "inference-19-deprecated-good-faith-prediction",
+					"anchor": "inference-deprecated-good-faith-prediction",
+					"legacyAnchors": [
+						"inference-19-deprecated-good-faith-prediction"
+					],
 					"headingLine": "## 19) Deprecated: Good faith prediction",
 					"titleText": "19) Deprecated: Good faith prediction",
 					"segments": [
@@ -748,7 +847,10 @@
 				},
 				{
 					"id": "inference-20",
-					"anchor": "inference-20-deprecated-ores-damaging-and-goodfaith-predictions",
+					"anchor": "inference-deprecated-ores-damaging-and-goodfaith-predictions",
+					"legacyAnchors": [
+						"inference-20-deprecated-ores-damaging-and-goodfaith-predictions"
+					],
 					"headingLine": "## 20) Deprecated: ORES damaging and goodfaith predictions",
 					"titleText": "20) Deprecated: ORES damaging and goodfaith predictions",
 					"segments": [
@@ -769,7 +871,10 @@
 				},
 				{
 					"id": "inference-21",
-					"anchor": "inference-21-deprecated-reverted-prediction",
+					"anchor": "inference-deprecated-reverted-prediction",
+					"legacyAnchors": [
+						"inference-21-deprecated-reverted-prediction"
+					],
 					"headingLine": "## 21) Deprecated: Reverted prediction",
 					"titleText": "21) Deprecated: Reverted prediction",
 					"segments": [
@@ -784,13 +889,16 @@
 						},
 						{
 							"type": "markdown",
-							"content": "\n### Availability\n\n**Deprecated:** `revertrisk-language-agnostic` and `revertrisk-multilingual` are recommended as newer alternatives.\n\nStill callable on supported wikis.\n\nAvailable for the following: `bnwiki`, `elwiki`, `enwiktionary`, `glwiki`, `hrwiki`, `idwiki`, `iswiki`, `tawiki`, `viwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---\n\n**Article recommendations** (sections 22–24)"
+							"content": "\n### Availability\n\n**Deprecated:** `revertrisk-language-agnostic` and `revertrisk-multilingual` are recommended as newer alternatives.\n\nStill callable on supported wikis.\n\nAvailable for the following: `bnwiki`, `elwiki`, `enwiktionary`, `glwiki`, `hrwiki`, `idwiki`, `iswiki`, `tawiki`, `viwiki`.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)"
 						}
 					]
 				},
 				{
 					"id": "inference-22",
-					"anchor": "inference-22-more-like-search",
+					"anchor": "inference-more-like-search",
+					"legacyAnchors": [
+						"inference-22-more-like-search"
+					],
 					"headingLine": "## 22) \"More like\" search",
 					"titleText": "22) \"More like\" search",
 					"segments": [
@@ -811,7 +919,10 @@
 				},
 				{
 					"id": "inference-23",
-					"anchor": "inference-23-list-building",
+					"anchor": "inference-list-building",
+					"legacyAnchors": [
+						"inference-23-list-building"
+					],
 					"headingLine": "## 23) List-building",
 					"titleText": "23) List-building",
 					"segments": [
@@ -832,7 +943,10 @@
 				},
 				{
 					"id": "inference-24",
-					"anchor": "inference-24-search-with-ranking-profiles",
+					"anchor": "inference-search-with-ranking-profiles",
+					"legacyAnchors": [
+						"inference-24-search-with-ranking-profiles"
+					],
 					"headingLine": "## 24) Search with ranking profiles",
 					"titleText": "24) Search with ranking profiles",
 					"segments": [
@@ -847,15 +961,97 @@
 						},
 						{
 							"type": "markdown",
-							"content": "\n_Captured with `srlimit=3`._\n\n### Availability\n\n**Active:** Ranking profile behavior varies by wiki backend configuration.\n\nPublicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module.\n\nAvailable where the Action API search module is enabled; `srqiprofile` effects depend on search backend/profile support.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---\n\n**Edit suggestions** (sections 25–26)"
+							"content": "\n_Captured with `srlimit=3`._\n\n### Availability\n\n**Active:** Ranking profile behavior varies by wiki backend configuration.\n\nPublicly available on each wiki's `api.php`; this is a core production MediaWiki Action API module.\n\nAvailable where the Action API search module is enabled; `srqiprofile` effects depend on search backend/profile support.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
 						}
 					]
 				},
 				{
 					"id": "inference-25",
-					"anchor": "inference-25-link-suggestions",
-					"headingLine": "## 25) Link suggestions",
-					"titleText": "25) Link suggestions",
+					"anchor": "inference-microtask-articles-from-category",
+					"legacyAnchors": [
+						"inference-25-microtask-articles-from-category",
+						"inference-25-microtask-generator-articles-from-category"
+					],
+					"headingLine": "## 25) Microtask: Articles from category",
+					"titleText": "25) Microtask: Articles from category",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nToolforge `POST /related-articles` ([Microtask Generator](https://microtask-generator.toolforge.org/), [OpenAPI](https://microtask-generator.toolforge.org/openapi.json)). For scores and edit suggestions after you have titles, see §27 below.\n\n### Documentation\n\n- [OpenAPI](https://microtask-generator.toolforge.org/openapi.json) — `POST /related-articles`, schema `CategoryRequest`\n\n### Endpoint\n\n`https://microtask-generator.toolforge.org/related-articles`\n\n### Method\n\n`POST`\n\n### Request shape\n\nJSON body:\n\n- `lang` (string, required)\n- `category` (string, required) — e.g. `Physics`\n- `limit` (integer, optional, default 20)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS -X POST \"https://microtask-generator.toolforge.org/related-articles\" \\\n\t-H \"Content-Type: application/json\" \\\n\t-H \"User-Agent: <your tool name> (<contact: URL or email>)\" \\\n\t-d '{\"lang\":\"en\",\"category\":\"Physics\",\"limit\":3}'",
+							"responseJson": "{\n\t\"results\": [\"Physics\", \"AIC Judd Award\", \"Atominstitute\"]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nToolforge; empty `results` usually means the category did not resolve on that wiki.\n\n### Rate limits\n\nNone published.\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-26",
+					"anchor": "inference-microtask-category-name-suggestions",
+					"legacyAnchors": [
+						"inference-26-microtask-category-name-suggestions",
+						"inference-26-microtask-generator-category-name-suggestions"
+					],
+					"headingLine": "## 26) Microtask: Category name suggestions",
+					"titleText": "26) Microtask: Category name suggestions",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nToolforge `GET /category-suggestions` on [Microtask Generator](https://microtask-generator.toolforge.org/). Prefix match on category names (no `Category:` needed for `q` in practice).\n\n### Documentation\n\n- [OpenAPI](https://microtask-generator.toolforge.org/openapi.json) — `GET /category-suggestions`\n\n### Endpoint\n\n`https://microtask-generator.toolforge.org/category-suggestions?lang={lang}&q={query}`\n\n### Method\n\n`GET`\n\n### Request shape\n\nQuery parameters:\n\n- `lang` (required)\n- `q` (required)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS \"https://microtask-generator.toolforge.org/category-suggestions?lang=en&q=Physics\" \\\n\t-H \"User-Agent: <your tool name> (<contact: URL or email>)\"",
+							"responseJson": "{\n\t\"results\": [\n\t\t\"Physics\",\n\t\t\"Physics-based video games\",\n\t\t\"Physics-related lists\",\n\t\t\"Physics Olympiads in India\",\n\t\t\"Physics WikiProjects\",\n\t\t\"Physics articles by importance\",\n\t\t\"Physics articles by quality\",\n\t\t\"Physics articles by quality and importance\",\n\t\t\"Physics articles needing attention\",\n\t\t\"Physics articles needing expert attention\"\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nToolforge.\n\n### Rate limits\n\nNone published.\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-27",
+					"anchor": "inference-microtask-article-quality-and-suggested-edits",
+					"legacyAnchors": [
+						"inference-27-microtask-article-quality-and-suggested-edits",
+						"inference-27-article-quality-and-suggested-edits",
+						"inference-29-microtask-generator-article-analysis",
+						"inference-31-microtask-generator-article-analysis-toolforge",
+						"inference-31-microtask-generator-article-analysis"
+					],
+					"headingLine": "## 27) Microtask: Article quality and suggested edits",
+					"titleText": "27) Microtask: Article quality and suggested edits",
+					"segments": [
+						{
+							"type": "markdown",
+							"content": "\nToolforge `POST /quality-check`: per-title quality score, `potential_needs` (concrete suggested edits), topics, pageviews, sitelinks, and feature breakdown. Not part of `api.wikimedia.org` (see OpenAPI). WikiSignals “Run” uses the browser; if that fails, use curl in a terminal.\n\n### Documentation\n\n- [OpenAPI](https://microtask-generator.toolforge.org/openapi.json) — `POST /quality-check`, schema `QualityRequest`\n- [About](https://microtask-generator.toolforge.org/about.html)\n\n### Endpoint\n\n`https://microtask-generator.toolforge.org/quality-check`\n\n### Method\n\n`POST`\n\n### Request shape\n\nJSON body:\n\n- `lang` (string)\n- `titles` (array of strings)\n\n### Example"
+						},
+						{
+							"type": "requestPair",
+							"requestBash": "curl -sS -X POST \"https://microtask-generator.toolforge.org/quality-check\" \\\n\t-H \"Content-Type: application/json\" \\\n\t-H \"User-Agent: <your tool name> (<contact: URL or email>)\" \\\n\t-d '{\"lang\":\"en\",\"titles\":[\"Cat\"]}'",
+							"responseJson": "{\n\t\"lang\": \"en\",\n\t\"results\": [\n\t\t{\n\t\t\t\"title\": \"Cat\",\n\t\t\t\"exists\": true,\n\t\t\t\"quality\": \"FA\",\n\t\t\t\"score\": 0.9825799824249976,\n\t\t\t\"pageviews\": 3198294,\n\t\t\t\"sitelinks\": 276,\n\t\t\t\"days_since_edit\": 2,\n\t\t\t\"potential_needs\": [\n\t\t\t\t{\n\t\t\t\t\t\"need\": \"Add more relevant categories\",\n\t\t\t\t\t\"score\": 0.4666666666666667\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"article_topics\": [\"Biology\", \"STEM\"],\n\t\t\t\"article_countries\": [],\n\t\t\t\"features\": {\n\t\t\t\t\"raw\": {\n\t\t\t\t\t\"characters\": 49245,\n\t\t\t\t\t\"refs\": 318,\n\t\t\t\t\t\"wikilinks\": 448,\n\t\t\t\t\t\"categories\": 7,\n\t\t\t\t\t\"media\": 36,\n\t\t\t\t\t\"headings\": 44,\n\t\t\t\t\t\"sources\": 271,\n\t\t\t\t\t\"infobox\": true,\n\t\t\t\t\t\"messagebox\": false\n\t\t\t\t},\n\t\t\t\t\"normalized\": {\n\t\t\t\t\t\"characters\": 1,\n\t\t\t\t\t\"refs\": 1,\n\t\t\t\t\t\"wikilinks\": 1,\n\t\t\t\t\t\"categories\": 0.4666666666666667,\n\t\t\t\t\t\"media\": 1,\n\t\t\t\t\t\"headings\": 1,\n\t\t\t\t\t\"sources\": 1,\n\t\t\t\t\t\"infobox\": true,\n\t\t\t\t\t\"messagebox\": false\n\t\t\t\t}\n\t\t\t},\n\t\t\t\"lang\": \"en\"\n\t\t}\n\t]\n}"
+						},
+						{
+							"type": "markdown",
+							"content": "\n### Availability\n\nToolforge; latency grows with batch size.\n\n### Rate limits\n\nNone published.\n\n---"
+						}
+					]
+				},
+				{
+					"id": "inference-28",
+					"anchor": "inference-link-suggestions",
+					"legacyAnchors": [
+						"inference-28-link-suggestions",
+						"inference-27-link-suggestions"
+					],
+					"headingLine": "## 28) Link suggestions",
+					"titleText": "28) Link suggestions",
 					"segments": [
 						{
 							"type": "markdown",
@@ -873,10 +1069,14 @@
 					]
 				},
 				{
-					"id": "inference-26",
-					"anchor": "inference-26-translation-suggestions",
-					"headingLine": "## 26) Translation suggestions",
-					"titleText": "26) Translation suggestions",
+					"id": "inference-29",
+					"anchor": "inference-translation-suggestions",
+					"legacyAnchors": [
+						"inference-29-translation-suggestions",
+						"inference-28-translation-suggestions"
+					],
+					"headingLine": "## 29) Translation suggestions",
+					"titleText": "29) Translation suggestions",
 					"segments": [
 						{
 							"type": "markdown",
@@ -889,15 +1089,18 @@
 						},
 						{
 							"type": "markdown",
-							"content": "\n### Availability\n\n**Active:** Some request options are marked experimental in ecosystem documentation.\n\nPublicly available via Wikimedia's production recommendation API.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---\n\n**Summary** (sections 27–28)"
+							"content": "\n### Availability\n\n**Active:** Some request options are marked experimental in ecosystem documentation.\n\nPublicly available via Wikimedia's production recommendation API.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---"
 						}
 					]
 				},
 				{
-					"id": "inference-27",
-					"anchor": "inference-27-article-descriptions",
-					"headingLine": "## 27) Article descriptions",
-					"titleText": "27) Article descriptions",
+					"id": "inference-30",
+					"anchor": "inference-article-descriptions",
+					"legacyAnchors": [
+						"inference-30-article-descriptions"
+					],
+					"headingLine": "## 30) Article descriptions",
+					"titleText": "30) Article descriptions",
 					"segments": [
 						{
 							"type": "markdown",
@@ -915,10 +1118,13 @@
 					]
 				},
 				{
-					"id": "inference-28",
-					"anchor": "inference-28-edit-types",
-					"headingLine": "## 28) Edit types",
-					"titleText": "28) Edit types",
+					"id": "inference-31",
+					"anchor": "inference-edit-types",
+					"legacyAnchors": [
+						"inference-31-edit-types"
+					],
+					"headingLine": "## 31) Edit types",
+					"titleText": "31) Edit types",
 					"segments": [
 						{
 							"type": "markdown",
@@ -940,15 +1146,18 @@
 						},
 						{
 							"type": "markdown",
-							"content": "\n### Availability\n\n**Experimental:** Experimental/community service. Behavior and availability may change.\n\nPublicly available Toolforge/WMCS-hosted service (not a core Wikimedia production API surface).\n\nCross-wiki in input shape (`lang` + `revid`), with real availability determined by whether the service can fetch and analyze that revision for the requested language wiki.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)\n\n---\n\n**Language and country** (sections 29–30)"
+							"content": "\n### Availability\n\n**Experimental:** Experimental/community service. Behavior and availability may change.\n\nPublicly available Toolforge/WMCS-hosted service (not a core Wikimedia production API surface).\n\nCross-wiki in input shape (`lang` + `revid`), with real availability determined by whether the service can fetch and analyze that revision for the requested language wiki.\n\n### Rate limits\n\n[Wikimedia APIs/Rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)\n\n[API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)"
 						}
 					]
 				},
 				{
-					"id": "inference-29",
-					"anchor": "inference-29-language-identification",
-					"headingLine": "## 29) Language identification",
-					"titleText": "29) Language identification",
+					"id": "inference-32",
+					"anchor": "inference-language-identification",
+					"legacyAnchors": [
+						"inference-32-language-identification"
+					],
+					"headingLine": "## 32) Language identification",
+					"titleText": "32) Language identification",
 					"segments": [
 						{
 							"type": "markdown",
@@ -966,10 +1175,13 @@
 					]
 				},
 				{
-					"id": "inference-30",
-					"anchor": "inference-30-article-country",
-					"headingLine": "## 30) Article country",
-					"titleText": "30) Article country",
+					"id": "inference-33",
+					"anchor": "inference-article-country",
+					"legacyAnchors": [
+						"inference-33-article-country"
+					],
+					"headingLine": "## 33) Article country",
+					"titleText": "33) Article country",
 					"segments": [
 						{
 							"type": "markdown",
@@ -982,7 +1194,7 @@
 						},
 						{
 							"type": "markdown",
-							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)\n\n---"
+							"content": "\n### Availability\n\nPublicly available on `api.wikimedia.org`, served by Wikimedia's production Lift Wing inference platform.\n\n### Rate limits\n\n[LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)"
 						}
 					]
 				}

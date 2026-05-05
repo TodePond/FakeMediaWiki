@@ -1,19 +1,5 @@
 # Inference and ML signals
 
-Categories are given in the table of contents that follows, and the same **category** names appear in the main text as plain **bold** lines (not `##` headings) immediately before the first `##` section in each group.
-
-- **Quality**: Sections 1–6.
-- **Topic**: Sections 7–10.
-- **Edit checks**: Sections 11–21.
-- **Article recommendations**: Sections 22–24.
-- **Edit suggestions**: Sections 25–26.
-- **Summary**: Sections 27–28.
-- **Language and country**: Sections 29–30.
-
----
-
-**Quality** (sections 1–6)
-
 ## 1) Language agnostic article quality
 
 This endpoint predicts article quality for a revision using a language-agnostic model.
@@ -456,10 +442,6 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 ### Rate limits
 
 [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
-
----
-
-**Topic** (sections 7–10)
 
 ## 7) Article topic
 
@@ -971,10 +953,6 @@ Available for the following: `enwiki`.
 ### Rate limits
 
 [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
-
----
-
-**Edit checks** (sections 11–21)
 
 ## 11) Language agnostic revert risk
 
@@ -2213,10 +2191,6 @@ Available for the following: `bnwiki`, `elwiki`, `enwiktionary`, `glwiki`, `hrwi
 
 [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
 
----
-
-**Article recommendations** (sections 22–24)
-
 ## 22) "More like" search
 
 This endpoint performs full-text search, and it can also run "more like this" retrieval using `srsearch=morelike:...`.
@@ -2543,9 +2517,218 @@ Available where the Action API search module is enabled; `srqiprofile` effects d
 
 ---
 
-**Edit suggestions** (sections 25–26)
+## 25) Microtask: Articles from category
 
-## 25) Link suggestions
+Toolforge `POST /related-articles` ([Microtask Generator](https://microtask-generator.toolforge.org/), [OpenAPI](https://microtask-generator.toolforge.org/openapi.json)). For scores and edit suggestions after you have titles, see §27 below.
+
+### Documentation
+
+- [OpenAPI](https://microtask-generator.toolforge.org/openapi.json) — `POST /related-articles`, schema `CategoryRequest`
+
+### Endpoint
+
+`https://microtask-generator.toolforge.org/related-articles`
+
+### Method
+
+`POST`
+
+### Request shape
+
+JSON body:
+
+- `lang` (string, required)
+- `category` (string, required) — e.g. `Physics`
+- `limit` (integer, optional, default 20)
+
+### Example
+
+#### Request
+
+```bash
+curl -sS -X POST "https://microtask-generator.toolforge.org/related-articles" \
+	-H "Content-Type: application/json" \
+	-H "User-Agent: <your tool name> (<contact: URL or email>)" \
+	-d '{"lang":"en","category":"Physics","limit":3}'
+```
+
+#### Response
+
+```json
+{
+	"results": ["Physics", "AIC Judd Award", "Atominstitute"]
+}
+```
+
+### Availability
+
+Toolforge; empty `results` usually means the category did not resolve on that wiki.
+
+### Rate limits
+
+None published.
+
+---
+
+## 26) Microtask: Category name suggestions
+
+Toolforge `GET /category-suggestions` on [Microtask Generator](https://microtask-generator.toolforge.org/). Prefix match on category names (no `Category:` needed for `q` in practice).
+
+### Documentation
+
+- [OpenAPI](https://microtask-generator.toolforge.org/openapi.json) — `GET /category-suggestions`
+
+### Endpoint
+
+`https://microtask-generator.toolforge.org/category-suggestions?lang={lang}&q={query}`
+
+### Method
+
+`GET`
+
+### Request shape
+
+Query parameters:
+
+- `lang` (required)
+- `q` (required)
+
+### Example
+
+#### Request
+
+```bash
+curl -sS "https://microtask-generator.toolforge.org/category-suggestions?lang=en&q=Physics" \
+	-H "User-Agent: <your tool name> (<contact: URL or email>)"
+```
+
+#### Response
+
+```json
+{
+	"results": [
+		"Physics",
+		"Physics-based video games",
+		"Physics-related lists",
+		"Physics Olympiads in India",
+		"Physics WikiProjects",
+		"Physics articles by importance",
+		"Physics articles by quality",
+		"Physics articles by quality and importance",
+		"Physics articles needing attention",
+		"Physics articles needing expert attention"
+	]
+}
+```
+
+### Availability
+
+Toolforge.
+
+### Rate limits
+
+None published.
+
+---
+
+## 27) Microtask: Article quality and suggested edits
+
+Toolforge `POST /quality-check`: per-title quality score, `potential_needs` (concrete suggested edits), topics, pageviews, sitelinks, and feature breakdown. Not part of `api.wikimedia.org` (see OpenAPI). WikiSignals “Run” uses the browser; if that fails, use curl in a terminal.
+
+### Documentation
+
+- [OpenAPI](https://microtask-generator.toolforge.org/openapi.json) — `POST /quality-check`, schema `QualityRequest`
+- [About](https://microtask-generator.toolforge.org/about.html)
+
+### Endpoint
+
+`https://microtask-generator.toolforge.org/quality-check`
+
+### Method
+
+`POST`
+
+### Request shape
+
+JSON body:
+
+- `lang` (string)
+- `titles` (array of strings)
+
+### Example
+
+#### Request
+
+```bash
+curl -sS -X POST "https://microtask-generator.toolforge.org/quality-check" \
+	-H "Content-Type: application/json" \
+	-H "User-Agent: <your tool name> (<contact: URL or email>)" \
+	-d '{"lang":"en","titles":["Cat"]}'
+```
+
+#### Response
+
+```json
+{
+	"lang": "en",
+	"results": [
+		{
+			"title": "Cat",
+			"exists": true,
+			"quality": "FA",
+			"score": 0.9825799824249976,
+			"pageviews": 3198294,
+			"sitelinks": 276,
+			"days_since_edit": 2,
+			"potential_needs": [
+				{
+					"need": "Add more relevant categories",
+					"score": 0.4666666666666667
+				}
+			],
+			"article_topics": ["Biology", "STEM"],
+			"article_countries": [],
+			"features": {
+				"raw": {
+					"characters": 49245,
+					"refs": 318,
+					"wikilinks": 448,
+					"categories": 7,
+					"media": 36,
+					"headings": 44,
+					"sources": 271,
+					"infobox": true,
+					"messagebox": false
+				},
+				"normalized": {
+					"characters": 1,
+					"refs": 1,
+					"wikilinks": 1,
+					"categories": 0.4666666666666667,
+					"media": 1,
+					"headings": 1,
+					"sources": 1,
+					"infobox": true,
+					"messagebox": false
+				}
+			},
+			"lang": "en"
+		}
+	]
+}
+```
+
+### Availability
+
+Toolforge; latency grows with batch size.
+
+### Rate limits
+
+None published.
+
+---
+
+## 28) Link suggestions
 
 This endpoint suggests links that could be added to an article.
 It returns candidate link text, target pages, and context so you can propose concrete linking edits.
@@ -2652,7 +2835,7 @@ Path is explicit by project and language (`{project}/{lang}/{title}`); availabil
 
 ---
 
-## 26) Translation suggestions
+## 29) Translation suggestions
 
 This endpoint recommends articles to translate from one language wiki to another.
 It returns ranked candidate articles based on source/target languages and optional seed or topic inputs.
@@ -2737,9 +2920,7 @@ Publicly available via Wikimedia's production recommendation API.
 
 ---
 
-**Summary** (sections 27–28)
-
-## 27) Article descriptions
+## 30) Article descriptions
 
 This endpoint generates short description text for an article title and language.
 It returns one or more candidate descriptions that can be used as summary snippets.
@@ -2822,7 +3003,7 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 
 ---
 
-## 28) Edit types
+## 31) Edit types
 
 This endpoint analyzes a revision diff and labels the kinds of changes made.
 Depending on the route, it returns summary counts, detailed structured changes, or debug output.
@@ -2929,11 +3110,7 @@ Cross-wiki in input shape (`lang` + `revid`), with real availability determined 
 
 [API:Etiquette](https://www.mediawiki.org/wiki/API:Etiquette)
 
----
-
-**Language and country** (sections 29–30)
-
-## 29) Language identification
+## 32) Language identification
 
 This endpoint detects the language of input text.
 It returns language identifiers and a confidence score for the detected language.
@@ -2994,7 +3171,7 @@ Not tied to a specific wiki; works on raw input text.
 
 ---
 
-## 30) Article country
+## 33) Article country
 
 This endpoint predicts which countries are most relevant to an article.
 You provide article title and language, and it returns country candidates with scores and source evidence.
@@ -3054,5 +3231,3 @@ Publicly available on `api.wikimedia.org`, served by Wikimedia's production Lift
 ### Rate limits
 
 [LiftWing external usage rate limits](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/API/External_usage#Rate_limits_for_external_usage)
-
----
