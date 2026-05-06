@@ -110,6 +110,9 @@ const DEFAULT_USER_CONTRIBS_LIMIT = 20
 /** Maximum limit we allow for user contribution history (Action API supports up to 500). */
 const USER_CONTRIBS_MAX_LIMIT = 500
 
+/** Max usernames per Action API `list=users` batch (same scale as pageimages / revision id batches). */
+const USER_NAMES_PER_USERS_LIST = 50
+
 /** Default Api-User-Agent sent to Wikimedia/Lift Wing APIs. Override via constructor options to test or identify your client. */
 const DEFAULT_API_USER_AGENT = "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)"
 
@@ -732,7 +735,7 @@ export class FakeWiki {
 		const url = `${this.base}w/api.php?${searchParams.toString()}&origin=*`
 		const headers = {
 			"Content-Type": "application/json",
-			"Api-User-Agent": "MediaWikiPrototypes/0.1 (lwilson-ctr@wikimedia.org)",
+			"Api-User-Agent": this.apiUserAgent ?? DEFAULT_API_USER_AGENT,
 		}
 
 		try {
@@ -3453,6 +3456,98 @@ export class FakeWiki {
 			this.userInfoCache.set(userName, null)
 			return null
 		}
+	}
+
+	/**
+	 * Batch-fetch user information via Action API `list=users`, including `groups` and
+	 * `implicitgroups` (for bot detection). Requests at most 50 names per HTTP call.
+	 * Duplicate names in the input are ignored after the first occurrence; the returned
+	 * object has one key per unique trimmed username.
+	 * Results are merged into the same in-memory cache as {@link getUserInfo}.
+	 * @category Users
+	 * @param userNames - Usernames or IP addresses (empty strings skipped)
+	 * @returns Object keyed by requested username; value is user info or null when missing or on error
+	 *
+	 * @example
+	 * ```ts
+	 * const byName = await wiki.getUsersInfo(["Samwalton9", "Todepond"])
+	 * ```
+	 */
+	async getUsersInfo(userNames: string[]): Promise<Record<string, FWUserInfo | null>> {
+		const out: Record<string, FWUserInfo | null> = {}
+		const seen = new Set<string>()
+		const unique: string[] = []
+		for (const raw of userNames) {
+			const name = raw.trim()
+			if (!name) continue
+			if (seen.has(name)) continue
+			seen.add(name)
+			unique.push(name)
+		}
+		if (unique.length === 0) {
+			return out
+		}
+
+		for (let i = 0; i < unique.length; i += USER_NAMES_PER_USERS_LIST) {
+			const chunk = unique.slice(i, i + USER_NAMES_PER_USERS_LIST)
+			try {
+				const data = (await this.request({
+					api: "action",
+					params: {
+						action: "query",
+						list: "users",
+						ususers: chunk.join("|"),
+						usprop: "groups|implicitgroups|tempexpired|editcount|registration",
+					},
+				})) as {
+					query?: {
+						users?: Array<{
+							userid?: number
+							name: string
+							editcount?: number
+							registration?: string
+							tempexpired?: boolean | null
+							invalid?: boolean
+							missing?: boolean
+							groups?: string[]
+							implicitgroups?: string[]
+						}>
+					}
+				}
+
+				const list = data.query?.users ?? []
+				const byName = new Map(list.map(u => [u.name, u]))
+				for (const key of chunk) {
+					const u = byName.get(key)
+					if (!u) {
+						out[key] = null
+						this.userInfoCache.set(key, null)
+						continue
+					}
+					const userInfo: FWUserInfo = {
+						userid: u.userid,
+						name: u.name,
+						editcount: u.editcount,
+						registration: u.registration,
+						tempexpired: u.tempexpired,
+						invalid: u.invalid,
+						missing: u.missing,
+						groups: u.groups,
+						implicitgroups: u.implicitgroups,
+					}
+					out[key] = userInfo
+					this.userInfoCache.set(key, userInfo)
+				}
+			} catch (error) {
+				console.error("Failed to get users info:", error)
+				for (const key of chunk) {
+					out[key] = null
+					this.userInfoCache.set(key, null)
+				}
+			}
+		}
+
+		return out
 	}
 
 	/**

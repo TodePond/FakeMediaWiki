@@ -197,6 +197,9 @@ export const playgroundSchema: PlaygroundMethodSchema[] = [
   { name: "getUserInfo", description: "Get user information including edit count, registration date, and account type\nResults are cached in memory to avoid repeated API calls for the same user.", category: "Users", params: [
       { key: "userName", description: "Username or IP address" }
   ], examples: ["const userInfo = await wiki.getUserInfo(\"Samwalton9\")"] },
+  { name: "getUsersInfo", description: "Batch-fetch user information via Action API `list=users`, including `groups` and\n`implicitgroups` (for bot detection). Requests at most 50 names per HTTP call.\nDuplicate names in the input are ignored after the first occurrence; the returned\nobject has one key per unique trimmed username.\nResults are merged into the same in-memory cache as {@link getUserInfo}.", category: "Users", params: [
+      { key: "userNames", description: "Usernames or IP addresses (empty strings skipped)" }
+  ], examples: ["const byName = await wiki.getUsersInfo([\"Samwalton9\", \"Todepond\"])"] },
   { name: "isTemporaryAccount", description: "Check if a username is a temporary account (starts with ~)", category: "Users", params: [
       { key: "userName", description: "Username to check" }
   ], examples: ["const isTemp = wiki.isTemporaryAccount(\"Samwalton9\")"] },

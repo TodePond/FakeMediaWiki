@@ -849,6 +849,24 @@ Uses bounded concurrency (same as getCombinedFeed user branch; Wikimedia: few co
 const histories = await wiki.getUsersHistory(["Todepond", "Samwalton9"])
 ```
 
+### `getUsersInfo`
+
+Batch-fetch user information via Action API `list=users`, including `groups` and
+`implicitgroups` (for bot detection). Requests at most 50 names per HTTP call.
+Duplicate names in the input are ignored after the first occurrence; the returned
+object has one key per unique trimmed username.
+Results are merged into the same in-memory cache as {@link getUserInfo}.
+
+**Parameters**
+
+- `userNames` - Usernames or IP addresses (empty strings skipped)
+
+**Example**
+
+```ts
+const byName = await wiki.getUsersInfo(["Samwalton9", "Todepond"])
+```
+
 ### `isIPAddress`
 
 Check if a username is an IP address

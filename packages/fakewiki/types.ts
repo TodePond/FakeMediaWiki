@@ -169,6 +169,10 @@ export interface FWUserInfo {
 	tempexpired?: boolean | null
 	invalid?: boolean
 	missing?: boolean
+	/** Present when fetched with `list=users` and `usprop` includes `groups`. */
+	groups?: string[]
+	/** Present when fetched with `list=users` and `usprop` includes `implicitgroups`. */
+	implicitgroups?: string[]
 }
 
 /** User experience category used by watchlist-like prototypes */
