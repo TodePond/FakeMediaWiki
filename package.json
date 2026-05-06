@@ -15,7 +15,7 @@
 		"prebuild": "npm run generate",
 		"generate": "npm run generate -w fakewiki",
 		"preview": "vite preview",
-		"lint": "eslint . --fix --cache && npm run type-check",
+		"lint": "eslint . --fix --cache && npm run type-check && node packages/fakewiki/scripts/verify-root-ts-packed.mjs",
 		"type-check": "vue-tsc --noEmit",
 		"format": "prettier --write src/",
 		"update-ve": "bash scripts/update-ve.sh",

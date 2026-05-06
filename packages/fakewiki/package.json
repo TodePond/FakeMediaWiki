@@ -1,6 +1,6 @@
 {
 	"name": "fakewiki",
-	"version": "0.0.11",
+	"version": "0.0.12",
 	"type": "module",
 	"description": "Helpers for making MediaWiki prototypes",
 	"license": "GPL-2.0-only",
@@ -37,19 +37,16 @@
 		}
 	},
 	"files": [
-		"FakeWiki.ts",
-		"index.ts",
-		"types.ts",
+		"*.ts",
 		"hooks",
 		"style",
 		"schema",
-		"playground-schema.generated.ts",
-		"playground-overrides.ts",
 		"AGENTS.md",
 		"scripts"
 	],
 	"scripts": {
-		"generate": "node ../../scripts/build-real-data-reference.mjs && npx tsx scripts/generate-schema.ts"
+		"generate": "node ../../scripts/build-real-data-reference.mjs && npx tsx scripts/generate-schema.ts",
+		"prepublishOnly": "node scripts/verify-root-ts-packed.mjs"
 	},
 	"peerDependencies": {
 		"vue": "^3.5.0",
