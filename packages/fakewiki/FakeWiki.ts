@@ -231,7 +231,43 @@ export class FakeWiki {
 		Punctuation: "punctuation",
 		Comment: "comment",
 		Media: "media",
+		Infobox: "infobox",
+		"Media-img": "image",
+		"Media-audio": "audio",
+		"Media-video": "video",
+		Citation: "citation",
+		Wikitable: "table",
+		Category: "category",
+		Navigation: "navigation",
+		Messagebox: "messagebox",
+		InlineCleanup: "inline cleanup",
+		Note: "note",
 	}
+
+	/**
+	 * Maps edit-types HTML-mode summary keys to canonical significance slots.
+	 * Used when `content_type=html` returns semantic types (Infobox, Media-img, …).
+	 */
+	private readonly STRUCTURED_DELTA_HTML_TYPE_ALIASES: Record<string, FWStructuredDeltaCanonicalType> =
+		{
+			Infobox: "Template",
+			"Media-img": "Media",
+			"Media-audio": "Media",
+			"Media-video": "Media",
+			Citation: "Reference",
+			"TF-i": "Template",
+			"TF-small": "Template",
+			"TF-q": "Template",
+			"TF-sup": "Template",
+			"TF-sub": "Template",
+			"TF-b": "Template",
+			Messagebox: "Template",
+			InlineCleanup: "Template",
+			Note: "Template",
+			Wikitable: "Table",
+			Category: "Wikilink",
+			Navigation: "Wikilink",
+		}
 
 	/** Default settings for structured-delta computation. */
 	readonly DEFAULT_STRUCTURED_DELTA_SETTINGS: FWStructuredDeltaSettings = {
@@ -4945,12 +4981,25 @@ Check whether a timestamp falls on today in local time.
 		revisionId: number,
 		options?: FWStructuredDeltaRevisionOptions
 	): Promise<FWStructuredDeltaResult | null> {
-		const summary = await this.getEditTypesSummary(revisionId, {
-			lang: options?.lang,
-			content_type: options?.content_type,
+		const lang = options?.lang
+		const requestedContentType = options?.content_type
+		let summary = await this.getEditTypesSummary(revisionId, {
+			lang,
+			content_type: requestedContentType,
 		})
+		let normalizedSummary = this.normalizeStructuredDeltaSummary(
+			summary as Record<string, unknown>
+		)
+		if (!normalizedSummary && requestedContentType === "html") {
+			summary = await this.getEditTypesSummary(revisionId, {
+				lang,
+				content_type: "wikitext",
+			})
+			normalizedSummary = this.normalizeStructuredDeltaSummary(summary as Record<string, unknown>)
+		}
+		if (!normalizedSummary) return null
 		const defaults = this.DEFAULT_STRUCTURED_DELTA_SETTINGS
-		return this.getStructuredDeltasFromSummary(summary, {
+		return this.getStructuredDeltasFromSummary(normalizedSummary, {
 			highlightCount: options?.highlightCount ?? defaults.highlightCount,
 			improvedDeltaEnabled: options?.improvedDeltaEnabled ?? defaults.improvedDeltaEnabled,
 			relativeDetailLevelEnabled:
@@ -5252,10 +5301,50 @@ Check whether a timestamp falls on today in local time.
 		canonical: FWStructuredDeltaCanonicalType
 	): string | null {
 		const normalizedCanonical = this.canonicalizeStructuredDeltaTypeName(canonical)
-		const found = Object.keys(summary).find(
+		const exact = Object.keys(summary).find(
 			key => this.canonicalizeStructuredDeltaTypeName(key) === normalizedCanonical
 		)
-		return found ?? null
+		if (exact) return exact
+
+		const aliased = Object.keys(summary).filter(
+			key => this.resolveStructuredDeltaCanonicalType(key) === canonical
+		)
+		if (aliased.length === 0) return null
+		if (aliased.length === 1) return aliased[0]
+
+		return aliased.sort((a, b) => {
+			const aHasLabel = this.STRUCTURED_DELTA_DISPLAY_LABELS[a] ? 1 : 0
+			const bHasLabel = this.STRUCTURED_DELTA_DISPLAY_LABELS[b] ? 1 : 0
+			if (aHasLabel !== bHasLabel) return bHasLabel - aHasLabel
+			return (
+				this.getStructuredDeltaSummaryTotal(summary[b]) -
+				this.getStructuredDeltaSummaryTotal(summary[a])
+			)
+		})[0]
+	}
+
+	private resolveStructuredDeltaCanonicalType(
+		typeKey: string
+	): FWStructuredDeltaCanonicalType | null {
+		const normalized = this.canonicalizeStructuredDeltaTypeName(typeKey)
+		for (const level of this.STRUCTURED_DELTA_SIGNIFICANCE_LEVELS) {
+			for (const canonical of level) {
+				if (this.canonicalizeStructuredDeltaTypeName(canonical) === normalized) return canonical
+			}
+		}
+		const aliasEntry = Object.entries(this.STRUCTURED_DELTA_HTML_TYPE_ALIASES).find(
+			([key]) => this.canonicalizeStructuredDeltaTypeName(key) === normalized
+		)
+		if (aliasEntry) return aliasEntry[1]
+		if (/^tf/i.test(typeKey)) return "Template"
+		return null
+	}
+
+	private getStructuredDeltaSummaryTotal(actions: Record<string, number>): number {
+		return Object.values(actions).reduce(
+			(total, count) => (typeof count === "number" && count > 0 ? total + count : total),
+			0
+		)
 	}
 
 	private canonicalizeStructuredDeltaTypeName(value: string): string {
@@ -5302,7 +5391,8 @@ Public for snippet logic: significance level index (0 = most significant).
 			this.STRUCTURED_DELTA_DISPLAY_LABELS[typeKey] ??
 			typeKey.toLowerCase().replace(/\s+/g, " ")
 		if (count === 1) return base
-		return base.endsWith("s") ? `${base}es` : `${base}s`
+		if (base.endsWith("s") || base.endsWith("x")) return `${base}es`
+		return `${base}s`
 	}
 
 	private veTextMatchConfigPromise: Promise<{

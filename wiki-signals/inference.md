@@ -2198,7 +2198,7 @@ It returns candidate pages that are textually similar to your seed pages.
 
 ### Documentation
 
-- [API:Search](https://www.mediawiki.org/wiki/API:Search)
+- [Help:CirrusSearch: Morelike](https://www.mediawiki.org/wiki/Help:CirrusSearch#Morelike)
 
 ### Endpoint
 

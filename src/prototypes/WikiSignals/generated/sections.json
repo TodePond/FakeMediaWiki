@@ -904,7 +904,7 @@
 					"segments": [
 						{
 							"type": "markdown",
-							"content": "\nThis endpoint performs full-text search, and it can also run \"more like this\" retrieval using `srsearch=morelike:...`.\nIt returns candidate pages that are textually similar to your seed pages.\n\n### Documentation\n\n- [API:Search](https://www.mediawiki.org/wiki/API:Search)\n\n### Endpoint\n\n`https://en.wikipedia.org/w/api.php?action=query&list=search`\n\n### Method\n\n`GET`\n\n### Request shape\n\n- `srsearch=morelike:Earth|Mars`\n- `srwhat=text`\n- `srlimit=10`\n- `sroffset=0`\n- optional `srnamespace=0`\n\n### Example"
+							"content": "\nThis endpoint performs full-text search, and it can also run \"more like this\" retrieval using `srsearch=morelike:...`.\nIt returns candidate pages that are textually similar to your seed pages.\n\n### Documentation\n\n- [Help:CirrusSearch: Morelike](https://www.mediawiki.org/wiki/Help:CirrusSearch#Morelike)\n\n### Endpoint\n\n`https://en.wikipedia.org/w/api.php?action=query&list=search`\n\n### Method\n\n`GET`\n\n### Request shape\n\n- `srsearch=morelike:Earth|Mars`\n- `srwhat=text`\n- `srlimit=10`\n- `sroffset=0`\n- optional `srnamespace=0`\n\n### Example"
 						},
 						{
 							"type": "requestPair",
